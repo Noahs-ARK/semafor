@@ -1,0 +1,11 @@
+#!/bin/ksh
+
+if [ $# != 1 ]
+	then
+	print -u2 "Usage: $0 <projectdir>"
+	exit 1
+fi
+
+
+
+java eos.TestEOS $1

@@ -1,0 +1,47 @@
+<title>MXPOST</title>
+
+<p>
+MXPOST is a JAVA (JDK 1.1) implementation of the part-of-speech tagger described in:
+
+<p><A HREF="http://www.cis.upenn.edu/~adwait/papers/tagger.ps">
+   Adwait Ratnaparkhi. <EM>A Maximum Entropy Part-Of-Speech Tagger.</EM>
+   In Proceedings of the Empirical Methods in Natural Language
+   Processing Conference, May 17-18, 1996. University of Pennsylvania</A>
+
+<p>
+USERS MUST ABIDE BY THE LICENSE INCLUDED WITH
+THIS DISTRIBUTION.
+
+<p>
+MXPOST is copyright (c) 1997 Adwait Ratnaparkhi
+
+<P>
+<center><h1>INSTRUCTIONS FOR USE</h1></center>
+
+<p>To use:
+<OL>
+  <LI> Edit your CLASSPATH variable to include the file mxpost.jar.
+  <LI> Type: <p><code>mxpost projectdir< wordfile</code>
+       <p>where <code>projectdir</code> is a project directory, and
+       <code>wordfile</code> contains one sentence per line.
+
+       <p>The project directory <code>tagger.project</code> contains a model trained
+       from sections 0 through 18 of the Penn Treebank Wall St. Journal
+       corpus.
+       <p>The sentences in <code>wordfile</code> must be tokenized according to Penn Treebank conventions,
+       e.g., "The stock didn't rise $5." should be "The stock did n't rise $ 5 .
+</OL>
+
+<p>To train a new model:
+<OL>
+  <LI> Edit your CLASSPATH variable to include the directory mxpost.jar.
+  <LI> Create an empty project directory
+  <LI> Type: <p><code>trainmxpost projectdir traindata</code>
+       <p>where <code>projectdir</code> is the newly created project directory,
+       and where <code>traindata</code> contains one sentence per line, where
+       each sentence has the format:
+       <p><code>word1_tag1 word2_tag2 word3_tag3 ... word4_tag4</code> 
+</OL>
+
+
+

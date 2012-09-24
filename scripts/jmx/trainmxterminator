@@ -1,0 +1,16 @@
+#!/bin/ksh
+
+
+if [ $# != 2 ]
+	then
+	print -u2 "Usage: $0 <project> <training>" 
+	exit 1
+fi
+
+set -x
+
+project=$1
+trdata=$2
+
+
+java eos.TrainEOS $project $trdata

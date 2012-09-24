@@ -1,0 +1,24 @@
+#!/bin/ksh
+
+if [ $# != 2 ]
+	then
+	print -u2 "Usage: $0 <project> <training>" 
+	exit 1
+fi
+
+set -x
+
+project=$1
+trdata=$2
+
+
+
+java -mx500m tagger.TrainTagger $project $trdata
+
+[[ $? != 0 ]] && exit 1
+
+java -mx500m maxent.GIS $project/events $project/tagfeatures.fmap $project/model 100
+
+[[ $? != 0 ]] && exit 1
+
+return 0

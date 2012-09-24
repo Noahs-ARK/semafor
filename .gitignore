@@ -4,3 +4,9 @@
 *.jar
 *.war
 *.ear
+
+# IDE cruft
+.idea
+
+# Emacs cruft
+*\~

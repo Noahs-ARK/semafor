@@ -1,0 +1,46 @@
+<title>MXTERMINATOR</title>
+
+MXTERMINATOR is a JAVA (JDK 1.1) implementation of the sentence boundary
+detector described in:
+
+<p><A HREF="http://xxx.lanl.gov/ps/cmp-lg/9704002">
+Jeffrey C. Reynar and Adwait Ratnaparkhi.
+<EM>A Maximum Entropy Approach to Identifying Sentence
+Boundaries.</EM>
+In Proceedings of the Fifth Conference on Applied Natural Language Processing,
+March 31-April 3, 1997. Washington, D.C.</A>
+
+<p>
+USERS MUST ABIDE BY THE LICENSE INCLUDED WITH
+THIS DISTRIBUTION.
+
+<p>
+MXTERMINATOR is copyright (c) 1997 Adwait Ratnaparkhi
+
+<P>
+<center><h1>INSTRUCTIONS FOR USE</h1></center>
+
+<p>To use:
+<OL>
+  <LI> Edit your CLASSPATH variable to include file mxpost.jar.
+  <LI> Type: <p><code>mxterminator projectdir < textfile</code> <p>where <code>textfile</code> contains raw text,
+       and where <code>projectdir</code> is a project directory.
+       
+       <p>The project directory <code>eos.project</code> contains
+       a model trained on about 1 million words of Wall St. Journal text.
+
+</ol>
+
+To train a new model:
+<ol>
+  <LI> Edit your CLASSPATH variable to include the file mxpost.jar.
+  <LI> Create an empty project directory
+  <LI> Type: <p><code>trainmxterminator projectdir traindata</code>
+       <p>where <code>projectdir</code> is the newly created project directory,
+       and where <code>traindata</code> contains one sentence per line.
+</ol>
+
+
+
+
+
