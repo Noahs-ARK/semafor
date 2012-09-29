@@ -1,12 +1,8 @@
 *.class
 
-# Package Files #
-*.jar
-*.war
-*.ear
-
 # IDE cruft
 .idea
+*.iml
 
 # Emacs cruft
 *\~
