@@ -24,25 +24,9 @@ If you want existing code in SEMAFOR to create these maps, you could use the met
 
 
 
-2) The next step creates some more data structures used for the training and inference procedure. You will find a class called: edu/cmu/cs/lti/ark/fn/identification/RequiredDataCreation.java. Compile it and run the following: 
+2) The next step creates some more data structures used for the training and inference procedure. You will find a class called: edu/cmu/cs/lti/ark/fn/identification/RequiredDataCreation.java. Compile it, then run the script:
 
-classpath=${SEMAFOR_HOME}/lib/semafor-deps.jar
-datadir=<some directory where you store the data structures, including the two previous maps>
-luxmldir=<the directory that contains all the lexical unit xmls for FrameNet 1.5; you can also add your own xmls to this directory; for format information, take a look at the lu/ directory under the FrameNet release>
-jhome=<java bin home>
-
-${jhome}/java -classpath ${classpath} -Xms2g -Xmx2g edu.cmu.cs.lti.ark.fn.identification.RequiredDataCreation \
-      stopwords-file:${SEMAFOR_HOME}/stopwords.txt \
-      wordnet-configfile:${SEMAFOR_HOME}/file_properties.xml \
-      framenet-mapfile:${datadir}/framenet.original.map \
-      luxmldir:${luxmldir} \
-      allrelatedwordsfile:${datadir}/allrelatedwords.ser \
-      hvcorrespondencefile:${datadir}/hvmap.ser \
-      wnrelatedwordsforwordsfile:${datadir}/wnallrelwords.ser \
-      wnmapfile:${datadir}/wnMap.ser \
-      revisedmapfile:${datadir}/revisedrelmap.ser \
-      lemmacachefile:${datadir}/hvlemmas.ser \
-      fnidreqdatafile:${datadir}/reqData.jobj
+training/createRequiredData.sh 
 
 
 
