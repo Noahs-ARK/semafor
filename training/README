@@ -1,0 +1,160 @@
+This is a README for training on the FrameNet 1.5 full text annotations
+Dipanjan Das 
+dipanjan@cs.cmu.edu
+2/18/2012
+=======================================================================
+
+Training models for frame-semantic parsing with SEMAFOR is still a very laborious and 
+clunky set of steps. Your kind patience is required to train the models :-)
+
+0) Run svn checkout https://semafor-semantic-parser.googlecode.com/svn/trunk/ semafor-semantic-parser. Compile necessary files as you go.
+
+
+1) The first step is to create some data structures which are used to train and test the frame identification and argument identification models (please refer to our NAACL 2010 paper to understand these two steps). The first step is to create two maps -- I name these framenet.original.map and framenet.frame.element.map
+
+   i) The first map is of type THashMap<String, THashSet<String>>. It maps a frame to a set of disambiguated predicates 
+      (words along with part of speech tags, but in the style of FrameNet). 
+   ii) The second map is of type THashMap<String,THashSet<String>>, which maps each frame to a set of frame element names. 
+       In other words, this data structure is necessary for the argument identification model to know what 
+       the frame elements are for each frame.
+ 
+My versions of these two maps are present in this directory (these are just serialized Java objects). Use the semafor-deps.jar file in lib/ directory of the googlecode repository to get the right version of GNU trove, and read (deserialize) these two maps. After that print the keys, and the corresponding values to see exactly what is stored in these maps. After that, you will need to create your own versions of these two maps for your domain, in exactly the same format as these maps.
+
+If you want existing code in SEMAFOR to create these maps, you could use the method writeSerializedObject(Object object, String outFile) in edu/cmu/cs/lti/ark/util/SerializedObjects.java to write serialize those maps. So creating your own maps will be easy. You could also read the maps using that class.
+
+
+
+2) The next step creates some more data structures used for the training and inference procedure. You will find a class called: edu/cmu/cs/lti/ark/fn/identification/RequiredDataCreation.java. Compile it and run the following: 
+
+classpath=${SEMAFOR_HOME}/lib/semafor-deps.jar
+datadir=<some directory where you store the data structures, including the two previous maps>
+luxmldir=<the directory that contains all the lexical unit xmls for FrameNet 1.5; you can also add your own xmls to this directory; for format information, take a look at the lu/ directory under the FrameNet release>
+jhome=<java bin home>
+
+${jhome}/java -classpath ${classpath} -Xms2g -Xmx2g edu.cmu.cs.lti.ark.fn.identification.RequiredDataCreation \
+      stopwords-file:${SEMAFOR_HOME}/stopwords.txt \
+      wordnet-configfile:${SEMAFOR_HOME}/file_properties.xml \
+      framenet-mapfile:${datadir}/framenet.original.map \
+      luxmldir:${luxmldir} \
+      allrelatedwordsfile:${datadir}/allrelatedwords.ser \
+      hvcorrespondencefile:${datadir}/hvmap.ser \
+      wnrelatedwordsforwordsfile:${datadir}/wnallrelwords.ser \
+      wnmapfile:${datadir}/wnMap.ser \
+      revisedmapfile:${datadir}/revisedrelmap.ser \
+      lemmacachefile:${datadir}/hvlemmas.ser \
+      fnidreqdatafile:${datadir}/reqData.jobj
+
+
+
+3) This step corresponds to training the frame identification model. I will be using the flags declared above.
+
+# a directory where training events will be stored for efficiency
+mkdir ${datadir}/events
+fefile=${datadir}/cv.train.sentences.frame.elements
+end=`wc -l ${fefile}`
+end=`expr ${end% *}
+
+
+  i) 
+  # step 1: alphabet creation
+  $jhome/java -classpath ${classpath} -Xms8000m -Xmx8000m \
+  edu.cmu.cs.lti.ark.fn.identification.AlphabetCreationThreaded \
+  train-fefile:${datadir}/cv.train.sentences.frame.elements \
+  train-parsefile:${datadir}/cv.train.sentences.all.lemma.tags \
+  stopwords-file:${SEMAFOR_HOME}/stopwords.txt \
+  wordnet-configfile:${SEMAFOR_HOME}/file_properties.xml \
+  fnidreqdatafile:${datadir}/reqData.jobj \
+  logoutputfile:${datadir}/log \
+  model:${datadir}/alphabet.dat \
+  eventsfile:${datadir}/events \
+  startindex:0 \
+  endindex:${end} \
+  numthreads:4
+
+
+  ii) In this step, we are combining the different alphabets each thread above creates. Run edu.cmu.cs.lti.ark.fn.identification.CombineAlphabets with two 
+      arguments - the full path to the directory that contains the alphabet files, and the full path to the name of a combined alphabet file. After that's d      one, you will have a single alphabet file, with which you will run the following step. 
+  
+  iii) Creating feature events for each datapoint. 
+  
+  # step 3: creating feature events
+  $jhome/java -classpath ${classpath} -Xms8000m -Xmx8000m \
+  edu.cmu.cs.lti.ark.fn.identification.CreateEventsUnsupported \
+  train-fefile:${datadir}/cv.train.sentences.frame.elements \
+  train-parsefile:${datadir}/cv.train.sentences.all.lemma.tags \
+  stopwords-file:${SEMAFOR_HOME}/stopwords.txt \
+  wordnet-configfile:${SEMAFOR_HOME}/file_properties.xml \
+  fnidreqdatafile:${datadir}/reqData.jobj \
+  logoutputfile:${datadir}/log \
+  model:${datadir}/alphabet.dat \
+  eventsfile:${datadir}/events \
+  startindex:0 \
+  endindex:${end} \
+  numthreads:4
+
+  
+
+  iv) After the above step is done in the ${datadir}/events directory, you will find tons of the serialized objects, which are the feature vectors for 
+  each data point. After this events creation is done, you can run training by running:
+  
+  # step 4: traning the frame identification model
+  
+  mkdir ${datadir}/models_0.0
+  $jhome/java -classpath ${classpath} -Xms8g -Xmx8g \
+  edu.cmu.cs.lti.ark.fn.identification.TrainBatchModelDerThreaded \
+  alphabetfile:${datadir}/alphabet.dat \
+  eventsfile:${datadir}/events \
+  model:${datadir}/models_0.0/idmodel.dat \
+  regularization:reg \
+  lambda:0.0 \
+  restartfile:null \
+  logoutputfile:${datadir}/log \
+  numthreads:8
+
+
+The training procedure will run for a long period of time. Line search in L-BFGS may fail at the end, but that does not mean training failed. In models_0.0, there will be models produced every few iterations. If line search failed, take the last model.
+
+We do not use the format of the model file produced by the above procedure, and convert it to a more usable version. To do that, 
+use edu.cmu.cs.lti.ark.fn.identification.ConvertAlphabetFile to convert the produced models to the new format. 
+The class takes three arguments: the alphabet file path, the model file path, and the output model file path.
+
+
+4) This step corresponds to the training the argument identification model. 
+
+
+  mkdir ${datadir}/scan
+
+  # step 1: Alphabet Creation
+
+   $jhome/java -classpath ${classpath} -Xms4000m -Xmx4000m edu.cmu.cs.lti.ark.fn.parsing.CreateAlphabet \
+   ${datadir}/cv.train.sentences.frame.elements \
+   ${datadir}/cv.train.sentences.all.lemma.tags \
+   ${datadir}/scan/cv.train.events.bin \
+   ${datadir}/scan/parser.conf.unlabeled \
+   ${datadir}/scan/cv.train.sentences.frame.elements.spans \
+   true \
+   false \
+   1 \
+   null \
+   ${datadir}/framenet.frame.element.map
+
+
+  # step 2: Caching Feature Vectors
+  $jhome/java -classpath ${classpath} -Xms4000m -Xmx4000m edu.cmu.cs.lti.ark.fn.parsing.FrameFeaturesCache \
+  eventsfile:${datadir}/scan/cv.train.events.bin \
+  spansfile:${datadir}/scan/cv.train.sentences.frame.elements.spans \
+  train-framefile:${datadir}/cv.train.sentences.frame.elements \
+  localfeaturescache:${datadir}/scan/featurecache.jobj
+
+  # step 3: training
+  $jhome/java -classpath ${classpath} -Xms8000m -Xmx8000m edu.cmu.cs.lti.ark.fn.parsing.TrainingBatchMain \
+  model:${datadir}/argmodel.dat \ 
+  alphabetfile:${datadir}/scan/parser.conf.unlabeled \
+  localfeaturescache:${datadir}/scan/featurecache.jobj \
+  train-framefile:${datadir}/cv.train.sentences.frame.elements \
+  regularization:reg \
+  lambda:0.1 \
+  numthreads:4 \
+  binaryoverlapfactor:false
+
+You may tune lambda on a development set to get the best results.
