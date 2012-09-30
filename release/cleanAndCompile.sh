@@ -24,11 +24,13 @@ pwd
 classpath=".:./lib/semafor-deps.jar"
 
 find edu \( -name "*.class" \) -exec rm '{}' \;
+# classes needed for running SEMAFOR
 ${JAVA_HOME_BIN}/javac -cp ${classpath} edu/cmu/cs/lti/ark/fn/data/prep/CoNLLInputPreparation.java
 ${JAVA_HOME_BIN}/javac -cp ${classpath} edu/cmu/cs/lti/ark/fn/data/prep/AllAnnotationsMergingWithoutNE.java
 ${JAVA_HOME_BIN}/javac -cp ${classpath} edu/cmu/cs/lti/ark/fn/parsing/ParserDriver.java
 ${JAVA_HOME_BIN}/javac -cp ${classpath} edu/cmu/cs/lti/ark/fn/evaluation/PrepareFullAnnotationXML.java
-
+# classes needed for training SEMAFOR
+${JAVA_HOME_BIN}/javac -cp ${classpath} edu/cmu/cs/lti/ark/fn/identification/*.java
 
 cd ${MST_PARSER_HOME}
 pwd

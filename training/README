@@ -40,21 +40,8 @@ end=`expr ${end% *}
 
 
   i) 
-  # step 1: alphabet creation
-  $jhome/java -classpath ${classpath} -Xms8000m -Xmx8000m \
-  edu.cmu.cs.lti.ark.fn.identification.AlphabetCreationThreaded \
-  train-fefile:${datadir}/cv.train.sentences.frame.elements \
-  train-parsefile:${datadir}/cv.train.sentences.all.lemma.tags \
-  stopwords-file:${SEMAFOR_HOME}/stopwords.txt \
-  wordnet-configfile:${SEMAFOR_HOME}/file_properties.xml \
-  fnidreqdatafile:${datadir}/reqData.jobj \
-  logoutputfile:${datadir}/log \
-  model:${datadir}/alphabet.dat \
-  eventsfile:${datadir}/events \
-  startindex:0 \
-  endindex:${end} \
-  numthreads:4
-
+  # step 1: alphabet creation. Run the script:
+  training/trainFrameIdentificationModel.sh 
 
   ii) In this step, we are combining the different alphabets each thread above creates. Run edu.cmu.cs.lti.ark.fn.identification.CombineAlphabets with two 
       arguments - the full path to the directory that contains the alphabet files, and the full path to the name of a combined alphabet file. After that's d      one, you will have a single alphabet file, with which you will run the following step. 
