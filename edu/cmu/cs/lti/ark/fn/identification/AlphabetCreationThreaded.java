@@ -129,15 +129,15 @@ public class AlphabetCreationThreaded
 	 * @param lemmaCache map from tokens to their lemmas
 	 */
 	public AlphabetCreationThreaded(String alphabetFile,
-									String frameElementsFile,
-									String parseFile,
-									THashMap<String, THashSet<String>> frameMap,
-									Map<String, Set<String>> relatedWordsForWord,
-									int startIndex,
-									int endIndex,
-									int numThreads,
-									Map<String, Map<String, Set<String>>> rMap,
-									Map<String, String> lemmaCache)
+	                                String frameElementsFile,
+	                                String parseFile,
+	                                THashMap<String, THashSet<String>> frameMap,
+	                                Map<String, Set<String>> relatedWordsForWord,
+	                                int startIndex,
+	                                int endIndex,
+	                                int numThreads,
+	                                Map<String, Map<String, Set<String>>> rMap,
+	                                Map<String, String> lemmaCache)
 	{
 		mFrameMap = frameMap;
 		mParseFile = parseFile;
@@ -260,15 +260,15 @@ public class AlphabetCreationThreaded
 		{
 			IntCounter<String> valMap = null;
 			FeatureExtractor featex = new FeatureExtractor();
-			valMap =  featex.extractFeaturesLessMemory(frame,
-					intTokNums, 
-					unit, 
-					data, 
-					"test", 
+			valMap = featex.extractFeaturesLessMemory(frame,
+					intTokNums,
+					unit,
+					data,
+					"test",
 					mRelatedWordsForWord,
 					mRevisedRelationsMap,
 					mHVLemmas,
-					parse);															
+					parse);
 			Set<String> features = valMap.keySet();
 			ArrayList<Integer> feats = new ArrayList<Integer>();
 			for (String feat : features)
@@ -301,8 +301,8 @@ public class AlphabetCreationThreaded
 	}
 
 	private Pair<String, Integer> processLine(String line, int index,
-                                              String parseLine, int parseOffset, BufferedReader parseReader,
-                                              Map<String, Integer> alphabet) {
+	                                          String parseLine, int parseOffset, BufferedReader parseReader,
+	                                          Map<String, Integer> alphabet) {
 		String[] toks = line.split("\t");
 		int sentNum = new Integer(toks[5]);
 		while (parseOffset < sentNum) {
