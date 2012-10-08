@@ -1,4 +1,6 @@
+# Compiled artifacts
 *.class
+*.pyc
 
 # IDE cruft
 .idea
