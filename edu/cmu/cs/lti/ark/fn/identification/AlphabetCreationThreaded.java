@@ -47,9 +47,10 @@ import gnu.trove.*;
 
 public class AlphabetCreationThreaded	
 {
-	private THashMap<String, THashSet<String>> mFrameMap = null;
+	private THashMap<String, THashSet<String>> mFrameMap=null;
 	private String mParseFile = null;
 	private String mAlphabetFile = null;
+	private String mEventDir = null;
 	private String mFrameElementsFile = null;
 	private Map<String, Set<String>> mRelatedWordsForWord = null;
 	private int mStartIndex = -1;
@@ -59,93 +60,77 @@ public class AlphabetCreationThreaded
 	private Map<String, Map<String, Set<String>>> mRevisedRelationsMap;
 	private Map<String, String> mHVLemmas;
 
-	/**
-	 * Parses commandline args, then creates a new {@link #AlphabetCreationThreaded} with them
-	 * and calls {@link #createEvents}.
-	 *
-	 * @param args commandline arguments. see {@link #AlphabetCreationThreaded}
-	 *             for details.
-	 */
 	public static void main(String[] args)
 	{
 		FNModelOptions options = new FNModelOptions(args);
 		boolean append = true;
-		String logOutputFile = options.logOutputFile.get();
-		FileHandler fileHandler;
+		String logoutputfile = options.logOutputFile.get();
+		FileHandler fh = null;
 		LogManager logManager = LogManager.getLogManager();
 		logManager.reset();
 		Logger logger = null;
 		try {
-			fileHandler = new FileHandler(logOutputFile, append);
-			fileHandler.setFormatter(new SimpleFormatter());
+			fh = new FileHandler(logoutputfile, append);
+			fh.setFormatter(new SimpleFormatter());
 			logger = Logger.getLogger("CreateEvents");
-			logger.addHandler(fileHandler);
+			logger.addHandler(fh);   
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(-1);
 		}
 
 		String alphabetFile=options.modelFile.get();
+		String eventDir = options.eventsFile.get();
 		String feFile = options.trainFrameElementFile.get();
-		RequiredDataForFrameIdentification r =
-				(RequiredDataForFrameIdentification)SerializedObjects.readSerializedObject(options.fnIdReqDataFile.get());
+		RequiredDataForFrameIdentification r = (RequiredDataForFrameIdentification)SerializedObjects.readSerializedObject(options.fnIdReqDataFile.get());
 		Map<String, Set<String>> relatedWordsForWord = r.getRelatedWordsForWord();
 		THashMap<String,THashSet<String>> frameMap = r.getFrameMap();
 		int startIndex = options.startIndex.get();
 		int endIndex = options.endIndex.get();
-		logger.info("Start:" + startIndex + " end:" + endIndex);
+		int revisedStart = startIndex;
+		int revisedEnd = endIndex;
+		logger.info("Start:"+ revisedStart + " end:" + revisedEnd);
 		Map<String, Map<String, Set<String>>> revisedRelationsMap = 
 			r.getRevisedRelMap();
 		Map<String, String> hvLemmas = r.getHvLemmaCache();
 		AlphabetCreationThreaded events = 
-				new AlphabetCreationThreaded(alphabetFile,
-						feFile,
-						options.trainParseFile.get(),
-						frameMap,
-						relatedWordsForWord,
-						startIndex,
-						endIndex,
+				new AlphabetCreationThreaded(alphabetFile, 
+						eventDir, 
+						feFile, 
+						options.trainParseFile.get(), 
+						frameMap, 
+						relatedWordsForWord, 
+						revisedStart,
+						revisedEnd,
+						logger,
 						options.numThreads.get(),
 						revisedRelationsMap,
 						hvLemmas);
-		events.createEvents();
-	}
+			events.createEvents();
+	} 
 
-	/**
-	 * Creates a new AlphabetCreationThreaded with the given arguments
-	 *
-	 * @param alphabetFile the file prefix to which to write the resulting alphabet
-	 * @param frameElementsFile path to file containing gold standard frame element
-	 *                          annotations
-	 * @param parseFile path to file containing dependency parsed sentences (the same
-	 *                  ones that are in frameElementsFile
-	 * @param frameMap a map from frames to a set of disambiguated predicates
-	 *                 (words along with part of speech tags, but in the style of FrameNet)
-	 * @param relatedWordsForWord map from frame to a set of frame element names
-	 * @param startIndex the line of the frameElementsFile to start at
-	 * @param endIndex the line of frameElementsFile to end at
-	 * @param numThreads the number of threads to run
-	 * @param rMap ?
-	 * @param lemmaCache map from tokens to their lemmas
-	 */
 	public AlphabetCreationThreaded(String alphabetFile,
-	                                String frameElementsFile,
-	                                String parseFile,
-	                                THashMap<String, THashSet<String>> frameMap,
-	                                Map<String, Set<String>> relatedWordsForWord,
-	                                int startIndex,
-	                                int endIndex,
-	                                int numThreads,
-	                                Map<String, Map<String, Set<String>>> rMap,
-	                                Map<String, String> lemmaCache)
+			String eventDir,
+			String frameElementsFile,
+			String parseFile, 
+			THashMap<String, THashSet<String>> frameMap, 
+			Map<String, Set<String>> relatedWordsForWord,
+			int startIndex, 
+			int endIndex,
+			Logger logger,
+			int numThreads,
+			Map<String, Map<String, Set<String>>> rMap,
+			Map<String, String> lemmaCache)
 	{
-		mFrameMap = frameMap;
-		mParseFile = parseFile;
-		mFrameElementsFile = frameElementsFile;
-		mAlphabetFile = alphabetFile;
+		mFrameMap=frameMap;
+		mParseFile=parseFile;
+		mFrameElementsFile=frameElementsFile;
+		mEventDir=eventDir;
+		mAlphabetFile=alphabetFile;	
 		mRelatedWordsForWord = relatedWordsForWord;
 		mStartIndex = startIndex;
 		mEndIndex = endIndex;
+		mLogger = logger;
 		mNumThreads = numThreads; 
 		mHVLemmas = lemmaCache;
 		mRevisedRelationsMap = rMap;
@@ -153,6 +138,7 @@ public class AlphabetCreationThreaded
 	
 	public void createEvents() {
 		try {
+			// readAlphabetFile();
 			ThreadPool threadPool = new ThreadPool(mNumThreads);
 			for (int i = 0; i < mNumThreads; i ++) {
 				threadPool.runTask(createTask(i));
@@ -175,6 +161,7 @@ public class AlphabetCreationThreaded
 		}
 		Map<String, Integer> alphabet = new THashMap<String, Integer>();
 		mLogger.info("Thread " + i + ": start:" + start +" end:" + end);
+		// System.out.println("Thread " + i + ": start:" + start +" end:" + end);
 		int count = 0;
 		try
 		{
@@ -193,8 +180,9 @@ public class AlphabetCreationThreaded
 				}
 				line=line.trim();
 				mLogger.info("Thread + " + i + ": Processing:"+count);
+				//System.out.println("Thread + " + i + ": Processing:"+count);
 				Pair<String, Integer> pair = 
-					processLine(line, count, parseLine, parseOffset, parseReader, alphabet);
+					processLine(line, count, parseLine, parseOffset, parseReader, alphabet, i);
 				count++;
 				if (count == end) {
 					break;
@@ -248,8 +236,7 @@ public class AlphabetCreationThreaded
 		    };
 	}
 
-	private int[][] getFeatures(String frame, int[] intTokNums, String[][] data,
-								Map<String, Integer> alphabet)
+	private int[][] getFeatures(String frame,int[] intTokNums,String[][] data, Map<String, Integer> alphabet)
 	{
 		THashSet<String> hiddenUnits = mFrameMap.get(frame);
 		DependencyParse parse = DependencyParse.processFN(data, 0.0);
@@ -260,15 +247,15 @@ public class AlphabetCreationThreaded
 		{
 			IntCounter<String> valMap = null;
 			FeatureExtractor featex = new FeatureExtractor();
-			valMap = featex.extractFeaturesLessMemory(frame,
-					intTokNums,
-					unit,
-					data,
-					"test",
+			valMap =  featex.extractFeaturesLessMemory(frame,
+					intTokNums, 
+					unit, 
+					data, 
+					"test", 
 					mRelatedWordsForWord,
 					mRevisedRelationsMap,
 					mHVLemmas,
-					parse);
+					parse);															
 			Set<String> features = valMap.keySet();
 			ArrayList<Integer> feats = new ArrayList<Integer>();
 			for (String feat : features)
@@ -300,15 +287,20 @@ public class AlphabetCreationThreaded
 		return res;
 	}
 
-	private Pair<String, Integer> processLine(String line, int index,
-	                                          String parseLine, int parseOffset, BufferedReader parseReader,
-	                                          Map<String, Integer> alphabet) {
+	private Pair<String, Integer> processLine(String line, int index, 
+			String parseLine, int parseOffset, BufferedReader parseReader,
+			Map<String, Integer> alphabet,
+			int threadIndex) {
 		String[] toks = line.split("\t");
 		int sentNum = new Integer(toks[5]);
 		while (parseOffset < sentNum) {
 			parseLine = BasicFileIO.getLine(parseReader);
 			parseOffset++;
 		}
+		// mLogger.info("Thread:" + threadIndex + " Index:" + index +" feLine:" + line);
+		// mLogger.info("Thread:" + threadIndex + " Index:" + index +" feLine:" + sentNum);
+		// mLogger.info("Thread:" + threadIndex + " Index:" + index +" parseOffset:" + parseOffset);
+		// mLogger.info("Thread:" + threadIndex + " Index:" + index +" parseLine:" + parseLine);
 		String frameName = toks[1];
 		String[] tokNums = toks[3].split("_");
 		int[] intTokNums = new int[tokNums.length];
@@ -326,6 +318,7 @@ public class AlphabetCreationThreaded
 				data[k][j]=""+st.nextToken().trim();
 			}
 		}
+		// mLogger.info("Thread:" + threadIndex + " Index:"+index +" Number of toks:" + tokensInFirstSent);
 		Set<String> set = mFrameMap.keySet();
 		int size = set.size();
 		int[][][] allFeatures = new int[size][][];
