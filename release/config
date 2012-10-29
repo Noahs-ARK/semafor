@@ -7,7 +7,7 @@ BASE_DIR="/cab0/sthomson/code/semafor"
 # SEMAFOR home: Please change the following path to the absolute path
 # where you decompressed SEMAFOR.
 #SEMAFOR_HOME=/usr2/dipanjan/experiments/FramenetParsing/www/semafor-semantic-parser
-SEMAFOR_HOME="${BASE_DIR}/semafor-semantic-parser"
+SEMAFOR_HOME="${BASE_DIR}/semafor"
 
 # Temporary folder location: Change the path to your custom temp directory
 TEMP_DIR="${SEMAFOR_HOME}/release/temp"
