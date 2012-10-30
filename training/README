@@ -26,26 +26,22 @@ If you want existing code in SEMAFOR to create these maps, you could use the met
 
 2) The next step creates some more data structures used for the training and inference procedure. You will find a class called: edu/cmu/cs/lti/ark/fn/identification/RequiredDataCreation.java. Compile it, then run the script:
 
-training/createRequiredData.sh 
+./training/createRequiredData.sh
 
 
 
 3) This step corresponds to training the frame identification model. I will be using the flags declared above.
 
-# a directory where training events will be stored for efficiency
-mkdir ${datadir}/events
-fefile=${datadir}/cv.train.sentences.frame.elements
-end=`wc -l ${fefile}`
-end=`expr ${end% *}
-
-
   i) 
   # step 1: alphabet creation. Run the script:
-  training/trainFrameIdentificationModel.sh 
+  ./training/trainFrameIdentificationModel.sh
+  # This takes ~75 minutes on my 2.2 GHz Intel Core i7 4 core macbook pro (sam)
 
-  ii) In this step, we are combining the different alphabets each thread above creates. Run edu.cmu.cs.lti.ark.fn.identification.CombineAlphabets with two 
-      arguments - the full path to the directory that contains the alphabet files, and the full path to the name of a combined alphabet file. After that's d      one, you will have a single alphabet file, with which you will run the following step. 
-  
+  ii)
+  # step 2: alphabet combination. Run the script:
+  ./training/combineAlphabets.sh
+  # Takes ~3 seconds
+
   iii) Creating feature events for each datapoint. 
   
   # step 3: creating feature events
