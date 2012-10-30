@@ -42,24 +42,10 @@ If you want existing code in SEMAFOR to create these maps, you could use the met
   ./training/combineAlphabets.sh
   # Takes ~3 seconds
 
-  iii) Creating feature events for each datapoint. 
-  
-  # step 3: creating feature events
-  $jhome/java -classpath ${classpath} -Xms8000m -Xmx8000m \
-  edu.cmu.cs.lti.ark.fn.identification.CreateEventsUnsupported \
-  train-fefile:${datadir}/cv.train.sentences.frame.elements \
-  train-parsefile:${datadir}/cv.train.sentences.all.lemma.tags \
-  stopwords-file:${SEMAFOR_HOME}/stopwords.txt \
-  wordnet-configfile:${SEMAFOR_HOME}/file_properties.xml \
-  fnidreqdatafile:${datadir}/reqData.jobj \
-  logoutputfile:${datadir}/log \
-  model:${datadir}/alphabet.dat \
-  eventsfile:${datadir}/events \
-  startindex:0 \
-  endindex:${end} \
-  numthreads:4
-
-  
+  iii)
+  # step 3: creating feature events for each datapoint. Run the script:
+  ./training/createFeatureEvents.sh
+  # Takes ~50 minutes
 
   iv) After the above step is done in the ${datadir}/events directory, you will find tons of the serialized objects, which are the feature vectors for 
   each data point. After this events creation is done, you can run training by running:
