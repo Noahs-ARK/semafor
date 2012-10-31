@@ -47,27 +47,16 @@ If you want existing code in SEMAFOR to create these maps, you could use the met
   ./training/createFeatureEvents.sh
   # Takes ~50 minutes
 
-  iv) After the above step is done in the ${datadir}/events directory, you will find tons of the serialized objects, which are the feature vectors for 
-  each data point. After this events creation is done, you can run training by running:
-  
-  # step 4: traning the frame identification model
-  
-  mkdir ${datadir}/models_0.0
-  $jhome/java -classpath ${classpath} -Xms8g -Xmx8g \
-  edu.cmu.cs.lti.ark.fn.identification.TrainBatchModelDerThreaded \
-  alphabetfile:${datadir}/alphabet.dat \
-  eventsfile:${datadir}/events \
-  model:${datadir}/models_0.0/idmodel.dat \
-  regularization:reg \
-  lambda:0.0 \
-  restartfile:null \
-  logoutputfile:${datadir}/log \
-  numthreads:8
+  iv) After the above step is done in the ${datadir}/events directory, you will find tons of the serialized objects, which are the feature vectors for
+      each data point. After this events creation is done, you can run training by running:
+  # step 4: training the frame identification model. Run the script:
+  ./training/trainBatch.sh
+  # takes ~4 hours
 
 
 The training procedure will run for a long period of time. Line search in L-BFGS may fail at the end, but that does not mean training failed. In models_0.0, there will be models produced every few iterations. If line search failed, take the last model.
 
-We do not use the format of the model file produced by the above procedure, and convert it to a more usable version. To do that, 
+We do not use the format of the model file produced by the above procedure, but convert it to a more usable version. To do that,
 use edu.cmu.cs.lti.ark.fn.identification.ConvertAlphabetFile to convert the produced models to the new format. 
 The class takes three arguments: the alphabet file path, the model file path, and the output model file path.
 
