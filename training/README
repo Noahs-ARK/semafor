@@ -53,8 +53,13 @@ If you want existing code in SEMAFOR to create these maps, you could use the met
   ./training/trainBatch.sh
   # takes ~4 hours
 
+  The training procedure will run for a long period of time. Line search in L-BFGS may fail at the end, but that does not mean training failed. In models_0.0, there will be models produced every few iterations. If line search failed, take the last model.
 
-The training procedure will run for a long period of time. Line search in L-BFGS may fail at the end, but that does not mean training failed. In models_0.0, there will be models produced every few iterations. If line search failed, take the last model.
+  v)
+  # step 5: convert the alphabet file. Run the script:
+  ./training/convertAlphabetFile.sh
+  # takes ~3 seconds
+
 
 We do not use the format of the model file produced by the above procedure, but convert it to a more usable version. To do that,
 use edu.cmu.cs.lti.ark.fn.identification.ConvertAlphabetFile to convert the produced models to the new format. 

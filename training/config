@@ -1,11 +1,25 @@
 #!/bin/bash -e                                                                                       
 
-source "$(dirname `readlink -f ${0}`)/../release/config"
+source "$(dirname ${0})/../release/config"
+
+classpath="..:${SEMAFOR_HOME}:${SEMAFOR_HOME}/lib/semafor-deps.jar"
 
 # the directory that contains framenet.frame.element.map and framenet.original.map
 datadir="${SEMAFOR_HOME}/training/data"
 # the directory that contains all the lexical unit xmls for FrameNet 1.5
 # you can also add your own xmls to this directory
 # for format information, take a look at the lu/ directory under the FrameNet release
-luxmldir="/mal2/dipanjan/experiments/FramenetParsing/fndata-1.5/lu"
-classpath="..:${SEMAFOR_HOME}:${SEMAFOR_HOME}/lib/semafor-deps.jar"
+luxmldir="${datadir}/lu"
+# the directory you would like the resulting model to end up in
+model_name="models_0.0"
+model_dir="${datadir}/${model_name}"
+
+# paths to the gold-standard annotated sentences, and dependency-parsed version of it
+training_dir="${datadir}/naacl2012"
+fe_file="${training_dir}/cv.train.sentences.frame.elements"
+fe_file_length=`wc -l ${fe_file}`
+fe_file_length=`expr ${fe_file_length% *}`
+parsed_file="${training_dir}/cv.train.sentences.all.lemma.tags"
+
+# path to store the alphabet we create:
+alphabet_file=${datadir}/alphabet_combined.dat

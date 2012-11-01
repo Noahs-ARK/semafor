@@ -4,12 +4,6 @@ source "$(dirname ${0})/config"
 
 # step 3.3: creating feature events for each datapoint
 
-training_dir="${datadir}/naacl2012"
-fe_file="${training_dir}/cv.train.sentences.frame.elements"
-fe_file_length=`wc -l ${fe_file}`
-fe_file_length=`expr ${fe_file_length% *}`
-parsed_file="${training_dir}/cv.train.sentences.all.lemma.tags"
-
 # clobber the log file
 log_file="${datadir}/log"
 if [ -e ${log_file} ]; then

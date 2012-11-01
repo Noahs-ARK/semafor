@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-source "$(dirname `readlink -f ${0}`)/config"
+source "$(dirname ${0})/config"
 
 # make sure RequiredDataCreation is compiled
 ${JAVA_HOME_BIN}/javac -cp ${classpath} edu/cmu/cs/lti/ark/fn/identification/RequiredDataCreation.java

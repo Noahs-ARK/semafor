@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-source "$(dirname `readlink -f ${0}`)/config"
+source "$(dirname ${0})/config"
 
 # a temp directory where training events will be stored
 event_dir="${datadir}/events"
