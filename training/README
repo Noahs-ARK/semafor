@@ -7,7 +7,11 @@ dipanjan@cs.cmu.edu
 Training models for frame-semantic parsing with SEMAFOR is still a very laborious and 
 clunky set of steps. Your kind patience is required to train the models :-)
 
-0) Run svn checkout https://semafor-semantic-parser.googlecode.com/svn/trunk/ semafor-semantic-parser. Compile necessary files as you go.
+0)
+
+  git clone git@github.com:sammthomson/semafor.git
+  cd semafor
+  ./release/cleanAndCompile.sh
 
 
 1) The first step is to create some data structures which are used to train and test the frame identification and argument identification models (please refer to our NAACL 2010 paper to understand these two steps). The first step is to create two maps -- I name these framenet.original.map and framenet.frame.element.map
@@ -23,39 +27,31 @@ My versions of these two maps are present in this directory (these are just seri
 If you want existing code in SEMAFOR to create these maps, you could use the method writeSerializedObject(Object object, String outFile) in edu/cmu/cs/lti/ark/util/SerializedObjects.java to write serialize those maps. So creating your own maps will be easy. You could also read the maps using that class.
 
 
+2) The next step creates some more data structures used for the training and inference procedure:
 
-2) The next step creates some more data structures used for the training and inference procedure. You will find a class called: edu/cmu/cs/lti/ark/fn/identification/RequiredDataCreation.java. Compile it, then run the script:
-
-./training/createRequiredData.sh
-
+  ./training/createRequiredData.sh
 
 
-3) This step corresponds to training the frame identification model. I will be using the flags declared above.
+3) This step corresponds to training the frame identification model.
 
-  i) 
   # step 1: alphabet creation. Run the script:
   ./training/trainFrameIdentificationModel.sh
   # This takes ~75 minutes on my 2.2 GHz Intel Core i7 4 core macbook pro (sam)
 
-  ii)
   # step 2: alphabet combination. Run the script:
   ./training/combineAlphabets.sh
   # Takes ~3 seconds
 
-  iii)
   # step 3: creating feature events for each datapoint. Run the script:
   ./training/createFeatureEvents.sh
   # Takes ~1 hour
 
-  iv) After the above step is done in the ${datadir}/events directory, you will find tons of the serialized objects, which are the feature vectors for
-      each data point. After this events creation is done, you can run training by running:
   # step 4: training the frame identification model. Run the script:
   ./training/trainBatch.sh
   # takes ~4 hours
 
   The training procedure will run for a long period of time. Line search in L-BFGS may fail at the end, but that does not mean training failed. In models_0.0, there will be models produced every few iterations. If line search failed, take the last model.
 
-  v)
   # step 5: convert the alphabet file. Run the script:
   ./training/convertAlphabetFile.sh
   # takes ~3 seconds
@@ -72,14 +68,7 @@ If you want existing code in SEMAFOR to create these maps, you could use the met
   # takes ~1.5 minutes
 
   # step 3: training
-  $jhome/java -classpath ${classpath} -Xms8000m -Xmx8000m edu.cmu.cs.lti.ark.fn.parsing.TrainingBatchMain \
-  model:${datadir}/argmodel.dat \ 
-  alphabetfile:${datadir}/scan/parser.conf.unlabeled \
-  localfeaturescache:${datadir}/scan/featurecache.jobj \
-  train-framefile:${datadir}/cv.train.sentences.frame.elements \
-  regularization:reg \
-  lambda:0.1 \
-  numthreads:4 \
-  binaryoverlapfactor:false
+  ./training/4_3_training.sh
+  # takes ~
 
-You may tune lambda on a development set to get the best results.
+  Step 4.3 has a regularization hyperparameter, lambda. You may tune lambda on a development set to get the best results.
