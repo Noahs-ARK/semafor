@@ -63,19 +63,13 @@ If you want existing code in SEMAFOR to create these maps, you could use the met
 
 4) This step corresponds to the training the argument identification model.
 
-
-  mkdir ${datadir}/scan
-
   # step 1: Alphabet Creation. Run the script:
-  ./training/4_i_createAlphabet.sh
+  ./training/4_1_createAlphabet.sh
   # takes ~6 minutes
 
   # step 2: Caching Feature Vectors
-  $jhome/java -classpath ${classpath} -Xms4000m -Xmx4000m edu.cmu.cs.lti.ark.fn.parsing.FrameFeaturesCache \
-  eventsfile:${datadir}/scan/cv.train.events.bin \
-  spansfile:${datadir}/scan/cv.train.sentences.frame.elements.spans \
-  train-framefile:${datadir}/cv.train.sentences.frame.elements \
-  localfeaturescache:${datadir}/scan/featurecache.jobj
+  ./training/4_2_cacheFeatureVectors.sh
+  # takes ~1.5 minutes
 
   # step 3: training
   $jhome/java -classpath ${classpath} -Xms8000m -Xmx8000m edu.cmu.cs.lti.ark.fn.parsing.TrainingBatchMain \

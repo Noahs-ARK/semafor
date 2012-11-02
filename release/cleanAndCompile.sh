@@ -18,7 +18,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-source "$(dirname `readlink -f ${0}`)/config"
+source "$(dirname ${0})/config"
 cd ${SEMAFOR_HOME}
 pwd
 classpath=".:./lib/semafor-deps.jar"
@@ -31,6 +31,7 @@ ${JAVA_HOME_BIN}/javac -cp ${classpath} edu/cmu/cs/lti/ark/fn/parsing/ParserDriv
 ${JAVA_HOME_BIN}/javac -cp ${classpath} edu/cmu/cs/lti/ark/fn/evaluation/PrepareFullAnnotationXML.java
 # classes needed for training SEMAFOR
 ${JAVA_HOME_BIN}/javac -cp ${classpath} edu/cmu/cs/lti/ark/fn/identification/*.java
+${JAVA_HOME_BIN}/javac -cp ${classpath} edu/cmu/cs/lti/ark/fn/parsing/*.java
 
 cd ${MST_PARSER_HOME}
 pwd
