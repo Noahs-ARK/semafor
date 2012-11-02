@@ -45,7 +45,7 @@ If you want existing code in SEMAFOR to create these maps, you could use the met
   iii)
   # step 3: creating feature events for each datapoint. Run the script:
   ./training/createFeatureEvents.sh
-  # Takes ~50 minutes
+  # Takes ~1 hour
 
   iv) After the above step is done in the ${datadir}/events directory, you will find tons of the serialized objects, which are the feature vectors for
       each data point. After this events creation is done, you can run training by running:
@@ -59,11 +59,6 @@ If you want existing code in SEMAFOR to create these maps, you could use the met
   # step 5: convert the alphabet file. Run the script:
   ./training/convertAlphabetFile.sh
   # takes ~3 seconds
-
-
-We do not use the format of the model file produced by the above procedure, but convert it to a more usable version. To do that,
-use edu.cmu.cs.lti.ark.fn.identification.ConvertAlphabetFile to convert the produced models to the new format. 
-The class takes three arguments: the alphabet file path, the model file path, and the output model file path.
 
 
 4) This step corresponds to the training the argument identification model. 
