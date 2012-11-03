@@ -2,6 +2,10 @@
 
 source "$(dirname ${0})/../release/config"
 
+# choose a name for the model to train
+model_name="models_0.0"
+
+
 classpath="..:${SEMAFOR_HOME}:${SEMAFOR_HOME}/lib/semafor-deps.jar"
 
 # the directory that contains framenet.frame.element.map and framenet.original.map
@@ -10,8 +14,8 @@ datadir="${SEMAFOR_HOME}/training/data"
 # you can also add your own xmls to this directory
 # for format information, take a look at the lu/ directory under the FrameNet release
 luxmldir="${datadir}/lu"
-# the directory you would like the resulting model to end up in
-model_name="models_0.0"
+
+# the directory the resulting model will end up in
 model_dir="${datadir}/${model_name}"
 
 # paths to the gold-standard annotated sentences, and dependency-parsed version of it

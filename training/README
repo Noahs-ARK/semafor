@@ -8,10 +8,20 @@ Training models for frame-semantic parsing with SEMAFOR is still a very laboriou
 clunky set of steps. Your kind patience is required to train the models :-)
 
 0)
+  Checkout the code:
 
   git clone git@github.com:sammthomson/semafor.git
   cd semafor
+
+  Modify the variables in ./release/config as needed.
+
+  Run:
   ./release/cleanAndCompile.sh
+
+  Make sure you have the required data.
+  You'll need the "lu" folder from framenet 1.5
+  (see https://framenet.icsi.berkeley.edu/fndrupal/framenet_data for obtaining the FN dataset)
+  set the "luxmldir" environment variable in training/config to point at it
 
 
 1) The first step is to create some data structures which are used to train and test the frame identification and argument identification models (please refer to our NAACL 2010 paper to understand these two steps). The first step is to create two maps -- I name these framenet.original.map and framenet.frame.element.map
@@ -29,31 +39,31 @@ If you want existing code in SEMAFOR to create these maps, you could use the met
 
 2) The next step creates some more data structures used for the training and inference procedure:
 
-  ./training/createRequiredData.sh
+  ./training/2_createRequiredData.sh
 
 
 3) This step corresponds to training the frame identification model.
 
   # step 1: alphabet creation. Run the script:
-  ./training/trainFrameIdentificationModel.sh
+  ./training/3_1_trainFrameIdentificationModel.sh
   # This takes ~75 minutes on my 2.2 GHz Intel Core i7 4 core macbook pro (sam)
 
   # step 2: alphabet combination. Run the script:
-  ./training/combineAlphabets.sh
+  ./training/3_2_combineAlphabets.sh
   # Takes ~3 seconds
 
   # step 3: creating feature events for each datapoint. Run the script:
-  ./training/createFeatureEvents.sh
+  ./training/3_3_createFeatureEvents.sh
   # Takes ~1 hour
 
   # step 4: training the frame identification model. Run the script:
-  ./training/trainBatch.sh
+  ./training/3_4_trainBatch.sh
   # takes ~4 hours
 
   The training procedure will run for a long period of time. Line search in L-BFGS may fail at the end, but that does not mean training failed. In models_0.0, there will be models produced every few iterations. If line search failed, take the last model.
 
   # step 5: convert the alphabet file. Run the script:
-  ./training/convertAlphabetFile.sh
+  ./training/3_5_convertAlphabetFile.sh
   # takes ~3 seconds
 
 
