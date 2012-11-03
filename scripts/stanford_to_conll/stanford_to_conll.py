@@ -52,7 +52,7 @@ CONLL_FIELDS = (
     # be meaningfull or simply 'ROOT'
     'pdeprel'
 )
-ConllToken = namedtuple('Token', ' '.join(CONLL_FIELDS)) 
+ConllToken = namedtuple('Token', ' '.join(CONLL_FIELDS))
 StanfordToken = namedtuple('StanfordToken', 'form tag')
 
 
@@ -63,24 +63,31 @@ def default_conll_token(**kwargs):
     return ConllToken(**defaults)
 
 
+def str_to_stanford(pair):
+    """ Converts a "word_token" string into a StanfordToken(word, token) """
+    parts = pair.split('_')
+    return StanfordToken(form='_'.join(parts[:-1]), tag=parts[-1])
+
+
 def stanford_to_conll(line):
     " Converts one line of Stanford POS Tagger's output to CoNLL format """
     output = []
-    stanford_tokens = (StanfordToken(*pair.split('_')) for pair in line.split())
+    stanford_tokens = (str_to_stanford(pair) for pair in line.split())
     for i, token in enumerate(stanford_tokens):
         conll_token = default_conll_token(
-            id=i+1,
+            id=unicode(i + 1),
             form=token.form,
             cpostag=token.tag,
             postag=token.tag)
-        output.append(u'\t'.join((unicode(field) for field in conll_token)))
-    output.append('')
-    return '\n'.join(output)
+        output.append(u'\t'.join(field for field in conll_token))
+    output.append(u'')
+    return u'\n'.join(output)
 
 
 def main():
     for line in sys.stdin:
-        print stanford_to_conll(line)
+        conll = stanford_to_conll(line.decode('utf8'))
+        print conll.encode('utf8')
 
 
 if __name__ == "__main__":
