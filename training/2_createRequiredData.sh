@@ -1,9 +1,7 @@
 #!/bin/bash -e
 
-source "$(dirname ${0})/config"
+source "$(dirname ${0})/config.sh"
 
-# make sure RequiredDataCreation is compiled
-${JAVA_HOME_BIN}/javac -cp ${classpath} edu/cmu/cs/lti/ark/fn/identification/RequiredDataCreation.java
 # run it
 ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms2g -Xmx2g \
     edu.cmu.cs.lti.ark.fn.identification.RequiredDataCreation \

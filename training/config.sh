@@ -24,9 +24,9 @@ model_dir="${datadir}/${model_name}"
 # paths to the gold-standard annotated sentences, and dependency-parsed version of it
 training_dir="${datadir}/naacl2012"
 fe_file="${training_dir}/cv.train.sentences.frame.elements"
+parsed_file="${training_dir}/cv.train.sentences.all.lemma.tags"
 fe_file_length=`wc -l ${fe_file}`
 fe_file_length=`expr ${fe_file_length% *}`
-parsed_file="${training_dir}/cv.train.sentences.all.lemma.tags"
 
 # path to store the alphabet we create:
 alphabet_file=${datadir}/alphabet_combined.dat

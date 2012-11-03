@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-source "$(dirname ${0})/config"
+source "$(dirname ${0})/config.sh"
 
 # step 3.3: creating feature events for each datapoint
 

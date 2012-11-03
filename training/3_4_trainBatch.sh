@@ -2,10 +2,7 @@
 
 # step 4: training the frame identification model.
 
-source "$(dirname ${0})/config"
-
-model_name="models_0.0"
-model_dir="${datadir}/${model_name}"
+source "$(dirname ${0})/config.sh"
 
 mkdir -p ${model_dir}
 

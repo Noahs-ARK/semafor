@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-source "$(dirname ${0})/config"
+source "$(dirname ${0})/config.sh"
 
 # step 3.2: combine alphabets
 ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8000m -Xmx8000m\

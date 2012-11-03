@@ -2,7 +2,7 @@
 
 # step 5: convert the alphabet file.
 
-source "$(dirname ${0})/config"
+source "$(dirname ${0})/config.sh"
 
 # gets the last model file created
 # todo: fragile, better to just pad the numbers and "ls | sort -r | tail -1"
