@@ -22,4 +22,4 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8000m -Xmx8000m \
   eventsfile:${datadir}/events \
   startindex:0 \
   endindex:${fe_file_length} \
-  numthreads:4
+  numthreads:${num_threads}

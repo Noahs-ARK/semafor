@@ -12,5 +12,5 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8000m -Xmx8000m \
   train-framefile:${training_dir}/cv.train.sentences.frame.elements \
   regularization:reg \
   lambda:0.1 \
-  numthreads:4 \
+  numthreads:${num_threads} \
   binaryoverlapfactor:false

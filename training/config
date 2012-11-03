@@ -5,6 +5,9 @@ source "$(dirname ${0})/../release/config"
 # choose a name for the model to train
 model_name="models_0.0"
 
+# should set to roughly the number of cores available
+num_threads=8
+
 
 classpath="..:${SEMAFOR_HOME}:${SEMAFOR_HOME}/lib/semafor-deps.jar"
 

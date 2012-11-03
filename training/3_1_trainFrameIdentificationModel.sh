@@ -5,13 +5,6 @@ source "$(dirname ${0})/config"
 # a temp directory where training events will be stored
 event_dir="${datadir}/events"
 mkdir -p "${event_dir}"
-# gold standard frame id annotations
-#training_dir="/mal2/dipanjan/experiments/FramenetParsing/fndata-1.5/NAACL2012/"
-training_dir="${datadir}/naacl2012"
-fe_file="${training_dir}/cv.train.sentences.frame.elements"
-fe_file_length=`wc -l ${fe_file}`
-fe_file_length=`expr ${fe_file_length% *}`
-parsed_file="${training_dir}/cv.train.sentences.all.lemma.tags"
 
 # clobber the log file
 log_file="${datadir}/log"
@@ -32,4 +25,4 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8000m -Xmx8000m\
   eventsfile:${event_dir} \
   startindex:0 \
   endindex:${fe_file_length} \
-  numthreads:4
+  numthreads:${num_threads}

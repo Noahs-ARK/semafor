@@ -8,3 +8,6 @@
 
 # Emacs cruft
 *\~
+
+# Mac cruft
+.DS_Store

@@ -25,4 +25,4 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8g -Xmx8g \
   lambda:0.0 \
   restartfile:null \
   logoutputfile:${datadir}/log \
-  numthreads:8
+  numthreads:${num_threads}
