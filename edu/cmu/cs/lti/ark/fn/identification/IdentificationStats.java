@@ -87,7 +87,7 @@ public class IdentificationStats
 		ArrayList<String> frameNetParseLines = ParsePreparation.readSentencesFromFile(opts.frameNetParseFile.get());
 		int offset = frameNetParseLines.size();
 		frameNetParseLines.addAll(ParsePreparation.readSentencesFromFile(opts.trainParseFile.get()));
-		ParsePreparation.writeSentencesToTempFile("/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/alltrain.m45.parsed", frameNetParseLines);				
+		ParsePreparation.writeSentencesToFile("/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/alltrain.m45.parsed", frameNetParseLines);
 		String frameFile = "/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/alltrain.m45.frames";
 		BufferedWriter bWriter = new BufferedWriter(new FileWriter(frameFile));
 		ArrayList<String> frameNetFrameLines = ParsePreparation.readSentencesFromFile(opts.frameNetFrameFile.get());
@@ -124,7 +124,7 @@ public class IdentificationStats
 	{
 		FNModelOptions opts = new FNModelOptions(args);
 		ArrayList<String> frameNetParseLines = ParsePreparation.readSentencesFromFile(opts.devParseFile.get());
-		ParsePreparation.writeSentencesToTempFile("/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/alldev.m45.parsed", frameNetParseLines);				
+		ParsePreparation.writeSentencesToFile("/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/alldev.m45.parsed", frameNetParseLines);
 		String frameFile = "/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/alldev.m45.frames";
 		BufferedWriter bWriter = new BufferedWriter(new FileWriter(frameFile));
 		ArrayList<String> frameNetFrameLines = ParsePreparation.readSentencesFromFile(opts.devFrameFile.get());

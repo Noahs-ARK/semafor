@@ -211,7 +211,7 @@ public class DependencyParsesCaching
 			line=line.trim();
 			ArrayList<String> list = new ArrayList<String>();
 			list.add(line);
-			ParsePreparation.writeSentencesToTempFile(outputDir+"/parse_"+countDP+".parse",list);
+			ParsePreparation.writeSentencesToFile(outputDir + "/parse_" + countDP + ".parse", list);
 			countDP++;
 		}
 	}

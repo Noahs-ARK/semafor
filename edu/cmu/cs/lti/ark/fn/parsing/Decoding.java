@@ -104,7 +104,7 @@ public class Decoding
 			result.add(decisionLine);
 		}
 		if (mPredictionFile != null) {
-			ParsePreparation.writeSentencesToTempFile(mPredictionFile, result);
+			ParsePreparation.writeSentencesToFile(mPredictionFile, result);
 		}
 		return result;
 	}

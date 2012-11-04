@@ -89,13 +89,13 @@ public class ParsePreparation {
 		//tokenizeSentences(sentences);
 		//tokenizeSentencesOPENNLP(sentences);
 		//System.out.println("Total number of keywords:"+keyWords.size());
-		//writeSentencesToTempFile("data/keywords.txt",keyWords);
+		//writeSentencesToFile("data/keywords.txt",keyWords);
 		//posTagSentences();
 		//printCoNLLTypeInput();
 		//ArrayList<String> labels=getLabels("data/rte_train.xml");
 		//labels.addAll(getLabels("data/rte_dev.xml"));
 		//labels.addAll(getLabels("data/rte_test.xml"));
-		//ParsePreparation.writeSentencesToTempFile("data/allLabels.txt",labels);
+		//ParsePreparation.writeSentencesToFile("data/allLabels.txt",labels);
 		prepareForSRLSystem();
 	}
 	
@@ -295,7 +295,7 @@ public class ParsePreparation {
 	{	
 		String tempFile="temp.txt";
 		System.out.println(sentences.size());
-		writeSentencesToTempFile(tempFile, sentences);
+		writeSentencesToFile(tempFile, sentences);
 		runExternalCommand("./scripts/tokenizer.sed temp.txt", "tokenized.txt");
 		List<String> tokenizedSentences=readSentencesFromFile("tokenized.txt");
 		if(sentences.size()!=tokenizedSentences.size())
@@ -303,7 +303,7 @@ public class ParsePreparation {
 			System.err.println("Problem in tokenized file. Exiting.");
 			System.exit(0);
 		}
-		writeSentencesToTempFile(file,tokenizedSentences);
+		writeSentencesToFile(file, tokenizedSentences);
 	}
 	
 	
@@ -329,7 +329,7 @@ public class ParsePreparation {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		writeSentencesToTempFile("data/allSentencesTokenizedOPENNLP.txt",tokenizedSentences);
+		writeSentencesToFile("data/allSentencesTokenizedOPENNLP.txt", tokenizedSentences);
 	}
 	
 	public static void runExternalCommand(String command, String printFile)
@@ -475,24 +475,22 @@ public class ParsePreparation {
 			e.printStackTrace();
 		}
 		return null;
-	}	
-	
-	
-	public static void writeSentencesToTempFile(String file, List<String> sentences)
-	{
-		try
-		{
-			BufferedWriter bWriter = new BufferedWriter(new FileWriter(file));
-			int size = sentences.size();
-			//System.out.println("Size of sentences:"+size);
-			for(int i = 0; i < size; i ++)
-			{
-				bWriter.write(sentences.get(i).trim()+"\n");
+	}
+
+	/**
+	 * Writes the given sentences to the given file
+	 *
+	 * @param outputFile the file to write to
+	 * @param sentences the sentences to write
+	 */
+	public static void writeSentencesToFile(String outputFile, List<String> sentences) {
+		try {
+			final BufferedWriter bWriter = new BufferedWriter(new FileWriter(outputFile));
+			for(String sentence : sentences)  {
+				bWriter.write(sentence.trim() + "\n");
 			}
 			bWriter.close();
-		}
-		catch(Exception e)
-		{
+		} catch(Exception e) {
 			e.printStackTrace();
 		}
 	}	

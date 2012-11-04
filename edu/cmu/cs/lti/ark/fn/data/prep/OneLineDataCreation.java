@@ -57,7 +57,7 @@ public class OneLineDataCreation {
 		ArrayList<String> tokenizedSentences = ParsePreparation.readSentencesFromFile(prefix + TOKENIZED_SUFFIX);
 		ArrayList<String> neTaggedSentences = ParsePreparation.readSentencesFromFile(prefix + NETAG_SUFFIX);
 		ArrayList<String> perSentenceParses=getPerSentenceParses(parses,tokenizedSentences,neTaggedSentences);
-		ParsePreparation.writeSentencesToTempFile(prefix + ONELINE_SUFFIX, perSentenceParses);
+		ParsePreparation.writeSentencesToFile(prefix + ONELINE_SUFFIX, perSentenceParses);
 	}
 
 	/**
@@ -65,8 +65,8 @@ public class OneLineDataCreation {
 	 * of one-line parses in the "all.lemma.tags" format.
 	 *
 	 * @param parses a list of dependency parsed sentences. each one is a list of strings
-	 * @param tokenizedSentences
-	 * @param neTaggedSentences
+	 * @param tokenizedSentences a list of tokenized sentences
+	 * @param neTaggedSentences a list of NE tagged sentences
 	 * @return
 	 */
 	public static ArrayList<String> getPerSentenceParses(ArrayList<ArrayList<String>> parses,

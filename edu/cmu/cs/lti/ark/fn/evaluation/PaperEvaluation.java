@@ -73,7 +73,7 @@ public class PaperEvaluation
 			String outLine = "1\t"+toks[0]+"\t"+toks[1]+"\t"+toks[2]+"\t"+toks[3]+"\t"+toks[4];
 			outLines.add(outLine);
 		}
-		ParsePreparation.writeSentencesToTempFile(outFile, outLines);
+		ParsePreparation.writeSentencesToFile(outFile, outLines);
 	}
 	
 	public static void convertGoldJohanssonToFramesFile()
@@ -91,7 +91,7 @@ public class PaperEvaluation
 			String outLine = "1\t"+toks[1]+"\t"+toks[2]+"\t"+toks[3]+"\t"+toks[4]+"\t"+toks[5];
 			outLines.add(outLine);
 		}
-		ParsePreparation.writeSentencesToTempFile(outFile, outLines);
+		ParsePreparation.writeSentencesToFile(outFile, outLines);
 	}
 	
 	public static void convertGoldTestToFramesFileOracleSpans()
@@ -108,7 +108,7 @@ public class PaperEvaluation
 					continue;
 			outLines.add(inLine);
 		}
-		ParsePreparation.writeSentencesToTempFile(outFile, outLines);
+		ParsePreparation.writeSentencesToFile(outFile, outLines);
 	}	
 	
 	public static void convertGoldDevToFrameFileOracleSpans()
@@ -135,7 +135,7 @@ public class PaperEvaluation
 				}
 			}
 			String outFile = malRootDir+"/dev.os.frame.elements"+start;
-			ParsePreparation.writeSentencesToTempFile(outFile, outLines);
+			ParsePreparation.writeSentencesToFile(outFile, outLines);
 		}
 	}
 	

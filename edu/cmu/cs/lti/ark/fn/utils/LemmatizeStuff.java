@@ -40,23 +40,35 @@ public class LemmatizeStuff {
 	public static final String OUT_FILE = "out";
 
 	public static void main(String[] args) {
-		CustomOptions co = new CustomOptions(args);
-		if(co.isPresent(STOP_WORDS)) {
-			stopWordsFile = co.get(STOP_WORDS);
+		CustomOptions options = new CustomOptions(args);
+		if(options.isPresent(STOP_WORDS)) {
+			stopWordsFile = options.get(STOP_WORDS);
 		}
-		if(co.isPresent(WN_XML)) {
-			wnConfigFile = co.get(WN_XML);
+		if(options.isPresent(WN_XML)) {
+			wnConfigFile = options.get(WN_XML);
 		}
-		if(co.isPresent(IN_FILE)) {
-			infilename = co.get(IN_FILE);
+		if(options.isPresent(IN_FILE)) {
+			infilename = options.get(IN_FILE);
 		}
-		if(co.isPresent(OUT_FILE)) {
-			outfilename = co.get(OUT_FILE);
+		if(options.isPresent(OUT_FILE)) {
+			outfilename = options.get(OUT_FILE);
 		}
 		wnr = new WordNetRelations(stopWordsFile, wnConfigFile);
 		run();
 	}
-	
+
+	/**
+	 * Reads sentences from infile, in the format
+	 * n   word_1    ...   word_n    ...{other_stuff}...
+	 * and writes them with their lemmatized versions appended to outfile in the format
+	 * n   word_1    ...   word_n    ...{other_stuff}...   lemma_1   ...   lemma_n
+	 *
+	 * @param stopFile path to a file containing a list of stopwords, one per line
+	 * @param wnFile path to the file containing the wordnet map, as created by
+	 * 				 {@link edu.cmu.cs.lti.ark.fn.identification.RequiredDataCreation}
+	 * @param infile path to a file containing the input sentences
+	 * @param outfile path to file to which to write
+	 */
 	public static void lemmatize(String stopFile, String wnFile, String infile, String outfile) {
 		stopWordsFile = stopFile;
 		wnConfigFile = wnFile;
@@ -66,11 +78,11 @@ public class LemmatizeStuff {
 		run();
 	}	
 	
-	public static void run() {
+	private static void run() {
 		Scanner sc = null;
 		PrintStream ps = null;
 		try {
-			sc = new Scanner (new FileInputStream(infilename));
+			sc = new Scanner(new FileInputStream(infilename));
 			ps = new PrintStream(new FileOutputStream (outfilename));
 		} catch (IOException ioe){
 			System.out.println(ioe.getMessage());

@@ -34,6 +34,6 @@ public class PrintAllRelatedWords {
 		String txtFile = "/mal2/dipanjan/experiments/FramenetParsing/fndata-1.5/CVSplits/" + split +"/allrelatedwords.txt";
 		THashSet<String> set = (THashSet<String>) SerializedObjects.readSerializedObject(serFile);
 		ArrayList<String> list = new ArrayList<String>(set);
-		ParsePreparation.writeSentencesToTempFile(txtFile, list);
+		ParsePreparation.writeSentencesToFile(txtFile, list);
 	} 
 }
