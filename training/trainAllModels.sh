@@ -1,6 +1,8 @@
-#!/bin/bash -e
+#!/bin/bash
 
 # Create required data, train the frameId model and train the argId model
+
+set -e # fail fast
 
 my_dir="$(dirname ${0})"
 

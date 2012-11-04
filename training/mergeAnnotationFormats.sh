@@ -1,4 +1,6 @@
-#!/bin/bash -e
+#!/bin/bash
+
+set -e # fail fast
 
 # Convert maltparser output into our "all.lemma.tags" format
 # maltparsed files should be located at

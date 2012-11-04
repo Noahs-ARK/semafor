@@ -1,4 +1,6 @@
-#!/bin/bash -e
+#!/bin/bash
+
+set -e # fail fast
 
 # step 4iii: Training.
 

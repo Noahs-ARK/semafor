@@ -1,4 +1,6 @@
-#!/bin/bash -e
+#!/bin/bash
+
+set -e # fail fast
 
 # step 4i: create the alphabet file for the argument identification model.
 
