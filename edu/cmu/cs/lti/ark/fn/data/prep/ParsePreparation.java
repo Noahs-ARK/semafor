@@ -47,41 +47,32 @@ import edu.cmu.cs.lti.ark.util.XmlUtils;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordnetInteraction;
 
 
-
-
-public class ParsePreparation
-{
-	public static final String TRAIN_SET="data/rte_train.xml";
-	public static final String DEV_SET="data/rte_dev.xml";
-	public static final String TEST_SET="data/rte_test.xml";
+/**
+ * Utilites for preprocessing data, converting between different formats, etc.
+ */
+public class ParsePreparation {
+	public static final String TRAIN_SET = "data/rte_train.xml";
+	public static final String DEV_SET = "data/rte_dev.xml";
+	public static final String TEST_SET = "data/rte_test.xml";
 	
 	static final TokenizerFactory TOKENIZER_FACTORY = new IndoEuropeanTokenizerFactory();
-    static final SentenceModel SENTENCE_MODEL  = new IndoEuropeanSentenceModel();
-	    
-    
-	public static void main(String[] args)
-	{
+    static final SentenceModel SENTENCE_MODEL = new IndoEuropeanSentenceModel();
+
+
+	public static void main(String[] args) {
 		framenetStuff();
 	}	
 
 	
 	public static void framenetStuff()
 	{
-		/*
-		 * already tokenized
-		 */
-		//ArrayList<String> allSentences = ParsePreparation.readSentencesFromFile("/usr2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/framenet.original.sentences.tokenized");
-		//posTagSentences("/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/framenet.original.sentences.tokenized","/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/framenet.original.sentences.pos.tagged");
-		//printCoNLLTypeInput("/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/framenet.original.sentences.pos.tagged","/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/framenet.original.sentences.conll.input");
-
 		String prefix = "/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData";
 		String input[] = {"semeval.fulltrain.sentences.tokenized", "semeval.fulldev.sentences.tokenized", "semeval.fulltest.sentences.tokenized"};
 		String posOutput[] = {"semeval.fulltrain.sentences.pos.tagged", "semeval.fulldev.sentences.pos.tagged", "semeval.fulltest.sentences.pos.tagged"};
 		String conllInput[] = {"semeval.fulltrain.sentences.conll.input", "semeval.fulldev.sentences.conll.input", "semeval.fulltest.sentences.conll.input"};
 		
 		int length = input.length;
-		for(int i = 0; i < length; i ++)
-		{
+		for(int i = 0; i < length; i ++) {
 			String inputFile = prefix+"/"+input[i];
 			String posOutputFile = prefix+"/"+posOutput[i];
 			posTagSentences(inputFile, posOutputFile);

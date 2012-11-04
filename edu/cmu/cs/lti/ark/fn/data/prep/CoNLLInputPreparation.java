@@ -21,13 +21,14 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.data.prep;
 
-public class CoNLLInputPreparation
-{
-	public static void main(String[] args)
-	{
+/**
+ * Converts a POS tagged file in the form "word1_tag1 word2_tag2 ..." (like the output of Stanford's POS Tagger e.g.)
+ * to CoNLL format.
+ */
+public class CoNLLInputPreparation {
+	public static void main(String[] args) {
 		String posFile = args[0];
 		String outFile = args[1];
 		ParsePreparation.printCoNLLTypeInput(posFile, outFile);
-	}	
-	
+	}
 }
