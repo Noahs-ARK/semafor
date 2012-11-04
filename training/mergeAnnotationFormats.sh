@@ -14,7 +14,7 @@ do
     tmp_parse_file="${training_dir}/cv.${prefix}.sentences.tmp_parse_file"
     ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms2g -Xmx2g \
         edu.cmu.cs.lti.ark.fn.data.prep.AllAnnotationsMergingWithoutNE \
-          ${training_dir}/cv.${prefix}.sentences.pos.tagged \
+          ${training_dir}/cv.${prefix}.sentences.tokenized \
           ${training_dir}/cv.${prefix}.sentences.maltparsed.conll \
           ${tmp_parse_file} \
           ${SEMAFOR_HOME}/stopwords.txt \
