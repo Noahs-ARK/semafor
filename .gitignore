@@ -5,6 +5,9 @@
 # IDE cruft
 .idea
 *.iml
+.classpath
+.project
+.pydevproject
 
 # Emacs cruft
 *\~
