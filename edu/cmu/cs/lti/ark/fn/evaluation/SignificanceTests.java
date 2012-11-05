@@ -27,8 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Random;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
@@ -341,7 +339,7 @@ public class SignificanceTests
 			outLines.add(matches+" / "+modelSize+" / "+goldSize);
 			System.out.println(matches+" / "+modelSize+" / "+goldSize);
 		}
-		ParsePreparation.writeSentencesToTempFile(outFile, outLines);
+		ParsePreparation.writeSentencesToFile(outFile, outLines);
 	}
 	
 	
@@ -417,7 +415,7 @@ public class SignificanceTests
 			System.out.print("Precision:"+prec+" ");
 			System.out.print("Recall:"+recall+" ");
 			System.out.print("F1 score:"+f+"\n");
-			ParsePreparation.writeSentencesToTempFile(formattedFiles[i], resLines);
+			ParsePreparation.writeSentencesToFile(formattedFiles[i], resLines);
 		}		
 	}
 	

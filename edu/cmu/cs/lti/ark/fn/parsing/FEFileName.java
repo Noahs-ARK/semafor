@@ -29,7 +29,7 @@ import gnu.trove.THashSet;
  * will be read from the command-line argument accordingly.
  * */
 public class FEFileName {
-	public static String stopwordFilename="lrdata/stopwords.txt";
+	public static String stopwordFilename="stopwords.txt";
 	public static String wordnetFilename="file_properties.xml";
 	public static String frameDir="../framenet_j";
 	public static String fedictFilename1=null;

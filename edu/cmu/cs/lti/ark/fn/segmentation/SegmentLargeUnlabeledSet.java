@@ -82,7 +82,7 @@ public class SegmentLargeUnlabeledSet {
 		for (String a: arr) {
 			list.add(a);
 		}
-		ParsePreparation.writeSentencesToTempFile(options.outputPredicatesFile.get(), list);
+		ParsePreparation.writeSentencesToFile(options.outputPredicatesFile.get(), list);
 	}
 	
 	public static Set<String> 

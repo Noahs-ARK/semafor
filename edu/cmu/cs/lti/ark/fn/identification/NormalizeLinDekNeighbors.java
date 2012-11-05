@@ -115,7 +115,7 @@ public class NormalizeLinDekNeighbors {
 			line = line.trim();
 			finalLines.add(line);
 		}
-		ParsePreparation.writeSentencesToTempFile(outFile, finalLines);
+		ParsePreparation.writeSentencesToFile(outFile, finalLines);
 	}
 	
 	public static TObjectDoubleHashMap<String> add(TObjectDoubleHashMap<String> vector, 

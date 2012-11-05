@@ -93,7 +93,7 @@ public class OneLineParseFromConvertedParses
 			}
 			bReader.close();
 		}
-		ParsePreparation.writeSentencesToTempFile(outputFile, allSents);
+		ParsePreparation.writeSentencesToFile(outputFile, allSents);
 		System.out.println("Size of sentences:"+allSents.size());
 	}
 	

@@ -33,10 +33,7 @@ import java.util.StringTokenizer;
 
 
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
-import edu.cmu.cs.lti.ark.fn.evaluation.ParseUtils;
-import edu.cmu.cs.lti.ark.fn.segmentation.RoteSegmenter;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
-import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import edu.cmu.cs.lti.ark.util.optimization.LDouble;
 import gnu.trove.THashMap;
@@ -145,7 +142,7 @@ public class FrameIdentificationGoldTargets
 		}
 		System.out.println("End Time:"+(new Date()));
 		String feFile = options.frameElementsOutputFile.get();
-		ParsePreparation.writeSentencesToTempFile(feFile, idResult);
+		ParsePreparation.writeSentencesToFile(feFile, idResult);
 		
 	}	
 	

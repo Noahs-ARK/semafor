@@ -20,64 +20,81 @@
  * with SEMAFOR 2.0.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.utils;
-import java.io.*;
-import java.util.*;
-
+import java.io.FileInputStream;
+import java.io.PrintStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Scanner;
 import edu.cmu.cs.lti.ark.fn.parsing.CustomOptions;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
+
 public class LemmatizeStuff {
-	public static String infilename="semeval.fulldev.sentences.all.tags";
-	public static String outfilename="semeval.fulldev.sentences.lemma.tags";
+	public static String infilename = "semeval.fulldev.sentences.all.tags";
+	public static String outfilename = "semeval.fulldev.sentences.lemma.tags";
 	public static WordNetRelations wnr;
-	public static String stopWordsFile="lrdata/stopwords.txt";
-	public static String wnConfigFile="file_properties.xml";
-	public static final String STOP_WORDS="stopWords";
-	public static final String WN_XML="wnXML";
-	public static final String IN_FILE="in";
-	public static final String OUT_FILE="out";
+	public static String stopWordsFile = "stopwords.txt";
+	public static String wnConfigFile = "file_properties.xml";
+	public static final String STOP_WORDS = "stopWords";
+	public static final String WN_XML = "wnXML";
+	public static final String IN_FILE = "in";
+	public static final String OUT_FILE = "out";
+
 	public static void main(String[] args) {
-		CustomOptions co=new CustomOptions(args);
-		if(co.isPresent(STOP_WORDS)){
-			stopWordsFile=co.get(STOP_WORDS);
+		CustomOptions options = new CustomOptions(args);
+		if(options.isPresent(STOP_WORDS)) {
+			stopWordsFile = options.get(STOP_WORDS);
 		}
-		if(co.isPresent(WN_XML)){
-			wnConfigFile=co.get(WN_XML);
+		if(options.isPresent(WN_XML)) {
+			wnConfigFile = options.get(WN_XML);
 		}
-		if(co.isPresent(IN_FILE)){
-			infilename=co.get(IN_FILE);
+		if(options.isPresent(IN_FILE)) {
+			infilename = options.get(IN_FILE);
 		}
-		if(co.isPresent(OUT_FILE)){
-			outfilename=co.get(OUT_FILE);
+		if(options.isPresent(OUT_FILE)) {
+			outfilename = options.get(OUT_FILE);
 		}
 		wnr = new WordNetRelations(stopWordsFile, wnConfigFile);
 		run();
 	}
-	
-	public static void lemmatize(String stopFile, String wnFile, String infile, String outfile)
-	{
-		stopWordsFile=stopFile;
-		wnConfigFile=wnFile;
-		infilename=infile;
-		outfilename=outfile;
+
+	/**
+	 * Reads sentences from infile, in the format
+	 * n   word_1    ...   word_n    ...{other_stuff}...
+	 * and writes them with their lemmatized versions appended to outfile in the format
+	 * n   word_1    ...   word_n    ...{other_stuff}...   lemma_1   ...   lemma_n
+	 *
+	 * @param stopFile path to a file containing a list of stopwords, one per line
+	 * @param wnFile path to the file containing the wordnet map, as created by
+	 * 				 {@link edu.cmu.cs.lti.ark.fn.identification.RequiredDataCreation}
+	 * @param infile path to a file containing the input sentences
+	 * @param outfile path to file to which to write
+	 */
+	public static void lemmatize(String stopFile, String wnFile, String infile, String outfile) {
+		stopWordsFile = stopFile;
+		wnConfigFile = wnFile;
+		infilename = infile;
+		outfilename = outfile;
 		wnr = new WordNetRelations(stopWordsFile, wnConfigFile);
 		run();
 	}	
 	
-	public static void run(){
-		Scanner sc=null;
-		PrintStream ps=null;
-		try{
-			sc=new Scanner (new FileInputStream(infilename));
-			ps=new PrintStream(new FileOutputStream (outfilename));
-		}catch (IOException ioe){System.out.println(ioe.getMessage());}
-		while(sc.hasNextLine()){
-			String line=sc.nextLine();
-			ps.print(line+"\t");
-			String[] toks=line.trim().split("\\s");
-			int sentLen=Integer.parseInt(toks[0]);
-			for(int i=0;i<sentLen;i++){
-				String lemma=wnr.getLemmaForWord(toks[i+1].toLowerCase(), toks[i+1+sentLen]);
-				ps.print(lemma+"\t");
+	private static void run() {
+		Scanner sc = null;
+		PrintStream ps = null;
+		try {
+			sc = new Scanner(new FileInputStream(infilename));
+			ps = new PrintStream(new FileOutputStream (outfilename));
+		} catch (IOException ioe){
+			System.out.println(ioe.getMessage());
+		}
+		while(sc.hasNextLine()) {
+			String line = sc.nextLine();
+			ps.print(line + "\t");
+			String[] toks = line.trim().split("\\s");
+			int sentLen = Integer.parseInt(toks[0]);
+			for(int i = 0; i < sentLen; i++) {
+				String lemma = wnr.getLemmaForWord(toks[i+1].toLowerCase(), toks[i+1+sentLen]);
+				ps.print(lemma + "\t");
 			}
 			ps.println();
 		}

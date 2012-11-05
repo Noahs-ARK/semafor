@@ -166,7 +166,7 @@ public class OptimizeMapReduce
     	{
     		shuffledSentences.add(sentences.get(n[i]));
     	}
-    	ParsePreparation.writeSentencesToTempFile(tempFile, shuffledSentences);
+    	ParsePreparation.writeSentencesToFile(tempFile, shuffledSentences);
     	ExternalCommands.runExternalCommand(HADOOP_HOME+"/bin/hadoop dfs -put "+tempFile+" "+hdfsInputFile);  	
     }
     

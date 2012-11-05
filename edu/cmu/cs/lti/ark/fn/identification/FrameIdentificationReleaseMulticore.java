@@ -23,10 +23,8 @@ package edu.cmu.cs.lti.ark.fn.identification;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
@@ -214,7 +212,7 @@ public class FrameIdentificationReleaseMulticore
 				idResult.add(1+"\t"+bestFrame+"\t"+split[0]+"\t"+toks[1]+"\t"+split[1]+"\t"+sentCount);	// BestFrame\tTargetTokenNum(s)\tSentenceOffset
 			}
 		}
-		ParsePreparation.writeSentencesToTempFile(outFile + "_"+start+"_"+end, idResult);
+		ParsePreparation.writeSentencesToFile(outFile + "_" + start + "_" + end, idResult);
 	}
 	
 	

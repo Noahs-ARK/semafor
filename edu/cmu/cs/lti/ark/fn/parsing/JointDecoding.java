@@ -23,7 +23,6 @@
 package edu.cmu.cs.lti.ark.fn.parsing;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Scanner;
 import java.util.Set;
@@ -149,7 +148,7 @@ public class JointDecoding extends Decoding {
 			result.add(decisionLine);
 		}
 		if (mPredictionFile != null) {
-			ParsePreparation.writeSentencesToTempFile(mPredictionFile, result);
+			ParsePreparation.writeSentencesToFile(mPredictionFile, result);
 		}
 		return result;
 	}
@@ -166,7 +165,7 @@ public class JointDecoding extends Decoding {
 			result.add(decisionLine);
 		}
 		if (mPredictionFile != null) {
-			ParsePreparation.writeSentencesToTempFile(mPredictionFile, result);
+			ParsePreparation.writeSentencesToFile(mPredictionFile, result);
 		}
 		return result;
 	}

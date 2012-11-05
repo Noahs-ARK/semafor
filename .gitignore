@@ -5,6 +5,18 @@
 # IDE cruft
 .idea
 *.iml
+.classpath
+.project
+.pydevproject
 
 # Emacs cruft
 *\~
+
+# Mac cruft
+.DS_Store
+
+# training data we don't include in the repo
+training/data/naacl2012*
+
+# log
+training/data/log

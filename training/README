@@ -7,7 +7,21 @@ dipanjan@cs.cmu.edu
 Training models for frame-semantic parsing with SEMAFOR is still a very laborious and 
 clunky set of steps. Your kind patience is required to train the models :-)
 
-0) Run svn checkout https://semafor-semantic-parser.googlecode.com/svn/trunk/ semafor-semantic-parser. Compile necessary files as you go.
+0)
+  Checkout the code:
+
+  git clone git@github.com:sammthomson/semafor.git
+  cd semafor
+
+  Modify the variables in ./release/config as needed.
+
+  Run:
+  ./release/cleanAndCompile.sh
+
+  Make sure you have the required data.
+  You'll need the "lu" folder from framenet 1.5
+  (see https://framenet.icsi.berkeley.edu/fndrupal/framenet_data for obtaining the FN dataset)
+  set the "luxmldir" environment variable in training/config to point at it
 
 
 1) The first step is to create some data structures which are used to train and test the frame identification and argument identification models (please refer to our NAACL 2010 paper to understand these two steps). The first step is to create two maps -- I name these framenet.original.map and framenet.frame.element.map
@@ -23,109 +37,48 @@ My versions of these two maps are present in this directory (these are just seri
 If you want existing code in SEMAFOR to create these maps, you could use the method writeSerializedObject(Object object, String outFile) in edu/cmu/cs/lti/ark/util/SerializedObjects.java to write serialize those maps. So creating your own maps will be easy. You could also read the maps using that class.
 
 
+2) The next step creates some more data structures used for the training and inference procedure:
 
-2) The next step creates some more data structures used for the training and inference procedure. You will find a class called: edu/cmu/cs/lti/ark/fn/identification/RequiredDataCreation.java. Compile it, then run the script:
-
-training/createRequiredData.sh 
-
+  ./training/2_createRequiredData.sh
 
 
-3) This step corresponds to training the frame identification model. I will be using the flags declared above.
+3) This step corresponds to training the frame identification model.
 
-# a directory where training events will be stored for efficiency
-mkdir ${datadir}/events
-fefile=${datadir}/cv.train.sentences.frame.elements
-end=`wc -l ${fefile}`
-end=`expr ${end% *}
-
-
-  i) 
   # step 1: alphabet creation. Run the script:
-  training/trainFrameIdentificationModel.sh 
+  ./training/3_1_trainFrameIdentificationModel.sh
+  # This takes ~75 minutes on my 2.2 GHz Intel Core i7 4 core macbook pro (sam)
 
-  ii) In this step, we are combining the different alphabets each thread above creates. Run edu.cmu.cs.lti.ark.fn.identification.CombineAlphabets with two 
-      arguments - the full path to the directory that contains the alphabet files, and the full path to the name of a combined alphabet file. After that's d      one, you will have a single alphabet file, with which you will run the following step. 
-  
-  iii) Creating feature events for each datapoint. 
-  
-  # step 3: creating feature events
-  $jhome/java -classpath ${classpath} -Xms8000m -Xmx8000m \
-  edu.cmu.cs.lti.ark.fn.identification.CreateEventsUnsupported \
-  train-fefile:${datadir}/cv.train.sentences.frame.elements \
-  train-parsefile:${datadir}/cv.train.sentences.all.lemma.tags \
-  stopwords-file:${SEMAFOR_HOME}/stopwords.txt \
-  wordnet-configfile:${SEMAFOR_HOME}/file_properties.xml \
-  fnidreqdatafile:${datadir}/reqData.jobj \
-  logoutputfile:${datadir}/log \
-  model:${datadir}/alphabet.dat \
-  eventsfile:${datadir}/events \
-  startindex:0 \
-  endindex:${end} \
-  numthreads:4
+  # step 2: alphabet combination. Run the script:
+  ./training/3_2_combineAlphabets.sh
+  # Takes ~3 seconds
 
-  
+  # step 3: creating feature events for each datapoint. Run the script:
+  ./training/3_3_createFeatureEvents.sh
+  # Takes ~1 hour
 
-  iv) After the above step is done in the ${datadir}/events directory, you will find tons of the serialized objects, which are the feature vectors for 
-  each data point. After this events creation is done, you can run training by running:
-  
-  # step 4: traning the frame identification model
-  
-  mkdir ${datadir}/models_0.0
-  $jhome/java -classpath ${classpath} -Xms8g -Xmx8g \
-  edu.cmu.cs.lti.ark.fn.identification.TrainBatchModelDerThreaded \
-  alphabetfile:${datadir}/alphabet.dat \
-  eventsfile:${datadir}/events \
-  model:${datadir}/models_0.0/idmodel.dat \
-  regularization:reg \
-  lambda:0.0 \
-  restartfile:null \
-  logoutputfile:${datadir}/log \
-  numthreads:8
+  # step 4: training the frame identification model. Run the script:
+  ./training/3_4_trainBatch.sh
+  # takes ~4 hours
+
+  The training procedure will run for a long period of time. Line search in L-BFGS may fail at the end, but that does not mean training failed. In models_0.0, there will be models produced every few iterations. If line search failed, take the last model.
+
+  # step 5: convert the alphabet file. Run the script:
+  ./training/3_5_convertAlphabetFile.sh
+  # takes ~3 seconds
 
 
-The training procedure will run for a long period of time. Line search in L-BFGS may fail at the end, but that does not mean training failed. In models_0.0, there will be models produced every few iterations. If line search failed, take the last model.
+4) This step corresponds to the training the argument identification model.
 
-We do not use the format of the model file produced by the above procedure, and convert it to a more usable version. To do that, 
-use edu.cmu.cs.lti.ark.fn.identification.ConvertAlphabetFile to convert the produced models to the new format. 
-The class takes three arguments: the alphabet file path, the model file path, and the output model file path.
-
-
-4) This step corresponds to the training the argument identification model. 
-
-
-  mkdir ${datadir}/scan
-
-  # step 1: Alphabet Creation
-
-   $jhome/java -classpath ${classpath} -Xms4000m -Xmx4000m edu.cmu.cs.lti.ark.fn.parsing.CreateAlphabet \
-   ${datadir}/cv.train.sentences.frame.elements \
-   ${datadir}/cv.train.sentences.all.lemma.tags \
-   ${datadir}/scan/cv.train.events.bin \
-   ${datadir}/scan/parser.conf.unlabeled \
-   ${datadir}/scan/cv.train.sentences.frame.elements.spans \
-   true \
-   false \
-   1 \
-   null \
-   ${datadir}/framenet.frame.element.map
-
+  # step 1: Alphabet Creation. Run the script:
+  ./training/4_1_createAlphabet.sh
+  # takes ~6 minutes
 
   # step 2: Caching Feature Vectors
-  $jhome/java -classpath ${classpath} -Xms4000m -Xmx4000m edu.cmu.cs.lti.ark.fn.parsing.FrameFeaturesCache \
-  eventsfile:${datadir}/scan/cv.train.events.bin \
-  spansfile:${datadir}/scan/cv.train.sentences.frame.elements.spans \
-  train-framefile:${datadir}/cv.train.sentences.frame.elements \
-  localfeaturescache:${datadir}/scan/featurecache.jobj
+  ./training/4_2_cacheFeatureVectors.sh
+  # takes ~1.5 minutes
 
   # step 3: training
-  $jhome/java -classpath ${classpath} -Xms8000m -Xmx8000m edu.cmu.cs.lti.ark.fn.parsing.TrainingBatchMain \
-  model:${datadir}/argmodel.dat \ 
-  alphabetfile:${datadir}/scan/parser.conf.unlabeled \
-  localfeaturescache:${datadir}/scan/featurecache.jobj \
-  train-framefile:${datadir}/cv.train.sentences.frame.elements \
-  regularization:reg \
-  lambda:0.1 \
-  numthreads:4 \
-  binaryoverlapfactor:false
+  ./training/4_3_training.sh
+  # takes ~
 
-You may tune lambda on a development set to get the best results.
+  Step 4.3 has a regularization hyperparameter, lambda. You may tune lambda on a development set to get the best results.

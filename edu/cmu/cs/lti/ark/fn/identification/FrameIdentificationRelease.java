@@ -165,7 +165,7 @@ public class FrameIdentificationRelease
 			
 		}
 		String feFile = options.frameElementsOutputFile.get();
-		ParsePreparation.writeSentencesToTempFile(feFile, idResult);
+		ParsePreparation.writeSentencesToFile(feFile, idResult);
 		System.out.println("End Time:"+(new Date()));
 	}	
 	

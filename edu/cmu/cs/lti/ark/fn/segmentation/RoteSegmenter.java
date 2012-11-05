@@ -84,7 +84,7 @@ public class RoteSegmenter
 		
 		WordNetRelations mWNR = new WordNetRelations("/mal2/dipanjan/experiments/QG/QG4Entailment/data/stopwords.txt","file_properties.xml");
 		ArrayList<String> segs = findSegmentationForM45(tokenNums, parses, allRelatedWords, mWNR);
-		ParsePreparation.writeSentencesToTempFile(outputFile, segs);
+		ParsePreparation.writeSentencesToFile(outputFile, segs);
 	}
 	
 	public void roteSegmentation()
@@ -115,7 +115,7 @@ public class RoteSegmenter
 		
 		WordNetRelations mWNR = new WordNetRelations("/mal2/dipanjan/experiments/QG/QG4Entailment/data/stopwords.txt","file_properties.xml");
 		ArrayList<String> segs = findSegmentation(tokenNums, parses, allRelatedWords, mWNR);
-		ParsePreparation.writeSentencesToTempFile("segs.txt", segs);
+		ParsePreparation.writeSentencesToFile("segs.txt", segs);
 	}
 	
 	public ArrayList<String[][]> readNewParses(String file)

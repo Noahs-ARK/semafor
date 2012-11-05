@@ -26,7 +26,6 @@ import java.io.FilenameFilter;
 import java.util.ArrayList;
 
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
-import gnu.trove.THashMap;
 
 
 public class ParseFixer
@@ -63,7 +62,7 @@ public class ParseFixer
 				}				
 				outSentences.add(sentence);
 			}
-			ParsePreparation.writeSentencesToTempFile(outdirname+"/"+file, outSentences);
+			ParsePreparation.writeSentencesToFile(outdirname + "/" + file, outSentences);
 		}
 		
 		

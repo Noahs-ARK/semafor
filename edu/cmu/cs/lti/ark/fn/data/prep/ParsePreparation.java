@@ -47,41 +47,32 @@ import edu.cmu.cs.lti.ark.util.XmlUtils;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordnetInteraction;
 
 
-
-
-public class ParsePreparation
-{
-	public static final String TRAIN_SET="data/rte_train.xml";
-	public static final String DEV_SET="data/rte_dev.xml";
-	public static final String TEST_SET="data/rte_test.xml";
+/**
+ * Utilites for preprocessing data, converting between different formats, etc.
+ */
+public class ParsePreparation {
+	public static final String TRAIN_SET = "data/rte_train.xml";
+	public static final String DEV_SET = "data/rte_dev.xml";
+	public static final String TEST_SET = "data/rte_test.xml";
 	
 	static final TokenizerFactory TOKENIZER_FACTORY = new IndoEuropeanTokenizerFactory();
-    static final SentenceModel SENTENCE_MODEL  = new IndoEuropeanSentenceModel();
-	    
-    
-	public static void main(String[] args)
-	{
+    static final SentenceModel SENTENCE_MODEL = new IndoEuropeanSentenceModel();
+
+
+	public static void main(String[] args) {
 		framenetStuff();
 	}	
 
 	
 	public static void framenetStuff()
 	{
-		/*
-		 * already tokenized
-		 */
-		//ArrayList<String> allSentences = ParsePreparation.readSentencesFromFile("/usr2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/framenet.original.sentences.tokenized");
-		//posTagSentences("/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/framenet.original.sentences.tokenized","/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/framenet.original.sentences.pos.tagged");
-		//printCoNLLTypeInput("/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/framenet.original.sentences.pos.tagged","/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/framenet.original.sentences.conll.input");
-
 		String prefix = "/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData";
 		String input[] = {"semeval.fulltrain.sentences.tokenized", "semeval.fulldev.sentences.tokenized", "semeval.fulltest.sentences.tokenized"};
 		String posOutput[] = {"semeval.fulltrain.sentences.pos.tagged", "semeval.fulldev.sentences.pos.tagged", "semeval.fulltest.sentences.pos.tagged"};
 		String conllInput[] = {"semeval.fulltrain.sentences.conll.input", "semeval.fulldev.sentences.conll.input", "semeval.fulltest.sentences.conll.input"};
 		
 		int length = input.length;
-		for(int i = 0; i < length; i ++)
-		{
+		for(int i = 0; i < length; i ++) {
 			String inputFile = prefix+"/"+input[i];
 			String posOutputFile = prefix+"/"+posOutput[i];
 			posTagSentences(inputFile, posOutputFile);
@@ -98,13 +89,13 @@ public class ParsePreparation
 		//tokenizeSentences(sentences);
 		//tokenizeSentencesOPENNLP(sentences);
 		//System.out.println("Total number of keywords:"+keyWords.size());
-		//writeSentencesToTempFile("data/keywords.txt",keyWords);
+		//writeSentencesToFile("data/keywords.txt",keyWords);
 		//posTagSentences();
 		//printCoNLLTypeInput();
 		//ArrayList<String> labels=getLabels("data/rte_train.xml");
 		//labels.addAll(getLabels("data/rte_dev.xml"));
 		//labels.addAll(getLabels("data/rte_test.xml"));
-		//ParsePreparation.writeSentencesToTempFile("data/allLabels.txt",labels);
+		//ParsePreparation.writeSentencesToFile("data/allLabels.txt",labels);
 		prepareForSRLSystem();
 	}
 	
@@ -304,7 +295,7 @@ public class ParsePreparation
 	{	
 		String tempFile="temp.txt";
 		System.out.println(sentences.size());
-		writeSentencesToTempFile(tempFile, sentences);
+		writeSentencesToFile(tempFile, sentences);
 		runExternalCommand("./scripts/tokenizer.sed temp.txt", "tokenized.txt");
 		List<String> tokenizedSentences=readSentencesFromFile("tokenized.txt");
 		if(sentences.size()!=tokenizedSentences.size())
@@ -312,7 +303,7 @@ public class ParsePreparation
 			System.err.println("Problem in tokenized file. Exiting.");
 			System.exit(0);
 		}
-		writeSentencesToTempFile(file,tokenizedSentences);
+		writeSentencesToFile(file, tokenizedSentences);
 	}
 	
 	
@@ -338,7 +329,7 @@ public class ParsePreparation
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		writeSentencesToTempFile("data/allSentencesTokenizedOPENNLP.txt",tokenizedSentences);
+		writeSentencesToFile("data/allSentencesTokenizedOPENNLP.txt", tokenizedSentences);
 	}
 	
 	public static void runExternalCommand(String command, String printFile)
@@ -484,24 +475,22 @@ public class ParsePreparation
 			e.printStackTrace();
 		}
 		return null;
-	}	
-	
-	
-	public static void writeSentencesToTempFile(String file, List<String> sentences)
-	{
-		try
-		{
-			BufferedWriter bWriter = new BufferedWriter(new FileWriter(file));
-			int size = sentences.size();
-			//System.out.println("Size of sentences:"+size);
-			for(int i = 0; i < size; i ++)
-			{
-				bWriter.write(sentences.get(i).trim()+"\n");
+	}
+
+	/**
+	 * Writes the given sentences to the given file
+	 *
+	 * @param outputFile the file to write to
+	 * @param sentences the sentences to write
+	 */
+	public static void writeSentencesToFile(String outputFile, List<String> sentences) {
+		try {
+			final BufferedWriter bWriter = new BufferedWriter(new FileWriter(outputFile));
+			for(String sentence : sentences)  {
+				bWriter.write(sentence.trim() + "\n");
 			}
 			bWriter.close();
-		}
-		catch(Exception e)
-		{
+		} catch(Exception e) {
 			e.printStackTrace();
 		}
 	}	

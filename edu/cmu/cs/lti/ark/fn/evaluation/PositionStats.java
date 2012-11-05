@@ -88,8 +88,8 @@ public class PositionStats {
 					continue;
 				}
 			}
-			ParsePreparation.writeSentencesToTempFile("gold.fes", goldPs);
-			ParsePreparation.writeSentencesToTempFile("auto.fes", autoPs);
+			ParsePreparation.writeSentencesToFile("gold.fes", goldPs);
+			ParsePreparation.writeSentencesToFile("auto.fes", autoPs);
 			PrepareFullAnnotationXML.generateXMLForPrediction("gold.fes", 
 					new Range0Based(0,tsents.size(),false), 
 					pfile, 

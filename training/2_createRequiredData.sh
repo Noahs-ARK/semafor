@@ -1,9 +1,9 @@
-#!/bin/bash -e
+#!/bin/bash
 
-source "$(dirname `readlink -f ${0}`)/config"
+set -e # fail fast
 
-# make sure RequiredDataCreation is compiled
-${JAVA_HOME_BIN}/javac -cp ${classpath} edu/cmu/cs/lti/ark/fn/identification/RequiredDataCreation.java
+source "$(dirname ${0})/config.sh"
+
 # run it
 ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms2g -Xmx2g \
     edu.cmu.cs.lti.ark.fn.identification.RequiredDataCreation \
