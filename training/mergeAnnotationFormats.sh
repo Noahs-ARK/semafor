@@ -19,8 +19,8 @@ do
           ${training_dir}/cv.${prefix}.sentences.tokenized \
           ${training_dir}/cv.${prefix}.sentences.maltparsed.conll \
           ${tmp_parse_file} \
-          ${SEMAFOR_HOME}/stopwords.txt \
-          ${SEMAFOR_HOME}/file_properties.xml \
+          ${stopwords_file} \
+          ${wordnet_config_file} \
           ${training_dir}/cv.${prefix}.sentences.all.lemma.tags
     rm ${tmp_parse_file}
 done

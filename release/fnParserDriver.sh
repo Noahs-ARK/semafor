@@ -19,7 +19,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-source "$(dirname `readlink -f ${0}`)/config"
+source "$(dirname ${0})/config"
 
 if [ $# -lt 1 -o $# -gt 2 ]; then
    echo "USAGE: `basename "${0}"` <input-file> [<output-file>]"
@@ -37,11 +37,11 @@ if [ `uname -m` != "x86_64" ]; then
 fi
 
 # $3: location of line split file, must be absolute path
-INPUT_FILE=`readlink -f "${1}"`
+INPUT_FILE="${1}"
 
 # output of FN parser
 if [ $# = 2 ]; then
-   OUTPUT_FILE=`readlink -f "${2}"`
+   OUTPUT_FILE="${2}"
 else
    OUTPUT_FILE="${INPUT_FILE}.out"
 fi
@@ -130,12 +130,12 @@ fi
 
 if [ "${USE_GRAPH_FILE}" == "yes" ]
 then
-    GRAPH_FILE=${MODEL_DIR}/sparsegraph.gz
+    GRAPH_FILE="${MODEL_DIR}/sparsegraph.gz"
 else
     GRAPH_FILE=null
 fi
 
-ALL_LEMMA_TAGS_FILE=${INPUT_FILE}.all.lemma.tags
+ALL_LEMMA_TAGS_FILE="${INPUT_FILE}.all.lemma.tags"
 
 
 echo "**********************************************************************"

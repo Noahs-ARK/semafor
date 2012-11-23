@@ -16,9 +16,9 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8000m -Xmx8000m \
   edu.cmu.cs.lti.ark.fn.identification.CreateEventsUnsupported \
   train-fefile:${fe_file} \
   train-parsefile:${parsed_file} \
-  stopwords-file:${SEMAFOR_HOME}/stopwords.txt \
-  wordnet-configfile:${SEMAFOR_HOME}/file_properties.xml \
-  fnidreqdatafile:${datadir}/reqData.jobj \
+  stopwords-file:${stopwords_file} \
+  wordnet-configfile:${wordnet_config_file} \
+  fnidreqdatafile:${fn_id_req_data_file} \
   logoutputfile:${datadir}/log \
   model:${datadir}/alphabet_combined.dat \
   eventsfile:${datadir}/events \

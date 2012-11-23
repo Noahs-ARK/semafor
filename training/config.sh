@@ -21,6 +21,21 @@ luxmldir="${datadir}/lu"
 # the directory the resulting model will end up in
 model_dir="${datadir}/${model_name}"
 
+
+# config files
+wordnet_config_file="${SEMAFOR_HOME}/file_properties.xml"
+stopwords_file="${SEMAFOR_HOME}/stopwords.txt"
+
+framenet_map_file="${datadir}/framenet.original.map"
+all_related_words_file="${datadir}/allrelatedwords.ser"
+hv_correspondence_file="${datadir}/hvmap.ser"
+wn_related_words_for_words_file="${datadir}/wnallrelwords.ser"
+wn_map_file="${datadir}/wnMap.ser"
+revised_map_file="${datadir}/revisedrelmap.ser"
+lemma_cache_file="${datadir}/hvlemmas.ser"
+fn_id_req_data_file="${datadir}/reqData.jobj"
+
+
 # paths to the gold-standard annotated sentences, and dependency-parsed version of it
 training_dir="${datadir}/naacl2012"
 fe_file="${training_dir}/cv.train.sentences.frame.elements"

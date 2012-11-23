@@ -7,14 +7,14 @@ source "$(dirname ${0})/config.sh"
 # run it
 ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms2g -Xmx2g \
     edu.cmu.cs.lti.ark.fn.identification.RequiredDataCreation \
-      stopwords-file:${SEMAFOR_HOME}/stopwords.txt \
-      wordnet-configfile:${SEMAFOR_HOME}/file_properties.xml \
-      framenet-mapfile:${datadir}/framenet.original.map \
+      stopwords-file:${stopwords_file} \
+      wordnet-configfile:${wordnet_config_file} \
+      framenet-mapfile:${framenet_map_file} \
       luxmldir:${luxmldir} \
-      allrelatedwordsfile:${datadir}/allrelatedwords.ser \
-      hvcorrespondencefile:${datadir}/hvmap.ser \
-      wnrelatedwordsforwordsfile:${datadir}/wnallrelwords.ser \
-      wnmapfile:${datadir}/wnMap.ser \
-      revisedmapfile:${datadir}/revisedrelmap.ser \
-      lemmacachefile:${datadir}/hvlemmas.ser \
-      fnidreqdatafile:${datadir}/reqData.jobj
+      allrelatedwordsfile:${all_related_words_file} \
+      hvcorrespondencefile:${hv_correspondence_file} \
+      wnrelatedwordsforwordsfile:${wn_related_words_for_words_file} \
+      wnmapfile:${wn_map_file} \
+      revisedmapfile:${revised_map_file} \
+      lemmacachefile:${lemma_cache_file} \
+      fnidreqdatafile:${fn_id_req_data_file}
