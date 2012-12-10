@@ -21,47 +21,50 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.segmentation;
 
-import java.util.ArrayList;
-import java.util.StringTokenizer;
-
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
+import com.google.common.collect.Sets;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
-import edu.cmu.cs.lti.ark.util.SerializedObjects;
-import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
-
-import gnu.trove.*;
 
 import javax.annotation.Nullable;
+import java.util.*;
 
-public class RoteSegmenter
-{
+import static com.google.common.collect.ImmutableList.copyOf;
+import static com.google.common.collect.Iterables.any;
+import static edu.cmu.cs.lti.ark.fn.evaluation.ParseUtils.GOLD_TARGET_SUFFIX;
+import static edu.cmu.cs.lti.ark.util.IntRanges.range;
+import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
+
+public class RoteSegmenter implements Segmenter {
+	// the maximum length of ngrams we'll look for
 	public static final int MAX_LEN = 4;
 
-	public static final ImmutableSet<String> FORBIDDEN_WORDS =
+	private static final ImmutableSet<String> FORBIDDEN_WORDS =
 			ImmutableSet.of("a", "an", "as ", "for ", "i ", "in particular ",
 					"it ", "of course ", "so ", "the ", "with");
 	// if these words precede "of", "of" should not be discarded
-	public static final ImmutableSet<String> PRECEDING_WORDS_OF =
+	private static final ImmutableSet<String> PRECEDING_WORDS_OF =
 			ImmutableSet.of("%", "all ", "face ", "few ", "half ", "majority ",
 					"many ", "member ", "minority ", "more ", "most ", "much ",
 					"none ", "one ", "only ", "part ", "proportion ",
 					"quarter ", "share ", "some ", "third");
 	// if these words follow "of", "of" should not be discarded
-	public static final ImmutableSet<String> FOLLOWING_WORDS_OF =
+	private static final ImmutableSet<String> FOLLOWING_WORDS_OF =
 			ImmutableSet.of("all", "group", "their", "them", "us");
 	// all prepositions should be discarded
-	public static final ImmutableSet<String> LOC_PREPS =
+	private static final ImmutableSet<String> LOC_PREPS =
 			ImmutableSet.of("above", "against", "at", "below", "beside", "by",
 					"in", "on", "over", "under");
-	public static final ImmutableSet<String> TEMPORAL_PREPS = ImmutableSet.of("after", "before");
-	public static final ImmutableSet<String> DIR_PREPS = ImmutableSet.of("into", "through", "to");
+	private static final ImmutableSet<String> TEMPORAL_PREPS = ImmutableSet.of("after", "before");
+	private static final ImmutableSet<String> DIR_PREPS = ImmutableSet.of("into", "through", "to");
+	private static final ImmutableSet<String> FORBIDDEN_POS_PREFIXES = ImmutableSet.of("PR", "CC", "IN", "TO");
+
 	// description of the parse array format
 	// TODO: would be better to just make a class for parses
+	public static final int NUM_PARSE_ROWS = 6;
 	public static final int PARSE_TOKEN_ROW = 0;
 	public static final int PARSE_POS_ROW = 1;
 	public static final int PARSE_NE_ROW = 4;
@@ -74,89 +77,45 @@ public class RoteSegmenter
 		}
 	};
 
-	private DependencyParse[] mNodeList = null;
-	private DependencyParse mParse = null;
-
-	public static void main(String[] args) {
-		RoteSegmenter seg = new RoteSegmenter();
-		seg.roteSegmentation();
-	}
-	
-	public RoteSegmenter() {
-		mNodeList = null;
-		mParse =  null;
-	}
-
-	public void roteSegmentation() {
-		THashSet<String> allRelatedWords = (THashSet<String>)SerializedObjects.readSerializedObject("/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/allRelatedWords.set.identity.extended");
-		System.out.println(allRelatedWords.size());
-		
-		String state = "train";
-		String trainParseFile=null;
-		String tokenNumsFile=null;
-		
-		if(state.equals("train")) {
-			trainParseFile = "/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/alldev.m45.parsed";
-			tokenNumsFile = "/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/segmentationData/semeval.dev.tokenNums";	
-		}
-		else {
-			trainParseFile = "/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData/semeval.fulltrain.sentences.all.tags";
-			tokenNumsFile = "/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/segmentationData/semeval.train.tokenNums";
-		}
-		ArrayList<String> parses = ParsePreparation.readSentencesFromFile(trainParseFile);
-		ArrayList<String> tokenNums = ParsePreparation.readSentencesFromFile(tokenNumsFile);
-		
-		WordNetRelations mWNR = new WordNetRelations("/mal2/dipanjan/experiments/QG/QG4Entailment/data/stopwords.txt","file_properties.xml");
-		ArrayList<String> segs = findSegmentation(tokenNums, parses, allRelatedWords, mWNR);
-		ParsePreparation.writeSentencesToFile("segs.txt", segs);
-	}
-
 	/**
-	 *
-	 * @param parse tsv. first field is the number of tokens in the sentence
-	 * @param allRelatedWords
-	 * @return
+	 * @param parse allLemmaTags formatted sentence
+	 * @param allRelatedWords a set of all ngrams (in the form "lemma_cpos" that are likely to be targets
+	 * @return a tsv of ngrams that are likely to evoke frames, in the format "5_6_7_8 2_3_4 ..."
 	 */
-	public String getHighRecallSegmentation(String parse, THashSet<String> allRelatedWords) {
-		final StringTokenizer st = new StringTokenizer(parse, "\t");
-		final int tokensInFirstSent = Integer.parseInt(st.nextToken());
-		final String[][] data = new String[6][tokensInFirstSent];
-		for(int k = 0; k < 6; k ++) {
-			for(int j = 0; j < tokensInFirstSent; j++) {
-				data[k][j] = st.nextToken().trim();
+	private List<String> getSegmentation(String[][] parse, Set<String> allRelatedWords) {
+		final int numTokens = parse[0].length;
+		// start indices that we haven't used yet
+		final Set<Integer> remainingStartIndices = Sets.newHashSet(xrange(numTokens));
+		final ImmutableList.Builder<String> allNgramIndices = ImmutableList.builder();  // results
+
+		final List<String> lemmas = getLemmasAndCoursePos(parse);
+
+		// look for ngrams, backing off to smaller n
+		for(int n : range(1, MAX_LEN).asList().reverse()) {
+			for(int start : xrange(numTokens - n + 1)) {
+				if(!remainingStartIndices.contains(start)) continue;
+				final int end = start + n;
+				final Set<Integer> ngramIndices = range(start, end);
+				final String ngramLemmas = Joiner.on(" ").join(lemmas.subList(start, end));
+				if(allRelatedWords.contains(ngramLemmas)) {
+					// found a good ngram, add it to results, and remove it from startIndices so we don't overlap later
+					allNgramIndices.add(Joiner.on("_").join(ngramIndices));
+					remainingStartIndices.removeAll(ngramIndices);
+				}
 			}
 		}
-		final ArrayList<String> startInds = Lists.newArrayList();
-		for(int i = 0; i < data[0].length; i ++) {
-			startInds.add("" + i);
+		return allNgramIndices.build();
+	}
+
+	private ImmutableList<String> getLemmasAndCoursePos(String[][] data) {
+		int numTokens = data[0].length;
+		final ImmutableList.Builder<String> lemmasBuilder = ImmutableList.builder();
+		for(int i : range(numTokens)) {
+			final String cPos = data[PARSE_POS_ROW][i].substring(0, 1);
+			final String lemma = data[PARSE_LEMMA_ROW][i];
+			lemmasBuilder.add(lemma + "_" + cPos);
 		}
-		String tokNums = "";
-		for(int i = MAX_LEN; i >= 1; i--) {
-			for(int j = 0; j <= tokensInFirstSent-i; j++) {
-				String ind = ""+j;
-				if(!startInds.contains(ind)) continue;
-				String lTok = "";
-				for(int k = j; k < j + i; k++) {
-					String pos = data[1][k];
-					String cPos = pos.substring(0,1);
-					String l = data[5][k];    
-					lTok += l+"_"+cPos+" ";
-				}
-				lTok=lTok.trim();
-				if(allRelatedWords.contains(lTok)) {
-					String tokRep = "";
-					for(int k = j; k < j + i; k ++) {
-						tokRep += k+" ";
-						ind = ""+k;
-						startInds.remove(ind);
-					}
-					tokRep = tokRep.trim().replaceAll(" ", "_");
-					tokNums += tokRep+"\t";
-				}
-			}				
-		}
-		tokNums = tokNums.trim();
-		return tokNums;
+		return lemmasBuilder.build();
 	}
 
 	/**
@@ -166,9 +125,9 @@ public class RoteSegmenter
 	 * @param pData a 2d array containing the token, lemma, pos tag, and NE for each token
 	 * @return
 	 */
-	private boolean shouldIncludeToken(final String idxStr, final String[][] pData) {
+	private boolean shouldIncludeToken(final String idxStr, final String[][] pData, DependencyParse[] mNodeList) {
 		final int numTokens = pData[PARSE_TOKEN_ROW].length;
-		// include through fields with "_" in them
+		// always include ngrams, n > 1
 		if(idxStr.contains("_")) return true;
 
 		final int idx = Integer.parseInt(idxStr);
@@ -182,9 +141,9 @@ public class RoteSegmenter
 		String precedingLemma = "";
 		String precedingNE = "";
 		if(idx >= 1) {
-			precedingWord = pData[PARSE_TOKEN_ROW][idx-1].toLowerCase();
-			precedingPOS = pData[PARSE_POS_ROW][idx-1];
-			precedingLemma = pData[PARSE_LEMMA_ROW][idx-1];
+			precedingWord = pData[PARSE_TOKEN_ROW][idx-1].toLowerCase().trim();
+			precedingPOS = pData[PARSE_POS_ROW][idx-1].trim();
+			precedingLemma = pData[PARSE_LEMMA_ROW][idx-1].trim();
 			precedingNE = pData[PARSE_NE_ROW][idx-1];
 		}
 		String followingWord = "";
@@ -197,12 +156,10 @@ public class RoteSegmenter
 		}
 
 		if(FORBIDDEN_WORDS.contains(token)) return false;
-		// the three types of prepositions should all be skipped
 		if(LOC_PREPS.contains(token)) return false;
 		if(DIR_PREPS.contains(token)) return false;
 		if(TEMPORAL_PREPS.contains(token)) return false;
-
-		if(pos.startsWith("PR") || pos.startsWith("CC") || pos.startsWith("IN") || pos.startsWith("TO")) return false;
+		if(FORBIDDEN_POS_PREFIXES.contains(pos.substring(0, 2))) return false;
 		// skip "of course" and "in particular"
 		if(token.equals("course") && precedingWord.equals("of")) return false;
 		if(token.equals("particular") && precedingWord.equals("in")) return false;
@@ -210,11 +167,8 @@ public class RoteSegmenter
 		if(token.equals("of")) {
 			if(PRECEDING_WORDS_OF.contains(precedingLemma)) return true;
 			if(FOLLOWING_WORDS_OF.contains(followingWord)) return true;
-
 			if(precedingPOS.startsWith("JJ") || precedingPOS.startsWith("CD")) return true;
-
 			if(followingPOS.startsWith("CD")) return true;
-
 			if(followingPOS.startsWith("DT")) {
 				if(idx < numTokens - 2) {
 					final String followingFollowingPOS = pData[PARSE_POS_ROW][idx+2];
@@ -225,180 +179,79 @@ public class RoteSegmenter
 					followingNE.startsWith("LOCATION") ||
 					precedingNE.startsWith("CARDINAL");
 		}
-
 		if(token.equals("will")) return !pos.equals("MD");
-
-		// TODO: mNodeList depends on methods being called in a certain order. not nice. also, no guarantee idx+1 in range
-		final DependencyParse headNode = mNodeList[idx+1];
-		if(lemma.equals("have")) return Iterables.any(headNode.getChildren(), isObject);
-
+		if(idx < mNodeList.length) {
+			final DependencyParse headNode = mNodeList[idx+1];
+			if(lemma.equals("have")) return any(headNode.getChildren(), isObject);
+		}
 		return !lemma.equals("be");
 	}
 	
 	/**
 	 * Removes prepositions from the given sentence
 	 *
-	 * @param tokenIndices a tsv row of token indices
+	 * @param candidateTokens a row of token indices
 	 * @param pData an array of parse data. each column is a word. relevant rows are:  0: token, 1: pos, 5: lemma
 	 * @return
 	 */
-	public String trimPrepositions(String tokenIndices, String[][] pData) {
-		final String[] candidateTokens = tokenIndices.trim().split("\t");
-		final int numTokens = pData[PARSE_TOKEN_ROW].length;
+	private List<String> trimPrepositions(List<String> candidateTokens, final String[][] pData) {
+		final DependencyParse mParse = DependencyParse.processFN(pData, 0.0);
+		final DependencyParse[] mNodeList = DependencyParse.getIndexSortedListOfNodes(mParse);
+		mParse.processSentence();
+		final Iterable<String> goodTokens = Iterables.filter(candidateTokens, new Predicate<String>() {
+			@Override public boolean apply(@Nullable String input) {
+				return shouldIncludeToken(input, pData, mNodeList);
+			}
+		});
+		return copyOf(goodTokens);
+	}
 
-		final ArrayList<String> result = Lists.newArrayListWithExpectedSize(numTokens);
-		for(String candidateTokenIdxStr: candidateTokens) {
-			if(shouldIncludeToken(candidateTokenIdxStr, pData)) {
-				result.add(candidateTokenIdxStr);
+	private String[][] readAllLemmaTagsLine(String line) {
+		final Scanner fields = new Scanner(line.trim()).useDelimiter("\t");
+		final int tokensInFirstSent = Integer.parseInt(fields.next());
+
+		final String[][] parseData = new String[6][tokensInFirstSent];
+		for(int k : xrange(NUM_PARSE_ROWS)) {
+			for(int j : xrange(tokensInFirstSent)) {
+				parseData[k][j] = fields.next().trim();
 			}
 		}
-		return Joiner.on("\t").join(result).trim();
+		return parseData;
+	}
+
+	private String getTestLine(List<String> goldTokens, List<String> actualTokens) {
+		final ImmutableList.Builder<String> result = ImmutableList.builder();
+		for(String goldToken : goldTokens) {
+			result.add(goldToken + GOLD_TARGET_SUFFIX);
+		}
+		for(String actualToken : actualTokens) {
+			if (!goldTokens.contains(actualToken)) {
+				result.add(actualToken + GOLD_TARGET_SUFFIX);
+			}
+		}
+		return Joiner.on("\t").join(result.build());
 	}
 
 	/**
-	 *
 	 * @param tokenNums the last tsv field is the index of the sentence in `parses`
-	 * @param parses a list of
+	 * @param parseLines a list of
 	 * @param allRelatedWords
 	 * @return
 	 */
-	public ArrayList<String> findSegmentationForTest(ArrayList<String> tokenNums, 
-			ArrayList<String> parses, 
-			THashSet<String> allRelatedWords) {
-		final ArrayList<String> result = Lists.newArrayList();
+	@Override
+	public List<String> getSegmentations(List<String> tokenNums, List<String> parseLines, Set<String> allRelatedWords) {
+		final ImmutableList.Builder<String> result = ImmutableList.builder();
 		for(String tokenNum: tokenNums) {
-			final String gold = tokenNum.trim();
-			final String[] tokens = tokenNum.split("\t");
+			final List<String> tokens = copyOf(tokenNum.trim().split("\t"));
 
 			// the last tsv field is the index of the sentence in `parses`
-			final int sentNum = Integer.parseInt(tokens[tokens.length - 1]);
-			final String parse = parses.get(sentNum);
-			String tokNums = getHighRecallSegmentation(parse, allRelatedWords);
-
-			StringTokenizer st = new StringTokenizer(parse.trim(), "\t");
-			final int tokensInFirstSent = Integer.parseInt(st.nextToken());
-
-			// what is this magic number 6? (sthomson)
-			String[][] data = new String[6][tokensInFirstSent];
-			for(int k = 0; k < 6; k ++) {
-				data[k] = new String[tokensInFirstSent];
-				for(int j = 0; j < tokensInFirstSent; j ++) {
-					data[k][j] = "" + st.nextToken().trim();
-				}
-			}
-			mParse = DependencyParse.processFN(data, 0.0);
-			mNodeList = DependencyParse.getIndexSortedListOfNodes(mParse);
-			mParse.processSentence();
-			if(!tokNums.trim().equals("")) {
-				tokNums = trimPrepositions(tokNums, data);
-			}
-			final String line = getTestLine(gold, tokNums).trim() + "\t" + sentNum;
-			result.add(line.trim());
-		}		
-		return result;
+			final int sentNum = Integer.parseInt(tokens.get(tokens.size()-1));
+			final String parse = parseLines.get(sentNum);
+			final String[][] parseData = readAllLemmaTagsLine(parse);
+			final List<String> ngramIndices = getSegmentation(parseData, allRelatedWords);
+			final List<String> trimmed = trimPrepositions(ngramIndices, parseData);
+			result.add(getTestLine(tokens, trimmed) + "\t" + sentNum);
+		}
+		return result.build();
 	}
-
-	public String getTestLine(String goldTokens, String actualTokens) {
-		final ArrayList<String> result = Lists.newArrayList();
-		final ArrayList<String> goldList = Lists.newArrayList(goldTokens.trim().split("\t"));
-		final ArrayList<String> actList = Lists.newArrayList(actualTokens.trim().split("\t"));
-		for(String aGoldList : goldList) {
-			result.add(aGoldList.trim() + "#true");
-		}
-		for (String anActList : actList) {
-			final String tokNum = anActList.trim();
-			if (!goldList.contains(tokNum)) {
-				result.add(tokNum + "#true");
-			}
-		}
-		return Joiner.on("\t").join(result);
-	}
-
-	public ArrayList<String> findSegmentation(ArrayList<String> tokenNums, 
-													 ArrayList<String> parses, 
-													 THashSet<String> allRelatedWords, 
-													 WordNetRelations mWNR)
-	{
-		ArrayList<String> result = new ArrayList<String>();
-		for(String tokenNum: tokenNums)
-		{
-			String[] toks = tokenNum.split("\t");
-			String gold = "";
-			for(int i = 0; i < toks.length-1; i ++)
-				gold += toks[i]+"\t";
-			gold=gold.trim();
-			int sentNum = Integer.parseInt(toks[toks.length-1]);
-			String parse = parses.get(sentNum);
-			String tokNums = getHighRecallSegmentation(parse,allRelatedWords);
-			StringTokenizer st = new StringTokenizer(parse.trim(),"\t");
-			int tokensInFirstSent = Integer.parseInt(st.nextToken());
-			String[][] data = new String[5][tokensInFirstSent];
-			for(int k = 0; k < 5; k ++)
-			{
-				data[k]=new String[tokensInFirstSent];
-				for(int j = 0; j < tokensInFirstSent; j ++)
-				{
-					data[k][j]=""+st.nextToken().trim();
-				}
-			}
-			mParse = DependencyParse.processFN(data, 0.0);
-			mNodeList = DependencyParse.getIndexSortedListOfNodes(mParse);
-			mParse.processSentence();
-			if(!tokNums.trim().equals(""))
-				tokNums=trimPrepositions(tokNums, data);
-			String line = "zzzz\t"+gold+"#"+tokNums;
-			String line1 = getActualTokenLine(gold,tokNums,data);
-			System.out.println(line1+"\n"+mParse.getSentence()+"\n");
-			result.add(line);
-		}		
-		return result;
-	}	
-	
-	public String getActualTokenLine(String goldTokens, String actualTokens, String[][] data)
-	{
-		String result = "";
-		ArrayList<String> goldList = new ArrayList<String>();
-		StringTokenizer st = new StringTokenizer(goldTokens.trim(),"\t");
-		while(st.hasMoreTokens())
-		{
-			goldList.add(st.nextToken());
-		}
-		ArrayList<String> actList = new ArrayList<String>();
-		st = new StringTokenizer(actualTokens.trim(),"\t");
-		while(st.hasMoreTokens())
-		{
-			actList.add(st.nextToken());
-		}		
-		
-		int goldSize = goldList.size();
-		for(int i = 0; i < goldSize; i ++)
-		{
-			String tokNum = goldList.get(i).trim();
-			String[] toks = tokNum.split("_");
-			String token = "";
-			for(int j = 0; j < toks.length; j ++)
-			{
-				int num = Integer.parseInt(toks[j]);
-				token += data[0][num]+"_"+data[1][num]+" ";
-			}
-			token=token.trim();
-			result += token+"_"+tokNum+"\t";
-		}	
-		result=result.trim()+"\n";
-		int actSize = actList.size();
-		for(int i = 0; i < actSize; i ++)
-		{
-			String tokNum = actList.get(i).trim();
-			String[] toks = tokNum.split("_");
-			String token = "";
-			for(int j = 0; j < toks.length; j ++)
-			{
-				int num = Integer.parseInt(toks[j]);
-				token += data[0][num]+"_"+data[1][num]+" ";
-			}
-			token=token.trim();
-			result += token+"_"+tokNum+"\t";
-		}
-		return result.trim();
-	}	
 }

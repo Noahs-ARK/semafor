@@ -21,102 +21,23 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.segmentation;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.StringTokenizer;
-
-import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
-import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 
-import gnu.trove.*;
+import java.util.*;
 
-public class MoreRelaxedSegmenter
-{
+public class MoreRelaxedSegmenter implements Segmenter {
 	public static final int MAX_LEN = 4;
 	
 	private DependencyParse[] mNodeList = null;
 	private DependencyParse mParse = null;
-		
-	public static void main(String[] args)
-	{
-		//createM45Data();
-		RoteSegmenter seg = new RoteSegmenter();
-		seg.roteSegmentation();
-	}
-	
+
 	public MoreRelaxedSegmenter() {
 		mNodeList = null;
 		mParse =  null;
 	}	
-	
-	public ArrayList<String[][]> readNewParses(String file)
-	{
-		ArrayList<String> lines = ParsePreparation.readSentencesFromFile(file);
-		int size = lines.size();
-		ArrayList<String> collection = new ArrayList<String>();
-		ArrayList<String[][]> result = new ArrayList<String[][]>();
-		for(int i = 0; i < size; i ++)
-		{
-			String line = lines.get(i).trim();
-			if(line.equals(""))
-			{
-				String[][] parse = getParse(collection);
-				result.add(parse);
-				collection = new ArrayList<String>();
-			}		
-			else
-			{
-				collection.add(line);
-			}			
-		}		
-		return result;
-	}
-	
-	public String[][] getParse(ArrayList<String> collection)
-	{
-		int size = collection.size();
-		String[][] result = new String[size][];
-		for(int i = 0; i < size; i ++)
-		{
-			result[i] = new String[4];
-			String[] arr = collection.get(i).trim().split("\t");
-			result[i][0]=""+arr[5];
-			result[i][1]=""+arr[7];
-			result[i][2]=""+arr[8];
-			result[i][3]=""+arr[9];
-		}		
-		return result;
-	}
-	
-	
-	public THashSet<String> setOfParticles(THashMap<String,THashSet<String>> mFrameMap)
-	{
-		THashSet<String> result = new THashSet<String>();
-		Set<String> set = mFrameMap.keySet();
-		int count = 0;
-		for(String string:set)
-		{
-			THashSet<String> hus = mFrameMap.get(string);
-			System.out.println(count+"\t"+string);
-			count++;
-			for(String hu: hus)
-			{
-				String[] wps = hu.trim().split(" ");
-				if(wps.length==1)
-					continue;
-				String lastWord = wps[wps.length-1];
-				String[] arr = lastWord.split("_");					
-			}
-		}
-		return result;
-	}	
-	
-	
+
 	public String getHighRecallSegmentation(String parse, 
-												   THashSet<String> allRelatedWords)
+												   Set<String> allRelatedWords)
 	{				
 		StringTokenizer st = new StringTokenizer(parse,"\t");
 		int tokensInFirstSent = new Integer(st.nextToken());
@@ -182,11 +103,7 @@ public class MoreRelaxedSegmenter
 	public boolean containsPunc(String word) {
 		char first = word.toLowerCase().charAt(0);
 		char last = word.toLowerCase().charAt(word.length()-1);
-		if (Character.isLetter(first) && Character.isLetter(last)) {
-			return false;
-		} else {
-			return true;
-		}
+		return !(Character.isLetter(first) && Character.isLetter(last));
 	}
 	
 	public String trimPrepositions(String tokNum, String[][] pData)
@@ -414,21 +331,11 @@ public class MoreRelaxedSegmenter
 		}
 		return result.trim();
 	}
-	
-	public String removeSupportVerbs(String tokNum, String[][] pData, WordNetRelations mWNR, String[][] nData)
-	{
-		String result = "";
-		String[] candToks = tokNum.trim().split("\t");
-		for(String candTok: candToks)
-		{
-			
-		}
-		return result;
-	}
-	
-	public ArrayList<String> findSegmentationForTest(ArrayList<String> tokenNums, 
-			ArrayList<String> parses, 
-			THashSet<String> allRelatedWords)
+
+	@Override
+	public List<String> getSegmentations(List<String> tokenNums,
+										 List<String> parses,
+										 Set<String> allRelatedWords)
 	{
 		ArrayList<String> result = new ArrayList<String>();
 		for(String tokenNum: tokenNums)
@@ -440,7 +347,7 @@ public class MoreRelaxedSegmenter
 			gold=gold.trim();
 			int sentNum = new Integer(toks[toks.length-1]);
 			String parse = parses.get(sentNum);
-			String tokNums = getHighRecallSegmentation(parse,allRelatedWords);
+			String tokNums = getHighRecallSegmentation(parse, allRelatedWords);
 			StringTokenizer st = new StringTokenizer(parse.trim(),"\t");
 			int tokensInFirstSent = new Integer(st.nextToken());
 			String[][] data = new String[6][tokensInFirstSent];
@@ -498,97 +405,4 @@ public class MoreRelaxedSegmenter
 		}
 		return result.trim();
 	}
-	
-
-	
-	public ArrayList<String> findSegmentation(ArrayList<String> tokenNums, 
-													 ArrayList<String> parses, 
-													 THashSet<String> allRelatedWords, 
-													 WordNetRelations mWNR)
-	{
-		ArrayList<String> result = new ArrayList<String>();
-		for(String tokenNum: tokenNums)
-		{
-			String[] toks = tokenNum.split("\t");
-			String gold = "";
-			for(int i = 0; i < toks.length-1; i ++)
-				gold+=toks[i]+"\t";
-			gold=gold.trim();
-			int sentNum = new Integer(toks[toks.length-1]);
-			String parse = parses.get(sentNum);
-			String tokNums = getHighRecallSegmentation(parse,allRelatedWords);
-			StringTokenizer st = new StringTokenizer(parse.trim(),"\t");
-			int tokensInFirstSent = new Integer(st.nextToken());
-			String[][] data = new String[5][tokensInFirstSent];
-			for(int k = 0; k < 5; k ++)
-			{
-				data[k]=new String[tokensInFirstSent];
-				for(int j = 0; j < tokensInFirstSent; j ++)
-				{
-					data[k][j]=""+st.nextToken().trim();
-				}
-			}
-			mParse = DependencyParse.processFN(data, 0.0);
-			mNodeList = DependencyParse.getIndexSortedListOfNodes(mParse);
-			mParse.processSentence();
-			if(!tokNums.trim().equals(""))
-				tokNums=trimPrepositions(tokNums, data);
-			//if(!tokNums.trim().equals(""))
-			//	tokNums=removeSupportVerbs(tokNums, data, mWNR, newParse);
-			String line = "zzzz\t"+gold+"#"+tokNums;
-			String line1 = getActualTokenLine(gold,tokNums,data);
-			String sentence = mParse.getSentence();
-			System.out.println(line1+"\n"+mParse.getSentence()+"\n");
-			result.add(line);
-		}		
-		return result;
-	}	
-	
-	public String getActualTokenLine(String goldTokens, String actualTokens, String[][] data)
-	{
-		String result = "";
-		ArrayList<String> goldList = new ArrayList<String>();
-		StringTokenizer st = new StringTokenizer(goldTokens.trim(),"\t");
-		while(st.hasMoreTokens())
-		{
-			goldList.add(st.nextToken());
-		}
-		ArrayList<String> actList = new ArrayList<String>();
-		st = new StringTokenizer(actualTokens.trim(),"\t");
-		while(st.hasMoreTokens())
-		{
-			actList.add(st.nextToken());
-		}		
-		
-		int goldSize = goldList.size();
-		for(int i = 0; i < goldSize; i ++)
-		{
-			String tokNum = goldList.get(i).trim();
-			String[] toks = tokNum.split("_");
-			String token = "";
-			for(int j = 0; j < toks.length; j ++)
-			{
-				int num = new Integer(toks[j]);
-				token+=data[0][num]+"_"+data[1][num]+" ";
-			}
-			token=token.trim();
-			result+=token+"_"+tokNum+"\t";
-		}	
-		result=result.trim()+"\n";
-		int actSize = actList.size();
-		for(int i = 0; i < actSize; i ++)
-		{
-			String tokNum = actList.get(i).trim();
-			String[] toks = tokNum.split("_");
-			String token = "";
-			for(int j = 0; j < toks.length; j ++)
-			{
-				int num = new Integer(toks[j]);
-				token+=data[0][num]+"_"+data[1][num]+" ";
-			}
-			token=token.trim();
-			result+=token+"_"+tokNum+"\t";
-		}
-		return result.trim();
-	}	
 }

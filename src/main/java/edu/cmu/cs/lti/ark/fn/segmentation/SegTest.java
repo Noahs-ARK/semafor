@@ -24,12 +24,10 @@ package edu.cmu.cs.lti.ark.fn.segmentation;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
 
 import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
 public class SegTest {
@@ -77,6 +75,6 @@ public class SegTest {
 			(RequiredDataForFrameIdentification)SerializedObjects.readSerializedObject("lrdata/reqData.jobj");
 		THashSet<String> allRelatedWords = r.getAllRelatedWords();		
 		MoreRelaxedSegmenter seg = new MoreRelaxedSegmenter();
-		ArrayList<String> segs = seg.findSegmentationForTest(tokenNums, parses, allRelatedWords);
+		List<String> segs = seg.getSegmentations(tokenNums, parses, allRelatedWords);
 	}
 }

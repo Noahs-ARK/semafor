@@ -21,46 +21,35 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.evaluation;
 
+import com.google.common.base.Joiner;
+
 import java.util.ArrayList;
-import java.util.StringTokenizer;
+import java.util.List;
+
+import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 
 
-
-public class ParseUtils
-{
+public class ParseUtils {
+	public static final String GOLD_TARGET_SUFFIX = "#true";
 	/**
-	 * 
-	 * @param segs Lines from a .seg.data file ??
+	 * @param segments Lines from a .seg.data file ??
 	 * @return
 	 */
-	public static ArrayList<String> getRightInputForFrameIdentification(ArrayList<String> segs)
-	{
-		ArrayList<String> result = new ArrayList<String>();
-		int size = segs.size();
-		for(int i = 0; i < size; i ++)
-		{
-			String line = segs.get(i).trim();
-			StringTokenizer st = new StringTokenizer(line,"\t");
-			while(st.hasMoreTokens())
-			{
-				String tok = st.nextToken();
-				int lastInd = tok.lastIndexOf("#");
-				String rest = tok.substring(lastInd+1);
-				if(rest.equals("true"))	// token(s) comprise a gold target
-				{
-					String ind = tok.substring(0,lastInd);	// the token number(s) for the potential target
-					result.add("Null\t"+ind+"\t"+i);
+	public static ArrayList<String> getRightInputForFrameIdentification(List<String> segments) {
+		final ArrayList<String> result = new ArrayList<String>();
+		final int size = segments.size();
+		for(int i : xrange(size)) {
+			String line = segments.get(i).trim();
+			final String[] tokens = line.split("\t");
+			for(String token: tokens) {
+				if(token.endsWith(GOLD_TARGET_SUFFIX)) {
+					// token(s) comprise a gold target
+					// the token indices for the potential target
+					final String ngramIndices = token.substring(0, token.length() - GOLD_TARGET_SUFFIX.length());
+					result.add(Joiner.on("\t").join("Null", ngramIndices, i));
 				}
 			}
 		}		
 		return result;
-	}	
-	
-	public void buildIdentificationXML(ArrayList<String> ids, ArrayList<String> originalSentences, String outFile)
-	{
-				
-		
 	}
-	
-	
 }

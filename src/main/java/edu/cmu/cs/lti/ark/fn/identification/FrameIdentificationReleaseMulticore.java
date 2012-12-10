@@ -29,11 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -126,13 +122,13 @@ public class FrameIdentificationReleaseMulticore
 		Map<String, Map<String, Set<String>>> revisedRelationsMap = 
 			r.getRevisedRelMap();
 		boolean useRelaxed = options.useRelaxedSegmentation.get().equals("yes");
-		ArrayList<String> segs = null;
+		List<String> segs = null;
 		if (!useRelaxed) {
 			RoteSegmenter seg = new RoteSegmenter();
-			segs = seg.findSegmentationForTest(tokenNums, parses, allRelatedWords);
+			segs = seg.getSegmentations(tokenNums, parses, allRelatedWords);
 		} else {
 			MoreRelaxedSegmenter seg = new MoreRelaxedSegmenter();
-			segs = seg.findSegmentationForTest(tokenNums, parses, allRelatedWords);
+			segs = seg.getSegmentations(tokenNums, parses, allRelatedWords);
 		}
 		ArrayList<String> inputForFrameId = ParseUtils.getRightInputForFrameIdentification(segs);	// Null\tTargetTokenNum(s)\tSentenceOffset
 		TObjectDoubleHashMap<String> paramList = parseParamFile(options.idParamFile.get());
@@ -141,8 +137,7 @@ public class FrameIdentificationReleaseMulticore
 				paramList, 
 				"reg", 
 				0.0, 
-				frameMap, 
-				null, 
+				frameMap,
 				cMap,
 				relatedWordsForWord,
 				revisedRelationsMap,

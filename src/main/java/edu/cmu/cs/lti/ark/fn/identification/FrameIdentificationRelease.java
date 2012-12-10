@@ -24,18 +24,14 @@ package edu.cmu.cs.lti.ark.fn.identification;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 
 
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.fn.evaluation.ParseUtils;
 import edu.cmu.cs.lti.ark.fn.segmentation.MoreRelaxedSegmenter;
 import edu.cmu.cs.lti.ark.fn.segmentation.RoteSegmenter;
+import edu.cmu.cs.lti.ark.fn.segmentation.Segmenter;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.CommandLineOptions;
@@ -108,13 +104,13 @@ public class FrameIdentificationRelease
 		
 		
 		boolean useRelaxed = options.useRelaxedSegmentation.get().equals("yes");
-		ArrayList<String> segs = null;
+		List<String> segs = null;
 		if (!useRelaxed) {
 			RoteSegmenter seg = new RoteSegmenter();
-			segs = seg.findSegmentationForTest(tokenNums, parses, allRelatedWords);
+			segs = seg.getSegmentations(tokenNums, parses, allRelatedWords);
 		} else {
-			MoreRelaxedSegmenter seg = new MoreRelaxedSegmenter();
-			segs = seg.findSegmentationForTest(tokenNums, parses, allRelatedWords);
+			Segmenter seg = new MoreRelaxedSegmenter();
+			segs = seg.getSegmentations(tokenNums, parses, allRelatedWords);
 		}
 		ArrayList<String> inputForFrameId = ParseUtils.getRightInputForFrameIdentification(segs);	// Null\tTargetTokenNum(s)\tSentenceOffset
 		ArrayList<String> idResult = new ArrayList<String>();
@@ -125,8 +121,7 @@ public class FrameIdentificationRelease
 				paramList, 
 				"reg", 
 				0.0, 
-				frameMap, 
-				null, 
+				frameMap,
 				cMap,
 				relatedWordsForWord,
 				revisedRelationsMap,

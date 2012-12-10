@@ -24,10 +24,7 @@ package edu.cmu.cs.lti.ark.fn.segmentation;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.fn.evaluation.ParseUtils;
@@ -58,12 +55,12 @@ public class SegmentLargeUnlabeledSet {
 					tokenNums.add(""+(j-i));
 				}
 				RoteSegmenter seg = new RoteSegmenter();
-				ArrayList<String> segs = seg.findSegmentationForTest(tokenNums, parses, allRelatedWords);
-				ArrayList<String> modified = ParseUtils.getRightInputForFrameIdentification(segs);
+				List<String> segs = seg.getSegmentations(tokenNums, parses, allRelatedWords);
+				List<String> modified = ParseUtils.getRightInputForFrameIdentification(segs);
 				Set<String> setOfWords = getSetOfWords(modified, parses);
 				predicateSet.addAll(setOfWords);
 				MoreRelaxedSegmenter seg2 = new MoreRelaxedSegmenter();
-				segs = seg2.findSegmentationForTest(tokenNums, parses, allRelatedWords);
+				segs = seg2.getSegmentations(tokenNums, parses, allRelatedWords);
 				modified = ParseUtils.getRightInputForFrameIdentification(segs);
 				setOfWords = getSetOfWords(modified, parses);
 				predicateSet.addAll(setOfWords);
@@ -86,7 +83,7 @@ public class SegmentLargeUnlabeledSet {
 	}
 	
 	public static Set<String> 
-		getSetOfWords(ArrayList<String> modSegments, ArrayList<String> parses) {
+		getSetOfWords(List<String> modSegments, ArrayList<String> parses) {
 		Set<String> words = new THashSet<String>();
 		for (String seg: modSegments) {
 			String[] toks = seg.trim().split("\t");
