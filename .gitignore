@@ -1,6 +1,7 @@
 # Compiled artifacts
 *.class
 *.pyc
+target/
 
 # IDE cruft
 .idea

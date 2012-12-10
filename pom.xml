@@ -6,14 +6,13 @@
 
     <groupId>edu.cmu.cs.lti.ark</groupId>
     <artifactId>Semafor</artifactId>
-    <version>2.1-SNAPSHOT</version>
+    <version>3.0-SNAPSHOT</version>
 
     <repositories>
         <repository>
             <id>repo</id>
             <url>file://${project.basedir}/lib</url>
         </repository>
-
         <repository>
             <id>MavenCentral</id>
             <name>Maven repository</name>
@@ -25,7 +24,6 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
-        <!---->
     </repositories>
 
     <dependencies>
@@ -86,17 +84,20 @@
     </dependencies>
 
     <build>
+        <directory>target</directory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.0</version>
                 <configuration>
+                    <!-- target Java 1.6 -->
                     <source>1.6</source>
                     <target>1.6</target>
                 </configuration>
             </plugin>
             <plugin>
+                <!-- include source code in the final jar-->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <version>2.2.1</version>
@@ -114,7 +115,46 @@
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>2.4.0</version>
             </plugin>
+            <!-- ******************************************************** -->
+            <!-- The intermediate JAR file must be named differently than -->
+            <!-- the shade output JAR file to prevent duplicate warnings. -->
+            <!-- ******************************************************** -->
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <finalName>${project.artifactId}-${project.version}-nodeps</finalName>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- make an uberjar -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <!-- make it executable -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>edu.cmu.cs.lti.ark.fn.parsing.ParserDriver</mainClass>
+                                </transformer>
+                            </transformers>
+                            <!-- only include dependencies that are actually used (the transitive hull)
+                            <minimizeJar>true</minimizeJar>
+                             -->
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 </project>
