@@ -27,6 +27,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.List;
 
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.util.FileUtil;
@@ -38,7 +39,7 @@ public class LocalFeatureReading
 	private String mSpansFile;
 	private String mFrameFile;
 	private ArrayList<FrameFeatures> mFrameFeaturesList;
-	private ArrayList<String> mFrameLines;
+	private List<String> mFrameLines;
 	private int count;
 	
 	public LocalFeatureReading(String eventsFile, String spanFile, String frameFile)
@@ -52,7 +53,7 @@ public class LocalFeatureReading
 	
 	public LocalFeatureReading(String eventsFile, 
 							   String spanFile, 
-							   ArrayList<String> frameLines)
+							   List<String> frameLines)
 	{
 		mEventsFile=eventsFile;
 		mSpansFile=spanFile;

@@ -21,6 +21,7 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
+import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.fn.data.prep.AllAnnotationsMergingWithoutNE;
@@ -47,12 +48,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static edu.cmu.cs.lti.ark.fn.evaluation.ParseUtils.GOLD_TARGET_SUFFIX;
 import static edu.cmu.cs.lti.ark.fn.evaluation.ParseUtils.getRightInputForFrameIdentification;
 import static edu.cmu.cs.lti.ark.fn.identification.FrameIdentificationRelease.getTokenRepresentation;
-import static edu.cmu.cs.lti.ark.fn.segmentation.SegmentationMode.GOLD;
-import static edu.cmu.cs.lti.ark.fn.segmentation.SegmentationMode.RELAXED;
-import static edu.cmu.cs.lti.ark.fn.segmentation.SegmentationMode.STRICT;
-import static edu.cmu.cs.lti.ark.util.SerializedObjects.readSerializedObject;
+import static edu.cmu.cs.lti.ark.fn.segmentation.SegmentationMode.*;
+import static edu.cmu.cs.lti.ark.util.IntRanges.range;
+import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
+import static edu.cmu.cs.lti.ark.util.SerializedObjects.readObject;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
 public class ParserDriver {
@@ -146,9 +148,8 @@ public class ParserDriver {
 		final String allLemmaTagsOutputFile = options.outAllLemmaTagsFile.get();
 
 		// unpack required data
-		final RequiredDataForFrameIdentification r =
-			(RequiredDataForFrameIdentification) readSerializedObject(requiredDataFilename);
-		final THashSet<String> allRelatedWords = r.getAllRelatedWords();
+		final RequiredDataForFrameIdentification r = readObject(requiredDataFilename);
+		final Set<String> allRelatedWords = r.getAllRelatedWords();
 		final Map<String, Set<String>> relatedWordsForWord = r.getRelatedWordsForWord();
 		final Map<String, THashMap<String, Set<String>>> wordNetMap = r.getWordNetMap();
 		final THashMap<String,THashSet<String>> frameMap = r.getFrameMap();
@@ -161,7 +162,7 @@ public class ParserDriver {
 		final TObjectDoubleHashMap<String> paramList =
 			FrameIdentificationRelease.parseParamFile(idParamsFile);
 
-		System.out.println("Initializing frame identification model...");
+		System.err.println("Initializing frame identification model...");
 		final FastFrameIdentifier idModel = new FastFrameIdentifier(
 				paramList, 
 				"reg", 
@@ -173,30 +174,19 @@ public class ParserDriver {
 				hvLemmas);
 		SmoothedGraph sg = null;
 		if (useGraph) {
-			sg = (SmoothedGraph) readSerializedObject(graphFilename);
-			System.out.println("Read graph successfully from: " + graphFilename);
+			sg = readObject(graphFilename);
+			System.err.println("Read graph successfully from: " + graphFilename);
 		}
 		// initializing argument identification
 		// reading requires and excludes map
-		System.out.println("Initializing alphabet for argument identification..");
+		System.err.println("Initializing alphabet for argument identification..");
 		CreateAlphabet.setDataFileNames(alphabetFilename, fedictFilename, eventsFilename, spansFilename);
-		final Decoding decoding = getDecoding(decodingType, modelFilename, alphabetFilename, requiresMapFile, excludesMapFile);
+		final Decoding decoding =
+				getDecoding(decodingType, modelFilename, alphabetFilename, requiresMapFile, excludesMapFile);
 
+		final SegmentationMode segmentationMode = getSegmentationMode(goldSegFile, useRelaxedSegmentation);
 		BufferedReader goldSegReader = null;
-		SegmentationMode segmentationMode;
-		if (goldSegFile == null || goldSegFile.equals("null") || goldSegFile.equals("")) {
-			if (useRelaxedSegmentation.equals("yes")) {
-				segmentationMode = RELAXED;
-				System.err.println("Using relaxed auto target identification.");
-			} else {
-				segmentationMode = STRICT;
-				System.err.println("Using strict auto target identification.");
-			}
-		} else {
-			segmentationMode = GOLD;
-			System.err.println("Using gold targets from: " + goldSegFile);
-			goldSegReader = new BufferedReader(new FileReader(goldSegFile));
-		}
+		if(segmentationMode.equals(GOLD)) goldSegReader = new BufferedReader(new FileReader(goldSegFile));
 
 		final BufferedWriter outputWriter = new BufferedWriter(new FileWriter(outputFile));
 		final BufferedWriter lemmaTagsWriter = new BufferedWriter(new FileWriter(allLemmaTagsOutputFile));
@@ -210,111 +200,149 @@ public class ParserDriver {
 		}
 		String posLine = null;
 		do {
-			int index;
 			final ArrayList<String> posLines = Lists.newArrayList();
 			final ArrayList<String> tokenizedLines = Lists.newArrayList();
-			final ArrayList<String> segLines = Lists.newArrayList();
-			final ArrayList<String> tokenNums = Lists.newArrayList();
-			final ArrayList<String> idResult = Lists.newArrayList();
-			int size = parseSets.size();
-			for (int i = 0; i < size; i++) {
-				final ArrayList<String> set = parseSets.get(0);
-				set.clear();
-				parseSets.remove(0);
-			}
 			parseSets.clear();
-			System.out.println("Processing batch of size:" + BATCH_SIZE + " starting from: " + count);
-			for (index = 0; index < BATCH_SIZE; index++) {
+			System.err.println("Processing batch of size:" + BATCH_SIZE + " starting from: " + count);
+			for (int i : xrange(BATCH_SIZE)) {
 				posLine = posReader.readLine();
-				if (posLine == null) {
-					break;
-				}
+				if (posLine == null) break;
 				posLines.add(posLine);
 				tokenizedLines.add(tokenizedReader.readLine());
-				if (goldSegReader != null) {
-					segLines.add(goldSegReader.readLine().trim());
-				}
-				if (serverName == null) {
-					parseSets.add(readCoNLLParse(parseReader));
-				}
-				tokenNums.add("" + index);
 			}
 			if (posLines.size() == 0) break;
-			if (serverName != null) parseSets = getParsesFromServer(serverName, serverPort, posLines);
+			if (serverName == null) {
+				for (int ignored : xrange(BATCH_SIZE)) {
+					final ArrayList<String> parse = readCoNLLParse(parseReader);
+					if (parse.isEmpty()) break;
+					parseSets.add(parse);
+				}
+			} else {
+				parseSets = getParsesFromServer(serverName, serverPort, posLines);
+			}
 			final ArrayList<String> allLemmaTagsSentences =
 				getAllLemmaTagsSentences(tokenizedLines, parseSets, wnr);
 			for (String outSent: allLemmaTagsSentences) {
 				lemmaTagsWriter.write(outSent + "\n");
 			}
 			/* actual parsing */
-			// 1. getting segments
-			List<String> segments;
-			if (segmentationMode.equals(GOLD)) {
-				segments = getGoldSegmentation(segLines, tokenNums);
-			} else {
-				Segmenter segmenter = segmentationMode.equals(STRICT) ? new RoteSegmenter() : new MoreRelaxedSegmenter();
-				segments = segmenter.getSegmentations(tokenNums, allLemmaTagsSentences, allRelatedWords);
-			}
-			final ArrayList<String> inputForFrameId = getRightInputForFrameIdentification(segments);
+			final List<String> idResult =
+					identifyFrames(useGraph, allRelatedWords, idModel, sg, segmentationMode,
+							goldSegReader, allLemmaTagsSentences);
 
-			// 2. frame identification
-			for(String input: inputForFrameId) {
-				final String[] tokens = input.split("\t");
-				// offset of the sentence within the loaded data (relative to options.startIndex)
-				int sentNum = Integer.parseInt(tokens[2]);
-				String bestFrame;
-				if (sg == null) {
-					bestFrame = idModel.getBestFrame(input, allLemmaTagsSentences.get(sentNum));
-				} else {
-					bestFrame = idModel.getBestFrame(input, allLemmaTagsSentences.get(sentNum),sg);
-				}
-				final String tokenRepresentation = getTokenRepresentation(tokens[1], allLemmaTagsSentences.get(sentNum));
-				final String[] split = tokenRepresentation.trim().split("\t");
-				idResult.add(Joiner.on("\t").join(1, bestFrame, split[0], tokens[1], split[1], sentNum));	// BestFrame\tTargetTokenNum(s)\tSentenceOffset
-			}
 			// 3. argument identification
-			CreateAlphabet.run(false, allLemmaTagsSentences, idResult, wnr);
-			final LocalFeatureReading lfr =
-					new LocalFeatureReading(eventsFilename, spansFilename, idResult);
-			lfr.readLocalFeatures();
-			decoding.setData(null, lfr.getMFrameFeaturesList(), idResult);
-			final ArrayList<String> argResult = decoding.decodeAll("overlapcheck", count);
+			final List<String> argResult =
+					identifyArguments(wnr, eventsFilename, spansFilename, decoding, count, idResult,
+							allLemmaTagsSentences);
 			for (String result: argResult) {
 				outputWriter.write(result + "\n");
 			}
-			count += index;
+			count += BATCH_SIZE;
 		} while (posLine != null);
 
 		//close streams
-		if (parseReader != null) {
-			parseReader.close();
-		}
-		if (outputWriter != null) {
-			outputWriter.close();
-		}
-		if (lemmaTagsWriter != null) {
-			lemmaTagsWriter.close();
-		}
+		closeQuietly(parseReader);
+		closeQuietly(outputWriter);
+		closeQuietly(lemmaTagsWriter);
 		// wrapping up joint decoding
 		if (!decodingType.equals("beam")) {
-			((JointDecoding)decoding).wrapUp();
+			((JointDecoding) decoding).wrapUp();
 		}
 	}
 
-	private static ArrayList<String> getGoldSegmentation(ArrayList<String> segLines, ArrayList<String> tokenNums) {
-		int j = 0;
-		final ArrayList<String> segs = Lists.newArrayList();
-		for (String seg: segLines) {
-			final String[] toks = seg.trim().split("\\s");
-			String outSeg = "";
-			for (String tok: toks) {
-				outSeg += tok+"#true\t";
+	private static List<String> identifyFrames(boolean useGraph,
+											   Set<String> allRelatedWords,
+											   FastFrameIdentifier idModel,
+											   SmoothedGraph sg,
+											   SegmentationMode segmentationMode,
+											   BufferedReader goldSegReader,
+											   List<String> allLemmaTagsSentences) throws IOException {
+		final int size = allLemmaTagsSentences.size();
+		final List<Integer> tokenNums = range(size).asList();
+		final List<String> tokenNumStrs = Lists.transform(tokenNums, Functions.toStringFunction());
+		// 1. get segments
+		List<String> segments;
+		if (segmentationMode.equals(GOLD)) {
+			final ArrayList<String> segLines = Lists.newArrayList();
+			for (int ignored : xrange(size)) {
+				final String segLine = goldSegReader.readLine().trim();
+				if (segLine == null) break;
+				segLines.add(segLine);
 			}
-			outSeg += tokenNums.get(j);
-			segs.add(outSeg.trim());
-			j++;
+			segments = getGoldSegmentationBatch(segLines, tokenNums);
+		} else {
+			final Segmenter segmenter =
+					segmentationMode.equals(STRICT) ? new RoteSegmenter() : new MoreRelaxedSegmenter();
+			segments = segmenter.getSegmentations(tokenNumStrs, allLemmaTagsSentences, allRelatedWords);
+		}
+		final List<String> inputForFrameId = getRightInputForFrameIdentification(segments);
+
+		// 2. frame identification
+		final List<String> idResult = Lists.newArrayList();
+		for(String input: inputForFrameId) {
+			final String[] tokens = input.split("\t");
+			// offset of the sentence within the loaded data (relative to options.startIndex)
+			int sentNum = Integer.parseInt(tokens[2]);
+			final String parseLine = allLemmaTagsSentences.get(sentNum);
+			final String bestFrame = useGraph ?
+					idModel.getBestFrame(input, parseLine, sg) :
+					idModel.getBestFrame(input, parseLine);
+			final String tokenRepresentation = getTokenRepresentation(tokens[1], parseLine);
+			final String[] split = tokenRepresentation.trim().split("\t");
+			// 1\tBestFrame\tTargetTokenNum(s)\tSentenceOffset
+			idResult.add(Joiner.on("\t").join(1, bestFrame, split[0], tokens[1], split[1], sentNum));
+		}
+		return idResult;
+	}
+
+	private static List<String> identifyArguments(WordNetRelations wnr,
+												  String eventsFilename,
+												  String spansFilename,
+												  Decoding decoding,
+												  int count,
+												  List<String> idResult,
+												  List<String> allLemmaTagsSentences) throws Exception {
+		CreateAlphabet.run(false, allLemmaTagsSentences, idResult, wnr);
+		final LocalFeatureReading lfr = new LocalFeatureReading(eventsFilename, spansFilename, idResult);
+		lfr.readLocalFeatures();
+		decoding.setData(null, lfr.getMFrameFeaturesList(), idResult);
+		return decoding.decodeAll(true, count);
+	}
+
+	private static ArrayList<String> getGoldSegmentationBatch(List<String> segLines, List<Integer> tokenNums) {
+		final ArrayList<String> segs = Lists.newArrayList();
+		for(int j : xrange(segLines.size())) {
+			final String segLine = segLines.get(j);
+			final Integer tokenNum = tokenNums.get(j);
+			segs.add(getGoldSegmentation(segLine, tokenNum));
 		}
 		return segs;
+	}
+
+	private static String getGoldSegmentation(String segLine, Integer tokenNum) {
+		final Joiner tab = Joiner.on("\t");
+		List<String> result = Lists.newArrayList();
+		for (String tok: segLine.trim().split("\\s")) {
+			result.add(tok + GOLD_TARGET_SUFFIX);
+		}
+		return tab.join(tab.join(result), tokenNum);
+	}
+
+	private static SegmentationMode getSegmentationMode(String goldSegFile, String useRelaxedSegmentation) {
+		SegmentationMode segmentationMode;
+		if (goldSegFile == null || goldSegFile.equals("null") || goldSegFile.equals("")) {
+			if (useRelaxedSegmentation.equals("yes")) {
+				segmentationMode = RELAXED;
+				System.err.println("Using relaxed auto target identification.");
+			} else {
+				segmentationMode = STRICT;
+				System.err.println("Using strict auto target identification.");
+			}
+		} else {
+			segmentationMode = GOLD;
+			System.err.println("Using gold targets from: " + goldSegFile);
+		}
+		return segmentationMode;
 	}
 
 	private static Decoding getDecoding(String decodingType,
@@ -322,32 +350,25 @@ public class ParserDriver {
 										String alphabetFilename,
 										String requiresMapFile,
 										String excludesMapFile) {
-		Decoding decoding;
-		if (decodingType.equals("beam")) {
-			decoding = new Decoding();
-			decoding.init(modelFilename,
-					alphabetFilename);
-		} else {
-			decoding = new JointDecoding(true); // exact decoding
-			decoding.init(modelFilename,
-					alphabetFilename);
-			((JointDecoding)decoding).setMaps(requiresMapFile, excludesMapFile);
-		}
+		// beam search vs. exact decoding
+		final boolean isBeam = decodingType.equals("beam");
+		Decoding decoding = isBeam ? new Decoding() : new JointDecoding(true);
+		decoding.init(modelFilename, alphabetFilename);
+		if (!isBeam) ((JointDecoding)decoding).setMaps(requiresMapFile, excludesMapFile);
 		return decoding;
 	}
 
-	private static ArrayList<String> getAllLemmaTagsSentences(
-			ArrayList<String> tokenizedLines, 
-			ArrayList<ArrayList<String>> parses,
-			WordNetRelations wnr) {
+	private static ArrayList<String> getAllLemmaTagsSentences(List<String> tokenizedLines,
+															  List<ArrayList<String>> parses,
+															  WordNetRelations wnr) {
 		ArrayList<String> neSentences = 
 			AllAnnotationsMergingWithoutNE.findDummyNESentences(tokenizedLines);
 		ArrayList<String> perSentenceParses = 
 			OneLineDataCreation.getPerSentenceParses(parses, tokenizedLines, neSentences);
 		ArrayList<String> res = new ArrayList<String>();
 		for (String line: perSentenceParses){
-			String outLine = line+"\t";
-			String[] toks=line.trim().split("\\s");
+			String outLine = line + "\t";
+			String[] toks = line.trim().split("\\s");
 			int sentLen=Integer.parseInt(toks[0]);
 			for(int i=0;i<sentLen;i++){
 				String lemma=wnr.getLemmaForWord(toks[i+1].toLowerCase(), toks[i+1+sentLen]);

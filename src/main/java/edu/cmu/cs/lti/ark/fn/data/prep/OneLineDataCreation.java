@@ -22,6 +22,7 @@
 package edu.cmu.cs.lti.ark.fn.data.prep;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -45,9 +46,8 @@ public class OneLineDataCreation {
 				"semeval.fulldev.sentences",
 				"semeval.fulltest.sentences"
 		};
-		int size = prefixes.length;
-		for(int i = 0; i < size; i ++) {
-			transFormIntoPerLineParse(prefixes[i]);
+		for (String prefix : prefixes) {
+			transFormIntoPerLineParse(prefix);
 		}		
 	}
 	
@@ -69,9 +69,9 @@ public class OneLineDataCreation {
 	 * @param neTaggedSentences a list of NE tagged sentences
 	 * @return
 	 */
-	public static ArrayList<String> getPerSentenceParses(ArrayList<ArrayList<String>> parses,
-														 ArrayList<String> tokenizedSentences,
-														 ArrayList<String> neTaggedSentences) {
+	public static ArrayList<String> getPerSentenceParses(List<ArrayList<String>> parses,
+														 List<String> tokenizedSentences,
+														 List<String> neTaggedSentences) {
 		ArrayList<String> result = new ArrayList<String>();
 		ArrayList<String> gatheredSentences;
 		ArrayList<String> gatheredParses;
@@ -79,20 +79,22 @@ public class OneLineDataCreation {
 
 		int size = parses.size();
 		for(int i = 0; i < size; i++) {
+			final String tokenizedSentence = tokenizedSentences.get(i);
+			final ArrayList<String> parse = parses.get(i);
+			final String neTaggedSentence = neTaggedSentences.get(i);
 			gatheredSentences = new ArrayList<String>();
 			gatheredParses = new ArrayList<String>();
 			gatheredNESentences = new ArrayList<String>();
-			gatheredSentences.add(tokenizedSentences.get(i));
-			gatheredParses.addAll(parses.get(i));
-			gatheredNESentences.add(neTaggedSentences.get(i));
+			gatheredSentences.add(tokenizedSentence);
+			gatheredParses.addAll(parse);
+			gatheredNESentences.add(neTaggedSentence);
 			String oneLineParse = processGatheredSentences(gatheredSentences, gatheredParses, gatheredNESentences);
 			result.add(oneLineParse);
 		}
-		
 		return result;
 	}
-	
-	
+
+
 	private static String processGatheredSentences(ArrayList<String> gatheredSentences,
 												   ArrayList<String> gatheredParses,
 												   ArrayList<String> gatheredNESents) {
@@ -116,7 +118,7 @@ public class OneLineDataCreation {
 				String NE = token.substring(lastInd + 1);
 				neLine += NE + "\t";
 			}
-		}	
+		}
 		result = totalTokens + "\t" + result;
 		if(totalTokens != gatheredParses.size()) {
 			System.out.println("Some problem: total number of tokens in gathered sentences not equal to gathered parses.");
@@ -145,15 +147,15 @@ public class OneLineDataCreation {
 				st.nextToken();
 				posTagSequence += st.nextToken().trim() + "\t";
 				st.nextToken();
-				st.nextToken();				
+				st.nextToken();
 				int parent = new Integer(st.nextToken().trim());
 				if(parent != 0) {
 					parent += offset;
 				}
 				parentTagSequence += parent + "\t";
 				labelTagSequence += st.nextToken() + "\t";
-				count++;                               
-			}			
+				count++;
+			}
 		}	
 		result += posTagSequence + labelTagSequence + parentTagSequence + neLine;
 		result = result.trim();
@@ -175,7 +177,7 @@ public class OneLineDataCreation {
 		ArrayList<ArrayList<String>> result = new ArrayList<ArrayList<String>>();
 		try {
 			BufferedReader bReader = new BufferedReader(new FileReader(conllParseFile));
-			String line=null;
+			String line;
 			ArrayList<String> thisParse = new ArrayList<String>();
 			while((line=bReader.readLine()) != null) {
 				line=line.trim();

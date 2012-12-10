@@ -55,11 +55,11 @@ public class DataPrep {
 	/**
 	 * contains lines in frame element file
 	 */
-	public static ArrayList<String> feLines;
+	public static List<String> feLines;
 	/**
 	 * lines in tags file
 	 */
-	public static ArrayList<String> tagLines;
+	public static List<String> tagLines;
 	/**
 	 * index of the current line in feLines being processed
 	 */
@@ -98,8 +98,8 @@ public class DataPrep {
 		load(null, null, null);
 	}
 	
-	public DataPrep(ArrayList<String> tL, 
-					ArrayList<String> fL,
+	public DataPrep(List<String> tL,
+					List<String> fL,
 					WordNetRelations lwnr) {
 		// this model does not write span files
 		ps = FileUtil.openOutFile(FEFileName.spanfilename);
@@ -213,9 +213,7 @@ public class DataPrep {
 	 * @brief load data needed for feature extraction
 	 * 
 	 */
-	private void load(ArrayList<String> tL,
-					  ArrayList<String> fL,
-					  WordNetRelations lwnr) {
+	private void load(List<String> tL, List<String> fL, WordNetRelations lwnr) {
 		if (fedict == null) {
 			fedict = new FEDict(FEFileName.fedictFilename1);
 		}

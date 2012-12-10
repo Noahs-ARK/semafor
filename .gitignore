@@ -2,6 +2,7 @@
 *.class
 *.pyc
 target/
+dependency-reduced-pom.xml
 
 # IDE cruft
 .idea

@@ -22,6 +22,7 @@
 package edu.cmu.cs.lti.ark.fn.data.prep;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 import edu.cmu.cs.lti.ark.fn.utils.LemmatizeStuff;
 
@@ -62,7 +63,7 @@ public class AllAnnotationsMergingWithoutNE {
 		LemmatizeStuff.lemmatize(stopWordsFile, wordNetConfigFile, tmpParseFile, outfile);
 	}
 
-	public static ArrayList<String> findDummyNESentences(ArrayList<String> tokenizedSentences) {
+	public static ArrayList<String> findDummyNESentences(List<String> tokenizedSentences) {
 		ArrayList<String> res = new ArrayList<String>();
 		for(String sentence : tokenizedSentences) {
 			final StringTokenizer st = new StringTokenizer(sentence.trim());

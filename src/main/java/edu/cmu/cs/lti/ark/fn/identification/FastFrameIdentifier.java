@@ -203,8 +203,7 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode
 		return results;
 	}	
 	
-	public String getBestFrame(String frameLine, String parseLine, SmoothedGraph sg)
-	{
+	public String getBestFrame(String frameLine, String parseLine, SmoothedGraph sg) {
 		String result = null;
 		double maxVal = -Double.MIN_VALUE;
 		String[] toks = frameLine.split("\t");
@@ -213,35 +212,30 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode
 		for(int j = 0; j < tokNums.length; j ++)
 			intTokNums[j] = new Integer(tokNums[j]);
 		Arrays.sort(intTokNums);
-		StringTokenizer st = new StringTokenizer(parseLine,"\t");
+		StringTokenizer st = new StringTokenizer(parseLine, "\t");
 		int tokensInFirstSent = new Integer(st.nextToken());
 		String[][] data = new String[6][tokensInFirstSent];
-		for(int k = 0; k < 6; k ++)
-		{
+		for(int k = 0; k < 6; k ++) {
 			data[k]=new String[tokensInFirstSent];
-			for(int j = 0; j < tokensInFirstSent; j ++)
-			{
-				data[k][j]=""+st.nextToken().trim();
+			for(int j = 0; j < tokensInFirstSent; j ++) {
+				data[k][j] = "" + st.nextToken().trim();
 			}
 		}	
-		String finetoken = null;
-		String coarsetoken = null;
+		String fineToken;
+		String coarseToken;
 		Set<String> set = checkPresenceOfTokensInMap(intTokNums,data);
 		if (set == null) {
 			if (intTokNums.length > 1) {
-				coarsetoken = "";
-				for (int j = 0; j < intTokNums.length; j++) {
-					coarsetoken += data[0][intTokNums[j]].toLowerCase() + " ";
+				coarseToken = "";
+				for (int intTokNum : intTokNums) {
+					coarseToken += data[0][intTokNum].toLowerCase() + " ";
 				}
-				coarsetoken = coarsetoken.trim();
-				coarsetoken = 
-					ScanAdverbsAndAdjectives.getCanonicalForm(coarsetoken);
-				if (sg.getCoarseMap().containsKey(coarsetoken)) {
-					set = sg.getCoarseMap().get(coarsetoken);
-				} else {
-					set = null;
+				coarseToken = coarseToken.trim();
+				coarseToken =
+					ScanAdverbsAndAdjectives.getCanonicalForm(coarseToken);
+				if (sg.getCoarseMap().containsKey(coarseToken)) {
+					set = sg.getCoarseMap().get(coarseToken);
 				}
-				
 			} else {
 				String lemma = data[5][intTokNums[0]];
 				String pos = data[1][intTokNums[0]];
@@ -259,41 +253,37 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode
 					pos = null;
 				}
 				if (pos != null) {
-					finetoken = 
+					fineToken =
 						ScanAdverbsAndAdjectives.getCanonicalForm(lemma + "." + pos);
-					coarsetoken = 
+					coarseToken =
 						ScanAdverbsAndAdjectives.getCanonicalForm(lemma);
-					if (sg.getFineMap().containsKey(finetoken)) {
-						set = sg.getFineMap().get(finetoken);
-					} else if (sg.getCoarseMap().containsKey(coarsetoken)){
-						set = sg.getCoarseMap().get(coarsetoken);
+					if (sg.getFineMap().containsKey(fineToken)) {
+						set = sg.getFineMap().get(fineToken);
+					} else if (sg.getCoarseMap().containsKey(coarseToken)){
+						set = sg.getCoarseMap().get(coarseToken);
 					} else {
 						set = null;
 					}
 				} else {
-					coarsetoken = 
+					coarseToken =
 						ScanAdverbsAndAdjectives.getCanonicalForm(lemma);
-					if (sg.getCoarseMap().containsKey(coarsetoken)){
-						set = sg.getCoarseMap().get(coarsetoken);
+					if (sg.getCoarseMap().containsKey(coarseToken)){
+						set = sg.getCoarseMap().get(coarseToken);
 					} else {
 						set = null;
 					}
 				}
 			}
 		}
-		if(set==null)
-		{
+		if(set == null) {
 			set = mFrameMap.keySet();
 		}
-		for(String frame: set)
-		{
+		for(String frame: set) {
 			double val =  getNumeratorValue(frame, intTokNums, data);
-			if(val>maxVal)
-			{
+			if(val>maxVal) {
 				maxVal = val;
-				result=""+frame;
+				result = "" + frame;
 			}
-			//System.out.println("Considered "+frame+" for frameLine:"+frameLine);
 		}
 		return result;
 	}	
@@ -333,7 +323,6 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode
 				maxVal = val;
 				result=""+frame;
 			}
-			//System.out.println("Considered "+frame+" for frameLine:"+frameLine);
 		}
 		return result;
 	}

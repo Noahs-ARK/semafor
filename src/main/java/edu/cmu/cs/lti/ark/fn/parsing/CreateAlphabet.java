@@ -24,11 +24,15 @@ package edu.cmu.cs.lti.ark.fn.parsing;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import edu.cmu.cs.lti.ark.fn.clusters.ScrapTest;
 import edu.cmu.cs.lti.ark.fn.utils.BitOps;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.FileUtil;
+import org.apache.commons.io.IOUtils;
+
+import static org.apache.commons.io.IOUtils.closeQuietly;
 
 public class CreateAlphabet {
 
@@ -72,11 +76,8 @@ public class CreateAlphabet {
 		DataPrep.genAlpha = false;
 	}
 
-	public static void run(boolean genAlpha, 
-							ArrayList<String> tL, 	
-							ArrayList<String> fL,
-							WordNetRelations lwnr) {
-		DataPrep dprep=new DataPrep(tL, fL, lwnr);
+	public static void run(boolean genAlpha, List<String> tL, List<String> fL, WordNetRelations lwnr) {
+		DataPrep dprep = new DataPrep(tL, fL, lwnr);
 		long time=System.currentTimeMillis();
 		System.out.println("Reading alphabet...");
 		if(genAlpha){
@@ -108,11 +109,7 @@ public class CreateAlphabet {
 			fCount++;
 		}
 		BitOps.writeInt(-1,bos);
-		try{
-			bos.close();
-		}catch(IOException ioe){
-			System.out.println(ioe.getMessage());
-		}
+		closeQuietly(bos);
 		System.out.println(System.currentTimeMillis()-time);
 		if(genAlpha){
 			DataPrep.writeFeatureIndex(FEFileName.alphafilename);

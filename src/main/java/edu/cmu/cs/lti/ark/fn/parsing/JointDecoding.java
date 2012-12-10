@@ -154,14 +154,14 @@ public class JointDecoding extends Decoding {
 	}
 	
 	// does not return scores
-	public ArrayList<String> decodeAll(String overlapCheck, 
+	public ArrayList<String> decodeAll(boolean doOverlapCheck,
 			int offset) {
 		int size = mFrameList.size();
 		ArrayList<String> result = new ArrayList<String>();
 		for(int i = 0; i < size; i ++)
 		{
 			System.out.println("Decoding index:"+i);
-			String decisionLine = decode(i,overlapCheck, offset, false);
+			String decisionLine = decode(i, doOverlapCheck, offset, false);
 			result.add(decisionLine);
 		}
 		if (mPredictionFile != null) {

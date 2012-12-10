@@ -21,12 +21,7 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.util.FileUtil;
@@ -42,20 +37,15 @@ public class Decoding
 	private String mLocalAlphabetFile;
 	private String mLocalModelFile;
 	public static long count=0;
-	protected ArrayList<FrameFeatures> mFrameList;
+	protected List<FrameFeatures> mFrameList;
 	protected String mPredictionFile;	
-	protected ArrayList<String> mFrameLines; 
-	
-	public Decoding()
-	{
-		
-	}
-	
+	protected List<String> mFrameLines;
+
 	public void init(String modelFile, 
 					 String alphabetFile,
 					 String predictionFile,
-					 ArrayList<FrameFeatures> list,
-					 ArrayList<String> frameLines)
+					 List<FrameFeatures> list,
+					 List<String> frameLines)
 	{
 		mLocalModelFile = modelFile;
 		mLocalAlphabetFile = alphabetFile;
@@ -72,9 +62,7 @@ public class Decoding
 		readModel();
 	}
 	
-	public void setData(String predictionFile,
-					 ArrayList<FrameFeatures> list,
-					 ArrayList<String> frameLines) {
+	public void setData(String predictionFile, List<FrameFeatures> list, List<String> frameLines) {
 		mFrameList=list;
 		mPredictionFile = predictionFile;
 		mFrameLines=frameLines;
@@ -92,7 +80,7 @@ public class Decoding
 		}
 	}
 	
-	public ArrayList<String> decodeAll(String overlapCheck, 
+	public ArrayList<String> decodeAll(boolean doOverlapCheck,
 									   int offset)
 	{
 		int size = mFrameList.size();
@@ -100,7 +88,7 @@ public class Decoding
 		for(int i = 0; i < size; i ++)
 		{
 			System.out.println("Decoding index:"+i);
-			String decisionLine = decode(i,overlapCheck, offset);
+			String decisionLine = decode(i, doOverlapCheck, offset);
 			result.add(decisionLine);
 		}
 		if (mPredictionFile != null) {
@@ -109,11 +97,11 @@ public class Decoding
 		return result;
 	}
 	
-	public String decode(int index, String overlapCheck, int offset)
+	public String decode(int index, boolean doOverlapCheck, int offset)
 	{
 		FrameFeatures f = mFrameList.get(index);
 		String dec = null;
-		if(overlapCheck.equals("overlapcheck"))
+		if(doOverlapCheck)
 			dec = getNonOverlappingDecision(f,mFrameLines.get(index), offset);
 		else
 			dec = getDecision(f,mFrameLines.get(index), offset);

@@ -22,94 +22,76 @@
 package edu.cmu.cs.lti.ark.util;
 
 
+import org.apache.commons.io.IOUtils;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-public class SerializedObjects
-{
-	public static void writeSerializedObject(Object object, String outFile)
-	{
-		ObjectOutput output = null;
+
+public class SerializedObjects {
+	public static void writeSerializedObject(Object object, String outFile) {
+		ObjectOutputStream output = null;
 		try {
-			OutputStream file = null;
-			if(outFile.endsWith(".gz")) {
-				file = new GZIPOutputStream(new FileOutputStream(outFile));
-			} else {
-				file = new FileOutputStream(outFile);
-			}
-			OutputStream buffer = new BufferedOutputStream( file );
-			output = new ObjectOutputStream( buffer );
+			output = getObjectOutputStream(outFile);
 			output.writeObject(object);
-			buffer.close();
-			file.close();
-		}
-		catch(IOException ex){
+		} catch(IOException ex){
+			// TODO: NONONONONO! stop swallowing errors!
 			ex.printStackTrace();
-		}
-		finally{
-			try {
-				if (output != null) {
-					//flush and close "output" and its underlying streams
-					output.close();
-				}
-			}
-			catch (IOException ex ){
-				ex.printStackTrace();
-			}
+		} finally{
+			IOUtils.closeQuietly(output);
 		}
 	}
 
-	public static Object readSerializedObject(String inputFile)
-	{
-		ObjectInput input = null;
-		Object recoveredObject=null;
+	public static Object readSerializedObject(String inputFile) {
+		ObjectInputStream input = null;
+		Object recoveredObject = null;
 		try{
-			//use buffering
-			InputStream file = null;
-			if (inputFile.endsWith(".gz")) {
-				file = new GZIPInputStream(new FileInputStream(inputFile));
-			} else {
-				file = new FileInputStream(inputFile);
-			}
-			InputStream buffer = new BufferedInputStream(file);
-			input = new ObjectInputStream(buffer);
-			//deserialize the List
+			input = getObjectInputStream(inputFile);
 			recoveredObject = input.readObject();
-		}
-		catch(IOException ex){
+		} catch(Exception ex) {
+			// TODO: NONONONONO! stop swallowing errors!
 			ex.printStackTrace();
-		}
-		catch (ClassNotFoundException ex){
-			ex.printStackTrace();
-		}
-		catch(Exception ex)
-		{
-			ex.printStackTrace();
-		}
-		finally{
-			try {
-				if ( input != null ) {
-					//close "input" and its underlying streams
-					input.close();
-				}
-			}
-			catch (IOException ex){
-				ex.printStackTrace();
-			}
+		} finally{
+			IOUtils.closeQuietly(input);
 		}
 		return recoveredObject;
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <T> T readObject(String inputFile)
+			throws IOException, ClassNotFoundException {
+		ObjectInputStream input = null;
+		try{
+			input = getObjectInputStream(inputFile);
+			return (T) input.readObject();
+		} finally{
+			IOUtils.closeQuietly(input);
+		}
+	}
+
+	private static ObjectInputStream getObjectInputStream(String inputFile) throws IOException {
+		return new ObjectInputStream(new BufferedInputStream(getInputStream(inputFile)));
+	}
+
+	public static InputStream getInputStream(String inputFile) throws IOException {
+		if(inputFile.endsWith(".gz")) {
+			return new GZIPInputStream(new FileInputStream(inputFile));
+		} else {
+			return new FileInputStream(inputFile);
+		}
+	}
+
+	private static ObjectOutputStream getObjectOutputStream(String outFile) throws IOException {
+		OutputStream file = getOutputStream(outFile);
+		return new ObjectOutputStream(new BufferedOutputStream(file));
+	}
+
+	public static OutputStream getOutputStream(String outFile) throws IOException {
+		if(outFile.endsWith(".gz")) {
+			return new GZIPOutputStream(new FileOutputStream(outFile));
+		} else {
+			return new FileOutputStream(outFile);
+		}
+	}
 }
