@@ -1,0 +1,30 @@
+1	My	_	PRP$	PRP$	_	2	NMOD	_	_
+2	kitchen	_	NN	NN	_	5	SBJ	_	_
+3	no	_	RB	RB	_	5	ADV	_	_
+4	longer	_	RB	RB	_	3	AMOD	_	_
+5	smells	_	VBZ	VBZ	_	0	ROOT	_	_
+
+1	0.2	_	CD	CD	_	2	NMOD	_	_
+2	miles	_	NNS	NNS	_	3	AMOD	_	_
+3	later	_	RB	RB	_	21	ADV	_	_
+4	the	_	DT	DT	_	5	NMOD	_	_
+5	trail	_	NN	NN	_	11	NMOD	_	_
+6	and	_	CC	CC	_	5	CC	_	_
+7	the	_	DT	DT	_	9	NMOD	_	_
+8	creek	_	NN	NN	_	9	NMOD	_	_
+9	run	_	NN	NN	_	5	COORD	_	_
+10	nearly	_	RB	RB	_	11	NMOD	_	_
+11	level	_	NN	NN	_	21	SBJ	_	_
+12	with	_	IN	IN	_	11	NMOD	_	_
+13	each	_	DT	DT	_	14	NMOD	_	_
+14	other	_	JJ	JJ	_	12	PMOD	_	_
+15	and	_	CC	CC	_	14	CC	_	_
+16	the	_	DT	DT	_	17	NMOD	_	_
+17	sound	_	NN	NN	_	14	COORD	_	_
+18	of	_	IN	IN	_	17	NMOD	_	_
+19	Minnehaha	_	NNP	NNP	_	20	NMOD	_	_
+20	Falls	_	NNP	NNP	_	18	PMOD	_	_
+21	fills	_	VBZ	VBZ	_	0	ROOT	_	_
+22	the	_	DT	DT	_	23	NMOD	_	_
+23	air	_	NN	NN	_	21	OBJ	_	_
+

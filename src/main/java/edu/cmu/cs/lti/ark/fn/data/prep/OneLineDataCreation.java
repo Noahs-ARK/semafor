@@ -131,6 +131,7 @@ public class OneLineDataCreation {
 			if(i > 0) {
 				offset += tokenNums[i-1];
 			}
+			// parse CONLL format
 			for(int j = 0; j < tokenNums[i]; j++) {
 				String parseLine = gatheredParses.get(count).trim();
 				StringTokenizer st = new StringTokenizer(parseLine, "\t");

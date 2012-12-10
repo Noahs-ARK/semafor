@@ -1,0 +1,2 @@
+My/PRP$/2/NMOD kitchen/NN/5/SBJ no/RB/5/ADV longer/RB/3/AMOD smells/VBZ/0/ROOT ././5/P	1
+0.2/CD/2/NMOD miles/NNS/3/AMOD later/RB/21/ADV the/DT/5/NMOD trail/NN/11/NMOD and/CC/5/CC the/DT/9/NMOD creek/NN/9/NMOD run/NN/5/COORD nearly/RB/11/NMOD level/NN/21/SBJ with/IN/11/NMOD each/DT/14/NMOD other/JJ/12/PMOD and/CC/14/CC the/DT/17/NMOD sound/NN/14/COORD of/IN/17/NMOD Minnehaha/NNP/20/NMOD Falls/NNP/18/PMOD fills/VBZ/0/ROOT the/DT/23/NMOD air/NN/21/OBJ ././21/P	1
