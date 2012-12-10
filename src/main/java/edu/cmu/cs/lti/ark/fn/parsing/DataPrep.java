@@ -117,7 +117,7 @@ public class DataPrep {
 	}
 	private ArrayList<int[]>  addConstituent(DataPointWithElements dp){
 		DependencyParse parse=dp.getParses().getBestParse();
-		DependencyParse[] nodes=DependencyParse.getIndexSortedListOfNodes(parse);
+		DependencyParse[] nodes= parse.getIndexSortedListOfNodes();
 		boolean[][] spanMat = new boolean[nodes.length - 1][nodes.length - 1];
 		int[][] heads = new int[nodes.length-1][nodes.length-1];
 		int[][] depParses = new int[nodes.length-1][nodes.length-1];
@@ -135,7 +135,7 @@ public class DataPrep {
 		if(!useOracleSpans)
 		{
 			parse = dp.getParses().get(0);
-			nodes = DependencyParse.getIndexSortedListOfNodes(parse);
+			nodes = parse.getIndexSortedListOfNodes();
 			findSpans(spanMat, heads, nodes);
 			if(FEFileName.useUnlabeledSpans)
 			{

@@ -55,51 +55,41 @@ public abstract class ParseNode<T extends ParseNode<T>> extends TreeNode<T> {
 	 */
 	protected String headWord = null;
 	
-	public void setWord(String w)
-	{
+	public void setWord(String w) {
 		word = w;
 	}
 	
-	public String getWord()
-	{
+	public String getWord() {
 		return word;
 	}
-	public void setLemma(String l)
-	{
+	public void setLemma(String l) {
 		lemma = l;
 	}
 	
-	public String getLemma()
-	{
+	public String getLemma() {
 		return lemma;
 	}
-	public void setHeadWord(String w)
-	{
+	public void setHeadWord(String w) {
 		headWord = w;
 	}
 	
-	public String getHeadWord()
-	{
+	public String getHeadWord() {
 		return headWord;
 	}
 	
-	public void setPOS(String pos)
-	{
+	public void setPOS(String pos) {
 		this.pos = pos;
 	}
 	
-	public String getPOS()
-	{
+	public String getPOS() {
 		return pos;
 	}
 	
-	public void setNE(String ne)
-	{
+	public void setNE(String ne) {
 		this.ne = ne;
 	}
 	
-	public String getNE()
-	{
+	public String getNE() {
 		return ne;
 	}
 	

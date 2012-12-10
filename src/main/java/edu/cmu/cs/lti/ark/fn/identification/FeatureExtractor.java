@@ -299,7 +299,7 @@ public class FeatureExtractor implements IFeatureExtractor
 		/*
 		 * syntactic features
 		 */
-		DependencyParse[] sortedNodes = DependencyParse.getIndexSortedListOfNodes(parse);
+		DependencyParse[] sortedNodes = parse.getIndexSortedListOfNodes();
 
 		DependencyParse node = DependencyParse.getHeuristicHead(sortedNodes, mTokenNums);
 
@@ -530,7 +530,7 @@ public class FeatureExtractor implements IFeatureExtractor
 		/*
 		 * syntactic features
 		 */
-		DependencyParse[] sortedNodes = DependencyParse.getIndexSortedListOfNodes(parse);
+		DependencyParse[] sortedNodes = parse.getIndexSortedListOfNodes();
 
 		DependencyParse node = DependencyParse.getHeuristicHead(sortedNodes, mTokenNums);
 
@@ -710,7 +710,7 @@ public class FeatureExtractor implements IFeatureExtractor
 		/*
 		 * syntactic features
 		 */
-		DependencyParse[] sortedNodes = DependencyParse.getIndexSortedListOfNodes(parse);
+		DependencyParse[] sortedNodes = parse.getIndexSortedListOfNodes();
 
 		DependencyParse node = DependencyParse.getHeuristicHead(sortedNodes, mTokenNums);
 

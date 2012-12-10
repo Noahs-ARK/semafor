@@ -36,10 +36,6 @@ import edu.cmu.cs.lti.ark.util.ds.Range1Based;
  * @since 2009-06-19
  */
 public class DependencyParses implements Iterable<DependencyParse>, Serializable {
-	
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -2181832066796195517L;
 	protected DependencyParse[] parses;
 	protected DependencyParse[][] nodes;
@@ -169,9 +165,9 @@ public class DependencyParses implements Iterable<DependencyParse>, Serializable
 	
 	
 	private void loadAllNodes() {
-		for (int p=0; p<this.parses.length; p++) {
-			if (this.nodes[p]==null) {
-				this.nodes[p] = DependencyParse.getIndexSortedListOfNodes(this.parses[p]);
+		for (int p = 0; p < parses.length; p++) {
+			if (nodes[p] == null) {
+				nodes[p] = parses[p].getIndexSortedListOfNodes();
 			}
 		}
 	}

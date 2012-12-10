@@ -80,7 +80,7 @@ public class ScrapTest {
 				dp=parses;
 			}
 			DependencyParse parseS=parses.get(0);	
-			DependencyParse[] sortedNodes = DependencyParse.getIndexSortedListOfNodes(parseS);
+			DependencyParse[] sortedNodes = parseS.getIndexSortedListOfNodes();
 			boolean[][] spanMat = new boolean[sortedNodes.length][sortedNodes.length];
 			int[][] heads = new int[sortedNodes.length][sortedNodes.length];
 			for(int j = 0; j < sortedNodes.length; j ++)
@@ -98,7 +98,7 @@ public class ScrapTest {
 				if(m>=pLen)
 					continue;
 				parseS=parses.get(m);	
-				sortedNodes = DependencyParse.getIndexSortedListOfNodes(parseS);
+				sortedNodes = parseS.getIndexSortedListOfNodes();
 				findSpans(spanMat,heads,sortedNodes);				
 			}
 			for(int k = 6; k < toks.length; k = k + 2)
@@ -149,7 +149,7 @@ public class ScrapTest {
 				}
 			}	
 			DependencyParse parseS = DependencyParse.processFN(data, 0.0);
-			DependencyParse[] sortedNodes = DependencyParse.getIndexSortedListOfNodes(parseS);
+			DependencyParse[] sortedNodes = parseS.getIndexSortedListOfNodes();
 			boolean[][] spanMat = new boolean[sortedNodes.length][sortedNodes.length];
 			int[][] heads = new int[sortedNodes.length][sortedNodes.length];
 			findSpans(spanMat,heads,sortedNodes);
@@ -302,7 +302,7 @@ public class ScrapTest {
 				}
 			}	
 			DependencyParse parseS = DependencyParse.processFN(data, 0.0);
-			DependencyParse[] sortedNodes = DependencyParse.getIndexSortedListOfNodes(parseS);
+			DependencyParse[] sortedNodes = parseS.getIndexSortedListOfNodes();
 			boolean[][] spanMat = new boolean[sortedNodes.length][sortedNodes.length];
 			int[][] heads = new int[sortedNodes.length][sortedNodes.length];
 			
@@ -377,7 +377,7 @@ public class ScrapTest {
 				}
 			}	
 			DependencyParse parseS = DependencyParse.processFN(data, 0.0);
-			DependencyParse[] sortedNodes = DependencyParse.getIndexSortedListOfNodes(parseS);
+			DependencyParse[] sortedNodes = parseS.getIndexSortedListOfNodes();
 			boolean[][] spanMat = new boolean[sortedNodes.length][sortedNodes.length];
 			int[][] heads = new int[sortedNodes.length][sortedNodes.length];
 			findSpans(spanMat,heads,sortedNodes);

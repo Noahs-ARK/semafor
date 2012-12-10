@@ -240,11 +240,7 @@ public class ParserDriver {
 				tokenNums.add("" + index);
 			}
 			if (posLines.size() == 0) break;
-			if (serverName != null) {
-				parseSets = getParsesFromServer(serverName,
-												serverPort,
-												posLines);
-			}
+			if (serverName != null) parseSets = getParsesFromServer(serverName, serverPort, posLines);
 			final ArrayList<String> allLemmaTagsSentences =
 				getAllLemmaTagsSentences(tokenizedLines, parseSets, wnr);
 			for (String outSent: allLemmaTagsSentences) {

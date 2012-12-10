@@ -181,6 +181,7 @@ public class RoteSegmenter implements Segmenter {
 		}
 		if(token.equals("will")) return !pos.equals("MD");
 		if(idx < mNodeList.length) {
+			// TODO: Why idx+1?
 			final DependencyParse headNode = mNodeList[idx+1];
 			if(lemma.equals("have")) return any(headNode.getChildren(), isObject);
 		}
@@ -196,7 +197,7 @@ public class RoteSegmenter implements Segmenter {
 	 */
 	private List<String> trimPrepositions(List<String> candidateTokens, final String[][] pData) {
 		final DependencyParse mParse = DependencyParse.processFN(pData, 0.0);
-		final DependencyParse[] mNodeList = DependencyParse.getIndexSortedListOfNodes(mParse);
+		final DependencyParse[] mNodeList = mParse.getIndexSortedListOfNodes();
 		mParse.processSentence();
 		final Iterable<String> goodTokens = Iterables.filter(candidateTokens, new Predicate<String>() {
 			@Override public boolean apply(@Nullable String input) {

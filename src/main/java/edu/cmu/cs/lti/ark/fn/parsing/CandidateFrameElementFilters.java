@@ -113,7 +113,7 @@ public class CandidateFrameElementFilters {
 		}
 		
 		public Set<Range0Based> getCandidateFillerSpanRanges(DependencyParse parse) {
-			DependencyParse[] nodes = DependencyParse.getIndexSortedListOfNodes(parse);
+			DependencyParse[] nodes = parse.getIndexSortedListOfNodes();
 			Set<Range0Based> candidateFillerSpanRanges = new THashSet<Range0Based>();
 			for (int start=1; start<nodes.length; start++) {
 				for (int end=start; end<nodes.length; end++) {
@@ -134,7 +134,7 @@ public class CandidateFrameElementFilters {
 		}
 		
 		public String getSufficientStatistics(DependencyParse parse, Range fillerSpanRange) {
-			DependencyParse[] nodes = DependencyParse.getIndexSortedListOfNodes(parse);
+			DependencyParse[] nodes = parse.getIndexSortedListOfNodes();
 			return getSufficientStatistics(nodes, fillerSpanRange.getStart(), fillerSpanRange.getEnd());
 		}
 		

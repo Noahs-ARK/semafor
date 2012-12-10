@@ -114,8 +114,7 @@ public class FeatureExtractor implements IFeatureExtractor<FeatureExtractor.Argu
 		DependencyParse parse = selectedParse;
 
 		// String sentence = parse.getSentence();
-		DependencyParse[] nodes = DependencyParse
-				.getIndexSortedListOfNodes(parse);
+		DependencyParse[] nodes = parse.getIndexSortedListOfNodes();
 		DependencyParse targetHeadNode = DependencyParse.getHeuristicHead(nodes, targetTokenNums);
 		DependencyParse targetFirstNode = nodes[targetTokenNums[0] + 1];
 		// String targetPOS = targetFirstNode.getPOS();

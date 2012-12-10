@@ -36,7 +36,7 @@ public class TestDependencyParses
 		DependencyParses parses = (DependencyParses)SerializedObjects.readSerializedObject("../sampleParses/parse_981.jobj");
 		System.out.println("Size of parses:"+parses.size());
 		DependencyParse best = parses.get(0);
-		DependencyParse[] arr = DependencyParse.getIndexSortedListOfNodes(best);
+		DependencyParse[] arr = best.getIndexSortedListOfNodes();
 		for(int i = 1; i < arr.length; i ++)
 		{
 			for(int j = i; j < arr.length; j ++)

@@ -360,7 +360,7 @@ public class MoreRelaxedSegmenter implements Segmenter {
 				}
 			}
 			mParse = DependencyParse.processFN(data, 0.0);
-			mNodeList = DependencyParse.getIndexSortedListOfNodes(mParse);
+			mNodeList = mParse.getIndexSortedListOfNodes();
 			mParse.processSentence();
 			if(!tokNums.trim().equals(""))
 				tokNums=trimPrepositions(tokNums, data);

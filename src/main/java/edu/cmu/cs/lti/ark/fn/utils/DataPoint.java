@@ -224,7 +224,7 @@ public class DataPoint
 		int[] targetTokenNums = getTokenNums();
 		DependencyParse[][] targetNodes = new DependencyParse[parses.size()][targetTokenNums.length];
 		for (int p=0; p<parses.size(); p++) {
-			DependencyParse[] allNodes = DependencyParse.getIndexSortedListOfNodes(parses.get(p));
+			DependencyParse[] allNodes = parses.get(p).getIndexSortedListOfNodes();
 			for (int i=0; i<targetTokenNums.length; i++) {
 				targetNodes[p][i] = allNodes[targetTokenNums[i]];
 			}
