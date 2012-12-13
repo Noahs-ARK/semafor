@@ -56,7 +56,7 @@ public class OneLineDataCreation {
 		ArrayList<ArrayList<String>> parses = readCoNLLParses(prefix + CONLL_PARSED_SUFFIX);
 		ArrayList<String> tokenizedSentences = ParsePreparation.readSentencesFromFile(prefix + TOKENIZED_SUFFIX);
 		ArrayList<String> neTaggedSentences = ParsePreparation.readSentencesFromFile(prefix + NETAG_SUFFIX);
-		ArrayList<String> perSentenceParses=getPerSentenceParses(parses,tokenizedSentences,neTaggedSentences);
+		ArrayList<String> perSentenceParses = getPerSentenceParses(parses,tokenizedSentences,neTaggedSentences);
 		ParsePreparation.writeSentencesToFile(prefix + ONELINE_SUFFIX, perSentenceParses);
 	}
 

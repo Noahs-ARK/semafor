@@ -364,7 +364,7 @@ public class DataPoint
 	public static final String SEMEVAL07_TRAIN_SET = "train";
 	public static final String SEMEVAL07_DEV_SET = "dev";
 	public static final String SEMEVAL07_TEST_SET = "test";
-	/** Sentence index ranges for documents in the train, dev, and test portions of the SemEval'07 data */ 
+	/** Sentence index ranges for documents in the train, dev, and test portions of the SemEval'07 data */
 	protected static final Map<String,Map<String,? extends Range>> DOCUMENT_SENTENCE_RANGES = new THashMap<String,Map<String,? extends Range>>();
 	{
 		{

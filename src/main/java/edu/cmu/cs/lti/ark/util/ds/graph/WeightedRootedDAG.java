@@ -136,7 +136,7 @@ public class WeightedRootedDAG<R extends RootedDAGNode<R> & HasWeightedEdges<R,W
 		
 		/*try {
 			MorphLatticeNode lat = new MorphLatticeNode(sentence, morphemeSpans);
-			System.out.println(lat.toString(true));
+			System.out.println(lat.encode(true));
 			
 			THashMap<String,MorphLatticeNode> allNodes = new THashMap<String,MorphLatticeNode>();
 			for (MorphLatticeNode n : lat.getDescendants(true))

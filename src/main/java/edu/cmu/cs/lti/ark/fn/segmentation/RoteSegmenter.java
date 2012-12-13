@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 
 import javax.annotation.Nullable;
@@ -34,6 +35,7 @@ import java.util.*;
 
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Iterables.any;
+import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.*;
 import static edu.cmu.cs.lti.ark.fn.evaluation.ParseUtils.GOLD_TARGET_SUFFIX;
 import static edu.cmu.cs.lti.ark.util.IntRanges.range;
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
@@ -61,14 +63,6 @@ public class RoteSegmenter implements Segmenter {
 	private static final ImmutableSet<String> TEMPORAL_PREPS = ImmutableSet.of("after", "before");
 	private static final ImmutableSet<String> DIR_PREPS = ImmutableSet.of("into", "through", "to");
 	private static final ImmutableSet<String> FORBIDDEN_POS_PREFIXES = ImmutableSet.of("PR", "CC", "IN", "TO");
-
-	// description of the parse array format
-	// TODO: would be better to just make a class for parses
-	public static final int NUM_PARSE_ROWS = 6;
-	public static final int PARSE_TOKEN_ROW = 0;
-	public static final int PARSE_POS_ROW = 1;
-	public static final int PARSE_NE_ROW = 4;
-	public static final int PARSE_LEMMA_ROW = 5;
 
 	public static final Predicate<DependencyParse> isObject = new Predicate<DependencyParse>() {
 		@Override
@@ -119,9 +113,9 @@ public class RoteSegmenter implements Segmenter {
 	}
 
 	/**
-	 * Helper method for trimPrepositions. Determines whether a token should be kept or discarded
+	 * Helper method for trimPrepositions. Determines whether an ngram should be kept or discarded
 	 * based on hand-built rules
-	 * @param idxStr the index of the token (or something with "_"?) in pData
+	 * @param idxStr "_" joined indices of the ngram tokens in pData
 	 * @param pData a 2d array containing the token, lemma, pos tag, and NE for each token
 	 * @return
 	 */
@@ -207,19 +201,6 @@ public class RoteSegmenter implements Segmenter {
 		return copyOf(goodTokens);
 	}
 
-	private String[][] readAllLemmaTagsLine(String line) {
-		final Scanner fields = new Scanner(line.trim()).useDelimiter("\t");
-		final int tokensInFirstSent = Integer.parseInt(fields.next());
-
-		final String[][] parseData = new String[6][tokensInFirstSent];
-		for(int k : xrange(NUM_PARSE_ROWS)) {
-			for(int j : xrange(tokensInFirstSent)) {
-				parseData[k][j] = fields.next().trim();
-			}
-		}
-		return parseData;
-	}
-
 	private String getTestLine(List<String> goldTokens, List<String> actualTokens) {
 		final ImmutableList.Builder<String> result = ImmutableList.builder();
 		for(String goldToken : goldTokens) {
@@ -248,7 +229,7 @@ public class RoteSegmenter implements Segmenter {
 			// the last tsv field is the index of the sentence in `parses`
 			final int sentNum = Integer.parseInt(tokens.get(tokens.size()-1));
 			final String parse = parseLines.get(sentNum);
-			final String[][] parseData = readAllLemmaTagsLine(parse);
+			final String[][] parseData = AllLemmaTags.readLine(parse);
 			final List<String> ngramIndices = getSegmentation(parseData, allRelatedWords);
 			final List<String> trimmed = trimPrepositions(ngramIndices, parseData);
 			result.add(getTestLine(tokens, trimmed) + "\t" + sentNum);

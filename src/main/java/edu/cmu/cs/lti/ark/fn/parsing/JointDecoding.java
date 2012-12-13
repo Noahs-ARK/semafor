@@ -136,15 +136,13 @@ public class JointDecoding extends Decoding {
 				returnScores);
 	}
 
-	public ArrayList<String> decodeAll(String overlapCheck, 
-			int offset,
-			boolean returnScores) {
+	public ArrayList<String> decodeAll(String overlapCheck, int offset, boolean returnScores) {
 		int size = mFrameList.size();
 		ArrayList<String> result = new ArrayList<String>();
 		for(int i = 0; i < size; i ++)
 		{
 			System.out.println("Decoding index:"+i);
-			String decisionLine = decode(i,overlapCheck, offset, returnScores);
+			String decisionLine = decode(i,overlapCheck.equals("overlapcheck"), offset, returnScores);
 			result.add(decisionLine);
 		}
 		if (mPredictionFile != null) {
@@ -154,8 +152,7 @@ public class JointDecoding extends Decoding {
 	}
 	
 	// does not return scores
-	public ArrayList<String> decodeAll(boolean doOverlapCheck,
-			int offset) {
+	public ArrayList<String> decodeAll(boolean doOverlapCheck, int offset) {
 		int size = mFrameList.size();
 		ArrayList<String> result = new ArrayList<String>();
 		for(int i = 0; i < size; i ++)
@@ -170,11 +167,11 @@ public class JointDecoding extends Decoding {
 		return result;
 	}
 
-	public String decode(int index, String overlapCheck, int offset, boolean returnScores)
+	public String decode(int index, boolean doOverlapCheck, int offset, boolean returnScores)
 	{
 		FrameFeatures f = mFrameList.get(index);
 		String dec = null;
-		if(overlapCheck.equals("overlapcheck"))
+		if(doOverlapCheck)
 			dec = getNonOverlappingDecision(f,mFrameLines.get(index), offset, returnScores);
 		else
 			dec = getDecision(f,mFrameLines.get(index), offset);

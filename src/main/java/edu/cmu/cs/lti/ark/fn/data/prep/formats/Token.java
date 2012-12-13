@@ -1,12 +1,11 @@
-package edu.cmu.cs.lti.ark.util.nlp.conll;
+package edu.cmu.cs.lti.ark.fn.data.prep.formats;
 
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
-import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
+import com.google.common.base.*;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 
 /**
@@ -98,15 +97,28 @@ public class Token {
 
 	/**
 	 * Convenience constructor for (word, pos, head, deprel)
+	 * cpostag also gets the value of postag
 	 */
 	public Token(String form, @Nullable String postag, @Nullable Integer head, @Nullable String deprel) {
-		this(null, form, null, null, postag, null, head, deprel, null, null);
+		this(null, form, null, postag, postag, null, head, deprel, null, null);
 	}
 	/**
 	 * Convenience constructor for (word, pos)
 	 */
-	public Token(String form, String postag) {
+	public Token(String form, @Nullable String postag) {
 		this(form, postag, null, null);
+	}
+	/**
+	 * Convenience constructor for (word,)
+	 */
+	public Token(String form) {
+		this(form, null);
+	}
+
+	public static class PosToken extends Token {
+		public PosToken(String form, String postag) {
+			super(form, postag);
+		}
 	}
 
 	public static class MaltToken extends Token {
@@ -114,6 +126,10 @@ public class Token {
 			super(form, postag, head, deprel);
 
 		}
+	}
+
+	public Token withIndex(int id) {
+		return new Token(id, form,lemma, cpostag, postag, feats, head, deprel, phead, pdeprel);
 	}
 
 	/*
@@ -171,18 +187,16 @@ public class Token {
 	/*
 	Codecs
 	 */
-
 	/**
 	 * Replace nulls with "_"
 	 * @param a the value of the field to convert to a string
-	 * @return either the field's toString, or "_" if it's null
+	 * @return either the field's encode, or "_" if it's null
 	 */
 	private static String fieldToString(Object a) {
 		return Optional.fromNullable(a).or(MISSING_INDICATOR).toString();
 	}
 
-	@Override
-	public String toString() {
+	public String toConll() {
 		return Joiner.on("\t").join(
 				fieldToString(id),
 				fieldToString(form),
@@ -202,8 +216,9 @@ public class Token {
 		return field.equals(MISSING_INDICATOR) ? null : fromStr.apply(field);
 	}
 
-	public static Token fromString(String line) {
+	public static Token fromConll(String line) {
 		final String[] fields = line.trim().split("\t");
+		checkArgument(fields.length == 10, "ConllToken must have 10 \"\\t\"-separated fields");
 		return new Token(
 				parseField(fields[0], parseInt),
 				parseField(fields[1], parseStr),
@@ -215,5 +230,25 @@ public class Token {
 				parseField(fields[7], parseStr),
 				parseField(fields[8], parseStr),
 				parseField(fields[9], parseStr));
+	}
+
+	public static PosToken fromPosTagged(String tokenStr) {
+		final String[] fields = tokenStr.split("_");
+		checkArgument(fields.length == 2, "PosToken must have 2 \"_\"-separated fields");
+		return new PosToken(fields[0], fields[1]);
+	}
+
+	public String toPosTagged() {
+		return form + "_" + postag;
+	}
+
+	public static MaltToken fromMalt(String tokenStr) {
+		final String[] fields = tokenStr.split("/");
+		checkArgument(fields.length == 4, "MaltToken must have 4 \"/\"-separated fields");
+		return new MaltToken(fields[0], fields[1], Integer.parseInt(fields[2]), fields[3]);
+	}
+
+	public String toMalt() {
+		return Joiner.on("/").join(new Object[] {form, postag, head, deprel});
 	}
 }
