@@ -28,11 +28,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>net.sf.trove4j</groupId>
-            <artifactId>trove4j</artifactId>
-            <version>2.0.2</version>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.11</version>
@@ -56,6 +51,11 @@
         The following dependencies have no public maven repo artifacts and/or unknown version numbers.
         They're stored in the local repo "lib/"
         -->
+        <dependency>
+            <groupId>net.sf.trove4j</groupId>
+            <artifactId>trove4j</artifactId>
+            <version>2.0.1</version>
+        </dependency>
         <dependency>
             <groupId>de.saar.coli.salsa.reiter</groupId>
             <artifactId>framenet</artifactId>
@@ -96,8 +96,8 @@
                     <target>1.6</target>
                 </configuration>
             </plugin>
+            <!-- include source code in the final jar -->
             <plugin>
-                <!-- include source code in the final jar-->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <version>2.2.1</version>
@@ -123,7 +123,7 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.4</version>
                 <configuration>
-                    <finalName>${project.artifactId}-${project.version}-nodeps</finalName>
+                    <finalName>${project.artifactId}-${project.version}</finalName>
                 </configuration>
             </plugin>
             <plugin>
