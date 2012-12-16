@@ -204,7 +204,7 @@ public class ParserDriver {
 			final ArrayList<String> tokenizedLines = Lists.newArrayList();
 			parseSets.clear();
 			System.err.println("Processing batch of size:" + BATCH_SIZE + " starting from: " + count);
-			for (int i : xrange(BATCH_SIZE)) {
+			for (int ignored : xrange(BATCH_SIZE)) {
 				posLine = posReader.readLine();
 				if (posLine == null) break;
 				posLines.add(posLine);

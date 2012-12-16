@@ -28,6 +28,8 @@ import java.io.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import static org.apache.commons.io.IOUtils.closeQuietly;
+
 
 public class SerializedObjects {
 	public static void writeSerializedObject(Object object, String outFile) {
@@ -39,7 +41,7 @@ public class SerializedObjects {
 			// TODO: NONONONONO! stop swallowing errors!
 			ex.printStackTrace();
 		} finally{
-			IOUtils.closeQuietly(output);
+			closeQuietly(output);
 		}
 	}
 
@@ -53,7 +55,7 @@ public class SerializedObjects {
 			// TODO: NONONONONO! stop swallowing errors!
 			ex.printStackTrace();
 		} finally{
-			IOUtils.closeQuietly(input);
+			closeQuietly(input);
 		}
 		return recoveredObject;
 	}
@@ -66,7 +68,7 @@ public class SerializedObjects {
 			input = getObjectInputStream(inputFile);
 			return (T) input.readObject();
 		} finally{
-			IOUtils.closeQuietly(input);
+			closeQuietly(input);
 		}
 	}
 
