@@ -91,22 +91,16 @@ public class DataPrep {
 		ps = FileUtil.openOutFile(FEFileName.spanfilename);
 		load(null, null, null);
 	}
-	
-	public DataPrep(String spansFile)
-	{
-		ps = FileUtil.openOutFile(FEFileName.spanfilename);
-		load(null, null, null);
-	}
-	
-	public DataPrep(List<String> tL,
-					List<String> fL,
+
+	public DataPrep(List<String> tagLines,
+					List<String> frameElementLines,
 					WordNetRelations lwnr) {
 		// this model does not write span files
 		ps = FileUtil.openOutFile(FEFileName.spanfilename);
-		load(tL, fL, lwnr);		
+		load(tagLines, frameElementLines, lwnr);
 	}	
 	
-	private ArrayList<String >readLinesInFile(String filename){
+	private ArrayList<String>readLinesInFile(String filename){
 		ArrayList<String>lines=new ArrayList<String>();
 		Scanner sc=FileUtil.openInFile(filename);
 		while (sc.hasNextLine()) {
@@ -213,21 +207,20 @@ public class DataPrep {
 	 * @brief load data needed for feature extraction
 	 * 
 	 */
-	private void load(List<String> tL, List<String> fL, WordNetRelations lwnr) {
+	private void load(List<String> tagLines, List<String> frameElementLines, WordNetRelations lwnr) {
 		if (fedict == null) {
 			fedict = new FEDict(FEFileName.fedictFilename1);
 		}
-		// fedict.merge(FEFileName.fedictFilename2);
 		canLines = new ArrayList<int[][]>();
-		if (fL == null) {
+		if (frameElementLines == null) {
 			feLines = readLinesInFile(FEFileName.feFilename);
 		} else {
-			feLines = fL;
+			feLines = frameElementLines;
 		}
-		if (tL == null) {
-			tagLines = readLinesInFile(FEFileName.tagFilename);
+		if (tagLines == null) {
+			DataPrep.tagLines = readLinesInFile(FEFileName.tagFilename);
 		} else {
-			tagLines = tL;
+			DataPrep.tagLines = tagLines;
 		}		
 		
 		boolean hasCandidateFile = true;
@@ -250,7 +243,7 @@ public class DataPrep {
 		for (String feline : feLines)
 		{
 			int sentNum = Integer.parseInt(feline.split("\t")[5]);
-			DataPointWithElements dp = new DataPointWithElements(tagLines.get(sentNum), feline);
+			DataPointWithElements dp = new DataPointWithElements(DataPrep.tagLines.get(sentNum), feline);
 			int spans[][];
 			ArrayList<int[]> spanList;
 			if (hasCandidateFile) {
@@ -397,13 +390,6 @@ public class DataPrep {
 		// add feature for gold standard
 		featureSet = FeatureExtractor.extractFeatures(goldDP, frame, fe, span,
 				wnr,goldDP.getParses().getBestParse()).keySet();
-		/*
-		System.out.println(goldDP.getSentenceNum() + "\t" + fe + "\t" + frame + "\t"
-				+ goldDP.getTokenNums()[0] + "\t"
-				+ goldDP.getTokenNums()[goldDP.getTokenNums().length - 1]
-				+ "\t" + feIndex);
-		
-		*/
 		ps.println(goldDP.getSentenceNum() + "\t" + fe + "\t" + frame + "\t"
 				+ goldDP.getTokenNums()[0] + "\t"
 				+ goldDP.getTokenNums()[goldDP.getTokenNums().length - 1]
@@ -461,13 +447,6 @@ public class DataPrep {
 		}
 		DependencyParse selectedParse = goldDP.getParses().get(parseId);
 		featureSet = FeatureExtractor.extractFeatures(goldDP, frame, fe, span, wnr, selectedParse).keySet();
-		/*
-		System.out.println(goldDP.getSentenceNum() + "\t" + fe + "\t" + frame + "\t"
-				+ goldDP.getTokenNums()[0] + "\t"
-				+ goldDP.getTokenNums()[goldDP.getTokenNums().length - 1]
-				+ "\t" + feIndex);
-		
-		*/
 		ps.println(goldDP.getSentenceNum() + "\t" + fe + "\t" + frame + "\t"
 				+ goldDP.getTokenNums()[0] + "\t"
 				+ goldDP.getTokenNums()[goldDP.getTokenNums().length - 1]
