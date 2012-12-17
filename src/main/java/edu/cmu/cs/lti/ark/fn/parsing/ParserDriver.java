@@ -109,13 +109,7 @@ public class ParserDriver {
 		try {
 			posReader = new BufferedReader(new FileReader(posFile));
 			tokenizedReader = new BufferedReader(new FileReader(tokenizedFile));
-			runParser(posReader,
-					tokenizedReader,
-					wnr,
-					options,
-					mstServer,
-					mstPort
-			);
+			runParser(posReader, tokenizedReader, wnr, options, mstServer, mstPort);
 		} finally {
 			closeQuietly(posReader);
 			closeQuietly(tokenizedReader);
@@ -209,7 +203,7 @@ public class ParserDriver {
 		do {
 			final ArrayList<String> posLines = Lists.newArrayList();
 			final ArrayList<String> tokenizedLines = Lists.newArrayList();
-			ArrayList<ArrayList<String>> parseSets = Lists.newArrayList();
+			List<ArrayList<String>> parseSets = Lists.newArrayList();
 			System.err.println("Processing batch of size:" + BATCH_SIZE + " starting from: " + count);
 			for (int ignored : xrange(BATCH_SIZE)) {
 				posLine = posReader.readLine();
@@ -233,11 +227,13 @@ public class ParserDriver {
 				lemmaTagsWriter.write(outSent + "\n");
 			}
 			/* actual parsing */
-			final List<String> idResult =
-					identifyFrames(allRelatedWords, idModel, segmentationMode,
-							goldSegReader, allLemmaTagsSentences);
+			// get segments
+			List<String> segments = getSegments(allRelatedWords, segmentationMode, goldSegReader, allLemmaTagsSentences);
 
-			// 3. argument identification
+			// frame identification
+			final List<String> idResult = identifyFrames(idModel, allLemmaTagsSentences, segments);
+
+			// argument identification
 			final List<String> argResult =
 					identifyArguments(wnr, eventsFilename, spansFilename, decoding, count, idResult,
 							allLemmaTagsSentences);
@@ -251,18 +247,37 @@ public class ParserDriver {
 		closeQuietly(parseReader);
 		closeQuietly(outputWriter);
 		closeQuietly(lemmaTagsWriter);
+		closeQuietly(goldSegReader);
 		decoding.wrapUp();
 	}
 
-	private static List<String> identifyFrames(Set<String> allRelatedWords,
-											   FastFrameIdentifier idModel,
-											   SegmentationMode segmentationMode,
-											   BufferedReader goldSegReader,
-											   List<String> allLemmaTagsSentences) throws IOException {
+	private static List<String> identifyFrames(FastFrameIdentifier idModel,
+											   List<String> allLemmaTagsSentences,
+											   List<String> segments) throws IOException {
+		final List<String> inputForFrameId = getRightInputForFrameIdentification(segments);
+
+		final List<String> idResult = Lists.newArrayList();
+		for(String input: inputForFrameId) {
+			final String[] tokens = input.split("\t");
+			// offset of the sentence within the loaded data (relative to options.startIndex)
+			int sentNum = Integer.parseInt(tokens[2]);
+			final String parseLine = allLemmaTagsSentences.get(sentNum);
+			final String bestFrame = idModel.getBestFrame(input, parseLine);
+			final String tokenRepresentation = getTokenRepresentation(tokens[1], parseLine);
+			final String[] split = tokenRepresentation.trim().split("\t");
+			// 1\tBestFrame\tTargetTokenNum(s)\tSentenceOffset
+			idResult.add(TAB.join(1, bestFrame, split[0], tokens[1], split[1], sentNum));
+		}
+		return idResult;
+	}
+
+	private static List<String> getSegments(Set<String> allRelatedWords,
+											SegmentationMode segmentationMode,
+											BufferedReader goldSegReader,
+											List<String> allLemmaTagsSentences) throws IOException {
 		final int size = allLemmaTagsSentences.size();
 		final List<Integer> tokenNums = range(size).asList();
 		final List<String> tokenNumStrs = transform(tokenNums, toStringFunction());
-		// 1. get segments
 		List<String> segments;
 		if (segmentationMode.equals(GOLD)) {
 			final ArrayList<String> segLines = Lists.newArrayList();
@@ -277,22 +292,7 @@ public class ParserDriver {
 					segmentationMode.equals(STRICT) ? new RoteSegmenter() : new MoreRelaxedSegmenter();
 			segments = segmenter.getSegmentations(tokenNumStrs, allLemmaTagsSentences, allRelatedWords);
 		}
-		final List<String> inputForFrameId = getRightInputForFrameIdentification(segments);
-
-		// 2. frame identification
-		final List<String> idResult = Lists.newArrayList();
-		for(String input: inputForFrameId) {
-			final String[] tokens = input.split("\t");
-			// offset of the sentence within the loaded data (relative to options.startIndex)
-			int sentNum = Integer.parseInt(tokens[2]);
-			final String parseLine = allLemmaTagsSentences.get(sentNum);
-			final String bestFrame = idModel.getBestFrame(input, parseLine);
-			final String tokenRepresentation = getTokenRepresentation(tokens[1], parseLine);
-			final String[] split = tokenRepresentation.trim().split("\t");
-			// 1\tBestFrame\tTargetTokenNum(s)\tSentenceOffset
-			idResult.add(TAB.join(1, bestFrame, split[0], tokens[1], split[1], sentNum));
-		}
-		return idResult;
+		return segments;
 	}
 
 	private static List<String> identifyArguments(WordNetRelations wnr,
@@ -383,9 +383,9 @@ public class ParserDriver {
 		return TAB.join(line, TAB.join(lemmas));
 	}
 
-	public static ArrayList<ArrayList<String>> getParsesFromServer(String server,
+	public static List<ArrayList<String>> getParsesFromServer(String server,
 			int port,
-			ArrayList<String> posLines) throws IOException {
+			List<String> posLines) throws IOException {
 		Socket kkSocket = null;
 		PrintWriter out = null;
 		BufferedReader in = null;
