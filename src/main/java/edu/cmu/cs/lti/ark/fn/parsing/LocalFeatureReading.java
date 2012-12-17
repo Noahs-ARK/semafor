@@ -21,20 +21,18 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.util.FileUtil;
 import gnu.trove.TIntObjectHashMap;
 
-public class LocalFeatureReading
-{
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.apache.commons.io.IOUtils.closeQuietly;
+
+public class LocalFeatureReading {
 	private String mEventsFile;
 	private String mSpansFile;
 	private String mFrameFile;
@@ -42,8 +40,7 @@ public class LocalFeatureReading
 	private List<String> mFrameLines;
 	private int count;
 	
-	public LocalFeatureReading(String eventsFile, String spanFile, String frameFile)
-	{
+	public LocalFeatureReading(String eventsFile, String spanFile, String frameFile) {
 		mEventsFile=eventsFile;
 		mSpansFile=spanFile;
 		mFrameFile=frameFile;
@@ -53,8 +50,7 @@ public class LocalFeatureReading
 	
 	public LocalFeatureReading(String eventsFile, 
 							   String spanFile, 
-							   List<String> frameLines)
-	{
+							   List<String> frameLines) {
 		mEventsFile=eventsFile;
 		mSpansFile=spanFile;
 		mFrameFile=null;
@@ -63,42 +59,44 @@ public class LocalFeatureReading
 	}
 	
 	
-	public void readLocalFeatures() throws Exception
-	{
+	public void readLocalFeatures() throws Exception {
 		readSpansFile();
 		readLocalEventsFile();
 	}
 	
-	public void readLocalEventsFile() throws Exception
-	{
-		BufferedInputStream bis =new BufferedInputStream( FileUtil.openInputStream(mEventsFile));
+	public void readLocalEventsFile() {
+		BufferedInputStream bis = new BufferedInputStream( FileUtil.openInputStream(mEventsFile));
+		try {
+			readLocalEventsFile(bis);
+		} finally {
+			closeQuietly(bis);
+		}
+	}
+
+	private void readLocalEventsFile(BufferedInputStream bis) {
 		int currentFrameFeaturesIndex = 0;
 		int currentFEIndex = 0;
 		int[] line = readALine(bis);
 		ArrayList<int[]> temp = new ArrayList<int[]>();
 		boolean skip = false;
-		while (line.length > 0||skip)
-		{
-			if(!skip)
-			{
-				while (line.length > 0)
-				{
+		while (line.length > 0||skip) {
+			if(!skip) {
+				while (line.length > 0) {
 					temp.add(line);
 					line = readALine(bis);
 				}
 			}
-			else
-			{
+			else {
 				skip = false;
 			}
 			int size = temp.size();
 			FrameFeatures f = mFrameFeaturesList.get(currentFrameFeaturesIndex);
-			if(f.fElements.size()==0)
-			{
+			if(f.fElements.size()==0) {
 				System.out.println(f.frameName+". No frame elements for the frame.");
 				currentFrameFeaturesIndex++;
-				if(currentFrameFeaturesIndex==mFrameFeaturesList.size())
+				if(currentFrameFeaturesIndex==mFrameFeaturesList.size()) {
 					break;
+				}
 				currentFEIndex = 0;
 				System.out.println("temp.size()="+temp.size());
 				skip = true;
@@ -106,35 +104,30 @@ public class LocalFeatureReading
 			}
 			SpanAndCorrespondingFeatures[] spans = f.fElementSpansAndFeatures.get(currentFEIndex);
 			System.out.println(f.frameName+" "+f.fElements.get(currentFEIndex)+" "+spans.length);
-			if(size!=spans.length)
-			{
+			if(size!=spans.length) {
 				System.out.println("Problem. Exiting. currentFrameFeaturesIndex:"+currentFrameFeaturesIndex+" temp.size()="+size+" spans.length:"+spans.length);
 				System.exit(0);
-			}			
-			for(int k = 0; k < size; k ++)
-			{
+			}
+			for(int k = 0; k < size; k ++) {
 				spans[k].features = temp.get(k);
 			}
 			SpanAndCorrespondingFeatures gold = new SpanAndCorrespondingFeatures();
 			gold.span = new int[2];gold.features = new int[spans[0].features.length]; gold.span[0]=spans[0].span[0];gold.span[1]=spans[0].span[1];for(int k = 0; k < gold.features.length; k ++) gold.features[k]=spans[0].features[k];
 			SpanAndCorrespondingFeatures.sort(spans);
 			int ind = SpanAndCorrespondingFeatures.search(spans, gold);
-			f.fGoldSpans.add(ind);			
-			if(currentFEIndex==f.fElements.size()-1)
-			{
+			f.fGoldSpans.add(ind);
+			if(currentFEIndex==f.fElements.size()-1) {
 				currentFrameFeaturesIndex++;
 				currentFEIndex = 0;
 			}
-			else
-			{
+			else {
 				currentFEIndex++;
 			}
 			temp = new ArrayList<int[]>();
 			line = readALine(bis);
 		}
-		bis.close();
 	}
-	
+
 	public int[] readALine(InputStream fis) {
 		ArrayList<Integer> temp = new ArrayList<Integer>();
 		int[] ret;
@@ -196,46 +189,25 @@ public class LocalFeatureReading
 		list.add(stringSpans);
 	}
 	
-	public void readSpansFile()
-	{
+	public void readSpansFile() throws IOException {
 		TIntObjectHashMap<ArrayList<Integer>> frameIndexMap = new TIntObjectHashMap<ArrayList<Integer>>();
-		for(int i = 0; i < mFrameLines.size(); i ++)
-		{
+		for(int i = 0; i < mFrameLines.size(); i ++) {
 			frameIndexMap.put(i, new ArrayList<Integer>());
-		}		
-		ArrayList<String> lines = new ArrayList<String>();
-		try
-		{
-			BufferedReader bReader = new BufferedReader(new FileReader(mSpansFile));
-			String line = null;
-			while((line=bReader.readLine())!=null)
-			{
-				line=line.trim();
-				if(line.equals(""))
-					continue;
-				lines.add(line);
-			}
-			bReader.close();
 		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}
-		int i = 0;
+		List<String> lines = readLines(mSpansFile);
+		int i;
 		int lineSize = lines.size();
-		ArrayList<String> feLines = new ArrayList<String>();
-		ArrayList<SpanAndCorrespondingFeatures[]> spansList = new ArrayList<SpanAndCorrespondingFeatures[]>();
-		ArrayList<int[]> spans = new ArrayList<int[]>();
+		ArrayList<String> feLines = Lists.newArrayList();
+		ArrayList<SpanAndCorrespondingFeatures[]> spansList = Lists.newArrayList();
+		ArrayList<int[]> spans = Lists.newArrayList();
 		if (lineSize != 0) {
 			String feLine = lines.get(0);
 			feLines.add(feLine);
 			i = 1;
 			System.out.println("LineSize:"+lineSize);
-			while(i<lineSize)
-			{
+			while(i<lineSize) {
 				String[] toks = lines.get(i).split("\t");
-				if(toks.length==6)
-				{
+				if(toks.length==6) {
 					feLines.add(lines.get(i));
 					int spanSize = spans.size();
 					int[][] spansArr = new int[spanSize][];
@@ -243,101 +215,99 @@ public class LocalFeatureReading
 					addIntSpanArray(spansList, spansArr);
 					spans = new ArrayList<int[]>();
 				}
-				else if(toks.length==2)
-				{
+				else if(toks.length==2) {
 					int[] intSpan = new int[2];
 					intSpan[0] = new Integer(toks[0]);
 					intSpan[1] = new Integer(toks[1]);
 					spans.add(intSpan);
 				}
-				else
-				{
+				else {
 					System.out.println("Problem with line:"+lines.get(i));
 				}
-	//			System.out.print(i+" ");
-	//			if(i%100==0)
-	//				System.out.println();
 				i++;
 			}
 		}
-		// System.out.println();
 		int spanSize = spans.size();
 		int[][] spansArr = new int[spanSize][];
 		spans.toArray(spansArr);
 		addIntSpanArray(spansList, spansArr);	
 		System.out.println("FE Lines Size:"+feLines.size());
 		System.out.println("Spans List Size:"+spansList.size());
-		for(i = 0; i < feLines.size(); i ++)
-		{
+		for(i = 0; i < feLines.size(); i ++) {
 			String[] toks = feLines.get(i).split("\t");
 			int sentNum = new Integer(toks[toks.length-1]);
 			ArrayList<Integer> list = frameIndexMap.get(sentNum);
-			if(list==null)
-			{
+			if(list==null) {
 				list = new ArrayList<Integer>();
 				list.add(i);
 				frameIndexMap.put(sentNum, list);
 			}
-			else
-			{
+			else {
 				list.add(i);
 			}
 		}	
 		int[] keys = frameIndexMap.keys();
-		for(i = 0; i < keys.length; i ++)
-		{
-			if(frameIndexMap.get(keys[i]).size()==0)
-			{
+		for(i = 0; i < keys.length; i ++) {
+			if(frameIndexMap.get(keys[i]).size()==0) {
 				System.out.println("There are no spans listed for line:"+keys[i]);
 			}
 		}	
 		System.out.println("Frame index map size:"+frameIndexMap.size());
 		mFrameFeaturesList = new ArrayList<FrameFeatures>();
-		for(i = 0; i < mFrameLines.size(); i ++)
-		{
+		for(i = 0; i < mFrameLines.size(); i ++) {
 			String[] toks = mFrameLines.get(i).split("\t");
 			String frame = toks[1].trim();
 			String[] span = toks[3].split("_");
 			int start = new Integer(span[0]);
 			int end = new Integer(span[span.length-1]);
 			ArrayList<Integer> feLineNums = frameIndexMap.get(i);
-			if(feLineNums.size()>0)
-			{
+			if(feLineNums.size()>0) {
 				String assocFeLine = feLines.get(feLineNums.get(0));
 				String[] aFLToks = assocFeLine.split("\t");
 				int aStart = new Integer(aFLToks[3]);
 				int aEnd = new Integer(aFLToks[4]);
-				if(start==aStart&&end==aEnd)
-				{
-					
+				if(start==aStart&&end==aEnd) {
+
 				}
-				else
-				{
+				else {
 					System.out.println("Problem with frameline:"+mFrameLines.get(i));
 					System.exit(0);
 				}
 			}
 			FrameFeatures f = new FrameFeatures(frame,start,end);
-			for(int j = 0; j < feLineNums.size(); j ++)
-			{
-				int feLineNum = feLineNums.get(j);
-				String feLine1 = feLines.get(feLineNum);
-				String[] feLine1Toks = feLine1.split("\t");
+			for (Integer feLineNum1 : feLineNums) {
+				final String feLine = feLines.get(feLineNum1);
+				final String[] feLine1Toks = feLine.split("\t");
 				f.fElements.add(feLine1Toks[1]);
-				f.fElementSpansAndFeatures.add(spansList.get(feLineNum));
+				f.fElementSpansAndFeatures.add(spansList.get(feLineNum1));
 			}
 			mFrameFeaturesList.add(f);
 		}	
 		System.out.println("Checked all frame lines.");
 	}
-	
+
+	/**
+	 * Read lines from a file until an empty line
+	 * @param spansFile
+	 */
+	private List<String> readLines(String spansFile) throws IOException {
+		ArrayList<String> lines = new ArrayList<String>();
+		BufferedReader bReader = null;
+		try {
+			bReader = new BufferedReader(new FileReader(spansFile));
+			String line;
+			while((line = bReader.readLine()) != null) {
+				line = line.trim();
+				if(line.equals("")) continue;
+				lines.add(line);
+			}
+		} finally {
+			closeQuietly(bReader);
+		}
+		return lines;
+	}
+
 	public ArrayList<FrameFeatures> getMFrameFeaturesList() {
 		return mFrameFeaturesList;
 	}
-
-	public void setMFrameFeaturesList(ArrayList<FrameFeatures> frameFeaturesList) {
-		mFrameFeaturesList = frameFeaturesList;
-	}
-	
-	
 }
