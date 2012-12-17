@@ -47,24 +47,20 @@ using AD^3 (or Alternating Directions Dual Decomposition) uses two other constra
 What follows is an overview of the organization of SEMAFOR's directory structure, and how it can be installed and run on new data.
 
 
-1. Requirements
+Requirements
 ===============
 Running the SEMAFOR tool *requires* Java 1.6. It should run on any platform (Windows, Unix, or Mac OS).
 
 
-2. Contents
+Contents
 ===========
-This tarball contains a folder called semafor-semantic-parser, which we 
-will refer to as the "root" folder. Underneath it, there are the following 
-files and folders:
+Underneath the root folder, there are the following files and folders:
 
 dict/
     WordNet data files. License information can be viewed at: 
     http://wordnet.princeton.edu/wordnet/license/
 
-edu/ 
-
-riso/
+src/
     Source files of the SEMAFOR project.
 
 lib/
@@ -75,9 +71,6 @@ scripts/
 
 release/
     Installation and execution code.
-
-samples/
-    Some sample text on which SEMAFOR can be run.
 
 file_properties.xml
     File containing WordNet lookup paths.
@@ -93,21 +86,19 @@ README
     This file.
 
 
-2. Included Libraries
-=======================
-The lib/ directory contains the following library:
-
-semafor-deps.jar: It contains all the required libraries that SEMAFOR needs to run.
-
-
-3. Installation
+Installation
 ===============
 
 ==Downloads==
 
-SEMAFOR v2.1 can be downloaded from http://semafor-semantic-parser.googlecode.com/files/SEMAFOR-2.1.tgz
+This fork is maintained at https://github.com/sammthomson/semafor .
+The latest official release, SEMAFOR v2.1, can be downloaded from
+http://semafor-semantic-parser.googlecode.com/files/SEMAFOR-2.1.tgz
 
-In preprocessing, SEMAFOR uses the MST Parser, a syntactic dependency parser created by Ryan McDonald. Download and unpack the following packaged version: http://semafor-semantic-parser.googlecode.com/files/stackedParserServer.tgz
+In preprocessing, SEMAFOR uses either MST Parser, a syntactic dependency parser created by Ryan McDonald,
+or MaltParser.
+To use MST Parser, download and unpack the following packaged version:
+http://semafor-semantic-parser.googlecode.com/files/stackedParserServer.tgz
 The original MST parser has been modified to add an option of running it in server mode, for ease of use.
 
 Download the model files both for the MST parser and SEMAFOR from here: http://www.ark.cs.cmu.edu/SEMAFOR/SEMAFOR-2.1-models.tgz (~400MB)
@@ -151,14 +142,16 @@ For more details, see Das et al. (*SEM 2012).
 
 
 ==Compilation==
-Although Java 1.6 class files are included in this release both for SEMAFOR and the MST parser, one can compile both packages anew.
-Assuming that the user is at the root of the directory where SEMAFOR was decompressed, run:
+Compilation is easiest using Maven (http://maven.apache.org/)
 
-$  cd release/
-$  ./cleanAndCompile.sh
+$  mvn compile
+
+or
+
+$ mvn package
 
 
-4. Running the Frame-Semantic Parser
+Running the Frame-Semantic Parser
 ====================================
 
 If the MST parser is to be run in server mode, in other words, if MST_MODE=server, then before running SEMAFOR, 
