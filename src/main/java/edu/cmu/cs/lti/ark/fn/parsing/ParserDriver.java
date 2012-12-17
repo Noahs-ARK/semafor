@@ -48,6 +48,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.google.common.base.Functions.toStringFunction;
+import static com.google.common.collect.Lists.transform;
 import static edu.cmu.cs.lti.ark.fn.evaluation.ParseUtils.GOLD_TARGET_SUFFIX;
 import static edu.cmu.cs.lti.ark.fn.evaluation.ParseUtils.getRightInputForFrameIdentification;
 import static edu.cmu.cs.lti.ark.fn.identification.FrameIdentificationRelease.getTokenRepresentation;
@@ -60,7 +62,7 @@ import static org.apache.commons.io.IOUtils.closeQuietly;
 public class ParserDriver {
 
 	public static final String SERVER_FLAG = "server";
-	public static final int BATCH_SIZE = 50;
+	public static final int BATCH_SIZE = 1;
 	/*
 	 *  required flags:
 	 *  mstmode
@@ -259,7 +261,7 @@ public class ParserDriver {
 											   List<String> allLemmaTagsSentences) throws IOException {
 		final int size = allLemmaTagsSentences.size();
 		final List<Integer> tokenNums = range(size).asList();
-		final List<String> tokenNumStrs = Lists.transform(tokenNums, Functions.toStringFunction());
+		final List<String> tokenNumStrs = transform(tokenNums, toStringFunction());
 		// 1. get segments
 		List<String> segments;
 		if (segmentationMode.equals(GOLD)) {

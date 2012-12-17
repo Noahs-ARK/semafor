@@ -22,6 +22,8 @@
 package edu.cmu.cs.lti.ark.fn.identification;
 
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
@@ -32,6 +34,8 @@ import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectDoubleHashMap;
 
 import java.util.*;
+
+import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.*;
 
 /**
  * @author dipanjan
@@ -120,18 +124,12 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode
 		return result;
 	}
 
-	public Set<String> checkPresenceOfTokensInMap(int[] intTokNums, String[][] data)
-	{
-		String lemmatizedTokens = "";
-		for(int i = 0; i < intTokNums.length; i ++)
-		{
-			String lexUnit = data[0][intTokNums[i]];
-			String pos = data[1][intTokNums[i]];
-			//lemmatizedTokens+=mWNR.getLemmaForWord(lexUnit, pos).toLowerCase()+" ";
-			lemmatizedTokens+=data[5][intTokNums[i]]+" ";
+	public Set<String> checkPresenceOfTokensInMap(int[] intTokNums, String[][] parseData) {
+		final List<String> lemmatizedTokens = Lists.newArrayList();
+		for (final int tokNum : intTokNums) {
+			lemmatizedTokens.add(parseData[PARSE_LEMMA_ROW][tokNum]);
 		}
-		lemmatizedTokens=lemmatizedTokens.trim();
-		return mHvCorrespondenceMap.get(lemmatizedTokens);
+		return mHvCorrespondenceMap.get(Joiner.on(" ").join(lemmatizedTokens));
 	}
 
 	public void setClusterInfo(THashMap<String,THashSet<String>> clusterMap,int K)
@@ -165,12 +163,9 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode
 			}
 		}	
 		Set<String> set = checkPresenceOfTokensInMap(intTokNums,data);
-		String option = null;
-		if(set==null)
-		{
+		if(set==null) {
 			set = mFrameMap.keySet();
 		}		
-		option = "" + set.size();
 		double sum = 0.0;
 		int count = 0;
 		Pair<String, Double>[] frames = new Pair[set.size()];
@@ -209,26 +204,20 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode
 		String[] toks = frameLine.split("\t");
 		String[] tokNums = toks[1].split("_");
 		int[] intTokNums = new int[tokNums.length];
-		for(int j = 0; j < tokNums.length; j ++)
-			intTokNums[j] = new Integer(tokNums[j]);
+		for(int j = 0; j < tokNums.length; j ++) {
+			intTokNums[j] = Integer.parseInt(tokNums[j]);
+		}
 		Arrays.sort(intTokNums);
-		StringTokenizer st = new StringTokenizer(parseLine, "\t");
-		int tokensInFirstSent = new Integer(st.nextToken());
-		String[][] data = new String[6][tokensInFirstSent];
-		for(int k = 0; k < 6; k ++) {
-			data[k]=new String[tokensInFirstSent];
-			for(int j = 0; j < tokensInFirstSent; j ++) {
-				data[k][j] = "" + st.nextToken().trim();
-			}
-		}	
+		final String[][] parseData = readLine(parseLine);
 		String fineToken;
 		String coarseToken;
-		Set<String> set = checkPresenceOfTokensInMap(intTokNums,data);
+		Set<String> set = checkPresenceOfTokensInMap(intTokNums, parseData);
+
 		if (set == null) {
 			if (intTokNums.length > 1) {
 				coarseToken = "";
 				for (int intTokNum : intTokNums) {
-					coarseToken += data[0][intTokNum].toLowerCase() + " ";
+					coarseToken += parseData[PARSE_TOKEN_ROW][intTokNum].toLowerCase() + " ";
 				}
 				coarseToken = coarseToken.trim();
 				coarseToken =
@@ -237,8 +226,8 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode
 					set = sg.getCoarseMap().get(coarseToken);
 				}
 			} else {
-				String lemma = data[5][intTokNums[0]];
-				String pos = data[1][intTokNums[0]];
+				final String lemma = parseData[PARSE_LEMMA_ROW][intTokNums[0]];
+				String pos = parseData[PARSE_POS_ROW][intTokNums[0]];
 				if (pos.startsWith("N")) {
 					pos = "n";
 				} else if (pos.startsWith("V")) {
@@ -267,7 +256,7 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode
 				} else {
 					coarseToken =
 						ScanAdverbsAndAdjectives.getCanonicalForm(lemma);
-					if (sg.getCoarseMap().containsKey(coarseToken)){
+					if (sg.getCoarseMap().containsKey(coarseToken)) {
 						set = sg.getCoarseMap().get(coarseToken);
 					} else {
 						set = null;
@@ -279,8 +268,8 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode
 			set = mFrameMap.keySet();
 		}
 		for(String frame: set) {
-			double val =  getNumeratorValue(frame, intTokNums, data);
-			if(val>maxVal) {
+			double val =  getNumeratorValue(frame, intTokNums, parseData);
+			if(val > maxVal) {
 				maxVal = val;
 				result = "" + frame;
 			}

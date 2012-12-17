@@ -29,7 +29,7 @@ import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 
 public class PositionStats {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		String sdir = 
 			"/mal2/dipanjan/experiments/FramenetParsing/fndata-1.5/CVSplits";
 		String adir = 

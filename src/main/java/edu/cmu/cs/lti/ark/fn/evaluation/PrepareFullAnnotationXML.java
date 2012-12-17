@@ -38,6 +38,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import static org.apache.commons.io.IOUtils.closeQuietly;
+
 
 public class PrepareFullAnnotationXML {
 	/**
@@ -53,7 +55,7 @@ public class PrepareFullAnnotationXML {
 	 *   outputFile
 	 * @see #generateXMLForPrediction
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		// TODO: Change to CommandLineOptions framework (involves changes to shell scripts which use this class)
 		ParseOptions options = new ParseOptions(args);
 		generateXMLForPrediction(
@@ -75,55 +77,50 @@ public class PrepareFullAnnotationXML {
 	 * @param outputFile Where to store the resulting XML
 	 */
 	public static void generateXMLForPrediction(String testFEPredictionsFile, Range sentenceNums, 
-			String testParseFile, String testTokenizedFile, String outputFile)
-	{
+			String testParseFile, String testTokenizedFile, String outputFile) throws Exception {
 		ArrayList<String> parses = new ArrayList<String>();
 		List<String> predictedFELines = new ArrayList<String>();
-		List<String> orgSentenceLines = new ArrayList<String>();	
-		try {
-			{	// Read in a subset of (predicted) frame element lines
-				BufferedReader inFELines = new BufferedReader(new FileReader(testFEPredictionsFile));
-				String pFELine;	// output of MapReduce--will have an extra number and tab at the beginning of each line
-				String feLine;
-				while((pFELine=inFELines.readLine())!=null)
-				{
-					feLine = pFELine.substring(pFELine.indexOf('\t')+1);
-					int sentNum = DataPointWithElements.parseFrameNameAndSentenceNum(feLine).getSecond();
-					if (sentenceNums.contains(sentNum))
-						predictedFELines.add(feLine.trim());
-				}				
-				inFELines.close();
-			}
-			
-			{	// Read in corresponding sentences and their parses
-				BufferedReader inParses = new BufferedReader(new FileReader(testParseFile));
-				BufferedReader inOrgSentences = new BufferedReader(new FileReader(testTokenizedFile));
-				String parseLine;
-				int count = 0;
-				while((parseLine=inParses.readLine())!=null)
-				{
-					String sentence = inOrgSentences.readLine().trim();
-					if(count<sentenceNums.getStart())	// skip sentences prior to the specified range
-					{
-						count++;
-						continue;
-					}
-					
-					parses.add(parseLine.trim());
-					orgSentenceLines.add(sentence);
-					
-					if(count==sentenceNums.getStart()+sentenceNums.length())	// skip sentences after the specified range
-						break;
-					count++;
-				}				
-				inParses.close();
-				inOrgSentences.close();
+		List<String> orgSentenceLines = new ArrayList<String>();
+		// Read in a subset of (predicted) frame element lines
+		BufferedReader inFELines = new BufferedReader(new FileReader(testFEPredictionsFile));
+		// output of MapReduce--will have an extra number and tab at the beginning of each line
+		String pFELine;
+		String feLine;
+		while((pFELine=inFELines.readLine())!=null) {
+			feLine = pFELine.substring(pFELine.indexOf('\t') + 1);
+			int sentNum = DataPointWithElements.parseFrameNameAndSentenceNum(feLine).getSecond();
+			if (sentenceNums.contains(sentNum)) {
+				predictedFELines.add(feLine.trim());
 			}
 		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}		
-		
+		closeQuietly(inFELines);
+
+
+		// Read in corresponding sentences and their parses
+		BufferedReader inParses = new BufferedReader(new FileReader(testParseFile));
+		BufferedReader inOrgSentences = new BufferedReader(new FileReader(testTokenizedFile));
+		String parseLine;
+		int count = 0;
+		while((parseLine=inParses.readLine())!=null) {
+			String sentence = inOrgSentences.readLine().trim();
+			// skip sentences prior to the specified range
+			if(count < sentenceNums.getStart()) {
+				count++;
+				continue;
+			}
+
+			parses.add(parseLine.trim());
+			orgSentenceLines.add(sentence);
+
+			// skip sentences after the specified range
+			if(count == sentenceNums.getStart() + sentenceNums.length()) {
+				break;
+			}
+			count++;
+		}
+		closeQuietly(inParses);
+		closeQuietly(inOrgSentences);
+
 		Document doc = createXMLDoc(predictedFELines, sentenceNums, parses, orgSentenceLines);
 		XmlUtils.writeXML(outputFile, doc);
 	}	

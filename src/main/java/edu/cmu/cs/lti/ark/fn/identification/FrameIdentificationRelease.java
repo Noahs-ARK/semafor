@@ -191,16 +191,13 @@ public class FrameIdentificationRelease
 		return startParamList;
 	}
 	
-	public static String getTokenRepresentation(String tokNum, String parse)
-	{
-		StringTokenizer st = new StringTokenizer(parse,"\t");
+	public static String getTokenRepresentation(String tokNum, String parse) {
+		StringTokenizer st = new StringTokenizer(parse, "\t");
 		int tokensInFirstSent = new Integer(st.nextToken());
 		String[][] data = new String[5][tokensInFirstSent];
-		for(int k = 0; k < 5; k ++)
-		{
+		for(int k = 0; k < 5; k ++) {
 			data[k]=new String[tokensInFirstSent];
-			for(int j = 0; j < tokensInFirstSent; j ++)
-			{
+			for(int j = 0; j < tokensInFirstSent; j ++) {
 				data[k][j]=""+st.nextToken().trim();
 			}
 		}
@@ -212,8 +209,7 @@ public class FrameIdentificationRelease
 		
 		String actualTokens = "";
 		String firstTok = "";
-		for(int i = 0; i < intTokNums.length; i ++)
-		{
+		for(int i = 0; i < intTokNums.length; i ++) {
 			String lexUnit = data[0][intTokNums[i]];
 			String pos = data[1][intTokNums[i]];	
 			actualTokens+=lexUnit+" ";
@@ -223,6 +219,6 @@ public class FrameIdentificationRelease
 		actualTokens=actualTokens.trim();
 		firstTok=firstTok.trim();
 		
-		return firstTok+"\t"+actualTokens;
+		return firstTok + "\t" + actualTokens;
 	}
 }

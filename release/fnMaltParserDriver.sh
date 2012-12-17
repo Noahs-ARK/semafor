@@ -45,7 +45,8 @@ INPUT_FILE="${1}"
 # where to write the output
 OUTPUT_FILE="${2}"
 
-TEMP_DIR=$(mktemp -d -t semafor)
+#TEMP_DIR=$(mktemp -d -t semafor)
+TEMP_DIR=$(mktemp -d -t semafor.XXXXXXXXXX)
 echo "TEMP_DIR: ${TEMP_DIR}"
 
 TOKENIZED="${TEMP_DIR}/tokenized"
@@ -132,6 +133,8 @@ end=`wc -l ${TOKENIZED}`
 end=`expr ${end% *}`
 echo "${end} sentences"
 
+mv ${FRAME_ELEMENTS_OUTPUT_FILE} ${OUTPUT_FILE}
+
 : '
 echo "Producing final XML document:"
 time ${JAVA_HOME_BIN}/java -classpath ${CLASSPATH} \
@@ -150,4 +153,4 @@ echo "**********************************************************************"
 echo
 echo
 
-#rm -r "${TEMP_DIR}"
+rm -r "${TEMP_DIR}"

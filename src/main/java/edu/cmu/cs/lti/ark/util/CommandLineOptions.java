@@ -93,7 +93,10 @@ public abstract class CommandLineOptions {
 		public boolean exists() { return getFile().exists(); }
 		public boolean exists(String path) { return new File(path).exists(); }
 		public boolean parentDirectoryExists() { return getFile().getParentFile().exists(); }
-		public boolean parentDirectoryExists(String path) { return new File(path).getParentFile().exists(); }
+		public boolean parentDirectoryExists(String path) {
+			final File parentFile = new File(path).getParentFile();
+			return parentFile != null && parentFile.exists();
+		}
 	}
 	/** Option which is a path that should already exist in the local file system */
 	public class ExistingPathOption extends PathOption {
