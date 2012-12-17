@@ -50,6 +50,12 @@ TEMP_DIR=$(mktemp -d -t semafor.XXXXXXXXXX)
 echo "TEMP_DIR: ${TEMP_DIR}"
 
 TOKENIZED="${TEMP_DIR}/tokenized"
+ALL_LEMMA_TAGS_FILE="${TEMP_DIR}/all.lemma.tags"
+FRAME_ELEMENTS_OUTPUT_FILE="${TEMP_DIR}/fes"
+POS_TAGGED="${TEMP_DIR}/pos.tagged"
+TEST_PARSED_FILE="${TEMP_DIR}/conll"
+
+
 echo "**********************************************************************"
 echo "Tokenizing file: ${INPUT_FILE}"
 time gzip -cd ${INPUT_FILE} | ${SEMAFOR_HOME}/scripts/tokenize_malt.py > ${TOKENIZED}
@@ -58,7 +64,6 @@ echo "**********************************************************************"
 echo
 echo
 
-POS_TAGGED="${TEMP_DIR}/pos.tagged"
 echo "**********************************************************************"
 echo "Part-of-speech tagging tokenized data...."
 time gzip -cd ${INPUT_FILE} | ${SEMAFOR_HOME}/scripts/pos_tag_malt.py > ${POS_TAGGED}
@@ -67,7 +72,6 @@ echo "**********************************************************************"
 echo
 echo
 
-TEST_PARSED_FILE="${TEMP_DIR}/conll"
 echo "**********************************************************************"
 echo "Converting malt parse to conll format...."
 time gzip -cd ${INPUT_FILE} | ${SEMAFOR_HOME}/scripts/malt_to_conll.py > ${TEST_PARSED_FILE}
@@ -91,9 +95,6 @@ then
 else
     GRAPH_FILE=null
 fi
-
-ALL_LEMMA_TAGS_FILE="${TEMP_DIR}/all.lemma.tags"
-FRAME_ELEMENTS_OUTPUT_FILE="${TEMP_DIR}/fes"
 
 echo "**********************************************************************"
 echo "Performing frame-semantic parsing"

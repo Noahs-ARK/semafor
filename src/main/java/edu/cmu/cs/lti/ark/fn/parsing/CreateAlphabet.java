@@ -21,16 +21,14 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import edu.cmu.cs.lti.ark.fn.clusters.ScrapTest;
 import edu.cmu.cs.lti.ark.fn.utils.BitOps;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.FileUtil;
-import org.apache.commons.io.IOUtils;
+
+import java.io.BufferedOutputStream;
+import java.util.HashMap;
+import java.util.List;
 
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
@@ -78,7 +76,7 @@ public class CreateAlphabet {
 
 	public static void run(boolean genAlpha, List<String> tL, List<String> fL, WordNetRelations lwnr) {
 		DataPrep dprep = new DataPrep(tL, fL, lwnr);
-		long time=System.currentTimeMillis();
+		long time = System.currentTimeMillis();
 		System.out.println("Reading alphabet...");
 		if(genAlpha){
 			DataPrep.featIndex=new HashMap<String,Integer>();

@@ -4,7 +4,7 @@
  * Carnegie Mellon University, 
  * All Rights Reserved.
  * 
- * FrameIdentifier.java is part of SEMAFOR 2.0.
+ * FrameIdentification.java is part of SEMAFOR 2.0.
  * 
  * SEMAFOR 2.0 is free software: you can redistribute it and/or modify  it
  * under the terms of the GNU General Public License as published by the
@@ -42,7 +42,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectDoubleHashMap;
 
-public class FrameIdentifier
+public class FrameIdentification
 {
 	public static void main(String[] args)
 	{
