@@ -124,7 +124,7 @@ public class FrameIdentificationReleaseMulticore
 		boolean useRelaxed = options.useRelaxedSegmentation.get().equals("yes");
 		List<String> segs = null;
 		if (!useRelaxed) {
-			RoteSegmenter seg = new RoteSegmenter();
+			RoteSegmenter seg = new RoteSegmenter(allRelatedWords);
 			segs = seg.getSegmentations(tokenNums, parses, allRelatedWords);
 		} else {
 			MoreRelaxedSegmenter seg = new MoreRelaxedSegmenter();

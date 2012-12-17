@@ -21,13 +21,13 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.segmentation;
 
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 
 import javax.annotation.Nullable;
@@ -71,18 +71,20 @@ public class RoteSegmenter implements Segmenter {
 		}
 	};
 
-	/**
-	 * @param parse allLemmaTags formatted sentence
-	 * @param allRelatedWords a set of all ngrams (in the form "lemma_cpos" that are likely to be targets
-	 * @return a tsv of ngrams that are likely to evoke frames, in the format "5_6_7_8 2_3_4 ..."
-	 */
-	private List<String> getSegmentation(String[][] parse, Set<String> allRelatedWords) {
-		final int numTokens = parse[0].length;
+	protected final Set<String> allRelatedWords;
+
+	public RoteSegmenter(Set<String> allRelatedWords) {
+		this.allRelatedWords = allRelatedWords;
+	}
+
+	public List<String> getSegmentation(Sentence sentence) {
+		final List<Token> tokens = sentence.getTokens();
+		final int numTokens = tokens.size();
 		// start indices that we haven't used yet
 		final Set<Integer> remainingStartIndices = Sets.newHashSet(xrange(numTokens));
 		final ImmutableList.Builder<String> allNgramIndices = ImmutableList.builder();  // results
 
-		final List<String> lemmas = getLemmasAndCoursePos(parse);
+		final List<String> lemmas = getLemmasAndCoursePos(sentence);
 
 		// look for ngrams, backing off to smaller n
 		for(int n : range(1, MAX_LEN).asList().reverse()) {
@@ -98,18 +100,19 @@ public class RoteSegmenter implements Segmenter {
 				}
 			}
 		}
-		return allNgramIndices.build();
+		final ImmutableList<String> ngramIndices = allNgramIndices.build();
+		return trimPrepositions(ngramIndices, sentence.toAllLemmaTagsArray());
 	}
 
-	private ImmutableList<String> getLemmasAndCoursePos(String[][] data) {
-		int numTokens = data[0].length;
-		final ImmutableList.Builder<String> lemmasBuilder = ImmutableList.builder();
-		for(int i : range(numTokens)) {
-			final String cPos = data[PARSE_POS_ROW][i].substring(0, 1);
-			final String lemma = data[PARSE_LEMMA_ROW][i];
-			lemmasBuilder.add(lemma + "_" + cPos);
-		}
-		return lemmasBuilder.build();
+	private List<String> getLemmasAndCoursePos(Sentence sentence) {
+		return Lists.transform(sentence.getTokens(), new Function<Token, String>() {
+			@Nullable
+			@Override
+			public String apply(@Nullable Token token) {
+				assert token != null;
+				return token.getLemma() + "_" + token.getCpostag();
+			}
+		});
 	}
 
 	/**
@@ -227,12 +230,11 @@ public class RoteSegmenter implements Segmenter {
 			final List<String> tokens = copyOf(tokenNum.trim().split("\t"));
 
 			// the last tsv field is the index of the sentence in `parses`
-			final int sentNum = Integer.parseInt(tokens.get(tokens.size()-1));
+			final int sentNum = Integer.parseInt(tokens.get(tokens.size() - 1));
 			final String parse = parseLines.get(sentNum);
-			final String[][] parseData = AllLemmaTags.readLine(parse);
-			final List<String> ngramIndices = getSegmentation(parseData, allRelatedWords);
-			final List<String> trimmed = trimPrepositions(ngramIndices, parseData);
-			result.add(getTestLine(tokens.subList(0, tokens.size() - 1), trimmed) + "\t" + sentNum);
+			final Sentence sentence = Sentence.fromAllLemmaTagsArray(AllLemmaTags.readLine(parse));
+			final List<String> ngramIndices = getSegmentation(sentence);
+			result.add(getTestLine(tokens.subList(0, tokens.size() - 1), ngramIndices) + "\t" + sentNum);
 		}
 		return result.build();
 	}

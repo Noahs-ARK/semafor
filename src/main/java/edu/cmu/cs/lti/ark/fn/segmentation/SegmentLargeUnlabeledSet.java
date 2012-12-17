@@ -54,7 +54,7 @@ public class SegmentLargeUnlabeledSet {
 					parses.add(line);
 					tokenNums.add(""+(j-i));
 				}
-				RoteSegmenter seg = new RoteSegmenter();
+				RoteSegmenter seg = new RoteSegmenter(allRelatedWords);
 				List<String> segs = seg.getSegmentations(tokenNums, parses, allRelatedWords);
 				List<String> modified = ParseUtils.getRightInputForFrameIdentification(segs);
 				Set<String> setOfWords = getSetOfWords(modified, parses);
