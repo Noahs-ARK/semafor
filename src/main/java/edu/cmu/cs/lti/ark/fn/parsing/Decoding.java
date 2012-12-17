@@ -511,4 +511,8 @@ public class Decoding
 		
 		}
 	}
+
+	public void wrapUp() {
+		// no op unless overridden
+	}
 }

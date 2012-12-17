@@ -55,6 +55,7 @@ public class JointDecoding extends Decoding {
 		mIgnoreNullSpansWhileJointDecoding = false;
 	}
 
+	@Override
 	public void wrapUp() {
 		if (jd != null) {
 			jd.end();

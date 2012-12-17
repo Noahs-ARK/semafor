@@ -251,10 +251,7 @@ public class ParserDriver {
 		closeQuietly(parseReader);
 		closeQuietly(outputWriter);
 		closeQuietly(lemmaTagsWriter);
-		// wrapping up joint decoding
-		if (!decodingType.equals("beam")) {
-			((JointDecoding) decoding).wrapUp();
-		}
+		decoding.wrapUp();
 	}
 
 	private static List<String> identifyFrames(Set<String> allRelatedWords,
