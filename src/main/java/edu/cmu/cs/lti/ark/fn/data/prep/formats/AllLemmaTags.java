@@ -14,6 +14,8 @@ public class AllLemmaTags {
 	public static final int NUM_PARSE_ROWS = 6;
 	public static final int PARSE_TOKEN_ROW = 0;
 	public static final int PARSE_POS_ROW = 1;
+	public static final int PARSE_DEPREL_ROW = 2;
+	public static final int PARSE_HEAD_ROW = 3;
 	public static final int PARSE_NE_ROW = 4;
 	public static final int PARSE_LEMMA_ROW = 5;
 
