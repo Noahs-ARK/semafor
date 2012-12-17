@@ -22,12 +22,14 @@
 package edu.cmu.cs.lti.ark.fn.evaluation;
 
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithElements;
+import edu.cmu.cs.lti.ark.util.XmlUtils;
 import edu.cmu.cs.lti.ark.util.ds.Range;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
-import edu.cmu.cs.lti.ark.util.XmlUtils;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectIterator;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -36,13 +38,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
-
-public class PrepareFullAnnotationXML
-{
+public class PrepareFullAnnotationXML {
 	/**
 	 * Generates the XML representation of a set of predicted semantic parses so evaluation 
 	 * can be performed (with SemEval Perl scripts)
@@ -54,12 +51,17 @@ public class PrepareFullAnnotationXML
 	 *   testParseFile 
 	 *   testTokenizedFile 
 	 *   outputFile
-	 * @see #generateXMLForPrediction(String, int, int, String, String, String) 
+	 * @see #generateXMLForPrediction
 	 */
-	public static void main(String[] args)
-	{
-		ParseOptions options = new ParseOptions(args);	// TODO: Change to CommandLineOptions framework (involves changes to shell scripts which use this class)
-		generateXMLForPrediction(options.testFEPredictionsFile, new Range0Based(options.startIndex,options.endIndex,false), options.testParseFile, options.testTokenizedFile, options.outputFile);
+	public static void main(String[] args) {
+		// TODO: Change to CommandLineOptions framework (involves changes to shell scripts which use this class)
+		ParseOptions options = new ParseOptions(args);
+		generateXMLForPrediction(
+				options.testFEPredictionsFile,
+				new Range0Based(options.startIndex, options.endIndex, false),
+				options.testParseFile,
+				options.testTokenizedFile,
+				options.outputFile);
 	}
 	
 	/**
@@ -69,7 +71,7 @@ public class PrepareFullAnnotationXML
 	 * @param testFEPredictionsFile Path to MapReduce output of the parser, formatted as frame elements lines
 	 * @param sentenceNums Range of sentences to include (0-based)
 	 * @param testParseFile Dependency parses for each sentence in the data
-	 * @param testTokenized File Original form of each sentence in the data
+	 * @param testTokenizedFile File Original form of each sentence in the data
 	 * @param outputFile Where to store the resulting XML
 	 */
 	public static void generateXMLForPrediction(String testFEPredictionsFile, Range sentenceNums, 
@@ -78,12 +80,11 @@ public class PrepareFullAnnotationXML
 		ArrayList<String> parses = new ArrayList<String>();
 		List<String> predictedFELines = new ArrayList<String>();
 		List<String> orgSentenceLines = new ArrayList<String>();	
-		try
-		{
+		try {
 			{	// Read in a subset of (predicted) frame element lines
 				BufferedReader inFELines = new BufferedReader(new FileReader(testFEPredictionsFile));
-				String pFELine = null;	// output of MapReduce--will have an extra number and tab at the beginning of each line
-				String feLine = null;
+				String pFELine;	// output of MapReduce--will have an extra number and tab at the beginning of each line
+				String feLine;
 				while((pFELine=inFELines.readLine())!=null)
 				{
 					feLine = pFELine.substring(pFELine.indexOf('\t')+1);
@@ -97,7 +98,7 @@ public class PrepareFullAnnotationXML
 			{	// Read in corresponding sentences and their parses
 				BufferedReader inParses = new BufferedReader(new FileReader(testParseFile));
 				BufferedReader inOrgSentences = new BufferedReader(new FileReader(testTokenizedFile));
-				String parseLine = null;
+				String parseLine;
 				int count = 0;
 				while((parseLine=inParses.readLine())!=null)
 				{
@@ -119,8 +120,7 @@ public class PrepareFullAnnotationXML
 				inOrgSentences.close();
 			}
 		}
-		catch(Exception e)
-		{
+		catch(Exception e) {
 			e.printStackTrace();
 		}		
 		
@@ -132,7 +132,7 @@ public class PrepareFullAnnotationXML
 	 * Given several parallel lists of predicted frame instances, including their frame elements, create an XML file 
 	 * for the full-text annotation predicted by the model.
 	 * @param predictedFELines Lines encoding predicted frames & FEs in the same format as the .sentences.frame.elements files
-	 * @parma startSentenceNum Global sentence number for the first sentence being predicted, so as to map FE lines to items in parses/orgLines
+	 * @param sentenceNums Global sentence number for the first sentence being predicted, so as to map FE lines to items in parses/orgLines
 	 * @param parses Lines encoding the parse for each sentence
 	 * @param orgLines The original sentences, untokenized
 	 * @return

@@ -27,6 +27,8 @@ import java.util.StringTokenizer;
 import java.io.BufferedReader;
 import java.io.FileReader;
 
+import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
+
 
 /**
  * Methods for converting to the "all.lemma.tags" format, as described in training/data/README.md
@@ -77,8 +79,8 @@ public class OneLineDataCreation {
 		ArrayList<String> gatheredParses;
 		ArrayList<String> gatheredNESentences;
 
-		int size = parses.size();
-		for(int i = 0; i < size; i++) {
+		final int size = parses.size();
+		for(int i : xrange(size)) {
 			final String tokenizedSentence = tokenizedSentences.get(i);
 			final ArrayList<String> parse = parses.get(i);
 			final String neTaggedSentence = neTaggedSentences.get(i);
