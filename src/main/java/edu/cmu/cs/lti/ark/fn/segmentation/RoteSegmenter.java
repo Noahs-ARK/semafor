@@ -232,7 +232,7 @@ public class RoteSegmenter implements Segmenter {
 			final String[][] parseData = AllLemmaTags.readLine(parse);
 			final List<String> ngramIndices = getSegmentation(parseData, allRelatedWords);
 			final List<String> trimmed = trimPrepositions(ngramIndices, parseData);
-			result.add(getTestLine(tokens, trimmed) + "\t" + sentNum);
+			result.add(getTestLine(tokens.subList(0, tokens.size() - 1), trimmed) + "\t" + sentNum);
 		}
 		return result.build();
 	}
