@@ -27,7 +27,13 @@ import java.io.IOException;
 import java.util.*;
 
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;
 import edu.cmu.cs.lti.ark.fn.evaluation.ParseUtils;
 import edu.cmu.cs.lti.ark.fn.segmentation.MoreRelaxedSegmenter;
 import edu.cmu.cs.lti.ark.fn.segmentation.RoteSegmenter;
@@ -40,6 +46,8 @@ import edu.cmu.cs.lti.ark.util.optimization.LDouble;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectDoubleHashMap;
+
+import static com.google.common.base.Strings.nullToEmpty;
 
 
 public class FrameIdentificationRelease
@@ -192,33 +200,24 @@ public class FrameIdentificationRelease
 	}
 	
 	public static String getTokenRepresentation(String tokNum, String parse) {
-		StringTokenizer st = new StringTokenizer(parse, "\t");
-		int tokensInFirstSent = new Integer(st.nextToken());
-		String[][] data = new String[5][tokensInFirstSent];
-		for(int k = 0; k < 5; k ++) {
-			data[k]=new String[tokensInFirstSent];
-			for(int j = 0; j < tokensInFirstSent; j ++) {
-				data[k][j]=""+st.nextToken().trim();
-			}
-		}
 		String[] tokNums = tokNum.split("_");
-		int[] intTokNums = new int[tokNums.length];
-		for(int j = 0; j < tokNums.length; j ++)
-			intTokNums[j] = new Integer(tokNums[j]);
-		Arrays.sort(intTokNums);
-		
-		String actualTokens = "";
-		String firstTok = "";
-		for(int i = 0; i < intTokNums.length; i ++) {
-			String lexUnit = data[0][intTokNums[i]];
-			String pos = data[1][intTokNums[i]];	
-			actualTokens+=lexUnit+" ";
-			if(i==0)
-				firstTok =  lexUnit.toLowerCase()+"."+pos.substring(0,1).toLowerCase();
+		List<Integer> indices = Lists.newArrayList();
+		for (String tokNum1 : tokNums) {
+			indices.add(Integer.parseInt(tokNum1));
 		}
-		actualTokens=actualTokens.trim();
-		firstTok=firstTok.trim();
-		
-		return firstTok + "\t" + actualTokens;
+		return getTokenRepresentation(indices, Sentence.fromAllLemmaTagsArray(AllLemmaTags.readLine(parse)));
+	}
+
+	public static String getTokenRepresentation(List<Integer> indices, Sentence sentence) {
+		final List<Token> tokens = sentence.getTokens();
+		if(indices.isEmpty()) return "\t";
+		final Token firstToken = tokens.get(indices.get(0));
+		String firstTok = firstToken.getForm().toLowerCase() + "." +
+				nullToEmpty(firstToken.getPostag()).substring(0, 1).toLowerCase();
+		List<String> actualTokens = Lists.newArrayList();
+		for (int i : indices) {
+			actualTokens.add(tokens.get(i).getForm());
+		}
+		return firstTok + "\t" + Joiner.on(" ").join(actualTokens);
 	}
 }

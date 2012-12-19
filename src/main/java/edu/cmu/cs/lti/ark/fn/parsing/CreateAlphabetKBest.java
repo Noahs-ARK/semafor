@@ -69,7 +69,7 @@ public class CreateAlphabetKBest
 		int fCount=0;
 		time=System.currentTimeMillis();
 		while( dprep.hasNext()){
-			int [][][] datapoint=dprep.getTrainData();
+			int [][][] datapoint=dprep.getNextTrainData();
 			System.out.print(".");
 			if(fCount%100==0){
 				System.out.println(fCount);

@@ -32,8 +32,6 @@ import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 import edu.cmu.cs.lti.ark.util.ds.Range1Based;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
-import edu.cmu.cs.lti.ark.fn.parsing.CandidateFrameElementFilters;
-import edu.cmu.cs.lti.ark.fn.parsing.FeatureExtractor;
 
 public class DataPrep {
 	/**
@@ -43,9 +41,9 @@ public class DataPrep {
 	/**
 	 * @brief an array list containing candidate spans for each sentence
 	 * the m'th span in the n'th sentence is 
-	 * canLines.get(n)[m][0] and canLines.get(n)[m][1]
+	 * candidateLines.get(n)[m][0] and candidateLines.get(n)[m][1]
 	 */
-	public ArrayList<int[][]> canLines;
+	public ArrayList<int[][]> candidateLines;
 	/**
 	 * a hash map from a frame name to its
 	 * frame elements.
@@ -211,7 +209,7 @@ public class DataPrep {
 		if (fedict == null) {
 			fedict = new FEDict(FEFileName.fedictFilename1);
 		}
-		canLines = new ArrayList<int[][]>();
+		candidateLines = new ArrayList<int[][]>();
 		if (frameElementLines == null) {
 			feLines = readLinesInFile(FEFileName.feFilename);
 		} else {
@@ -223,25 +221,19 @@ public class DataPrep {
 			DataPrep.tagLines = tagLines;
 		}		
 		
-		boolean hasCandidateFile = true;
-		
 		Scanner canScanner = FileUtil.openInFile(FEFileName.candidateFilename);
-		if (canScanner == null) {
-			hasCandidateFile = false;
-		}
+		final boolean hasCandidateFile = (canScanner != null);
+
 		if (wnr == null) {
 			if (lwnr != null) {
 				wnr = lwnr;
 			} else {
-				wnr = new WordNetRelations(FEFileName.stopwordFilename,
-						FEFileName.wordnetFilename);
+				wnr = new WordNetRelations(FEFileName.stopwordFilename, FEFileName.wordnetFilename);
 			}
 		}
 		int span[];
 		System.out.println("Loading data....");
-		int count = 0;
-		for (String feline : feLines)
-		{
+		for (String feline : feLines) {
 			int sentNum = Integer.parseInt(feline.split("\t")[5]);
 			DataPointWithElements dp = new DataPointWithElements(DataPrep.tagLines.get(sentNum), feline);
 			int spans[][];
@@ -261,15 +253,11 @@ public class DataPrep {
 				spanList=addConstituent(dp);
 			}
 			//add null span to candidates
-			span=new int[3];
-			span[0]=-1;
-			span[1]=-1;
-			span[2]=0;
+			span = new int[] {-1, -1, 0};
 			spanList.add(span);
 			spans = new int[spanList.size()][];
 			spanList.toArray(spans);
-			canLines.add(spans);
-			count++;
+			candidateLines.add(spans);
 		}
 		reset();
 	}
@@ -297,9 +285,7 @@ public class DataPrep {
 	}
 	
 	public boolean hasNext() {
-		if (feIndex >= feLines.size())
-			return false;
-		return true;
+		return feIndex < feLines.size();
 	}
 
 	public void reset() {
@@ -314,24 +300,24 @@ public class DataPrep {
 		}
 	}
 
-	public int[][][] getTrainData() {
-		int[][][] alldata = null;
+	public int[][][] getNextTrainData() {
+		int[][][] allData;
 		String feline = feLines.get(feIndex);
 		int sentNum = Integer.parseInt(feline.split("\t")[5]);
 		DataPointWithElements goldDP = new DataPointWithElements(tagLines.get(sentNum), feline);
 		String frame = goldDP.getFrameName();
-		int cantoks[][] = canLines.get(feIndex);
+		int canToks[][] = candidateLines.get(feIndex);
 		String[] canArgs = fedict.lookupFes(frame);
 		HashSet<String> realizedFes = new HashSet<String>();
-		ArrayList<int[][]> datapointList = new ArrayList<int[][]>();
-		String fename[] = goldDP.getOvertFilledFrameElementNames();
+		ArrayList<int[][]> dataPointList = new ArrayList<int[][]>();
+		String frameElementNames[] = goldDP.getOvertFilledFrameElementNames();
 		List<Range0Based> spans = goldDP.getOvertFrameElementFillerSpans();
 		//add realized frame elements
 		for (int i = 0; i < goldDP.getNumOvertFrameElementFillers(); i++) {
-			if(realizedFes.contains(fename[i]))
+			if(realizedFes.contains(frameElementNames[i]))
 				continue;
-			realizedFes.add(fename[i]);
-			addFeatureForOneArgument(goldDP, frame, fename[i], spans.get(i),datapointList, cantoks);
+			realizedFes.add(frameElementNames[i]);
+			addFeatureForOneArgument(goldDP, frame, frameElementNames[i], spans.get(i),dataPointList, canToks);
 		}
 		//add null frame elements
 		if (canArgs != null)
@@ -339,13 +325,13 @@ public class DataPrep {
 				if (!realizedFes.contains(fe)) {
 					addFeatureForOneArgument(goldDP, frame, fe,
 							CandidateFrameElementFilters.EMPTY_SPAN,
-							datapointList, cantoks);
+							dataPointList, canToks);
 				}
 			}
-		alldata = new int[datapointList.size()][][];
-		datapointList.toArray(alldata);
+		allData = new int[dataPointList.size()][][];
+		dataPointList.toArray(allData);
 		feIndex++;
-		return alldata;
+		return allData;
 	}
 
 	public int[][][] getTrainDataOracleSpans() {
@@ -355,7 +341,7 @@ public class DataPrep {
 		DataPointWithElements goldDP = new DataPointWithElements(tagLines
 				.get(sentNum), feline);
 		String frame = goldDP.getFrameName();
-		int cantoks[][] = canLines.get(feIndex);
+		int cantoks[][] = candidateLines.get(feIndex);
 		String[] canArgs = fedict.lookupFes(frame);
 		HashSet<String> realizedFes = new HashSet<String>();
 		ArrayList<int[][]> datapointList = new ArrayList<int[][]>();

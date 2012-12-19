@@ -1,9 +1,13 @@
 package edu.cmu.cs.lti.ark.fn.identification;
 
+import com.google.common.primitives.Ints;
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectDoubleHashMap;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -25,8 +29,7 @@ public class GraphBasedFrameIdentifier extends FastFrameIdentifier {
 		this.graph = graph;
 	}
 
-	@Override
-	public String getBestFrame(String frameLine, String parseLine) {
-		return super.getBestFrame(frameLine, parseLine, graph);
+	public String getBestFrame(List<Integer> indices, Sentence sentence) {
+		return getBestFrame(Ints.toArray(indices), sentence, graph);
 	}
 }

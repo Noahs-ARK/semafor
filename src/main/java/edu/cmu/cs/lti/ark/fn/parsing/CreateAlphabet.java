@@ -21,6 +21,7 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
+import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.fn.clusters.ScrapTest;
 import edu.cmu.cs.lti.ark.fn.utils.BitOps;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
@@ -74,46 +75,61 @@ public class CreateAlphabet {
 		DataPrep.genAlpha = false;
 	}
 
-	public static void run(boolean genAlpha, List<String> tagLines, List<String> frameElementLines, WordNetRelations lwnr) {
-		DataPrep dataPrep = new DataPrep(tagLines, frameElementLines, lwnr);
+	public static void run(boolean doGenerateAlphabet, List<String> tagLines, List<String> frameElementLines, WordNetRelations lwnr) {
+		List<int[][][]> dataPoints = getDataPoints(tagLines, frameElementLines, lwnr);
 		long time = System.currentTimeMillis();
-		System.out.println("Reading alphabet...");
-		if(genAlpha){
+		System.err.println("Reading alphabet...");
+		if(doGenerateAlphabet){
 			DataPrep.featIndex = new HashMap<String,Integer>();
 		}
 		if(DataPrep.featIndex == null){
 			DataPrep.readFeatureIndex(FEFileName.alphafilename);
 			System.out.println("Finished Reading alphabet..."+(System.currentTimeMillis()-time));
 		}
-		DataPrep.genAlpha = genAlpha;
-		BufferedOutputStream bos = new BufferedOutputStream(FileUtil.openOutFile(FEFileName.eventFilename));
-		try {
+		DataPrep.genAlpha = doGenerateAlphabet;
+		time = System.currentTimeMillis();
+		writeEvents(dataPoints, FEFileName.eventFilename);
+		System.err.println("Wrote events in " + (System.currentTimeMillis() - time) + " millis.");
+		if(doGenerateAlphabet){
+			DataPrep.writeFeatureIndex(FEFileName.alphafilename);
+		}
+	}
+
+	private static void writeEvents(List<int[][][]> dataPoints, String eventFilename) {
+		BufferedOutputStream eventOutputStream = new BufferedOutputStream(FileUtil.openOutFile(eventFilename));
+		try  {
 			int fCount = 0;
-			time = System.currentTimeMillis();
-			while(dataPrep.hasNext()){
-				int [][][] datapoint = dataPrep.getTrainData();
-				System.out.print(".");
+			for(int[][][] dataPoint : dataPoints) {
+				System.err.print(".");
 				if(fCount%100 == 0){
-					System.out.println(fCount);
+					System.err.println(fCount);
 				}
-				for(int i=0; i<datapoint.length; i++){
-					for(int j=0; j<datapoint[i].length; j++){
-						for(int k=0; k<datapoint[i][j].length; k++){
-							BitOps.writeInt(datapoint[i][j][k], bos);
+				for(int i=0; i<dataPoint.length; i++){
+					for(int j=0; j<dataPoint[i].length; j++){
+						for(int k=0; k<dataPoint[i][j].length; k++){
+							BitOps.writeInt(dataPoint[i][j][k], eventOutputStream);
 						}
-						BitOps.writeInt(-1, bos);
+						BitOps.writeInt(-1, eventOutputStream);
 					}
-					BitOps.writeInt(-1, bos);
+					BitOps.writeInt(-1, eventOutputStream);
 				}
 				fCount++;
 			}
-			BitOps.writeInt(-1, bos);
+			BitOps.writeInt(-1, eventOutputStream);
 		} finally {
-			closeQuietly(bos);
+			closeQuietly(eventOutputStream);
 		}
-		System.out.println(System.currentTimeMillis()-time);
-		if(genAlpha){
-			DataPrep.writeFeatureIndex(FEFileName.alphafilename);
+	}
+
+	public static List<int[][][]> getDataPoints(List<String> tagLines,
+												List<String> frameElementLines,
+												WordNetRelations lwnr) {
+		DataPrep dataPrep = new DataPrep(tagLines, frameElementLines, lwnr);
+		List<int[][][]> dataPoints = Lists.newArrayList();
+		while(dataPrep.hasNext()){
+			dataPoints.add(dataPrep.getNextTrainData());
 		}
-	}	
+		return dataPoints;
+	}
+
 }
