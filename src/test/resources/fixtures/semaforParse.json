@@ -1,0 +1,112 @@
+{
+      "frames": [
+        {
+          "frame_elements": [
+            {
+              "start": 10,
+              "end": 11,
+              "name": "Relatives",
+              "text": "family"
+            }
+          ],
+          "target": {
+            "start": 10,
+            "end": 11,
+            "name": "Kinship",
+            "text": "family"
+          }
+        },
+        {
+          "frame_elements": [
+            {
+              "start": 12,
+              "end": 13,
+              "name": "Vehicle",
+              "text": "vehicles"
+            }
+          ],
+          "target": {
+            "start": 12,
+            "end": 13,
+            "name": "Vehicle",
+            "text": "vehicles"
+          }
+        },
+        {
+          "frame_elements": [
+            {
+              "start": 7,
+              "end": 13,
+              "name": "Group",
+              "text": "of the Stryker family of vehicles"
+            },
+            {
+              "start": 6,
+              "end": 7,
+              "name": "Member",
+              "text": "member"
+            }
+          ],
+          "target": {
+            "start": 6,
+            "end": 7,
+            "name": "Membership",
+            "text": "member"
+          }
+        },
+        {
+          "frame_elements": [
+            {
+              "start": 6,
+              "end": 7,
+              "name": "Entity",
+              "text": "member"
+            },
+            {
+              "start": 5,
+              "end": 6,
+              "name": "Age",
+              "text": "newest"
+            }
+          ],
+          "target": {
+            "start": 5,
+            "end": 6,
+            "name": "Age",
+            "text": "newest"
+          }
+        },
+        {
+          "frame_elements": [
+            {
+              "start": 1,
+              "end": 2,
+              "name": "Person",
+              "text": "Soldiers"
+            }
+          ],
+          "target": {
+            "start": 1,
+            "end": 2,
+            "name": "People_by_vocation",
+            "text": "Soldiers"
+          }
+        }
+      ],
+      "text": [
+        "``",
+        "Soldiers",
+        "have",
+        "welcomed",
+        "the",
+        "newest",
+        "member",
+        "of",
+        "the",
+        "Stryker",
+        "family",
+        "of",
+        "vehicles",
+        "."
+      ]
+}
