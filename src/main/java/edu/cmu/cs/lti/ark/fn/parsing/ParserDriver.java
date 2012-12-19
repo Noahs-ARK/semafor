@@ -205,6 +205,7 @@ public class ParserDriver {
 			final ArrayList<String> tokenizedLines = Lists.newArrayList();
 			List<ArrayList<String>> parseSets = Lists.newArrayList();
 			System.err.println("Processing batch of size:" + BATCH_SIZE + " starting from: " + count);
+			long time = System.currentTimeMillis();
 			for (int ignored : xrange(BATCH_SIZE)) {
 				posLine = posReader.readLine();
 				if (posLine == null) break;
@@ -240,6 +241,7 @@ public class ParserDriver {
 			for (String result: argResult) {
 				outputWriter.write(result + "\n");
 			}
+			System.err.println("Processed " + posLines.size() + " sentences in " + (System.currentTimeMillis()-time) + " millis.");
 			count += BATCH_SIZE;
 		} while (posLine != null);
 

@@ -21,6 +21,8 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithElements;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.FileUtil;
@@ -30,8 +32,14 @@ import edu.cmu.cs.lti.ark.util.ds.Range1Based;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParses;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.*;
+
+import static java.lang.Integer.parseInt;
+import static org.apache.commons.io.IOUtils.closeQuietly;
 
 public class DataPrep {
 	/**
@@ -121,24 +129,18 @@ public class DataPrep {
 			parse = dp.getParses().get(0);
 			nodes = parse.getIndexSortedListOfNodes();
 			findSpans(spanMat, heads, nodes);
-			if(FEFileName.useUnlabeledSpans)
-			{
-				for(int j = 1; j < nodes.length; j ++)
-				{
-					for(int k = 1; k < nodes.length; k ++)
-					{
-						if(j==k)
-							continue;
-						if(k<j)
-							continue;
+			if(FEFileName.useUnlabeledSpans) {
+				for(int j = 1; j < nodes.length; j ++) {
+					for(int k = 1; k < nodes.length; k ++) {
+						if(j==k) continue;
+						if(k<j) continue;
 						String span = "";
-						for(int l = j; l <= k; l ++)
-							span+= nodes[l].getWord()+" ";
+						for(int l = j; l <= k; l ++) {
+							span += nodes[l].getWord() + " ";
+						}
 						span=span.trim().toLowerCase();
-						if(FEFileName.unlabeledSpans.contains(span))
-						{
-							if(!spanMat[j-1][k-1])
-							{
+						if(FEFileName.unlabeledSpans.contains(span)) {
+							if(!spanMat[j-1][k-1]) {
 								spanMat[j-1][k-1]=true;
 								depParses[j-1][k-1]=findParse(dp.getParses(),j,k,FEFileName.unlabeledSpans.get(span));
 							}
@@ -189,8 +191,7 @@ public class DataPrep {
 	
 	
 	/**
-	 * @brief load data needed for feature extraction
-	 * 
+	 * loads data needed for feature extraction
 	 */
 	private void load(List<String> tagLines, List<String> frameElementLines, WordNetRelations lwnr)
 			throws FEDict.LoadingException {
@@ -219,32 +220,24 @@ public class DataPrep {
 				wnr = new WordNetRelations(FEFileName.stopwordFilename, FEFileName.wordnetFilename);
 			}
 		}
-		int span[];
 		System.out.println("Loading data....");
 		for (String feline : feLines) {
-			int sentNum = Integer.parseInt(feline.split("\t")[5]);
+			int sentNum = parseInt(feline.split("\t")[5]);
 			DataPointWithElements dp = new DataPointWithElements(DataPrep.tagLines.get(sentNum), feline);
-			int spans[][];
 			ArrayList<int[]> spanList;
 			if (hasCandidateFile) {
-				spanList=new ArrayList<int[]>();
-				String spanToks[] = canScanner.nextLine().trim().split("\t|:");
-				for (int i = 0; i < spanToks.length; i += 2) {
-					span = new int[2];
-					span[0] = Integer.parseInt(spanToks[i]);
-					span[1] = Integer.parseInt(spanToks[i + 1]);
-					spanList.add(span);
+				spanList = Lists.newArrayList();
+				String spanTokens[] = canScanner.nextLine().trim().split("\t|:");
+				for (int i = 0; i < spanTokens.length; i += 2) {
+					spanList.add(new int[]{parseInt(spanTokens[i]), parseInt(spanTokens[i + 1])});
 				}
 			} 
 			else {
-				spanList=addConstituent(dp);
+				spanList = addConstituent(dp);
 			}
 			//add null span to candidates
-			span = new int[] {-1, -1, 0};
-			spanList.add(span);
-			spans = new int[spanList.size()][];
-			spanList.toArray(spans);
-			candidateLines.add(spans);
+			spanList.add(new int[]{-1, -1, 0});
+			candidateLines.add(spanList.toArray(new int[spanList.size()][]));
 		}
 		reset();
 	}
@@ -277,8 +270,7 @@ public class DataPrep {
 	}
 
 	public static void addFeature(String key, HashMap<String, Integer> freqmap) {
-		Integer freq = freqmap.get(key);
-		if (freq == null) {
+		if(!freqmap.containsKey(key)) {
 			freqmap.put(key, numFeat + 1);
 			numFeat++;
 		}
@@ -287,7 +279,7 @@ public class DataPrep {
 	public int[][][] getNextTrainData() {
 		int[][][] allData;
 		String feline = feLines.get(feIndex);
-		int sentNum = Integer.parseInt(feline.split("\t")[5]);
+		int sentNum = parseInt(feline.split("\t")[5]);
 		DataPointWithElements goldDP = new DataPointWithElements(tagLines.get(sentNum), feline);
 		String frame = goldDP.getFrameName();
 		int canToks[][] = candidateLines.get(feIndex);
@@ -374,21 +366,31 @@ public class DataPrep {
 	}
 
 	// loads a list of features into a hash
-	public static void readFeatureIndex(String alphabetFilename) {
-		Scanner localsc = FileUtil.openInFile(alphabetFilename);
-		featIndex = new HashMap<String, Integer>();
-		localsc.nextLine();
-		int count = 0;
-		while (localsc.hasNextLine()) {
-			addFeature(localsc.nextLine(), featIndex);
-			if (count % 100000 == 0) {
-				System.out.print(count + " ");
-			}
-			count++;
-		}
-		System.out.println();
-		localsc.close();
+	public static void loadFeatureIndex(String alphabetFilename) throws FileNotFoundException {
+		featIndex = readFeatureIndex(new File(alphabetFilename));
 		genAlpha = false;
+	}
+
+	public static HashMap<String, Integer> readFeatureIndex(File alphabetFile) throws FileNotFoundException {
+		HashMap<String, Integer> featureIndex = Maps.newHashMap();
+		final FileInputStream inputStream = new FileInputStream(alphabetFile);
+		Scanner scanner = new Scanner(inputStream);
+		try {
+			// skip the first line
+			scanner.nextLine();
+			int count = 0;
+			while (scanner.hasNextLine()) {
+				addFeature(scanner.nextLine(), featureIndex);
+				if (count % 100000 == 0) {
+					System.err.print(count + " ");
+				}
+				count++;
+			}
+			System.err.println();
+		} finally {
+			closeQuietly(inputStream);
+		}
+		return featureIndex;
 	}
 
 	// writes a list of features into a hash

@@ -30,6 +30,7 @@ public class FileUtil {
 			localsc=new Scanner (new FileInputStream(filename));
 
 		}catch(IOException ioe){
+			// TODO: NO! stop swallowing exceptions
 			System.out.println(ioe.getMessage());
 		}
 		return localsc;
@@ -41,6 +42,7 @@ public class FileUtil {
 			localps=new PrintStream (new FileOutputStream(filename));
 
 		}catch(IOException ioe){
+			// TODO: NO! stop swallowing exceptions
 			System.out.println(ioe.getMessage());
 		}
 		return localps;
@@ -51,6 +53,7 @@ public class FileUtil {
 			fis =(new FileInputStream(infilename));
 			
 		} catch (IOException ioe) {
+			// TODO: NO! stop swallowing exceptions
 			System.out.println(ioe.getMessage());
 		}
 		return fis;

@@ -28,6 +28,7 @@ import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.FileUtil;
 
 import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -38,7 +39,7 @@ public class CreateAlphabet {
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) throws FEDict.LoadingException {
+	public static void main(String[] args) throws FEDict.LoadingException, FileNotFoundException {
 		FEFileName.feFilename = args[0];
 		FEFileName.tagFilename =  args[1];
 		FEFileName.eventFilename =  args[2];
@@ -64,12 +65,12 @@ public class CreateAlphabet {
 	public static void setDataFileNames(String alphafilename,
 								   		String fedictFilename,
 								   		String eventsFile,
-								   		String spansFile) throws FEDict.LoadingException {
+								   		String spansFile) throws FEDict.LoadingException, FileNotFoundException {
 		FEFileName.alphafilename = alphafilename;
 		FEFileName.fedictFilename1 = fedictFilename;
 		FEFileName.spanfilename = spansFile;
 		FEFileName.eventFilename = eventsFile;
-		DataPrep.readFeatureIndex(FEFileName.alphafilename);
+		DataPrep.loadFeatureIndex(FEFileName.alphafilename);
 		DataPrep.fedict = new FEDict(FEFileName.fedictFilename1);
 		DataPrep.genAlpha = false;
 	}
@@ -77,7 +78,7 @@ public class CreateAlphabet {
 	public static void run(boolean doGenerateAlphabet,
 						   List<String> tagLines,
 						   List<String> frameElementLines,
-						   WordNetRelations lwnr) throws FEDict.LoadingException {
+						   WordNetRelations lwnr) throws FEDict.LoadingException, FileNotFoundException {
 		List<int[][][]> dataPoints = getDataPoints(tagLines, frameElementLines, lwnr);
 		long time = System.currentTimeMillis();
 		System.err.println("Reading alphabet...");
@@ -85,8 +86,8 @@ public class CreateAlphabet {
 			DataPrep.featIndex = new HashMap<String,Integer>();
 		}
 		if(DataPrep.featIndex == null){
-			DataPrep.readFeatureIndex(FEFileName.alphafilename);
-			System.out.println("Finished Reading alphabet..."+(System.currentTimeMillis()-time));
+			DataPrep.loadFeatureIndex(FEFileName.alphafilename);
+			System.out.println("Read alphabet in "+(System.currentTimeMillis()-time) + " millis.");
 		}
 		DataPrep.genAlpha = doGenerateAlphabet;
 		time = System.currentTimeMillis();

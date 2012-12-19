@@ -22,6 +22,7 @@
 package edu.cmu.cs.lti.ark.fn.parsing;
 
 import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -31,7 +32,7 @@ import edu.cmu.cs.lti.ark.util.FileUtil;
 
 public class CreateAlphabetKBest
 {
-	public static void main(String[] args) throws FEDict.LoadingException {
+	public static void main(String[] args) throws FEDict.LoadingException, FileNotFoundException {
 		FEFileName.feFilename = args[0];
 		FEFileName.tagFilename =  args[1];
 		FEFileName.eventFilename =  args[2];
@@ -52,7 +53,7 @@ public class CreateAlphabetKBest
 		run(genAlpha);
 	}
 	
-	public static void run(boolean genAlpha) throws FEDict.LoadingException {
+	public static void run(boolean genAlpha) throws FEDict.LoadingException, FileNotFoundException {
 		DataPrep dprep = new DataPrep();
 		long time=System.currentTimeMillis();
 		System.out.println("Reading alphabet...");
@@ -60,7 +61,7 @@ public class CreateAlphabetKBest
 			DataPrep.featIndex=new HashMap<String,Integer>();
 		}
 		if(DataPrep.featIndex==null){
-			DataPrep.readFeatureIndex(FEFileName.alphafilename);
+			DataPrep.loadFeatureIndex(FEFileName.alphafilename);
 		}
 		DataPrep.genAlpha=genAlpha;
 		System.out.println("Finished Reading alphabet..."+(System.currentTimeMillis()-time));
