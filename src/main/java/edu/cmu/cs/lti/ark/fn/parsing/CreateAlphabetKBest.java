@@ -31,8 +31,7 @@ import edu.cmu.cs.lti.ark.util.FileUtil;
 
 public class CreateAlphabetKBest
 {
-	public static void main(String[] args)
-	{	 
+	public static void main(String[] args) throws FEDict.LoadingException {
 		FEFileName.feFilename = args[0];
 		FEFileName.tagFilename =  args[1];
 		FEFileName.eventFilename =  args[2];
@@ -53,8 +52,8 @@ public class CreateAlphabetKBest
 		run(genAlpha);
 	}
 	
-	public static void run(boolean genAlpha) {
-		DataPrep dprep=new DataPrep();
+	public static void run(boolean genAlpha) throws FEDict.LoadingException {
+		DataPrep dprep = new DataPrep();
 		long time=System.currentTimeMillis();
 		System.out.println("Reading alphabet...");
 		if(genAlpha){

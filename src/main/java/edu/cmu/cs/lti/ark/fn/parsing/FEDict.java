@@ -25,38 +25,40 @@ import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
+/**
+ * A map from frames to their frame elements
+ */
 public class FEDict {
-	//public static String dirname="frame";
-	public static String outdictFilename="data/fedict.train";
+	private THashMap<String, THashSet<String>> frameElementsForFrame;
 
-	private THashMap<String,THashSet<String>>fedict;
-	public FEDict(String dictFilename){
-		fedict=(THashMap<String,THashSet<String>>)SerializedObjects.readSerializedObject(dictFilename);
+	public FEDict(THashMap<String, THashSet<String>> frameElementsForFrame){
+		this.frameElementsForFrame = frameElementsForFrame;
 	}
-	public String [] lookupFes(String frame){
-		THashSet<String> feSet=fedict.get(frame);
-		if(feSet==null)return new String[0];
-		String [] ret=new String[ feSet.size()];
-		int count=0;
-		for(String fe:feSet){
-			ret[count]=fe;
-			count++;
+
+	/**
+	 * Initialize from a serialized HashMap
+	 * @param dictFilename the path to the file containing the serialized HashMap
+	 */
+	public FEDict(String dictFilename) throws LoadingException {
+		try {
+			frameElementsForFrame = SerializedObjects.readObject(dictFilename);
+		} catch (Exception e) {
+			throw new LoadingException(e);
 		}
-		
-		return ret;
 	}
-	public void merge(String filename){
-		THashMap<String,THashSet<String>> tempdict=(THashMap<String,THashSet<String>>)SerializedObjects.readSerializedObject(filename);
-		for(String key : tempdict.keySet()){
-			THashSet newval=tempdict.get(key);
-			if(fedict.contains(key)){
-				THashSet val=fedict.get(key);
-				val.addAll(newval);
-			}
-			else{
-				fedict.put(key, newval);
-			}
-		}
-		fedict.putAll(tempdict);
+
+	/**
+	 * Get the frame elements for the given frame
+	 * @param frame the frame to look up
+	 * @return an array of frame elements of `frame`
+	 */
+	public String [] lookupFrameElements(String frame){
+		THashSet<String> frameElements = frameElementsForFrame.get(frame);
+		if(frameElements == null) return new String[0];
+		return frameElements.toArray(new String[frameElements.size()]);
+	}
+
+	public static class LoadingException extends Exception {
+		public LoadingException(Exception e) { super(e); }
 	}
 }

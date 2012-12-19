@@ -21,25 +21,21 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import java.io.PrintStream;
-import java.util.*;
-
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithElements;
-import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
-import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParses;
+import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.FileUtil;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 import edu.cmu.cs.lti.ark.util.ds.Range1Based;
-import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
+import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
+import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParses;
+
+import java.io.PrintStream;
+import java.util.*;
 
 public class DataPrep {
 	/**
-	 * @brief prefix for null features
-	 */
-	public static final String NULL_SPAN = "NULL_SPAN";
-	/**
-	 * @brief an array list containing candidate spans for each sentence
+	 * an array list containing candidate spans for each sentence
 	 * the m'th span in the n'th sentence is 
 	 * candidateLines.get(n)[m][0] and candidateLines.get(n)[m][1]
 	 */
@@ -84,21 +80,19 @@ public class DataPrep {
 	
 	public static boolean useOracleSpans = false;
 	
-	public DataPrep()
-	{
+	public DataPrep() throws FEDict.LoadingException {
 		ps = FileUtil.openOutFile(FEFileName.spanfilename);
 		load(null, null, null);
 	}
 
 	public DataPrep(List<String> tagLines,
 					List<String> frameElementLines,
-					WordNetRelations lwnr) {
-		// this model does not write span files
+					WordNetRelations lwnr) throws FEDict.LoadingException {
 		ps = FileUtil.openOutFile(FEFileName.spanfilename);
 		load(tagLines, frameElementLines, lwnr);
 	}	
 	
-	private ArrayList<String>readLinesInFile(String filename){
+	private ArrayList<String> readLinesInFile(String filename){
 		ArrayList<String>lines=new ArrayList<String>();
 		Scanner sc=FileUtil.openInFile(filename);
 		while (sc.hasNextLine()) {
@@ -107,16 +101,14 @@ public class DataPrep {
 		sc.close();
 		return lines;
 	}
-	private ArrayList<int[]>  addConstituent(DataPointWithElements dp){
+	private ArrayList<int[]> addConstituent(DataPointWithElements dp){
 		DependencyParse parse=dp.getParses().getBestParse();
 		DependencyParse[] nodes= parse.getIndexSortedListOfNodes();
 		boolean[][] spanMat = new boolean[nodes.length - 1][nodes.length - 1];
 		int[][] heads = new int[nodes.length-1][nodes.length-1];
 		int[][] depParses = new int[nodes.length-1][nodes.length-1];
-		for(int j = 0; j < nodes.length-1; j ++)
-		{
-			for(int k = 0; k < nodes.length-1; k ++)
-			{
+		for(int j = 0; j < nodes.length-1; j ++) {
+			for(int k = 0; k < nodes.length-1; k ++) {
 				spanMat[j][k]=false;
 				heads[j][k]=-1;
 				depParses[j][k]=0;
@@ -169,29 +161,24 @@ public class DataPrep {
 		return spanList;
 	}
 	
-	public int findParse(DependencyParses parses, int j, int k, int hIndex)
-	{
+	public int findParse(DependencyParses parses, int j, int k, int hIndex) {
 		hIndex=hIndex+j;
 		int start=0;
 		int ret = 0;
 		Range1Based span = new Range1Based(j,k);
-		while(true)
-		{
+		while(true) {
 			Pair<Integer,DependencyParse> p = parses.matchesSomeConstituent(span,start);
-			if(p==null)
-			{
+			if(p==null) {
 				ret = 0;
 				break;
 			}
 			int fIndex = p.getSecond().getIndex();
-			if(fIndex==hIndex)
-			{
+			if(fIndex==hIndex) {
 				if(p.getFirst()!=0)
 					System.out.println("Found correct parse:"+p.getFirst());
 				return p.getFirst();				
 			}
-			else
-			{
+			else {
 				start=p.getFirst()+1;
 				if(start>=parses.size())
 					break;
@@ -205,7 +192,8 @@ public class DataPrep {
 	 * @brief load data needed for feature extraction
 	 * 
 	 */
-	private void load(List<String> tagLines, List<String> frameElementLines, WordNetRelations lwnr) {
+	private void load(List<String> tagLines, List<String> frameElementLines, WordNetRelations lwnr)
+			throws FEDict.LoadingException {
 		if (fedict == null) {
 			fedict = new FEDict(FEFileName.fedictFilename1);
 		}
@@ -248,8 +236,7 @@ public class DataPrep {
 					spanList.add(span);
 				}
 			} 
-			else
-			{
+			else {
 				spanList=addConstituent(dp);
 			}
 			//add null span to candidates
@@ -262,15 +249,12 @@ public class DataPrep {
 		reset();
 	}
 
-	public void addGoldSpan(boolean [][] spanMat,DataPointWithElements goldDP,int[][] depParses)
-	{
+	public void addGoldSpan(boolean [][] spanMat,DataPointWithElements goldDP,int[][] depParses) {
 		List<Range0Based> spans = goldDP.getOvertFrameElementFillerSpans();
 		DependencyParses parses = goldDP.getParses();
-		for(Range0Based span:spans)
-		{
+		for(Range0Based span:spans) {
 			spanMat[span.getStart()][span.getEnd()]=true;
-			if(FEFileName.KBestParse>1)
-			{
+			if(FEFileName.KBestParse > 1) {
 				int start=0;
 				Range1Based span1 = new Range1Based(span);
 				Pair<Integer,DependencyParse> p = parses.matchesSomeConstituent(span1,start);
@@ -307,7 +291,7 @@ public class DataPrep {
 		DataPointWithElements goldDP = new DataPointWithElements(tagLines.get(sentNum), feline);
 		String frame = goldDP.getFrameName();
 		int canToks[][] = candidateLines.get(feIndex);
-		String[] canArgs = fedict.lookupFes(frame);
+		String[] canArgs = fedict.lookupFrameElements(frame);
 		HashSet<String> realizedFes = new HashSet<String>();
 		ArrayList<int[][]> dataPointList = new ArrayList<int[][]>();
 		String frameElementNames[] = goldDP.getOvertFilledFrameElementNames();
@@ -333,88 +317,6 @@ public class DataPrep {
 		feIndex++;
 		return allData;
 	}
-
-	public int[][][] getTrainDataOracleSpans() {
-		int[][][] alldata = null;
-		String feline = feLines.get(feIndex);
-		int sentNum = Integer.parseInt(feline.split("\t")[5]);
-		DataPointWithElements goldDP = new DataPointWithElements(tagLines
-				.get(sentNum), feline);
-		String frame = goldDP.getFrameName();
-		int cantoks[][] = candidateLines.get(feIndex);
-		String[] canArgs = fedict.lookupFes(frame);
-		HashSet<String> realizedFes = new HashSet<String>();
-		ArrayList<int[][]> datapointList = new ArrayList<int[][]>();
-		String fename[] = goldDP.getOvertFilledFrameElementNames();
-		List<Range0Based> spans = goldDP.getOvertFrameElementFillerSpans();
-		//add realized frame elements
-		for (int i = 0; i < goldDP.getNumOvertFrameElementFillers(); i++) {
-			realizedFes.add(fename[i]);
-			addFeatureForOneArgumentOracleSpans(goldDP, frame, fename[i], spans.get(i),
-					datapointList, cantoks);	
-		}
-		//add null frame elements
-		if (canArgs != null)
-			for (String fe : canArgs) {
-				if (!realizedFes.contains(fe)) {
-					addFeatureForOneArgumentOracleSpans(goldDP, frame, fe,
-							CandidateFrameElementFilters.EMPTY_SPAN,
-							datapointList, cantoks);
-				}
-			}
-		alldata = new int[datapointList.size()][][];
-		datapointList.toArray(alldata);
-		feIndex++;
-		return alldata;
-	}
-	
-	private void addFeatureForOneArgumentOracleSpans(DataPointWithElements goldDP,
-			String frame, String fe, Range0Based span,
-			ArrayList<int[][]> datapointlist, int cantoks[][]) {
-		Set<String> featureSet;
-		ArrayList<int[]> adatapoint = new ArrayList<int[]>();
-		// add feature for gold standard
-		featureSet = FeatureExtractor.extractFeatures(goldDP, frame, fe, span,
-				wnr,goldDP.getParses().getBestParse()).keySet();
-		ps.println(goldDP.getSentenceNum() + "\t" + fe + "\t" + frame + "\t"
-				+ goldDP.getTokenNums()[0] + "\t"
-				+ goldDP.getTokenNums()[goldDP.getTokenNums().length - 1]
-				+ "\t" + feIndex);
-		ps.println(span.getStart() + "\t" + span.getEnd());
-		int[] featArray = new int[featureSet.size()];
-		int featCount = 0;
-		for (String feature : featureSet) {
-			featArray[featCount] = featidx(feature);
-			featCount++;
-		}
-		adatapoint.add(featArray);
-		// add features for candidate spans
-		for (int j = 0; j < cantoks.length; j++) {
-			// make sure does not print gold span again
-			if (cantoks[j][0] == span.getStart() 
-					&& cantoks[j][1] == span.getEnd())
-				continue;
-			
-			Range0Based canspan;
-			canspan = CandidateFrameElementFilters.createSpanRange(cantoks[j][0], cantoks[j][1]);
-			ps.println(canspan.getStart() + "\t" + canspan.getEnd());
-			featureSet = FeatureExtractor.extractFeatures(goldDP, frame, fe,
-					canspan, wnr,goldDP.getParses().getBestParse()).keySet();
-			featArray = new int[featureSet.size()];
-			featCount = 0;
-			for (String feature : featureSet) {
-				featArray[featCount] = featidx(feature);
-				featCount++;
-			}
-			adatapoint.add(featArray);
-		}
-
-		ps.println();
-		int[][] datap = new int[adatapoint.size()][];
-		adatapoint.toArray(datap);
-		datapointlist.add(datap);
-	}
-	
 	
 	private void addFeatureForOneArgument(DataPointWithElements goldDP,
 			String frame, String fe, Range0Based span,
@@ -423,11 +325,9 @@ public class DataPrep {
 		ArrayList<int[]> adatapoint = new ArrayList<int[]>();
 		// add feature for gold standard
 		int parseId = 0;
-		for (int j = 0; j < cantoks.length; j++)
-		{
+		for (int j = 0; j < cantoks.length; j++) {
 			if (cantoks[j][0] == span.getStart() 
-					&& cantoks[j][1] == span.getEnd())
-			{
+					&& cantoks[j][1] == span.getEnd()) {
 				parseId = cantoks[j][2];
 			}
 		}
@@ -441,7 +341,7 @@ public class DataPrep {
 		int[] featArray = new int[featureSet.size()];
 		int featCount = 0;
 		for (String feature : featureSet) {
-			featArray[featCount] = featidx(feature);
+			featArray[featCount] = getIndexOfFeature(feature);
 			featCount++;
 		}
 		adatapoint.add(featArray);
@@ -461,7 +361,7 @@ public class DataPrep {
 			featArray = new int[featureSet.size()];
 			featCount = 0;
 			for (String feature : featureSet) {
-				featArray[featCount] = featidx(feature);
+				featArray[featCount] = getIndexOfFeature(feature);
 				featCount++;
 			}
 			adatapoint.add(featArray);
@@ -505,36 +405,6 @@ public class DataPrep {
 		localps.close();
 	}
 
-	public static void findSpans(boolean[][] spanMat, DependencyParse[] nodes) {
-		int[] parent = new int[nodes.length - 1];
-		int left[] = new int[parent.length];
-		int right[] = new int[parent.length];
-		for (int i = 0; i < parent.length; i++) {
-			parent[i] = (nodes[i + 1].getParentIndex() - 1);
-			left[i] = i;
-			right[i] = i;
-		}
-		for (int i = 0; i < parent.length; i++) {
-			int index = parent[i];
-			while (index >= 0) {
-				if (left[index] > i) {
-					left[index] = i;
-				}
-				if (right[index] < i) {
-					right[index] = i;
-				}
-				index = parent[index];
-			}
-		}
-		for (int i = 0; i < parent.length; i++) {
-			spanMat[left[i]][right[i]] = true;
-		}
-		// single words
-		for (int i = 0; i < parent.length; i++) {
-			spanMat[i][i] = true;
-		}
-	}
-	
 	public static void findSpans(boolean[][] spanMat, int[][] heads, DependencyParse[] nodes) {
 		int[] parent = new int[nodes.length - 1];
 		int left[] = new int[parent.length];
@@ -556,8 +426,7 @@ public class DataPrep {
 				index = parent[index];
 			}
 		}
-		for (int i = 0; i < parent.length; i++)
-		{
+		for (int i = 0; i < parent.length; i++) {
 			spanMat[left[i]][right[i]] = true;
 			heads[left[i]][right[i]] = i;
 		}
@@ -568,51 +437,43 @@ public class DataPrep {
 			heads[i][i]=i;
 		}
 		
-		for (int i = 0; i < parent.length; i++)
-		{
-			if(!(left[i]<i&&right[i]>i))
-				continue;
+		for (int i = 0; i < parent.length; i++) {
+			if(!(left[i]<i&&right[i]>i)) continue;
 			//left
 			int justLeft=i-1;
-			if(i-1>=0)
-			{
-				if(spanMat[left[i]][justLeft])
-				{
-					if(justLeft-left[i]==0&&nodes[justLeft+1].getPOS().equals("DT"))
-					{
-						;
-					}
-					else if(justLeft-left[i]==0&&nodes[justLeft+1].getPOS().equals("JJ"))
-					{
-						;
-					}
-					else
-					{	
-						spanMat[i][right[i]]=true;
-						heads[i][right[i]]=i;
+			if(i-1>=0) {
+				if(spanMat[left[i]][justLeft]) {
+					if (justLeft-left[i] != 0 || !nodes[justLeft + 1].getPOS().equals("DT")) {
+						if (justLeft - left[i] != 0 || !nodes[justLeft + 1].getPOS().equals("JJ")) {
+							spanMat[i][right[i]] = true;
+							heads[i][right[i]] = i;
+						}
 					}
 				}
 			}
 			
 			//right
 			int justRight=i+1;
-			if(justRight<=parent.length-1)
-			{
-				if(spanMat[justRight][right[i]])
-				{
+			if(justRight<=parent.length-1) {
+				if(spanMat[justRight][right[i]]) {
 					spanMat[left[i]][i]=true;
 					heads[left[i]][i]=i;
 				}
 			}
 		}
 		
-	}	
-	
-	
-	public int featidx(String feature) {
-		Integer fidx = featIndex.get(feature);
-		if (fidx != null)
-			return fidx;
+	}
+
+	/**
+	 * Look up the index in of feature in in our map
+	 * If it doesn't exist and genAlpha is true, add it to our map
+	 *
+	 * @param feature the feature to look up
+	 * @return the index of feature
+	 */
+	public int getIndexOfFeature(String feature) {
+		Integer idx = featIndex.get(feature);
+		if (idx != null) return idx;
 		if (genAlpha) {
 			addFeature(feature, featIndex);
 			return numFeat;

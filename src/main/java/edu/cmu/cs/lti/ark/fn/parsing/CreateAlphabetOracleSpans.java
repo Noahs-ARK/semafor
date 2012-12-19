@@ -32,7 +32,7 @@ public class CreateAlphabetOracleSpans {
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {	 
+	public static void main(String[] args) throws FEDict.LoadingException {
 		FEFileName.feFilename = args[0];
 		FEFileName.tagFilename =  args[1];
 		FEFileName.eventFilename =  args[2];
@@ -42,9 +42,9 @@ public class CreateAlphabetOracleSpans {
 		run(genAlpha);
 	}
 
-	public static void run(boolean genAlpha) {
+	public static void run(boolean genAlpha) throws FEDict.LoadingException {
 		DataPrep.useOracleSpans=true;
-		DataPrep dprep=new DataPrep();
+		DataPrep dprep = new DataPrep();
 		long time=System.currentTimeMillis();
 		System.out.println("Reading alphabet...");
 		if(genAlpha){

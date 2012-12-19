@@ -38,8 +38,7 @@ public class CreateAlphabet {
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args)
-	{	 
+	public static void main(String[] args) throws FEDict.LoadingException {
 		FEFileName.feFilename = args[0];
 		FEFileName.tagFilename =  args[1];
 		FEFileName.eventFilename =  args[2];
@@ -65,7 +64,7 @@ public class CreateAlphabet {
 	public static void setDataFileNames(String alphafilename,
 								   		String fedictFilename,
 								   		String eventsFile,
-								   		String spansFile) {
+								   		String spansFile) throws FEDict.LoadingException {
 		FEFileName.alphafilename = alphafilename;
 		FEFileName.fedictFilename1 = fedictFilename;
 		FEFileName.spanfilename = spansFile;
@@ -75,7 +74,10 @@ public class CreateAlphabet {
 		DataPrep.genAlpha = false;
 	}
 
-	public static void run(boolean doGenerateAlphabet, List<String> tagLines, List<String> frameElementLines, WordNetRelations lwnr) {
+	public static void run(boolean doGenerateAlphabet,
+						   List<String> tagLines,
+						   List<String> frameElementLines,
+						   WordNetRelations lwnr) throws FEDict.LoadingException {
 		List<int[][][]> dataPoints = getDataPoints(tagLines, frameElementLines, lwnr);
 		long time = System.currentTimeMillis();
 		System.err.println("Reading alphabet...");
@@ -101,7 +103,7 @@ public class CreateAlphabet {
 			int fCount = 0;
 			for(int[][][] dataPoint : dataPoints) {
 				System.err.print(".");
-				if(fCount%100 == 0){
+				if(fCount % 100 == 0){
 					System.err.println(fCount);
 				}
 				for(int i=0; i<dataPoint.length; i++){
@@ -123,7 +125,7 @@ public class CreateAlphabet {
 
 	public static List<int[][][]> getDataPoints(List<String> tagLines,
 												List<String> frameElementLines,
-												WordNetRelations lwnr) {
+												WordNetRelations lwnr) throws FEDict.LoadingException {
 		DataPrep dataPrep = new DataPrep(tagLines, frameElementLines, lwnr);
 		List<int[][][]> dataPoints = Lists.newArrayList();
 		while(dataPrep.hasNext()){
