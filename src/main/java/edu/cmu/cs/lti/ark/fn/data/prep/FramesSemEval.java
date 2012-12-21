@@ -59,18 +59,11 @@ public class FramesSemEval
 	
 	public static void main(String[] args)
 	{
-		//tokenSanityCheck();
 		separateParsedData();
 	}
-	
-	public static void posTagging()
-	{
-		
-	}	
-	
+
 	public static void tokenization()
 	{
-		//extractSentences();
 		tokenize();
 		tokenSanityCheck();
 	}
@@ -196,15 +189,7 @@ public class FramesSemEval
 			FixTokenization.writeSentencesToTempFile(outputFile, revisedSentences);
 		}
 	}
-	
-	
-	public static void extractSentences()
-	{
-		train();
-		dev();
-		test();
-	}
-	
+
 	public static void test()
 	{
 		ArrayList<String> sentences1 = FixTokenization.readSentencesFromFile("/mal2/dipanjan/experiments/FramenetParsing/semeval-2007-task19/test/ANC/IntroOfDublin.txt");
@@ -281,23 +266,6 @@ public class FramesSemEval
 		}
 		System.out.println("Total number of sentences:"+totalNumberOfSentences);
 	}
-	
-	
-	public static String getTextOfSentence(Node n)
-	{
-		NodeList children = n.getChildNodes();
-		for(int i = 0; i < children.getLength(); i ++)
-		{
-			Node child = children.item(i);
-			if(!child.getNodeName().equals("text"))
-				continue;
-			String content = child.getTextContent();
-			return content;
-		}
-		System.out.println("Error");
-		System.exit(0);
-		return null;
-	}	
 }
 
 

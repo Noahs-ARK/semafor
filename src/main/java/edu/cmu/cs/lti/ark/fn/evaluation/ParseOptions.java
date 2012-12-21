@@ -29,8 +29,7 @@ package edu.cmu.cs.lti.ark.fn.evaluation;
  * @author dipanjan
  *
  */
-public final class ParseOptions
-{
+public final class ParseOptions {
 	public String frameNetMapFile = null;
 	public String wnConfigFile = null;
 	public String stopWordsFile = null;
@@ -54,92 +53,52 @@ public final class ParseOptions
 	
 	public String outputFile = null;
 	
-	public ParseOptions(String[] args)
-	{		
-		for(int i = 0; i < args.length; i ++)
-		{
-			System.out.println(args[i]);
-			String[] pair = new String []{
-				args[i].substring(0,args[i].indexOf(':')),
-				args[i].substring(args[i].indexOf(':')+1),
+	public ParseOptions(String[] args) {
+		for (String arg : args) {
+			System.out.println(arg);
+			String[] pair = new String[]{
+					arg.substring(0, arg.indexOf(':')),
+					arg.substring(arg.indexOf(':') + 1),
 			};
-			if(pair[0].equals("frameNetMapFile"))
-			{
+			if (pair[0].equals("frameNetMapFile")) {
 				frameNetMapFile = pair[1].trim();
-			}
-			else if(pair[0].equals("wnConfigFile"))
-			{
+			} else if (pair[0].equals("wnConfigFile")) {
 				wnConfigFile = pair[1].trim();
-			}
-			else if(pair[0].equals("stopWordsFile"))
-			{
+			} else if (pair[0].equals("stopWordsFile")) {
 				stopWordsFile = pair[1].trim();
-			}
-			else if(pair[0].equals("testParseFile"))
-			{
+			} else if (pair[0].equals("testParseFile")) {
 				testParseFile = pair[1].trim();
-			}
-			else if(pair[0].equals("testTokenizedFile"))
-			{
+			} else if (pair[0].equals("testTokenizedFile")) {
 				testTokenizedFile = pair[1].trim();
-			}
-			else if(pair[0].equals("testFEPredictionsFile"))
-			{
+			} else if (pair[0].equals("testFEPredictionsFile")) {
 				testFEPredictionsFile = pair[1].trim();
-			}
-			else if(pair[0].equals("segParamFile"))
-			{
+			} else if (pair[0].equals("segParamFile")) {
 				segParamFile = pair[1].trim();
-			}			
-			else if(pair[0].equals("idParamFile"))
-			{
+			} else if (pair[0].equals("idParamFile")) {
 				idParamFile = pair[1].trim();
-			}
-			else if(pair[0].equals("allRelatedWordsFile"))
-			{
+			} else if (pair[0].equals("allRelatedWordsFile")) {
 				allRelatedWordsFile = pair[1].trim();
-			}
-			else if(pair[0].equals("startIndex"))
-			{
+			} else if (pair[0].equals("startIndex")) {
 				startIndex = new Integer(pair[1].trim());
-			}
-			else if(pair[0].equals("endIndex"))
-			{
+			} else if (pair[0].equals("endIndex")) {
 				endIndex = new Integer(pair[1].trim());
-			}
-			else if(pair[0].equals("outputFile"))
-			{
+			} else if (pair[0].equals("outputFile")) {
 				outputFile = pair[1].trim();
-			}
-			else if(pair[0].equals("wnRelatedWordsForWordsFile"))
-			{
+			} else if (pair[0].equals("wnRelatedWordsForWordsFile")) {
 				wnRelatedWordsForWordsFile = pair[1].trim();
-			}
-			else if(pair[0].equals("wnMapFile"))
-			{
+			} else if (pair[0].equals("wnMapFile")) {
 				wnMapFile = pair[1].trim();
-			}
-			else if(pair[0].equals("wnHiddenWordsCacheFile"))
-			{
+			} else if (pair[0].equals("wnHiddenWordsCacheFile")) {
 				wnHiddenWordsCacheFile = pair[1].trim();
-			}
-			else if(pair[0].equals("hvCorrespondenceFile"))
-			{
+			} else if (pair[0].equals("hvCorrespondenceFile")) {
 				hvCorrespondenceFile = pair[1].trim();
-			}
-			else if(pair[0].equals("goldFrameTokenFile"))
-			{
+			} else if (pair[0].equals("goldFrameTokenFile")) {
 				goldFrameTokenFile = pair[1].trim();
-			}
-			else if(pair[0].equals("tempfile"))
-			{
+			} else if (pair[0].equals("tempfile")) {
 				tempFile = pair[1].trim();
-			}
-			else if(pair[0].equals("framelementsfile"))
-			{
+			} else if (pair[0].equals("framelementsfile")) {
 				frameElementsFile = pair[1].trim();
 			}
-		}	
-		
+		}
 	}	
 }
