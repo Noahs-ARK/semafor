@@ -134,7 +134,17 @@ end=`wc -l ${TOKENIZED}`
 end=`expr ${end% *}`
 echo "${end} sentences"
 
-mv ${FRAME_ELEMENTS_OUTPUT_FILE} ${OUTPUT_FILE}
+#mv ${FRAME_ELEMENTS_OUTPUT_FILE} ${OUTPUT_FILE}
+
+
+echo "Producing final json document:"
+time ${JAVA_HOME_BIN}/java -classpath ${CLASSPATH} \
+    -Xms8g -Xmx8g \
+    edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationJson \
+    testFEPredictionsFile:${FRAME_ELEMENTS_OUTPUT_FILE} \
+    testParseFile:${ALL_LEMMA_TAGS_FILE} \
+    testTokenizedFile:${TOKENIZED} \
+    outputFile:${OUTPUT_FILE}.json
 
 : '
 echo "Producing final XML document:"
@@ -146,7 +156,7 @@ time ${JAVA_HOME_BIN}/java -classpath ${CLASSPATH} \
     endIndex:${end} \
     testParseFile:${ALL_LEMMA_TAGS_FILE} \
     testTokenizedFile:${TOKENIZED} \
-    outputFile:${OUTPUT_FILE}
+    outputFile:${OUTPUT_FILE}.xml
 '
 
 echo "Finished frame-semantic parsing."
@@ -154,4 +164,4 @@ echo "**********************************************************************"
 echo
 echo
 
-rm -r "${TEMP_DIR}"
+#rm -r "${TEMP_DIR}"

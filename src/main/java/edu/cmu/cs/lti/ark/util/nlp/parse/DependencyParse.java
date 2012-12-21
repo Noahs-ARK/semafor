@@ -45,6 +45,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 	public static final String NULL_LEMMA = "null_lemma";
 	public static final String NULL_WORD = "null_word";
 	public static final String DUMMY_ROOT_LABEL = "$$";
+	private static final IndexComparator indexComparator = new IndexComparator();
 
 	protected String sentence = "";
 
@@ -335,18 +336,12 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 	 * @return A list of nodes in this parse, sorted ascending by index
 	 */
 	public DependencyParse[] getIndexSortedListOfNodes() {
-		final List<DependencyParse> nodeList = getDescendants(true);
-		final int size = nodeList.size();
-		final DependencyParse[] parseArray = new DependencyParse[size];
-		nodeList.toArray(parseArray);
-		Arrays.sort(parseArray, new IndexComparator());
-		return parseArray;
+		return sortNodesByIndex(getDescendants(true));
 	}
 	
 	public static DependencyParse[] sortNodesByIndex(List<DependencyParse> nodes) {
-		DependencyParse[] nodeArray = new DependencyParse[nodes.size()];
-		nodes.toArray(nodeArray);
-		Arrays.sort(nodeArray, new IndexComparator());
+		DependencyParse[] nodeArray = nodes.toArray(new DependencyParse[nodes.size()]);
+		Arrays.sort(nodeArray, indexComparator);
 		return nodeArray;
 	}
 
@@ -423,4 +418,3 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 		return Integer.toString(index) + ":" + word + "(^=" + Integer.toString(getParent().index) + ":" + getParent().word + ")";
 	}
 }
-

@@ -30,8 +30,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import edu.cmu.cs.lti.ark.fn.optimization.*;
 
-public class Decoding
-{
+public class Decoding {
 	protected int numLocalFeatures;
 	protected double[] localW;
 	private String mLocalAlphabetFile;
@@ -45,8 +44,7 @@ public class Decoding
 					 String alphabetFile,
 					 String predictionFile,
 					 List<FrameFeatures> list,
-					 List<String> frameLines)
-	{
+					 List<String> frameLines) {
 		mLocalModelFile = modelFile;
 		mLocalAlphabetFile = alphabetFile;
 		readModel();
@@ -81,8 +79,7 @@ public class Decoding
 	}
 	
 	public ArrayList<String> decodeAll(boolean doOverlapCheck,
-									   int offset)
-	{
+									   int offset) {
 		int size = mFrameList.size();
 		ArrayList<String> result = new ArrayList<String>();
 		for(int i = 0; i < size; i ++)
@@ -97,8 +94,7 @@ public class Decoding
 		return result;
 	}
 	
-	public String decode(int index, boolean doOverlapCheck, int offset)
-	{
+	public String decode(int index, boolean doOverlapCheck, int offset) {
 		FrameFeatures f = mFrameList.get(index);
 		String dec = null;
 		if(doOverlapCheck)

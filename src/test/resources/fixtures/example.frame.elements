@@ -1,0 +1,15 @@
+0	1	Temporal_collocation	no.r	2_3	no longer	0
+0	2	Building_subparts	kitchen.n	1	kitchen	0	Building_part	1
+0	1	Sensation	smells.v	4	smells	0
+0	3	Measure_linear_extent	miles.n	1	miles	1	Unit	1	Count	0
+0	2	Time_vector	later.r	2	later	1	Event	3:19
+0	2	Roadways	trail.n	4	trail	1	Roadway	4
+0	2	Natural_features	creek.n	7	creek	1	Locale	7
+0	2	Leadership	run.n	8	run	1	Leader	7
+0	2	Relational_quantity	nearly.r	9	nearly	1	Denoted_quantity	9
+0	1	Rank	level.n	10	level	1
+0	1	Increment	other.j	13	other	1
+0	1	Sensation	sound.n	16	sound	1
+0	1	Motion_directional	falls.n	19	Falls	1
+0	2	Adorning	fills.v	20	fills	1	Theme	11:19
+0	1	Expressing_publicly	air.n	22	air	1

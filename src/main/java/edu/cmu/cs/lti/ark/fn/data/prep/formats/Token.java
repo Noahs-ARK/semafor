@@ -27,6 +27,7 @@ public class Token {
 	private final @Nullable String deprel;
 	private final @Nullable String phead;
 	private final @Nullable String pdeprel;
+
 	private static final String MISSING_INDICATOR = "_";
 
 	private static final Function<String, String> parseStr = Functions.identity();
@@ -184,6 +185,11 @@ public class Token {
 		return pdeprel;
 	}
 
+	@Override
+	public String toString() {
+		return getForm();
+	}
+
 	/*
 	Codecs
 	 */
@@ -192,27 +198,27 @@ public class Token {
 	 * @param a the value of the field to convert to a string
 	 * @return either the field's encode, or "_" if it's null
 	 */
-	private static String fieldToString(Object a) {
+	private static String fieldToConll(Object a) {
 		return Optional.fromNullable(a).or(MISSING_INDICATOR).toString();
 	}
 
 	public String toConll() {
 		return Joiner.on("\t").join(
-				fieldToString(id),
-				fieldToString(form),
-				fieldToString(lemma),
-				fieldToString(cpostag),
-				fieldToString(postag),
-				fieldToString(feats),
-				fieldToString(head),
-				fieldToString(deprel),
-				fieldToString(phead),
-				fieldToString(pdeprel)
+				fieldToConll(id),
+				fieldToConll(form),
+				fieldToConll(lemma),
+				fieldToConll(cpostag),
+				fieldToConll(postag),
+				fieldToConll(feats),
+				fieldToConll(head),
+				fieldToConll(deprel),
+				fieldToConll(phead),
+				fieldToConll(pdeprel)
 		);
 	}
 
 	@Nullable
-	private static <A> A parseField(String field, Function<String, A> fromStr) {
+	private static <A> A parseConllField(String field, Function<String, A> fromStr) {
 		return field.equals(MISSING_INDICATOR) ? null : fromStr.apply(field);
 	}
 
@@ -220,16 +226,16 @@ public class Token {
 		final String[] fields = line.trim().split("\t");
 		checkArgument(fields.length == 10, "ConllToken must have 10 \"\\t\"-separated fields");
 		return new Token(
-				parseField(fields[0], parseInt),
-				parseField(fields[1], parseStr),
-				parseField(fields[2], parseStr),
-				parseField(fields[3], parseStr),
-				parseField(fields[4], parseStr),
-				parseField(fields[5], parseStr),
-				parseField(fields[6], parseInt),
-				parseField(fields[7], parseStr),
-				parseField(fields[8], parseStr),
-				parseField(fields[9], parseStr));
+				parseConllField(fields[0], parseInt),
+				parseConllField(fields[1], parseStr),
+				parseConllField(fields[2], parseStr),
+				parseConllField(fields[3], parseStr),
+				parseConllField(fields[4], parseStr),
+				parseConllField(fields[5], parseStr),
+				parseConllField(fields[6], parseInt),
+				parseConllField(fields[7], parseStr),
+				parseConllField(fields[8], parseStr),
+				parseConllField(fields[9], parseStr));
 	}
 
 	public static PosToken fromPosTagged(String tokenStr) {

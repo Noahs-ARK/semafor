@@ -43,8 +43,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-public class DataPoint
-{
+public class DataPoint {
 	private DependencyParses parses;
 	private String frameName;
 	private String lexicalUnitName;	// e.g. 'cause.v'
@@ -60,21 +59,20 @@ public class DataPoint
 	 */
 	private THashMap<Integer,Range> tokenIndexMap;
 	
-	protected DataPoint() {	// for benefit of subclasses
-		
-	}
-	
-	public DataPoint(String parseLine)
-	{
+	protected DataPoint() { }	// for benefit of subclasses
+
+	public DataPoint(String parseLine) {
 		this(buildParsesForLine(parseLine));
 	}
 	
 	public DataPoint(DependencyParse parse) {
 		this(new DependencyParses(parse));
 	}
+
 	public DataPoint(DependencyParse[] parses) {
 		this(new DependencyParses(parses));
 	}
+
 	public DataPoint(DependencyParses parses) {
 		this.parses = parses;
 	}
@@ -84,18 +82,15 @@ public class DataPoint
 	 * from token numbers to strings in the format StartCharacterOffset\tEndCharacterOffset
 	 * @param orgLine
 	 */
-	public void processOrgLine(String orgLine)
-	{
+	public void processOrgLine(String orgLine) {
 		StringTokenizer st = new StringTokenizer(orgLine.trim()," ",true);
 		tokenIndexMap = new THashMap<Integer,Range>();
 		int count = 0;
 		int tokNum = 0;
 		System.out.println(orgLine);
-		while(st.hasMoreTokens())
-		{
+		while(st.hasMoreTokens()) {
 			String tok = st.nextToken();
-			if(tok.equals(" "))
-			{
+			if(tok.equals(" ")) {
 				count++;
 				continue;
 			}
@@ -108,18 +103,15 @@ public class DataPoint
 		}
 	}
 	
-	public DataPoint(String parseLine, String frameLine)
-	{
-		this(buildParsesForLine(parseLine), frameLine);	
-		
+	public DataPoint(String parseLine, String frameLine) {
+		this(buildParsesForLine(parseLine), frameLine);
 	}
 	
 	public DataPoint(DependencyParse[] parses, String frameLine) {
 		this(new DependencyParses(parses), frameLine);
 	}
 	
-	public DataPoint(DependencyParses parses, String frameLine)
-	{
+	public DataPoint(DependencyParses parses, String frameLine) {
 		this(parses,frameLine,null);
 	}
 	
@@ -140,9 +132,7 @@ public class DataPoint
 		this.dataSet = dataSet;
 	}
 	
-	public void processFrameLine(String frameLine)
-	{
-//		System.out.println(frameLine);
+	public void processFrameLine(String frameLine) {
 		// tokens are separated by tabs
 		// toks[0]: frame name
 		// toks[1]: lexical unit
@@ -189,13 +179,11 @@ public class DataPoint
 		return new Pair<String,Integer>(frameName, sentNum);
 	}
 	
-	public DependencyParses getParses()
-	{
+	public DependencyParses getParses() {
 		return parses;
 	}
 	
-	public String getFrameName()
-	{
+	public String getFrameName() {
 		return frameName;
 	}
 	
@@ -206,13 +194,11 @@ public class DataPoint
 		return lexicalUnitName;
 	}
 	
-	public int[] getTokenNums()
-	{
+	public int[] getTokenNums() {
 		return tokenNums;
 	}
 	
-	public int getSentenceNum()
-	{
+	public int getSentenceNum() {
 		return sentNum;
 	}
 	
@@ -249,7 +235,7 @@ public class DataPoint
 	}
 	
 	public static DependencyParse[] buildParsesForLine(String parseLine) {
-		StringTokenizer st = new StringTokenizer(parseLine,"\t");
+		StringTokenizer st = new StringTokenizer(parseLine, "\t");
 		int numWords = new Integer(st.nextToken());	// number of word tokens in the sentence
 		String[] parts = new String[6];
 		
@@ -295,8 +281,7 @@ public class DataPoint
 		return parses;
 	}
 	
-	public Node buildAnnotationSetNode(Document doc, int parentId, int num, String orgLine)
-	{
+	public Node buildAnnotationSetNode(Document doc, int parentId, int num, String orgLine) {
 		Node ret = doc.createElement("annotationSet");
 		int setId = parentId*100+num;
 		XmlUtils.addAttribute(doc,"ID", (Element)ret,""+setId);
@@ -470,9 +455,9 @@ public class DataPoint
 	/** @return One of {@link #SEMEVAL07_TRAIN_SET}, {@link #SEMEVAL07_DEV_SET}, or {@link #SEMEVAL07_TEST_SET} */
 	public String getDataSet() { return dataSet; }
 	
-	/** @see {@link #getDocumentDescriptor(int)} */
+	/** @see {@link #getDocumentDescriptor(String, int)} */
 	public String getDocumentDescriptor() { return DataPoint.getDocumentDescriptor(getDataSet(), this.getSentenceNum()); }
 	
-	/** @see {@link #getSourceCorpus(int)} */
+	/** @see {@link #getSourceCorpus(String, int)} */
 	public String getSourceCorpus() { return DataPoint.getSourceCorpus(getDataSet(), this.getSentenceNum()); }
 }

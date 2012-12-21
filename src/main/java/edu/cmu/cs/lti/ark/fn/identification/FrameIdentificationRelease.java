@@ -210,14 +210,18 @@ public class FrameIdentificationRelease
 
 	public static String getTokenRepresentation(List<Integer> indices, Sentence sentence) {
 		final List<Token> tokens = sentence.getTokens();
-		if(indices.isEmpty()) return "\t";
-		final Token firstToken = tokens.get(indices.get(0));
-		String firstTok = firstToken.getForm().toLowerCase() + "." +
-				nullToEmpty(firstToken.getPostag()).substring(0, 1).toLowerCase();
 		List<String> actualTokens = Lists.newArrayList();
 		for (int i : indices) {
 			actualTokens.add(tokens.get(i).getForm());
 		}
-		return firstTok + "\t" + Joiner.on(" ").join(actualTokens);
+		return getFirstTokenAndCpos(indices, sentence) + "\t" + Joiner.on(" ").join(actualTokens);
+	}
+
+	public static String getFirstTokenAndCpos(List<Integer> indices, Sentence sentence) {
+		if(indices.isEmpty()) return "";
+		final Token firstToken = sentence.getTokens().get(indices.get(0));
+		return firstToken.getForm().toLowerCase() + "." +
+				nullToEmpty(firstToken.getPostag()).substring(0, 1).toLowerCase();
+
 	}
 }
