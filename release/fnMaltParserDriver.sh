@@ -111,8 +111,6 @@ time ${JAVA_HOME_BIN}/java \
     mstport:12345 \
     posfile:${POS_TAGGED} \
     test-parsefile:${TEST_PARSED_FILE} \
-    stopwords-file:${SEMAFOR_HOME}/stopwords.txt \
-    wordnet-configfile:${SEMAFOR_HOME}/file_properties.xml \
     fnidreqdatafile:${MODEL_DIR}/reqData.jobj \
     goldsegfile:${GOLD_TARGET_FILE} \
     userelaxed:${RELAXED_FLAG} \

@@ -150,8 +150,6 @@ ${JAVA_HOME_BIN}/java \
     mstport:${MST_PORT} \
     posfile:${INPUT_FILE}.pos.tagged \
     test-parsefile:${INPUT_FILE}.conll.output \
-    stopwords-file:${SEMAFOR_HOME}/stopwords.txt \
-    wordnet-configfile:${SEMAFOR_HOME}/file_properties.xml \
     fnidreqdatafile:${MODEL_DIR}/reqData.jobj \
     goldsegfile:${GOLD_TARGET_FILE} \
     userelaxed:${RELAXED_FLAG} \

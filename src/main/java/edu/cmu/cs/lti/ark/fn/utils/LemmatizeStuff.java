@@ -24,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.PrintStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Scanner;
 import edu.cmu.cs.lti.ark.fn.parsing.CustomOptions;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
@@ -39,7 +40,7 @@ public class LemmatizeStuff {
 	public static final String IN_FILE = "in";
 	public static final String OUT_FILE = "out";
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws URISyntaxException {
 		CustomOptions options = new CustomOptions(args);
 		if(options.isPresent(STOP_WORDS)) {
 			stopWordsFile = options.get(STOP_WORDS);
@@ -53,7 +54,8 @@ public class LemmatizeStuff {
 		if(options.isPresent(OUT_FILE)) {
 			outfilename = options.get(OUT_FILE);
 		}
-		wnr = new WordNetRelations(stopWordsFile, wnConfigFile);
+		wnr = new WordNetRelations();
+		//wnr = new WordNetRelations(stopWordsFile, wnConfigFile);
 		run();
 	}
 

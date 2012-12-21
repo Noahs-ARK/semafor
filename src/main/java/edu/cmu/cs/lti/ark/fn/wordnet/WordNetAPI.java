@@ -111,6 +111,10 @@ public class WordNetAPI {
 	}
 
 	public static WordNetAPI getInstance(String configFile) throws Exception  {
+		return getInstance(new File(configFile));
+	}
+
+	public static WordNetAPI getInstance(File configFile) throws Exception  {
 		if (instance == null)
 			instance = new WordNetAPI(configFile);
 		return instance;
@@ -138,8 +142,12 @@ public class WordNetAPI {
 		return properties;
 	}
 
-	
+
 	private WordNetAPI(String propsFile) throws Exception {
+		this(new File(propsFile));
+	}
+
+	private WordNetAPI(File propsFile) throws Exception {
 
 		info("Initialize WordNet...: ");
 		

@@ -72,13 +72,6 @@ scripts/
 release/
     Installation and execution code.
 
-file_properties.xml
-    File containing WordNet lookup paths.
-
-stopwords.txt
-    File containing stopwords used while looking up WordNet
-
-
 LICENSE
     Text of the GNU General Public License, Version 3.
 

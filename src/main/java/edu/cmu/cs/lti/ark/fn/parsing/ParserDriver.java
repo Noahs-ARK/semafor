@@ -67,8 +67,6 @@ public class ParserDriver {
 	 * 	mstport
 	 *  posfile
 	 *  test-parsefile
-	 *  stopwords-file
-	 *  wordnet-configfile
 	 *  fnidreqdatafile
 	 *  goldsegfile
 	 *  userelaxed
@@ -96,10 +94,8 @@ public class ParserDriver {
 			mstServer = options.mstServerName.get();
 			mstPort = options.mstServerPort.get();
 		}
-		/* Initializing WordNet config file */
-		final String stopWordsFile = options.stopWordsFile.get();
-		final String wnConfigFile = options.wnConfigFile.get();
-		final WordNetRelations wnr = new WordNetRelations(stopWordsFile, wnConfigFile);
+		/* Initializing WordNet */
+		final WordNetRelations wnr = new WordNetRelations();
 		/* Opening POS tagged file */
 		final String posFile = options.posTaggedFile.get();
 		final String tokenizedFile = options.testTokenizedFile.get();

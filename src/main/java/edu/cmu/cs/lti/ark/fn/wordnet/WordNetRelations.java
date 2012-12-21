@@ -22,7 +22,9 @@
 package edu.cmu.cs.lti.ark.fn.wordnet;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -39,8 +41,10 @@ import net.didion.jwnl.data.POS;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
-public class WordNetRelations
-{
+public class WordNetRelations {
+	public static final String DEFAULT_FILE_PROPERTIES_FILE = "file_properties.xml";
+	public static final String DEFAULT_STOPWORDS_FILE = "stopwords.txt";
+
 	public static final String NO_RELATION = "no-relation";
 	private static Pattern puncPattern = Pattern.compile("\\p{Punct}");
 	private static final int NUM_THRESH = 4;
@@ -85,11 +89,22 @@ public class WordNetRelations
 		
 	//mapping a word to its lemma 
 	public Map<String,String> wordLemmaMap = new THashMap<String, String>();
-	
-	public WordNetRelations(String stopWordFile, String configFile)
-	{
-		initializeStopWords(stopWordFile);
-		initializeWordNet(configFile);
+
+	/**
+	 * Initialize a new WordNetRelations with the default file_properties and stopwords files
+	 */
+	@SuppressWarnings("ConstantConditions")
+	public WordNetRelations() throws URISyntaxException {
+		final ClassLoader classLoader = getClass().getClassLoader();
+		final File filePropertiesFile = new File(classLoader.getResource(DEFAULT_FILE_PROPERTIES_FILE).toURI());
+		final File stopwordsFile = new File(classLoader.getResource(DEFAULT_STOPWORDS_FILE).toURI());
+		initializeStopWords(stopwordsFile);
+		initializeWordNet(filePropertiesFile);
+	}
+
+	public WordNetRelations(String stopWordFile, String configFile) {
+		initializeStopWords(new File(stopWordFile));
+		initializeWordNet(new File(configFile));
 	}
 	
 	public WordNetRelations(String serializedFile)
@@ -167,8 +182,7 @@ public class WordNetRelations
 		SerializedObjects.writeSerializedObject(wc, serializedFile);
 	}	
 	
-	private void initializeStopWords(String stopFile)
-	{
+	private void initializeStopWords(File stopFile) {
 		stopwords = new THashSet<String>();
 		try {
 			BufferedReader bReader = new BufferedReader(new FileReader(stopFile));
@@ -178,13 +192,13 @@ public class WordNetRelations
 				stopwords.add(line.trim());
 			}
 		} catch (Exception e) {
+			// TODO: WHY!?
 			System.err.println("Problem initializing stopword file");
 			e.printStackTrace();
 		}
 	}	
 	
-	public THashMap<String, Set<String>> getAllRelationsMap(String sWord)
-	{
+	public THashMap<String, Set<String>> getAllRelationsMap(String sWord) {
 		/*
 		 * when sWord = sourceWord
 		 */
@@ -528,8 +542,7 @@ public class WordNetRelations
 	
 	
 	
-	private void initializeWordNet(String configFile)
-	{
+	private void initializeWordNet(File configFile) {
 		try {
 			mWN = WordNetAPI.getInstance(configFile);
 		} catch (Exception e) {
