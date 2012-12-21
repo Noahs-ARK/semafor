@@ -21,9 +21,7 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.wordnet;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -93,18 +91,21 @@ public class WordNetRelations {
 	/**
 	 * Initialize a new WordNetRelations with the default file_properties and stopwords files
 	 */
-	@SuppressWarnings("ConstantConditions")
 	public WordNetRelations() throws URISyntaxException {
 		final ClassLoader classLoader = getClass().getClassLoader();
-		final File filePropertiesFile = new File(classLoader.getResource(DEFAULT_FILE_PROPERTIES_FILE).toURI());
-		final File stopwordsFile = new File(classLoader.getResource(DEFAULT_STOPWORDS_FILE).toURI());
+		final InputStream filePropertiesFile = classLoader.getResourceAsStream(DEFAULT_FILE_PROPERTIES_FILE);
+		final InputStream stopwordsFile = classLoader.getResourceAsStream(DEFAULT_STOPWORDS_FILE);
 		initializeStopWords(stopwordsFile);
 		initializeWordNet(filePropertiesFile);
 	}
 
 	public WordNetRelations(String stopWordFile, String configFile) {
-		initializeStopWords(new File(stopWordFile));
-		initializeWordNet(new File(configFile));
+		try {
+			initializeStopWords(new FileInputStream(stopWordFile));
+			initializeWordNet(new FileInputStream(configFile));
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException(e); // TODO: add FileNotFoundException to signature
+		}
 	}
 	
 	public WordNetRelations(String serializedFile)
@@ -182,13 +183,12 @@ public class WordNetRelations {
 		SerializedObjects.writeSerializedObject(wc, serializedFile);
 	}	
 	
-	private void initializeStopWords(File stopFile) {
+	private void initializeStopWords(InputStream stopFile) {
 		stopwords = new THashSet<String>();
 		try {
-			BufferedReader bReader = new BufferedReader(new FileReader(stopFile));
-			String line = null;
-			while((line=bReader.readLine())!=null)
-			{
+			BufferedReader bReader = new BufferedReader(new InputStreamReader(stopFile));
+			String line;
+			while((line=bReader.readLine())!=null) {
 				stopwords.add(line.trim());
 			}
 		} catch (Exception e) {
@@ -542,7 +542,7 @@ public class WordNetRelations {
 	
 	
 	
-	private void initializeWordNet(File configFile) {
+	private void initializeWordNet(InputStream configFile) {
 		try {
 			mWN = WordNetAPI.getInstance(configFile);
 		} catch (Exception e) {

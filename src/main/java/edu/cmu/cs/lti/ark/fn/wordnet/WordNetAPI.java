@@ -111,10 +111,10 @@ public class WordNetAPI {
 	}
 
 	public static WordNetAPI getInstance(String configFile) throws Exception  {
-		return getInstance(new File(configFile));
+		return getInstance(new FileInputStream(configFile));
 	}
 
-	public static WordNetAPI getInstance(File configFile) throws Exception  {
+	public static WordNetAPI getInstance(InputStream configFile) throws Exception  {
 		if (instance == null)
 			instance = new WordNetAPI(configFile);
 		return instance;
@@ -144,10 +144,10 @@ public class WordNetAPI {
 
 
 	private WordNetAPI(String propsFile) throws Exception {
-		this(new File(propsFile));
+		this(new FileInputStream(propsFile));
 	}
 
-	private WordNetAPI(File propsFile) throws Exception {
+	private WordNetAPI(InputStream propsFile) throws Exception {
 
 		info("Initialize WordNet...: ");
 		
@@ -155,7 +155,7 @@ public class WordNetAPI {
 			throw new RuntimeException("Missing required property 'WN_PROP'");
 
 		try {
-			JWNL.initialize(new FileInputStream(propsFile));
+			JWNL.initialize(propsFile);
 			wDict = Dictionary.getInstance();
 			pUtils = PointerUtils.getInstance();
 			morphProcessor = wDict.getMorphologicalProcessor();
