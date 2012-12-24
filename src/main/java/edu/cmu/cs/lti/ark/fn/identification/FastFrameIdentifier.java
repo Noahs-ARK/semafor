@@ -22,13 +22,10 @@
 package edu.cmu.cs.lti.ark.fn.identification;
 
 
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;
-import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import edu.cmu.cs.lti.ark.util.optimization.LogFormula;
@@ -37,10 +34,13 @@ import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectDoubleHashMap;
 
-import javax.annotation.Nullable;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.*;
+import static com.google.common.base.Strings.nullToEmpty;
+import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.readLine;
 import static edu.cmu.cs.lti.ark.fn.identification.ScanAdverbsAndAdjectives.getCanonicalForm;
 
 /**
@@ -49,8 +49,8 @@ import static edu.cmu.cs.lti.ark.fn.identification.ScanAdverbsAndAdjectives.getC
  * the annotation for a sentence. It is just a single node implementation. 
  * Moreover, it looks only at a small set of frames for seen words
  */
-public class FastFrameIdentifier extends LRIdentificationModelSingleNode
-{
+public class FastFrameIdentifier extends LRIdentificationModelSingleNode {
+	// map from lemmas to frames
 	private THashMap<String, THashSet<String>> mHvCorrespondenceMap;
 	private Map<String, Set<String>> mRelatedWordsForWord;
 	private THashMap<String,THashSet<String>> clusterMap;
@@ -65,15 +65,14 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode
 							   THashMap<String, THashSet<String>> hvCorrespondenceMap,
 							   Map<String, Set<String>> relatedWordsForWord,
 							   Map<String, Map<String, Set<String>>> revisedRelationsMap,
-							   Map<String, String> hvLemmas)
-	{
-		super(paramList,reg,l,null,frameMap);
+							   Map<String, String> hvLemmas) {
+		super(paramList, reg, l, null, frameMap);
 		initializeParameterIndexes();
-		this.mParamList=paramList;
-		mReg=reg;
-		mLambda=l;
-		mFrameMap=frameMap;
-		totalNumberOfParams=paramList.size();
+		this.mParamList = paramList;
+		mReg = reg;
+		mLambda = l;
+		mFrameMap = frameMap;
+		totalNumberOfParams = paramList.size();
 		initializeParameters();
 		mLookupChart = new TIntObjectHashMap<LogFormula>();
 		mHvCorrespondenceMap = hvCorrespondenceMap;
@@ -81,27 +80,50 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode
 		mRevisedRelationsMap = revisedRelationsMap;
 		mHVLemmas = hvLemmas;
 	}
-	
-	private double getNumeratorValue(String frameName, int[] intTokNums, String[][] data) {
-		m_current = 0;
-		m_llcurrent = 0;
-		return getValueForFrame(frameName, intTokNums, data);
+
+	/**
+	 * Applies the log-linear model to each frame in frames and selects the highest scoring frame
+	 * @param frames the frames to consider
+	 * @param sentence the dependency parse of the sentence, needed to extract features
+	 * @param tokenIndices the token indexes that the frame spans
+	 * @return the highest scoring frame
+	 */
+	private String pickBestFrame(Set<String> frames, Sentence sentence, int[] tokenIndices) {
+		String result = null;
+		double maxVal = -Double.MIN_VALUE;
+		for(String frame: frames) {
+			double val = getValueForFrame(frame, tokenIndices, sentence);
+			if(val > maxVal) {
+				maxVal = val;
+				result = frame;
+			}
+		}
+		return result;
 	}
 
-	private double getValueForFrame(String frame, int[] intTokNums, String[][] data) {
+	/**
+	 * Applies the log-linear model to frame
+	 * @param frame the frames to score
+	 * @param sentence the dependency parse of the sentence, needed to extract features
+	 * @param intTokNums the token indexes that the frame spans
+	 * @return the score of the frame
+	 */
+	private double getValueForFrame(String frame, int[] intTokNums, Sentence sentence) {
+		m_current = 0;
+		m_llcurrent = 0;
+		String[][] parseData = sentence.toAllLemmaTagsArray();
 		THashSet<String> hiddenUnits = mFrameMap.get(frame);
+		DependencyParse parse = DependencyParse.processFN(parseData, 0.0);
 		double result = 0.0;
-		DependencyParse parse = DependencyParse.processFN(data, 0.0);
-		for (String unit : hiddenUnits)
-		{
-			IntCounter<String> valMap = null;
+		for (String unit : hiddenUnits) {
+			IntCounter<String> valMap;
 			FeatureExtractor featex = new FeatureExtractor();
-			if(clusterMap==null) {
+			if(clusterMap == null) {
 				valMap =
 					featex.extractFeaturesLessMemory(frame,
 							intTokNums,
 							unit,
-							data,
+							parseData,
 							"test",
 							mRelatedWordsForWord,
 							mRevisedRelationsMap,
@@ -109,99 +131,109 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode
 							parse);
 			} else { // not supported
 				valMap =
-					featex.extractFeaturesWithClusters(frame, intTokNums, unit, data, mWNR, "test", null, null,parse,clusterMap,K);
+					featex.extractFeaturesWithClusters(frame, intTokNums, unit, parseData, mWNR, "test", null, null, parse, clusterMap, K);
 			}
-			Set<String> features = valMap.keySet();
+			final Set<String> features = valMap.keySet();
 			double featSum = 0.0;
-			for (String feat : features)
-			{
+			for (String feat : features) {
 				double val = valMap.getT(feat);
 				int ind = localA.get(feat);
 				double paramVal = V[ind].exponentiate();
-				double prod = val*paramVal;
-				featSum+=prod;
+				double prod = val * paramVal;
+				featSum += prod;
 			}
-			double expVal = Math.exp(featSum);
-			result+=expVal;
+			result += Math.exp(featSum);
 		}
 		return result;
 	}
 
-	public Set<String> checkPresenceOfTokensInMap(int[] intTokNums, String[][] parseData) {
+	private Set<String> checkPresenceOfTokensInMap(int[] intTokNums, Sentence sentence) {
+		final List<Token> tokens = sentence.getTokens();
 		final List<String> lemmatizedTokens = Lists.newArrayList();
-		for (final int tokNum : intTokNums) {
-			lemmatizedTokens.add(parseData[PARSE_LEMMA_ROW][tokNum]);
+		for (int tokNum : intTokNums) {
+			lemmatizedTokens.add(tokens.get(tokNum).getLemma());
 		}
-		return mHvCorrespondenceMap.get(Joiner.on(" ").join(lemmatizedTokens));
+		final String lemmas = Joiner.on(" ").join(lemmatizedTokens);
+		Set<String> frames = mHvCorrespondenceMap.get(lemmas);
+		if (frames == null) System.err.println("Not found in hvCorrespondenceMap:\t" + lemmas);
+		return frames;
 	}
 
-	public void setClusterInfo(THashMap<String,THashSet<String>> clusterMap,int K)
-	{
-		this.clusterMap=clusterMap;
-		this.K=K;
+	public void setClusterInfo(THashMap<String, THashSet<String>> clusterMap, int K) {
+		this.clusterMap = clusterMap;
+		this.K = K;
 	}
-	
-	
-	public String[] getBestFrame(String frameLine, String parseLine, boolean printConf)
-	{
-		if (!printConf) {
-			return new String[] {getBestFrame(frameLine, parseLine)};
+
+	private Set<String> getCandidateFrames(int[] tokenIndices, Sentence sentence, SmoothedGraph graph) {
+		final List<Token> sentenceTokens = sentence.getTokens();
+		final Set<String> frames = checkPresenceOfTokensInMap(tokenIndices, sentence);
+		if(frames != null) return frames;
+
+		final List<Token> frameTokens = Lists.newArrayList();
+		final List<String> lowerCaseForms = Lists.newArrayList();
+		for(int tokNum : tokenIndices) {
+			final Token token = sentenceTokens.get(tokNum);
+			frameTokens.add(token);
+			lowerCaseForms.add(token.getForm().toLowerCase());
 		}
-		double maxVal = -Double.MIN_VALUE;
-		String[] toks = frameLine.split("\t");
-		String[] tokNums = toks[1].split("_");
-		int[] intTokNums = new int[tokNums.length];
-		for(int j = 0; j < tokNums.length; j ++)
-			intTokNums[j] = new Integer(tokNums[j]);
-		Arrays.sort(intTokNums);
-		StringTokenizer st = new StringTokenizer(parseLine,"\t");
-		int tokensInFirstSent = new Integer(st.nextToken());
-		String[][] data = new String[6][tokensInFirstSent];
-		for(int k = 0; k < 6; k ++)
-		{
-			data[k]=new String[tokensInFirstSent];
-			for(int j = 0; j < tokensInFirstSent; j ++)
-			{
-				data[k][j]=""+st.nextToken().trim();
+		final Map<String, Set<String>> coarseMap = graph.getCoarseMap();
+		if (frameTokens.size() > 1) {
+			final String coarseToken = getCanonicalForm(Joiner.on(" ").join(lowerCaseForms));
+			if (coarseMap.containsKey(coarseToken)) return coarseMap.get(coarseToken);
+		} else {
+			final Token token = frameTokens.get(0);
+			final String lemma = token.getLemma();
+			final String pos = convertPostag(token.getPostag());
+			if (pos != null) {
+				final String fineToken = getCanonicalForm(lemma + "." + pos);
+				if (graph.getFineMap().containsKey(fineToken)) return graph.getFineMap().get(fineToken);
 			}
-		}	
-		Set<String> set = checkPresenceOfTokensInMap(intTokNums,data);
-		if(set==null) {
-			set = mFrameMap.keySet();
-		}		
-		double sum = 0.0;
-		int count = 0;
-		Pair<String, Double>[] frames = new Pair[set.size()];
-		for(String frame: set)
-		{
-			double val =  getNumeratorValue(frame, intTokNums, data);
-			frames[count] = new Pair<String, Double>(frame, val);
-			count++;
- 			sum += val;
-			//System.out.println("Considered "+frame+" for frameLine:"+frameLine);
+			final String coarseToken = getCanonicalForm(lemma);
+			if (coarseMap.containsKey(coarseToken)) return coarseMap.get(coarseToken);
 		}
-		Comparator<Pair<String, Double>> c = new Comparator<Pair<String, Double>>() {
-			public int compare(Pair<String, Double> arg0,
-					Pair<String, Double> arg1) {
-				if (arg0.getSecond() > arg1.getSecond()) {
-					return -1;
-				} else if (arg0.getSecond() == arg1.getSecond()) {
-					return 0;
-				} else { 
-					return 1;
-				}
-			}			
-		};	
-		Arrays.sort(frames, c);
-		int K = frames.length < 10 ? frames.length : 10;
-		String[] results = new String[K];
-		for (int i = 0; i < K; i ++) {
-			results[i] = frames[i].getFirst() + "\t" + (frames[i].getSecond() / sum);
-  		}
-		return results;
-	}	
-	
-	public String getBestFrame(String frameLine, String parseLine, SmoothedGraph sg) {
+		return mFrameMap.keySet();
+	}
+
+	private String convertPostag(String pos) {
+		pos = nullToEmpty(pos);
+		if (pos.startsWith("N")) {
+			pos = "n";
+		} else if (pos.startsWith("V")) {
+			pos = "v";
+		} else if (pos.startsWith("J")) {
+			pos = "a";
+		} else if (pos.startsWith("RB")) {
+			pos = "adv";
+		} else if (pos.startsWith("I") || pos.startsWith("TO")) {
+			pos = "prep";
+		} else {
+			pos = null;
+		}
+		return pos;
+	}
+
+	/* SmoothedGraph versions */
+	public String getBestFrame(String frameLine, String parseLine, SmoothedGraph graph) {
+		return getBestFrame(parseFrameLine(frameLine), Sentence.fromAllLemmaTagsArray(readLine(parseLine)), graph);
+	}
+
+	public String getBestFrame(int[] tokenIndices, Sentence sentence, SmoothedGraph graph) {
+		Set<String> candidateFrames = getCandidateFrames(tokenIndices, sentence, graph);
+		return pickBestFrame(candidateFrames, sentence, tokenIndices);
+	}
+
+	/* non-graph versions */
+	public String getBestFrame(String frameLine, String parseLine) {
+		return getBestFrame(parseFrameLine(frameLine), Sentence.fromAllLemmaTagsArray(readLine(parseLine)));
+	}
+
+	private String getBestFrame(int[] tokenIndices, Sentence sentence) {
+		Set<String> frames = checkPresenceOfTokensInMap(tokenIndices, sentence);
+		if(frames == null) frames = mFrameMap.keySet(); // lemmas aren't in the map. fall back to all frames
+		return pickBestFrame(frames, sentence, tokenIndices);
+	}
+
+	private int[] parseFrameLine(String frameLine) {
 		String[] toks = frameLine.split("\t");
 		String[] tokNums = toks[1].split("_");
 		int[] intTokNums = new int[tokNums.length];
@@ -209,109 +241,6 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode
 			intTokNums[j] = Integer.parseInt(tokNums[j]);
 		}
 		Arrays.sort(intTokNums);
-
-		return getBestFrame(intTokNums, Sentence.fromAllLemmaTagsArray(readLine(parseLine)), sg);
-	}
-
-	public String getBestFrame(int[] tokenIndices, Sentence sentence, SmoothedGraph graph) {
-		Set<String> candidateFrames = getCandidateFrames(tokenIndices, sentence, graph);
-		String[][] parseData = sentence.toAllLemmaTagsArray();
-		String result = null;
-		double maxVal = -Double.MIN_VALUE;
-		// get max
-		for(String frame : candidateFrames) {
-			double val =  getNumeratorValue(frame, tokenIndices, parseData);
-			if(val > maxVal) {
-				maxVal = val;
-				result = "" + frame;
-			}
-		}
-		return result;
-	}
-
-	private Set<String> getCandidateFrames(int[] tokenIndices, Sentence sentence, SmoothedGraph graph) {
-		final List<Token> sentenceTokens = sentence.getTokens();
-
-		final List<Token> frameTokens = Lists.newArrayList();
-		final List<String> lowerCaseForms = Lists.newArrayList();
-		final List<String> lemmaList = Lists.newArrayList();
-		for(int tokNum : tokenIndices) {
-			final Token token = sentenceTokens.get(tokNum);
-			frameTokens.add(token);
-			lowerCaseForms.add(token.getForm().toLowerCase());
-			lemmaList.add(token.getLemma());
-		}
-		final String lemmas = Joiner.on(" ").join(lemmaList);
-
-		if(mHvCorrespondenceMap.containsKey(lemmas)) return mHvCorrespondenceMap.get(lemmas);
-
-		final Map<String, Set<String>> coarseMap = graph.getCoarseMap();
-		if (frameTokens.size() > 1) {
-			final String coarseToken = getCanonicalForm(Joiner.on(" ").join(lowerCaseForms));
-			if (coarseMap.containsKey(coarseToken)) return coarseMap.get(coarseToken);
-		} else {
-			final Token token = frameTokens.get(0);
-			String pos = Strings.nullToEmpty(token.getPostag());
-			if (pos.startsWith("N")) {
-				pos = "n";
-			} else if (pos.startsWith("V")) {
-				pos = "v";
-			} else if (pos.startsWith("J")) {
-				pos = "a";
-			} else if (pos.startsWith("RB")) {
-				pos = "adv";
-			} else if (pos.startsWith("I") || pos.startsWith("TO")) {
-				pos = "prep";
-			} else {
-				pos = null;
-			}
-			if (pos != null) {
-				final String fineToken = getCanonicalForm(lemmas + "." + pos);
-				if (graph.getFineMap().containsKey(fineToken)) return graph.getFineMap().get(fineToken);
-			}
-			final String coarseToken = getCanonicalForm(lemmas);
-			if (coarseMap.containsKey(coarseToken)) return coarseMap.get(coarseToken);
-		}
-		return mFrameMap.keySet();
-	}
-
-	public String getBestFrame(String frameLine, String parseLine)
-	{
-		String result = null;
-		double maxVal = -Double.MIN_VALUE;
-		String[] toks = frameLine.split("\t");
-		String[] tokNums = toks[1].split("_");
-		int[] intTokNums = new int[tokNums.length];
-		for(int j = 0; j < tokNums.length; j ++)
-			intTokNums[j] = new Integer(tokNums[j]);
-		Arrays.sort(intTokNums);
-		StringTokenizer st = new StringTokenizer(parseLine,"\t");
-		int tokensInFirstSent = new Integer(st.nextToken());
-		String[][] data = new String[6][tokensInFirstSent];
-		for(int k = 0; k < 6; k ++)
-		{
-			data[k]=new String[tokensInFirstSent];
-			for(int j = 0; j < tokensInFirstSent; j ++)
-			{
-				data[k][j]=""+st.nextToken().trim();
-			}
-		}	
-		Set<String> set = checkPresenceOfTokensInMap(intTokNums,data);
-		if(set==null)
-		{
-			set = mFrameMap.keySet();
-			System.out.println("Notfound:\t"+frameLine);
-		}
-		for(String frame: set)
-		{
-			double val =  getNumeratorValue(frame, intTokNums, data);
-			if(val>maxVal)
-			{
-				maxVal = val;
-				result=""+frame;
-			}
-		}
-		return result;
+		return intTokNums;
 	}
 }
-

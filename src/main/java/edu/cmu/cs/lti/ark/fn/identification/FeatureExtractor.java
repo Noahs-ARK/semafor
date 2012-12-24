@@ -22,7 +22,6 @@
 package edu.cmu.cs.lti.ark.fn.identification;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,16 +35,15 @@ import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
-public class FeatureExtractor implements IFeatureExtractor
-{
-	public Lock r = null;
-	public Lock w = null;
+public class FeatureExtractor implements IFeatureExtractor {
+	public Lock readLock = null;
+	public Lock writeLock = null;
 	
 	
 	public FeatureExtractor() {
 		ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-		r = lock.readLock();
-		w = lock.writeLock();
+		readLock = lock.readLock();
+		writeLock = lock.writeLock();
 	}
 	
 	
@@ -157,10 +155,10 @@ public class FeatureExtractor implements IFeatureExtractor
 			hiddenUnitTokens+=arr[0]+" ";
 			hiddenPOSSeq+=arr[1]+" ";
 			hiddenFinePOSSeq+=arr[1].substring(0,1)+" ";
-			w.lock();
+			writeLock.lock();
 			hiddenUnitLemmas+=getLowerCaseLemma(lemmaCache,arr[0], arr[1],wnr)+" ";
 			hiddenLemmaAndFPOS+=getLowerCaseLemma(lemmaCache,arr[0], arr[1],wnr)+"_"+arr[1].substring(0,1)+" ";
-			w.unlock();
+			writeLock.unlock();
 		}
 		hiddenUnitTokens=hiddenUnitTokens.trim();
 		hiddenUnitLemmas=hiddenUnitLemmas.trim();
@@ -174,12 +172,12 @@ public class FeatureExtractor implements IFeatureExtractor
 			String lexUnit = parseData[0][mTokenNums[i]];
 			String pos = parseData[1][mTokenNums[i]];	
 			actualTokens+=lexUnit+" ";
-			w.lock();
+			writeLock.lock();
 			actualLemmas+=getLowerCaseLemma(lemmaCache,lexUnit, pos,wnr)+" ";
 			actualPOSSeq+=pos+" ";
 			actualFinePOSSeq+=pos.substring(0,1)+" ";
 			actualLemmaAndFPOS+=getLowerCaseLemma(lemmaCache,lexUnit, pos,wnr)+"_"+pos.substring(0,1)+" ";
-			w.unlock();
+			writeLock.unlock();
 		}
 		actualTokens=actualTokens.trim();
 		actualLemmas=actualLemmas.trim();
@@ -226,9 +224,9 @@ public class FeatureExtractor implements IFeatureExtractor
 		}
 		else
 		{
-			w.lock();
+			writeLock.lock();
 			relations = getWNRelations(wnCacheMap,hiddenUnitTokens, actualTokens,wnr);
-			w.unlock();
+			writeLock.unlock();
 		}
 		for(String relation: relations)
 		{
@@ -430,10 +428,10 @@ public class FeatureExtractor implements IFeatureExtractor
 			hiddenUnitTokens+=arr[0]+" ";
 			hiddenPOSSeq+=arr[1]+" ";
 			hiddenFinePOSSeq+=arr[1].substring(0,1)+" ";
-			w.lock();
+			writeLock.lock();
 			hiddenUnitLemmas+=getLowerCaseLemma(lemmaCache,arr[0], arr[1],wnr)+" ";
 			hiddenLemmaAndFPOS+=getLowerCaseLemma(lemmaCache,arr[0], arr[1],wnr)+"_"+arr[1].substring(0,1)+" ";
-			w.unlock();
+			writeLock.unlock();
 		}
 		hiddenUnitTokens=hiddenUnitTokens.trim();
 		hiddenUnitLemmas=hiddenUnitLemmas.trim();
@@ -447,12 +445,12 @@ public class FeatureExtractor implements IFeatureExtractor
 			String lexUnit = parseData[0][mTokenNums[i]];
 			String pos = parseData[1][mTokenNums[i]];	
 			actualTokens+=lexUnit+" ";
-			w.lock();
+			writeLock.lock();
 			actualLemmas+=getLowerCaseLemma(lemmaCache,lexUnit, pos,wnr)+" ";
 			actualPOSSeq+=pos+" ";
 			actualFinePOSSeq+=pos.substring(0,1)+" ";
 			actualLemmaAndFPOS+=getLowerCaseLemma(lemmaCache,lexUnit, pos,wnr)+"_"+pos.substring(0,1)+" ";
-			w.unlock();
+			writeLock.unlock();
 		}
 		actualTokens=actualTokens.trim();
 		actualLemmas=actualLemmas.trim();
@@ -479,9 +477,9 @@ public class FeatureExtractor implements IFeatureExtractor
 		}
 		else
 		{
-			w.lock();
+			writeLock.lock();
 			relations = getWNRelations(wnCacheMap,hiddenUnitTokens, actualTokens,wnr);
-			w.unlock();
+			writeLock.unlock();
 		}
 		for(String relation: relations)
 		{
