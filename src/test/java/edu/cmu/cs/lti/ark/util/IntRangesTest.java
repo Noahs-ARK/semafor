@@ -13,6 +13,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class IntRangesTest {
 	private final ImmutableList<Integer> EMPTY = of();
+
 	@Test
 	public void testTwoSidedRange() {
 		assertEquals(of(1, 2), copyOf(range(1, 3)));
