@@ -38,7 +38,7 @@ import edu.cmu.cs.lti.ark.util.ds.map.SingleAssignmentHashMap;
  * See the code for details.
  * 
  * @author Nathan Schneider (nschneid)
- * @since 2009-04-24: Adapted from {@link edu.cmu.cs.lti.ark.fn.identification.IdentificationOptions}
+ * @since 2009-04-24
  * 2009-09-25: Made abstract, with application-specific options in {@link edu.cmu.cs.lti.ark.util.FNModelOptions}
  */
 public abstract class CommandLineOptions {
