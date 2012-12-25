@@ -27,7 +27,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
-import edu.cmu.cs.lti.ark.fn.parsing.SemaforParse;
+import edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult;
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithElements;
 import edu.cmu.cs.lti.ark.util.ds.Range;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
@@ -40,8 +40,8 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.google.common.collect.Lists.transform;
-import static edu.cmu.cs.lti.ark.fn.parsing.SemaforParse.Frame;
-import static edu.cmu.cs.lti.ark.fn.parsing.SemaforParse.Frame.Span;
+import static edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult.Frame;
+import static edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult.Frame.Span;
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 import static org.apache.commons.io.IOUtils.readLines;
@@ -49,7 +49,7 @@ import static org.apache.commons.io.IOUtils.readLines;
 /**
  * Collates intermediate output files into a final output file
  * Writes one json object (representing a Semafor-parsed sentence) per line
- * @see SemaforParse
+ * @see edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult
  *
  * @author Sam Thomson (sthomson@cs.cmu.edu)
  */
@@ -146,8 +146,8 @@ public class PrepareFullAnnotationJson {
 			final String parseLine = parses.get(i);
 			final Collection<String> feLines = predictions.get(i);
 			final String tokenizedLine = tokenizedLines.get(i);
-			final SemaforParse semaforParse = getSemaforParse(parseLine, feLines, tokenizedLine);
-			output.write(jsonMapper.writeValueAsString(semaforParse) + "\n");
+			final SemaforParseResult semaforParseResult = getSemaforParse(parseLine, feLines, tokenizedLine);
+			output.write(jsonMapper.writeValueAsString(semaforParseResult) + "\n");
 		}
 	}
 
@@ -159,7 +159,7 @@ public class PrepareFullAnnotationJson {
 	 * @param feLines Lines encoding predicted frames & FEs in the same format as the .sentences.frame.elements files
 	 * @param tokenizedLine The original sentence, space-separated
 	 */
-	private static SemaforParse getSemaforParse(String parseLine, Iterable<String> feLines, String tokenizedLine) {
+	private static SemaforParseResult getSemaforParse(String parseLine, Iterable<String> feLines, String tokenizedLine) {
 		final List<String> tokens = Arrays.asList(tokenizedLine.split(" "));
 		final ArrayList<Frame> frames = Lists.newArrayList();
 		for (String feLine : feLines) {
@@ -178,7 +178,7 @@ public class PrepareFullAnnotationJson {
 			}
 			frames.add(new Frame(target, frameElements));
 		}
-		return new SemaforParse(frames, tokens);
+		return new SemaforParseResult(frames, tokens);
 	}
 
 	private static Span makeSpan(int start, int end, String name, List<String> tokens) {

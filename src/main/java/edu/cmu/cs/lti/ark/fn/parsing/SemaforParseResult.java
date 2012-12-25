@@ -12,15 +12,15 @@ import java.util.List;
  * @author sthomson@cs.cmu.edu
  */
 @Immutable
-public class SemaforParse {
+public class SemaforParseResult {
 	/** The list of predicted frames **/
 	final public List<Frame> frames;
 	/** The original text of the sentence **/
 	final public List<String> tokens;
 
 	@JsonCreator
-	public SemaforParse(@JsonProperty("frames") List<Frame> frames,
-						@JsonProperty("tokens") List<String> tokens) {
+	public SemaforParseResult(@JsonProperty("frames") List<Frame> frames,
+							  @JsonProperty("tokens") List<String> tokens) {
 		this.frames = frames;
 		this.tokens = tokens;
 	}
