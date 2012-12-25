@@ -30,7 +30,7 @@ import gnu.trove.THashMap;
 public class FEFileName {
 	public static String stopwordFilename="stopwords.txt";
 	public static String wordnetFilename="file_properties.xml";
-	public static String fedictFilename1=null;
+	public static String feDictFilename = null;
 	
 	public static String tmpDirname="../tmp/";
 	
@@ -51,10 +51,6 @@ public class FEFileName {
 	public static String listfilename = "lrdata/train.list";
 	public static String rrkfefilename = "rerank.train.frame.elements";
 
-	public static boolean useUnlabeledSpans = false;
-	public static String unlabeledMatchedSpansFile = "lrdata/matched_spans";
-	public static THashMap<String,Integer> unlabeledSpans = null;	
-	
-	public static int KBestParse=1;
+	public static int KBestParse = 1;
 	public static String KBestParseDirectory = null;
 }

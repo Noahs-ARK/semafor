@@ -82,8 +82,8 @@ public abstract class SentenceCodec {
 		return new Sentence(tokens);
 	}
 
-	public SentenceIterator readFile(File file) throws FileNotFoundException {
-		return new SentenceIterator(this, file);
+	public SentenceIterator readInput(Readable input) throws FileNotFoundException {
+		return new SentenceIterator(this, input);
 	}
 
 	public SentenceWriter getFileWriter(File file) throws IOException {

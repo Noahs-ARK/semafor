@@ -17,7 +17,6 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4000m -Xmx4000m \
    ${training_dir}/scan/parser.conf.unlabeled \
    ${training_dir}/scan/cv.train.sentences.frame.elements.spans \
    true \
-   false \
    1 \
    null \
    ${datadir}/framenet.frame.element.map

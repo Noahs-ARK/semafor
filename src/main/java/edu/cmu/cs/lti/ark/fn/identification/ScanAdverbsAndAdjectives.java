@@ -62,8 +62,6 @@ public class ScanAdverbsAndAdjectives {
 						word = getCanonicalForm(word);
 						int c = advs.get(word);
 						advs.put(word, c+1);
-					} else {
-						continue;
 					}
 				}
 			}
@@ -115,8 +113,6 @@ public class ScanAdverbsAndAdjectives {
 			}
 			toksList.add(tok);
 		}
-		String[] arr = new String[toksList.size()];
-		toksList.toArray(arr);
-		return arr;
+		return toksList.toArray(new String[toksList.size()]);
 	}
 }

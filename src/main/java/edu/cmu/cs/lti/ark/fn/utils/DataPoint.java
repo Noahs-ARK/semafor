@@ -244,8 +244,7 @@ public class DataPoint {
 		{
 			parts[p]="";
 			while(true) {
-				for(int j = 0; j < numWords; j ++)
-				{
+				for(int j = 0; j < numWords; j ++) {
 					String tkn = (j==0) ? nexttkn : st.nextToken().trim();
 					parts[p] += tkn+"\t";
 				}
@@ -351,7 +350,7 @@ public class DataPoint {
 	public static final String SEMEVAL07_TEST_SET = "test";
 	/** Sentence index ranges for documents in the train, dev, and test portions of the SemEval'07 data */
 	protected static final Map<String,Map<String,? extends Range>> DOCUMENT_SENTENCE_RANGES = new THashMap<String,Map<String,? extends Range>>();
-	{
+	static {
 		{
 		Map<String,Range0Based> exemplarMap = new THashMap<String,Range0Based>();
 		exemplarMap.put("*", new Range0Based(0,139439,false));

@@ -27,38 +27,37 @@ import java.util.*;
 import edu.cmu.cs.lti.ark.util.Interner;
 import gnu.trove.*;
 
-public class Alphabet implements Serializable
-{
-	/**
-	 * Maps each unique string to a unique index.
-	 * 
-	 * @author dipanjan
-	 */
+/**
+ * Maps each unique string to a unique index.
+ *
+ * @author dipanjan
+ */
+public class Alphabet implements Serializable {
 	private static final long serialVersionUID = -3475498139713667452L;
-	private ArrayList<String> m_decode;
-	private TObjectIntHashMap<String> m_encode;
-	private Interner<String> m_interner = new Interner<String>();
-	private static int ALPHABET_INITIAL_CAPACITY = 2000000;
+	private final ArrayList<String> strings;
+	private final TObjectIntHashMap<String> reverseIndex;
+	private final Interner<String> interner = new Interner<String>();
 
 	public Alphabet() {
-		m_decode = new ArrayList<String>(ALPHABET_INITIAL_CAPACITY);
-		m_encode = new TObjectIntHashMap<String>(ALPHABET_INITIAL_CAPACITY, new TObjectIdentityHashingStrategy<String>());
+		final int ALPHABET_INITIAL_CAPACITY = 2000000;
+		strings = new ArrayList<String>(ALPHABET_INITIAL_CAPACITY);
+		reverseIndex =
+				new TObjectIntHashMap<String>(ALPHABET_INITIAL_CAPACITY, new TObjectIdentityHashingStrategy<String>());
 	}
 
 	public int getNumEntries() {
-		return m_decode.size();
+		return strings.size();
 	}
 	
 	/**
 	 * Returns String corresponding to given integer i, or "<UNK>" if i is out of range.
-	 * @param i
-	 * @return
+	 * @param i the index
+	 * @return String corresponding to i
 	 */
 	public String getString(int i) {
-		if (i <= m_decode.size() && i >= 1) 
-			return m_decode.get(i-1);
-		else
-			return "<UNK>";
+		if (i <= strings.size() && i >= 1)
+			return strings.get(i-1);
+		return "<UNK>";
 	}
 
 	/**
@@ -67,47 +66,36 @@ public class Alphabet implements Serializable
 	 * @param s String to add
 	 */
 	public void addString(String s) {
-		String ss = m_interner.intern(s);
-		if (!m_encode.containsKey(ss)) {
-			m_encode.put(ss, m_decode.size());
-			m_decode.add(ss);
-			//m_decode.add(ss);
-			//m_encode.put(ss, m_decode.size());
+		String ss = interner.intern(s);
+		if (!reverseIndex.containsKey(ss)) {
+			reverseIndex.put(ss, strings.size());
+			strings.add(ss);
 		}
 	}
 
 	public boolean checkString(String s) {
-		String ss = m_interner.intern(s);
-		if (m_encode.containsKey(ss)) {
-			return true;
-		} else {
-			return false;
-		}
+		return reverseIndex.containsKey(interner.intern(s));
 	}
 	
 	/**
 	 * Returns int corresponding to given String s. If s has not been seen before,
-	 * adds s to m_decode and m_encode and returns the hashed index of s in m_encode. 
-	 * @param s
+	 * adds s to strings and reverseIndex and returns the hashed index of s in reverseIndex.
+	 * @param s the string to look up
 	 * @return
 	 */
 	public int getInt(String s) {
-		boolean check = checkString(s);
-		String ss = m_interner.intern(s);
-		if(!check)
-		{
-			m_decode.add(ss);
-			int newind = m_decode.size();
-			m_encode.put(ss, newind);
-			return newind;
+		String ss = interner.intern(s);
+		if(!checkString(s)) {
+			strings.add(ss);
+			int newIndex = strings.size();
+			reverseIndex.put(ss, newIndex);
+			return newIndex;
 		}
-		int ind = m_encode.get(ss);
-		return ind;		
+		return reverseIndex.get(ss);
 	}
-	
-	public ArrayList<String> getEntries()
-	{
-		return m_decode;
+
+	public ArrayList<String> getEntries() {
+		return strings;
 	}
 } 
 

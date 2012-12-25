@@ -32,17 +32,16 @@ public class CreateAlphabetOracleSpans {
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) throws FEDict.LoadingException, FileNotFoundException {
+	public static void main(String[] args) throws IOException {
 		FEFileName.feFilename = args[0];
 		FEFileName.tagFilename =  args[1];
 		FEFileName.eventFilename =  args[2];
 		boolean genAlpha=Boolean.parseBoolean(args[3]);
-		if(genAlpha)
-			System.out.println("Generating alphabet too...");
+		if(genAlpha) System.out.println("Generating alphabet too...");
 		run(genAlpha);
 	}
 
-	public static void run(boolean genAlpha) throws FEDict.LoadingException, FileNotFoundException {
+	public static void run(boolean genAlpha) throws IOException {
 		DataPrep.useOracleSpans=true;
 		DataPrep dprep = new DataPrep();
 		long time=System.currentTimeMillis();

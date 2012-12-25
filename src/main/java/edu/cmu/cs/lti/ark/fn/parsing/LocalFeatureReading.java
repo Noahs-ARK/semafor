@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.apache.commons.io.IOUtils.closeQuietly;
+import static org.apache.commons.io.IOUtils.readLines;
 
 public class LocalFeatureReading {
 	private String mEventsFile;
@@ -112,7 +113,11 @@ public class LocalFeatureReading {
 				spans[k].features = temp.get(k);
 			}
 			SpanAndCorrespondingFeatures gold = new SpanAndCorrespondingFeatures();
-			gold.span = new int[2];gold.features = new int[spans[0].features.length]; gold.span[0]=spans[0].span[0];gold.span[1]=spans[0].span[1];for(int k = 0; k < gold.features.length; k ++) gold.features[k]=spans[0].features[k];
+			gold.span = new int[2];
+			gold.features = new int[spans[0].features.length];
+			gold.span[0]=spans[0].span[0];
+			gold.span[1]=spans[0].span[1];
+			for(int k = 0; k < gold.features.length; k ++) gold.features[k]=spans[0].features[k];
 			SpanAndCorrespondingFeatures.sort(spans);
 			int ind = SpanAndCorrespondingFeatures.search(spans, gold);
 			f.fGoldSpans.add(ind);
@@ -194,7 +199,7 @@ public class LocalFeatureReading {
 		for(int i = 0; i < mFrameLines.size(); i ++) {
 			frameIndexMap.put(i, new ArrayList<Integer>());
 		}
-		List<String> lines = readLines(mSpansFile);
+		List<String> lines = readLines(new FileInputStream(mSpansFile));
 		int i;
 		int lineSize = lines.size();
 		ArrayList<String> feLines = Lists.newArrayList();
@@ -204,8 +209,8 @@ public class LocalFeatureReading {
 			String feLine = lines.get(0);
 			feLines.add(feLine);
 			i = 1;
-			System.out.println("LineSize:"+lineSize);
-			while(i<lineSize) {
+			System.out.println("LineSize:" + lineSize);
+			while(i < lineSize) {
 				String[] toks = lines.get(i).split("\t");
 				if(toks.length==6) {
 					feLines.add(lines.get(i));
@@ -287,9 +292,10 @@ public class LocalFeatureReading {
 	}
 
 	/**
-	 * Read lines from a file until an empty line
+	 * Read lines from a file ignoring empty lines
 	 * @param spansFile
 	 */
+	/*
 	private List<String> readLines(String spansFile) throws IOException {
 		ArrayList<String> lines = new ArrayList<String>();
 		BufferedReader bReader = null;
@@ -306,7 +312,7 @@ public class LocalFeatureReading {
 		}
 		return lines;
 	}
-
+	*/
 	public ArrayList<FrameFeatures> getMFrameFeaturesList() {
 		return mFrameFeaturesList;
 	}

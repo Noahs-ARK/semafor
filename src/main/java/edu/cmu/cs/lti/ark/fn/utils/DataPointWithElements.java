@@ -32,6 +32,8 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
+import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -56,16 +58,18 @@ public class DataPointWithElements extends DataPoint
 	
 	private static final String RE_FE = "(\t([^\\t]+)\t(\\d+([:]\\d+)?))";	// \t frame_name \t token_range
 	
-	public DataPointWithElements(String parseLine, String frameElementsLine, int sentNum)
-	{
+	public DataPointWithElements(String parseLine, String frameElementsLine, int sentNum) {
 		this(buildParsesForLineWithKBestCache(parseLine,sentNum), frameElementsLine, null);
 	}
-	
-	public DataPointWithElements(String parseLine, String frameElementsLine)
-	{
+
+	public DataPointWithElements(String parseLine, String frameElementsLine) {
 		this(new DependencyParses(buildParsesForLine(parseLine)), frameElementsLine, null);
 	}
-	
+
+	public DataPointWithElements(Sentence sentence, String frameElementsLine) {
+		this(new DependencyParses(DependencyParse.process(new String[][][]{sentence.toAllLemmaTagsArray()}, 0.0)), frameElementsLine, null);
+	}
+
 	public DataPointWithElements(DependencyParses parses, String frameElementsLine, String dataSet) {
 		super(parses, 0, dataSet);
 		

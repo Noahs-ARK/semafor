@@ -23,12 +23,14 @@ package edu.cmu.cs.lti.ark.fn.parsing;
 
 import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.fn.clusters.ScrapTest;
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.utils.BitOps;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.FileUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -39,25 +41,18 @@ public class CreateAlphabet {
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) throws FEDict.LoadingException, FileNotFoundException {
+	public static void main(String[] args) throws IOException {
 		FEFileName.feFilename = args[0];
 		FEFileName.tagFilename =  args[1];
 		FEFileName.eventFilename =  args[2];
 		FEFileName.alphafilename = args[3];
 		FEFileName.spanfilename = args[4];		
-		FEFileName.fedictFilename1 = args[9];
+		FEFileName.feDictFilename = args[9];
 		
-		boolean genAlpha=Boolean.parseBoolean(args[5]);
-		if(genAlpha)
-			System.out.println("Generating alphabet too...");
-		FEFileName.useUnlabeledSpans=Boolean.parseBoolean(args[6]);
-		if(FEFileName.useUnlabeledSpans)
-		{
-			System.out.println("Using spans gathered from unlabeled data too...");
-			FEFileName.unlabeledSpans=ScrapTest.getSpansWithHeads(FEFileName.unlabeledMatchedSpansFile);
-		}
-		FEFileName.KBestParse = new Integer(args[7]);
-		FEFileName.KBestParseDirectory = args[8];
+		boolean genAlpha = Boolean.parseBoolean(args[5]);
+		if(genAlpha) System.out.println("Generating alphabet too...");
+		FEFileName.KBestParse = new Integer(args[6]);
+		FEFileName.KBestParseDirectory = args[7];
 		run(genAlpha, null, null, null);
 	}	
 	
@@ -67,18 +62,18 @@ public class CreateAlphabet {
 								   		String eventsFile,
 								   		String spansFile) throws FEDict.LoadingException, FileNotFoundException {
 		FEFileName.alphafilename = alphafilename;
-		FEFileName.fedictFilename1 = fedictFilename;
+		FEFileName.feDictFilename = fedictFilename;
 		FEFileName.spanfilename = spansFile;
 		FEFileName.eventFilename = eventsFile;
 		DataPrep.loadFeatureIndex(FEFileName.alphafilename);
-		DataPrep.fedict = new FEDict(FEFileName.fedictFilename1);
+		DataPrep.fedict = new FEDict(FEFileName.feDictFilename);
 		DataPrep.genAlpha = false;
 	}
 
 	public static void run(boolean doGenerateAlphabet,
 						   List<String> tagLines,
 						   List<String> frameElementLines,
-						   WordNetRelations lwnr) throws FEDict.LoadingException, FileNotFoundException {
+						   WordNetRelations lwnr) throws IOException {
 		List<int[][][]> dataPoints = getDataPoints(tagLines, frameElementLines, lwnr);
 		long time = System.currentTimeMillis();
 		System.err.println("Reading alphabet...");
@@ -126,7 +121,7 @@ public class CreateAlphabet {
 
 	public static List<int[][][]> getDataPoints(List<String> tagLines,
 												List<String> frameElementLines,
-												WordNetRelations lwnr) throws FEDict.LoadingException {
+												WordNetRelations lwnr) throws IOException {
 		DataPrep dataPrep = new DataPrep(tagLines, frameElementLines, lwnr);
 		List<int[][][]> dataPoints = Lists.newArrayList();
 		while(dataPrep.hasNext()){
@@ -135,4 +130,14 @@ public class CreateAlphabet {
 		return dataPoints;
 	}
 
+	public static int[][][] getDataPoints(Sentence sentence,
+										  String frameElements,
+										  WordNetRelations lwnr) throws IOException {
+		DataPrep dataPrep = new DataPrep(sentence, frameElements, lwnr);
+		List<int[][][]> dataPoints = Lists.newArrayList();
+		while(dataPrep.hasNext()){
+			dataPoints.add(dataPrep.getNextTrainData());
+		}
+		return dataPoints.get(0);
+	}
 }

@@ -26,8 +26,11 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import edu.cmu.cs.lti.ark.util.IntRanges;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.Range1Based;
+
+import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 
 /**
  * Represents a collection of predicted dependency parses for a single sentence.
@@ -124,41 +127,41 @@ public class DependencyParses implements Iterable<DependencyParse>, Serializable
 	 * @param span
 	 * @return
 	 */
-	public Pair<Integer,DependencyParse> matchesSomeConstituent(Range1Based span)
-	{
+	public Pair<Integer,DependencyParse> matchesSomeConstituent(Range1Based span) {
 		return matchesSomeConstituent(span, 0);
 	}
 	
-	public Pair<Integer,DependencyParse> matchesSomeConstituent(Range1Based span, int start)
-	{
+	public Pair<Integer,DependencyParse> matchesSomeConstituent(Range1Based span, int start) {
 		loadAllNodes();
 		DependencyParse head = null;
-		for (int p=start; p<this.parses.length; p++) {	// TODO: this procedure could be optimized
+		for (int p : xrange(start, parses.length)) {
 			// See if any constituents of this parse match the span exactly
-			boolean possibleConstit = true;
+			boolean possibleConstituent = true;
 			for (int i : span) {
-				DependencyParse n = this.nodes[p][i];
-				if (!span.contains(n.getParent().getIndex())) {	// n's parent outside of span
-					if (head==null)
-						head = n;
-					else {	// Multiple nodes in the span have a parent outside the span => not a constituent
+				final DependencyParse node = nodes[p][i];
+				final int parentIndex = node.getParent().getIndex();
+				if (!span.contains(parentIndex)) {
+					// n's parent outside of span
+					if (head == null) {
+						head = node;
+					} else {
+						// Multiple nodes in the span have a parent outside the span => not a constituent
 						head = null;
-						possibleConstit = false;
+						possibleConstituent = false;
 					}
 				}
-				
-				List<DependencyParse> desc = n.getDescendants(false);
-				for (DependencyParse d : desc) {
-					if (!span.contains(d.getIndex())) {
-						possibleConstit = false;	// Some node in the span has a descendant which is outside of the span
+				final List<DependencyParse> descendants = node.getDescendants(false);
+				for (DependencyParse descendant : descendants) {
+					if (!span.contains(descendant.getIndex())) {
+						possibleConstituent = false;	// Some node in the span has a descendant which is outside of the span
 						break;
 					}
 				}
-				if (!possibleConstit)
+				if (!possibleConstituent)
 					break;
 			}
-			if (possibleConstit)
-				return new Pair<Integer,DependencyParse>(p,head);
+			if (possibleConstituent)
+				return new Pair<Integer,DependencyParse>(p, head);
 		}
 		return null;
 	}
