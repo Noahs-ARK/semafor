@@ -25,6 +25,8 @@ import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
+import java.io.IOException;
+
 /**
  * A map from frames to their frame elements
  */
@@ -58,7 +60,7 @@ public class FEDict {
 		return frameElements.toArray(new String[frameElements.size()]);
 	}
 
-	public static class LoadingException extends Exception {
+	public static class LoadingException extends IOException {
 		public LoadingException(Exception e) { super(e); }
 	}
 }
