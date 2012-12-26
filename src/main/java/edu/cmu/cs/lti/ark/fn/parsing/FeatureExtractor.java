@@ -27,7 +27,7 @@ import java.util.StringTokenizer;
 
 import de.saar.coli.salsa.reiter.framenet.FrameElement;
 
-import edu.cmu.cs.lti.ark.fn.utils.DataPointWithElements;
+import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import edu.cmu.cs.lti.ark.util.IFeatureExtractor;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
@@ -48,7 +48,7 @@ import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
  */
 public class FeatureExtractor implements IFeatureExtractor<FeatureExtractor.ArgumentCandidate> {
 	public class ArgumentCandidate {
-		DataPointWithElements dp;
+		DataPointWithFrameElements dp;
 		String frameName;
 		FrameElement fe;
 		/** Only needs to be specified if {@code fe} is {@code null} */
@@ -96,13 +96,13 @@ public class FeatureExtractor implements IFeatureExtractor<FeatureExtractor.Argu
 		return extractFeatures(arg.dp, arg.frameName, arg.roleName, arg.fillerSpanRange, arg.wnr, arg.selectedParse);
 	}
 	
-	public static IntCounter<String> extractFeatures(DataPointWithElements dp,
+	public static IntCounter<String> extractFeatures(DataPointWithFrameElements dp,
 			String frameName, FrameElement fe, Range0Based fillerSpanRange,
 			WordNetRelations wnr /* , Map<String,Frame> frameLexicon */, DependencyParse selectedParse) {
 			return extractFeatures(dp,frameName,fe.getName(),fillerSpanRange,wnr, selectedParse);
 	}
 	
-	public static IntCounter<String> extractFeatures(DataPointWithElements dp,
+	public static IntCounter<String> extractFeatures(DataPointWithFrameElements dp,
 			String frameName, String roleName, Range0Based fillerSpanRange,
 			WordNetRelations wnr /* , Map<String,Frame> frameLexicon */, DependencyParse selectedParse) {
 		featureMap = new IntCounter<String>();
@@ -395,7 +395,7 @@ public class FeatureExtractor implements IFeatureExtractor<FeatureExtractor.Argu
 	 * @param roleName
 	 * @param fillerSpanRange
 	 */
-	private static void extractChildPOSFeatures(DataPointWithElements dp,
+	private static void extractChildPOSFeatures(DataPointWithFrameElements dp,
 			DependencyParse[] nodes, String frameName, String roleName,
 			Range0Based fillerSpanRange) {
 		int targetStart = dp.getTokenNums()[0];

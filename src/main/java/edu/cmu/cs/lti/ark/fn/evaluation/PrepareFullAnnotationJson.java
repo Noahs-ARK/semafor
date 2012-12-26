@@ -28,8 +28,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult;
-import edu.cmu.cs.lti.ark.fn.utils.DataPointWithElements;
-import edu.cmu.cs.lti.ark.util.ds.Range;
+import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 
 import javax.annotation.Nullable;
@@ -42,6 +41,7 @@ import java.util.List;
 import static com.google.common.collect.Lists.transform;
 import static edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult.Frame;
 import static edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult.Frame.Span;
+import static edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements.FrameElementAndSpan;
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 import static org.apache.commons.io.IOUtils.readLines;
@@ -58,7 +58,7 @@ public class PrepareFullAnnotationJson {
 	// gets the sentence index given a frame.elements line
 	private static final Function<String,Integer> getSentenceIndex = new Function<String, Integer>() {
 		@Nullable @Override public Integer apply(@Nullable String input) {
-			return DataPointWithElements.parseFrameNameAndSentenceNum(input).getSecond();
+			return DataPointWithFrameElements.parseFrameNameAndSentenceNum(input).getSecond();
 		}
 	};
 
@@ -163,18 +163,17 @@ public class PrepareFullAnnotationJson {
 		final List<String> tokens = Arrays.asList(tokenizedLine.split(" "));
 		final ArrayList<Frame> frames = Lists.newArrayList();
 		for (String feLine : feLines) {
-			final DataPointWithElements dp = new DataPointWithElements(parseLine, feLine);
+			final DataPointWithFrameElements dp = new DataPointWithFrameElements(parseLine, feLine);
 			dp.processOrgLine(tokenizedLine);
 			// extract target
 			final int[] indices = dp.getTokenNums();
-			final Span target = makeSpan(indices[0], indices[indices.length - 1] + 1, dp.getFrameName(), tokens);
+			final Span target = makeSpan(indices[0], indices[indices.length-1] + 1, dp.getFrameName(), tokens);
 			// extract frame elements
-			final List<Range0Based> ranges = dp.getOvertFrameElementFillerSpans();
-			final String[] feNames = dp.getOvertFilledFrameElementNames();
+			final List<FrameElementAndSpan> frameElementsAndSpans = dp.getFrameElementsAndSpans();
 			final ArrayList<Span> frameElements = Lists.newArrayList();
-			for (int i : xrange(feNames.length)) {
-				final Range range = ranges.get(i);
-				frameElements.add(makeSpan(range.getStart(), range.getEnd() + 1, feNames[i], tokens));
+			for(FrameElementAndSpan frameElementAndSpan : frameElementsAndSpans) {
+				final Range0Based range = frameElementAndSpan.span;
+				frameElements.add(makeSpan(range.getStart(), range.getEnd() + 1, frameElementAndSpan.name, tokens));
 			}
 			frames.add(new Frame(target, frameElements));
 		}

@@ -24,7 +24,7 @@ package edu.cmu.cs.lti.ark.fn.parsing;
 import java.util.List;
 import java.util.Set;
 
-import edu.cmu.cs.lti.ark.fn.utils.DataPointWithElements;
+import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
 import edu.cmu.cs.lti.ark.util.ds.Range;
@@ -64,25 +64,25 @@ public class CandidateFrameElementFilters {
 	}
 	
 	public static class First2POS_Last1POS_MinCount3 extends BoundaryPOSFilter {
-		public First2POS_Last1POS_MinCount3(List<DataPointWithElements> data) {
+		public First2POS_Last1POS_MinCount3(List<DataPointWithFrameElements> data) {
 			super(data, 2, 1, 3);
 		}
 	}
 	
 	public static class First2POS_Last1POS_MinCount2 extends BoundaryPOSFilter {
-		public First2POS_Last1POS_MinCount2(List<DataPointWithElements> data) {
+		public First2POS_Last1POS_MinCount2(List<DataPointWithFrameElements> data) {
 			super(data, 2, 1, 2);
 		}
 	}
 	
 	public static class BoundaryPOSFilter implements CandidateFrameElementFilter {
 		private Set<String> candidates;
-		private List<DataPointWithElements> mData;
+		private List<DataPointWithFrameElements> mData;
 		private int mNFirstPOS;
 		private int mNLastPOS;
 		private int mMinCount;
 		
-		public BoundaryPOSFilter(List<DataPointWithElements> data, int nFirstPOS, int nLastPOS, int minCount) {
+		public BoundaryPOSFilter(List<DataPointWithFrameElements> data, int nFirstPOS, int nLastPOS, int minCount) {
 			mData = data;
 			mNFirstPOS = nFirstPOS;
 			mNLastPOS = nLastPOS;
@@ -97,7 +97,7 @@ public class CandidateFrameElementFilters {
 		public void itemizeCandidates() {
 			candidates = new THashSet<String>();
 			IntCounter<String> counts = new IntCounter<String>();
-			for (DataPointWithElements p : mData) {
+			for (DataPointWithFrameElements p : mData) {
 				
 				for (Range fillerSpanRange : p.getOvertFrameElementFillerSpans()) {
 					String ss = getSufficientStatistics(p.getParses().getBestParse(), fillerSpanRange);

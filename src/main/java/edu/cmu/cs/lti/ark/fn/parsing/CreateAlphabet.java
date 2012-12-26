@@ -22,7 +22,6 @@
 package edu.cmu.cs.lti.ark.fn.parsing;
 
 import com.google.common.collect.Lists;
-import edu.cmu.cs.lti.ark.fn.clusters.ScrapTest;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.utils.BitOps;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
@@ -66,7 +65,7 @@ public class CreateAlphabet {
 		FEFileName.spanfilename = spansFile;
 		FEFileName.eventFilename = eventsFile;
 		DataPrep.loadFeatureIndex(FEFileName.alphafilename);
-		DataPrep.fedict = new FEDict(FEFileName.feDictFilename);
+		DataPrep.frameElementsForFrame = new FEDict(FEFileName.feDictFilename);
 		DataPrep.genAlpha = false;
 	}
 
@@ -78,9 +77,9 @@ public class CreateAlphabet {
 		long time = System.currentTimeMillis();
 		System.err.println("Reading alphabet...");
 		if(doGenerateAlphabet){
-			DataPrep.featIndex = new HashMap<String,Integer>();
+			DataPrep.featureIndex = new HashMap<String,Integer>();
 		}
-		if(DataPrep.featIndex == null){
+		if(DataPrep.featureIndex == null){
 			DataPrep.loadFeatureIndex(FEFileName.alphafilename);
 			System.out.println("Read alphabet in "+(System.currentTimeMillis()-time) + " millis.");
 		}

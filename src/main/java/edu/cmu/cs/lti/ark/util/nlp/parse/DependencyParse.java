@@ -22,6 +22,7 @@
 package edu.cmu.cs.lti.ark.util.nlp.parse;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.util.Interner;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
@@ -33,6 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import static com.google.common.base.Preconditions.checkArgument;
 
 
 /**
@@ -196,13 +198,12 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 	 * @return Array of k parse instances, in descending order of goodness
 	 */
 	public static DependencyParse[] process(String[][][] parseData, double logProb) {
+		checkArgument(parseData.length > 0, "Need at least one parse.");
+		checkArgument(parseData[0][2].length == parseData[0][3].length,
+				"Parse information inconsistent: %s dependency types but %s parent indices.",
+				parseData[0][2].length, parseData[0][3].length);
 		final int len = parseData.length;
-		
-		if (parseData[0][2].length != parseData[0][3].length) {
-			System.err.println("Parse information inconsistent: " + parseData[0][2].length + " series of dependency types but " + parseData[0][3].length + " series of parent indices.");
-			System.exit(1);
-		}
-		
+
 		final int numParses = parseData[0][2].length;
 		DependencyParse[] parses = new DependencyParse[numParses];
 		
@@ -248,8 +249,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 			
 			dummyRoot.setChildren(headWords);
 			if(headWords.size()==0) {
-				System.err.println("Head word size cannot be 0. Exiting");
-				System.exit(0);
+				throw new RuntimeException("Head word size cannot be 0.");
 			}
 			
 			for(DependencyParse head : headWords) {
@@ -306,8 +306,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 		
 		dummyRoot.setChildren(headWords);
 		if(headWords.isEmpty()) {
-			System.err.println("Head word size cannot be 0. Exiting");
-			System.exit(0);
+			throw new RuntimeException("Head word size cannot be 0.");
 		}
 		for(DependencyParse head : headWords) {
 			head.setDepth(1);

@@ -9,6 +9,7 @@ import java.util.List;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.*;
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
+import static java.lang.Integer.parseInt;
 
 /**
  * Represents one sentence in conll format
@@ -31,13 +32,23 @@ public class Sentence {
 	public static Sentence fromAllLemmaTagsArray(String[][] parse) {
 		List<Token> toks = Lists.newArrayList();
 		for(int i : xrange(parse[0].length)) {
+			Integer head;
+			try {
+				head = parseInt(parse[PARSE_HEAD_ROW][i]);
+			} catch (NumberFormatException e) {
+				head = null;
+			}
 			final Token token =
-					new Token(i,
+					new Token(i + 1,
 							parse[PARSE_TOKEN_ROW][i],
 							parse[PARSE_LEMMA_ROW][i],
 							parse[PARSE_POS_ROW][i].substring(0, 1),
 							parse[PARSE_POS_ROW][i],
-							null, null, null, null, null);
+							null,
+							head,
+							parse[PARSE_DEPREL_ROW][i],
+							null,
+							null);
 			toks.add(token);
 		}
 		return new Sentence(toks);
@@ -46,10 +57,8 @@ public class Sentence {
 	public String[][] toAllLemmaTagsArray() {
 		final int length = tokens.size();
 		String[][] result = new String[NUM_PARSE_ROWS][length];
-		for(Token token : tokens) {
-			final Integer id = token.getId();
-			assert id != null;
-			for(int row : xrange(NUM_PARSE_ROWS)) result[row][id] = "";
+		for(int id : xrange(length)) {
+			Token token = tokens.get(id);
 			result[PARSE_TOKEN_ROW][id] = token.getForm();
 			result[PARSE_POS_ROW][id] = token.getPostag() == null ? "_": token.getPostag();
 			result[PARSE_NE_ROW][id] = "O";

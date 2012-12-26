@@ -23,9 +23,10 @@ package edu.cmu.cs.lti.ark.fn.parsing;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
-import edu.cmu.cs.lti.ark.fn.utils.DataPointWithElements;
+import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.FileUtil;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
@@ -54,8 +55,8 @@ public class DataPrep {
 	 * a hash map from a frame name to its
 	 * frame elements.
 	 */
-	public static FEDict fedict;
-	public static WordNetRelations wnr;
+	public static FEDict frameElementsForFrame;
+	public static WordNetRelations wordNetRelations;
 	/**
 	 * contains lines in frame element file
 	 */
@@ -71,11 +72,11 @@ public class DataPrep {
 	/**
 	 * total number of features
 	 */
-	public static int numFeat = 0;
+	public static int numFeatures = 0;
 	/**
 	 * a map from feature name to its index
 	 */
-	public static HashMap<String, Integer> featIndex;
+	public static HashMap<String, Integer> featureIndex;
 	/**
 	 * prints .spans file , which is later used to recover 
 	 * frame parse after prediction
@@ -87,7 +88,6 @@ public class DataPrep {
 	 */
 	public static boolean genAlpha = true;
 
-	
 	public static boolean useOracleSpans = false;
 	
 	public DataPrep() throws IOException {
@@ -108,63 +108,38 @@ public class DataPrep {
 		getDataPoints(sentence, frameElements, lwnr);
 	}
 
-	private ArrayList<int[]> addConstituent(DataPointWithElements dataPoint){
+	private ArrayList<int[]> addConstituent(DataPointWithFrameElements dataPoint) {
 		final DependencyParse parse = dataPoint.getParses().getBestParse();
 		final DependencyParse[] nodes = parse.getIndexSortedListOfNodes();
 		final int length = nodes.length - 1;
 		// initialize the matrices
-		boolean[][] spanMat = new boolean[length][length];
+		// indexes a set of spans by [start][end]
+		boolean[][] spanMatrix = new boolean[length][length];
 		final int[][] heads = new int[length][length];
+		//
 		final int[][] depParses = new int[length][length];
 		for(int j : xrange(length)) {
 			for(int k : xrange(length)) {
 				heads[j][k] = -1;
 			}
 		}
-		spanMat = addGoldSpan(dataPoint, spanMat);
+		spanMatrix = addGoldSpan(dataPoint, spanMatrix);
 		if(FEFileName.KBestParse > 1) {
 			addKBestParses(dataPoint, depParses);
 		}
 		if(!useOracleSpans) {
-			findSpans(spanMat, heads, nodes);
+			findSpans(spanMatrix, heads, nodes);
 		}
 		ArrayList<int[]> spanList = new ArrayList<int[]>();
 		for (int i : xrange(length)) {
 			for (int j : xrange(length)) {
-				if (spanMat[i][j]) {
+				if (spanMatrix[i][j]) {
 					spanList.add(new int[] {i, j, depParses[i][j]});
 				}
 			}
 		}
 		return spanList;
 	}
-	
-	public int findParse(DependencyParses parses, int j, int k, int hIndex) {
-		hIndex = hIndex + j;
-		int start = 0;
-		int ret = 0;
-		Range1Based span = new Range1Based(j, k);
-		while(true) {
-			Pair<Integer,DependencyParse> p = parses.matchesSomeConstituent(span, start);
-			if(p == null) {
-				ret = 0;
-				break;
-			}
-			int fIndex = p.getSecond().getIndex();
-			if(fIndex == hIndex) {
-				if(p.getFirst()!=0)
-					System.out.println("Found correct parse:"+p.getFirst());
-				return p.getFirst();				
-			}
-			else {
-				start=p.getFirst()+1;
-				if(start>=parses.size())
-					break;
-			}
-		}
-		return ret;
-	}
-
 
 	/**
 	 * loads data needed for feature extraction
@@ -174,10 +149,10 @@ public class DataPrep {
 		if (tagLines == null) tagLines = readLines(new FileInputStream(FEFileName.tagFilename));
 		if (frameElementLines == null) frameElementLines = readLines(new FileInputStream(FEFileName.feFilename));
 
-		if (fedict == null) fedict = new FEDict(FEFileName.feDictFilename);
-		if (wnr == null) {
+		if (frameElementsForFrame == null) frameElementsForFrame = new FEDict(FEFileName.feDictFilename);
+		if (wordNetRelations == null) {
 			if (lwnr == null) lwnr = new WordNetRelations(FEFileName.stopwordFilename, FEFileName.wordnetFilename);
-			wnr = lwnr;
+			wordNetRelations = lwnr;
 		}
 
 		candidateLines = new ArrayList<int[][]>();
@@ -190,7 +165,7 @@ public class DataPrep {
 		System.err.println("Loading data....");
 		for (String feline : feLines) {
 			final int sentNum = parseInt(feline.split("\t")[5]);
-			DataPointWithElements dp = new DataPointWithElements(tagLines.get(sentNum), feline);
+			DataPointWithFrameElements dp = new DataPointWithFrameElements(tagLines.get(sentNum), feline);
 			ArrayList<int[]> spanList;
 			if (hasCandidateFile) {
 				spanList = Lists.newArrayList();
@@ -209,35 +184,34 @@ public class DataPrep {
 		feIndex = 0;
 	}
 
-	public int[][][] getDataPoints(Sentence sentence, String feline, WordNetRelations lwnr) throws IOException {
+	public ArrayList<int[][]> getDataPoints(Sentence sentence, String feline, WordNetRelations lwnr) throws IOException {
 		checkNotNull(sentence);
 		checkNotNull(feline);
 		checkNotNull(lwnr);
-		if (fedict == null) fedict = new FEDict(FEFileName.feDictFilename);
-		if (wnr == null) wnr = lwnr;
+		if (frameElementsForFrame == null) frameElementsForFrame = new FEDict(FEFileName.feDictFilename);
+		if (wordNetRelations == null) wordNetRelations = lwnr;
 
 		System.err.println("Loading data....");
-		final DataPointWithElements dataPointWithElements = new DataPointWithElements(sentence, feline);
+		final DataPointWithFrameElements dataPointWithElements = new DataPointWithFrameElements(sentence, feline);
 		final ArrayList<int[]> spanList = addConstituent(dataPointWithElements);
-		//add null span to candidates
+		// null span is always a candidate
 		spanList.add(new int[]{-1, -1, 0});
-		final int[][] spanArray = spanList.toArray(new int[spanList.size()][]);
-		return getTrainData(feline, spanArray, sentence);
+		return getTrainData(feline, spanList.toArray(new int[spanList.size()][]), sentence);
 	}
 
 	/**
-	 * Adds frame element filler spans from goldDP to spanMat.
-	 * Modifies spanMat in place, and also returns it.
+	 * Adds frame element filler spans from goldDP to spanMatrix.
+	 * Modifies spanMatrix in place, and also returns it.
 	 *
 	 * @param goldDP the data point whose spans to add
-	 * @param spanMat the 2d boolean matrix to add spans to
+	 * @param spanMatrix the 2d boolean matrix to add spans to
 	 */
-	private boolean[][] addGoldSpan(DataPointWithElements goldDP, boolean[][] spanMat) {
+	private boolean[][] addGoldSpan(DataPointWithFrameElements goldDP, boolean[][] spanMatrix) {
 		List<Range0Based> spans = goldDP.getOvertFrameElementFillerSpans();
 		for(Range0Based span : spans) {
-			spanMat[span.getStart()][span.getEnd()] = true;
+			spanMatrix[span.getStart()][span.getEnd()] = true;
 		}
-		return spanMat;
+		return spanMatrix;
 	}
 
 	/**
@@ -246,7 +220,7 @@ public class DataPrep {
 	 * @param goldDP the DataPointWithElements whose parses to add to depParses
 	 * @param depParses the array to add parses to
 	 */
-	private void addKBestParses(DataPointWithElements goldDP, int[][] depParses) {
+	private void addKBestParses(DataPointWithFrameElements goldDP, int[][] depParses) {
 		List<Range0Based> spans = goldDP.getOvertFrameElementFillerSpans();
 		DependencyParses parses = goldDP.getParses();
 		for (Range0Based span : spans) {
@@ -267,8 +241,8 @@ public class DataPrep {
 
 	public static void addFeature(String key, HashMap<String, Integer> freqmap) {
 		if(!freqmap.containsKey(key)) {
-			freqmap.put(key, numFeat + 1);
-			numFeat++;
+			freqmap.put(key, numFeatures + 1);
+			numFeatures++;
 		}
 	}
 
@@ -278,20 +252,21 @@ public class DataPrep {
 		final int sentNum = parseInt(feline.split("\t")[5]);
 		final String parseLine = tagLines.get(sentNum);
 		final Sentence sentence = Sentence.fromAllLemmaTagsArray(AllLemmaTags.readLine(parseLine));
-		final int[][][] allData = getTrainData(feline, candidateTokens, sentence);
+		final ArrayList<int[][]> allData = getTrainData(feline, candidateTokens, sentence);
 		feIndex++;
-		return allData;
+		return allData.toArray(new int[allData.size()][][]);
 	}
 
-	private int[][][] getTrainData(String feline, int[][] candidateTokens, Sentence sentence) {
-		final DataPointWithElements goldDP = new DataPointWithElements(sentence, feline);
+	private ArrayList<int[][]> getTrainData(String feline, int[][] candidateTokens, Sentence sentence) {
+		final DataPointWithFrameElements goldDP = new DataPointWithFrameElements(sentence, feline);
 		final String frame = goldDP.getFrameName();
-		final String[] canArgs = fedict.lookupFrameElements(frame);
-		final HashSet<String> realizedFes = new HashSet<String>();
+		final String[] canArgs = frameElementsForFrame.lookupFrameElements(frame);
 		final ArrayList<int[][]> dataPointList = new ArrayList<int[][]>();
-		final String frameElementNames[] = goldDP.getOvertFilledFrameElementNames();
 		final List<Range0Based> spans = goldDP.getOvertFrameElementFillerSpans();
+
 		//add realized frame elements
+		final String frameElementNames[] = goldDP.getOvertFilledFrameElementNames();
+		final HashSet<String> realizedFes = Sets.newHashSet();
 		for (int i = 0; i < goldDP.getNumOvertFrameElementFillers(); i++) {
 			if(realizedFes.contains(frameElementNames[i]))
 				continue;
@@ -308,24 +283,27 @@ public class DataPrep {
 				}
 			}
 		}
-		return dataPointList.toArray(new int[dataPointList.size()][][]);
+		return dataPointList;
 	}
 
-	private void addFeatureForOneArgument(DataPointWithElements goldDP,
-			String frame, String fe, Range0Based span,
-			ArrayList<int[][]> dataPoints, int candidateTokens[][]) {
+	private void addFeatureForOneArgument(DataPointWithFrameElements goldDP,
+										  String frame,
+										  String fe,
+										  Range0Based span,
+										  ArrayList<int[][]> dataPoints,
+										  int candidateTokens[][]) {
 		Set<String> featureSet;
-		ArrayList<int[]> adatapoint = new ArrayList<int[]>();
+		ArrayList<int[]> dataPoint = new ArrayList<int[]>();
 		// add feature for gold standard
 		int parseId = 0;
-		for (int j = 0; j < candidateTokens.length; j++) {
-			if (candidateTokens[j][0] == span.getStart()
-					&& candidateTokens[j][1] == span.getEnd()) {
-				parseId = candidateTokens[j][2];
+		for (int[] candidateToken : candidateTokens) {
+			if (candidateToken[0] == span.getStart()
+					&& candidateToken[1] == span.getEnd()) {
+				parseId = candidateToken[2];
 			}
 		}
 		DependencyParse selectedParse = goldDP.getParses().get(parseId);
-		featureSet = FeatureExtractor.extractFeatures(goldDP, frame, fe, span, wnr, selectedParse).keySet();
+		featureSet = FeatureExtractor.extractFeatures(goldDP, frame, fe, span, wordNetRelations, selectedParse).keySet();
 		ps.println(goldDP.getSentenceNum() + "\t" + fe + "\t" + frame + "\t"
 				+ goldDP.getTokenNums()[0] + "\t"
 				+ goldDP.getTokenNums()[goldDP.getTokenNums().length - 1]
@@ -337,38 +315,34 @@ public class DataPrep {
 			featArray[featCount] = getIndexOfFeature(feature);
 			featCount++;
 		}
-		adatapoint.add(featArray);
+		dataPoint.add(featArray);
 		// add features for candidate spans
-		for (int j = 0; j < candidateTokens.length; j++) {
+		for (int[] candidateToken : candidateTokens) {
 			// make sure does not print gold span again
-			if (candidateTokens[j][0] == span.getStart()
-					&& candidateTokens[j][1] == span.getEnd())
+			if (candidateToken[0] == span.getStart() && candidateToken[1] == span.getEnd())
 				continue;
-			
-			Range0Based canspan;
-			canspan = CandidateFrameElementFilters.createSpanRange(candidateTokens[j][0], candidateTokens[j][1]);
-			selectedParse = goldDP.getParses().get(candidateTokens[j][2]);
-			ps.println(canspan.getStart() + "\t" + canspan.getEnd());
+
+			final Range0Based candidateSpan =
+					CandidateFrameElementFilters.createSpanRange(candidateToken[0], candidateToken[1]);
+			selectedParse = goldDP.getParses().get(candidateToken[2]);
+			ps.println(candidateSpan.getStart() + "\t" + candidateSpan.getEnd());
 			featureSet = FeatureExtractor.extractFeatures(goldDP, frame, fe,
-					canspan, wnr, selectedParse).keySet();
+					candidateSpan, wordNetRelations, selectedParse).keySet();
 			featArray = new int[featureSet.size()];
 			featCount = 0;
 			for (String feature : featureSet) {
 				featArray[featCount] = getIndexOfFeature(feature);
 				featCount++;
 			}
-			adatapoint.add(featArray);
+			dataPoint.add(featArray);
 		}
-
 		ps.println();
-		int[][] datap = new int[adatapoint.size()][];
-		adatapoint.toArray(datap);
-		dataPoints.add(datap);
+		dataPoints.add(dataPoint.toArray(new int[dataPoint.size()][]));
 	}
 
 	// loads a list of features into a hash
 	public static void loadFeatureIndex(String alphabetFilename) throws FileNotFoundException {
-		featIndex = readFeatureIndex(new File(alphabetFilename));
+		featureIndex = readFeatureIndex(new File(alphabetFilename));
 		genAlpha = false;
 	}
 
@@ -397,12 +371,12 @@ public class DataPrep {
 	// writes a list of features into a hash
 	public static void writeFeatureIndex(String alphabetFilename) {
 		PrintStream localps = FileUtil.openOutFile(alphabetFilename);
-		localps.println(numFeat);
-		String buf[] = new String[numFeat + 1];
-		for (String feature : featIndex.keySet()) {
-			buf[featIndex.get(feature)] = feature;
+		localps.println(numFeatures);
+		String buf[] = new String[numFeatures + 1];
+		for (String feature : featureIndex.keySet()) {
+			buf[featureIndex.get(feature)] = feature;
 		}
-		for (int i = 1; i <= numFeat; i++) {
+		for (int i = 1; i <= numFeatures; i++) {
 			localps.println(buf[i]);
 		}
 		localps.close();
@@ -475,11 +449,11 @@ public class DataPrep {
 	 * @return the index of feature
 	 */
 	public int getIndexOfFeature(String feature) {
-		Integer idx = featIndex.get(feature);
+		Integer idx = featureIndex.get(feature);
 		if (idx != null) return idx;
 		if (genAlpha) {
-			addFeature(feature, featIndex);
-			return numFeat;
+			addFeature(feature, featureIndex);
+			return numFeatures;
 		}
 		return 0;
 	}

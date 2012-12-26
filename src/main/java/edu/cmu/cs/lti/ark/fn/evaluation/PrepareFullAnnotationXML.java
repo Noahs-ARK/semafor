@@ -21,7 +21,7 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.evaluation;
 
-import edu.cmu.cs.lti.ark.fn.utils.DataPointWithElements;
+import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
 import edu.cmu.cs.lti.ark.util.XmlUtils;
 import edu.cmu.cs.lti.ark.util.ds.Range;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
@@ -88,7 +88,7 @@ public class PrepareFullAnnotationXML {
 		String feLine;
 		while((pFELine=inFELines.readLine())!=null) {
 			feLine = pFELine.substring(pFELine.indexOf('\t') + 1);
-			int sentNum = DataPointWithElements.parseFrameNameAndSentenceNum(feLine).getSecond();
+			int sentNum = DataPointWithFrameElements.parseFrameNameAndSentenceNum(feLine).getSecond();
 			if (sentenceNums.contains(sentNum)) {
 				predictedFELines.add(feLine.trim());
 			}
@@ -142,7 +142,7 @@ public class PrepareFullAnnotationXML {
 		// Map sentence offsets to frame annotation data points within each sentence
 		TIntObjectHashMap<Set<String>> predictions = new TIntObjectHashMap<Set<String>>();
 		for (String feLine : predictedFELines) {
-			int sentNum = DataPointWithElements.parseFrameNameAndSentenceNum(feLine).getSecond();
+			int sentNum = DataPointWithFrameElements.parseFrameNameAndSentenceNum(feLine).getSecond();
 			
 			if (!predictions.containsKey(sentNum))
 				predictions.put(sentNum, new THashSet<String>());
@@ -194,7 +194,7 @@ public class PrepareFullAnnotationXML {
 			if (feLines!=null) {
 				for (String feLine : feLines)
 				{
-						DataPointWithElements dp = new DataPointWithElements(parseLine, feLine);
+						DataPointWithFrameElements dp = new DataPointWithFrameElements(parseLine, feLine);
 						String orgLine = orgLines.get(sent-sentenceNums.getStart());
 						dp.processOrgLine(orgLine);
 						

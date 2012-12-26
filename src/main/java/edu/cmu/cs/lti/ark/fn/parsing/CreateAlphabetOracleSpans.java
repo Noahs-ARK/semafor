@@ -47,9 +47,9 @@ public class CreateAlphabetOracleSpans {
 		long time=System.currentTimeMillis();
 		System.out.println("Reading alphabet...");
 		if(genAlpha){
-			DataPrep.featIndex=new HashMap<String,Integer>();
+			DataPrep.featureIndex =new HashMap<String,Integer>();
 		}
-		if(DataPrep.featIndex==null){
+		if(DataPrep.featureIndex ==null){
 			DataPrep.loadFeatureIndex(FEFileName.alphafilename);
 		}
 		DataPrep.genAlpha=genAlpha;

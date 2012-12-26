@@ -1,5 +1,9 @@
 package edu.cmu.cs.lti.ark.fn.data.prep.formats;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+
+import java.util.List;
 import java.util.Scanner;
 
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
@@ -30,5 +34,17 @@ public class AllLemmaTags {
 			}
 		}
 		return parseData;
+	}
+
+	public static String makeLine(String[][] parseData) {
+		final int numTokens = parseData[0].length;
+		final List<String> flattened = Lists.newArrayList();
+		for(int k : xrange(NUM_PARSE_ROWS)) {
+			for(int j : xrange(numTokens)) {
+				flattened.add(parseData[k][j]);
+			}
+		}
+		final Joiner tab = Joiner.on("\t");
+		return tab.join(numTokens, tab.join(flattened));
 	}
 }

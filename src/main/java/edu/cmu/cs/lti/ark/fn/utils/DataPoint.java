@@ -22,9 +22,7 @@
 package edu.cmu.cs.lti.ark.fn.utils;
 
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
-import edu.cmu.cs.lti.ark.fn.parsing.FEFileName;
 import edu.cmu.cs.lti.ark.util.Interner;
-import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import edu.cmu.cs.lti.ark.util.XmlUtils;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.Range;
@@ -32,16 +30,13 @@ import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParses;
 import gnu.trove.THashMap;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+
+import java.util.*;
+
+import static java.lang.Integer.parseInt;
 
 public class DataPoint {
 	private DependencyParses parses;
@@ -58,96 +53,62 @@ public class DataPoint {
 	 * @see #getCharacterIndicesForToken(int)
 	 */
 	private THashMap<Integer,Range> tokenIndexMap;
-	
-	protected DataPoint() { }	// for benefit of subclasses
 
-	public DataPoint(String parseLine) {
-		this(buildParsesForLine(parseLine));
-	}
-	
-	public DataPoint(DependencyParse parse) {
-		this(new DependencyParses(parse));
-	}
-
-	public DataPoint(DependencyParse[] parses) {
-		this(new DependencyParses(parses));
-	}
+	// for benefit of subclasses
+	protected DataPoint() { }
 
 	public DataPoint(DependencyParses parses) {
 		this.parses = parses;
 	}
-	
-	/**
-	 * Given a sentence tokenized with space separators, populates tokenIndexMap with mappings 
-	 * from token numbers to strings in the format StartCharacterOffset\tEndCharacterOffset
-	 * @param orgLine
-	 */
-	public void processOrgLine(String orgLine) {
-		StringTokenizer st = new StringTokenizer(orgLine.trim()," ",true);
-		tokenIndexMap = new THashMap<Integer,Range>();
-		int count = 0;
-		int tokNum = 0;
-		System.out.println(orgLine);
-		while(st.hasMoreTokens()) {
-			String tok = st.nextToken();
-			if(tok.equals(" ")) {
-				count++;
-				continue;
-			}
-			tok=tok.trim();
-			int start=count;
-			int end= count+tok.length()-1;
-			tokenIndexMap.put(tokNum, new Range0Based(start,end));
-			tokNum++;
-			count+=tok.length();
-		}
-	}
-	
-	public DataPoint(String parseLine, String frameLine) {
-		this(buildParsesForLine(parseLine), frameLine);
-	}
-	
-	public DataPoint(DependencyParse[] parses, String frameLine) {
-		this(new DependencyParses(parses), frameLine);
-	}
-	
-	public DataPoint(DependencyParses parses, String frameLine) {
-		this(parses,frameLine,null);
-	}
-	
-	/**
-	 * @param parses
-	 * @param frameLine
-	 * @param dataSet One of {@link #SEMEVAL07_TRAIN_SET}, {@link #SEMEVAL07_DEV_SET}, or {@link #SEMEVAL07_TEST_SET}
-	 */
-	public DataPoint(DependencyParses parses, String frameLine, String dataSet) {
-		this.parses = parses;
-		this.dataSet = dataSet;
-		processFrameLine(frameLine);
-	}
-	
-	/** @param dummyInt Any value (this parameter exists merely to distinguish this from other constructors) */
-	protected DataPoint(DependencyParses parses, int dummyInt, String dataSet) {
+
+	protected DataPoint(DependencyParses parses, String dataSet) {
 		this(parses);
 		this.dataSet = dataSet;
 	}
-	
+
+	/**
+	 * Given a sentence tokenized with space separators, populates tokenIndexMap with mappings 
+	 * from token numbers to strings in the format StartCharacterOffset\tEndCharacterOffset
+	 * @param tokenizedSentence
+	 */
+	public void processOrgLine(String tokenizedSentence) {
+		final StringTokenizer st = new StringTokenizer(tokenizedSentence.trim(), " ", true);
+		final THashMap<Integer, Range> localTokenIndexMap = new THashMap<Integer, Range>();
+		int count = 0;
+		int tokNum = 0;
+		while(st.hasMoreTokens()) {
+			String token = st.nextToken();
+			if(token.equals(" ")) {
+				count++;
+				continue;
+			}
+			token = token.trim();
+			int start = count;
+			int end = count + token.length() - 1;
+			localTokenIndexMap.put(tokNum, new Range0Based(start,end));
+			tokNum++;
+			count += token.length();
+		}
+		tokenIndexMap = localTokenIndexMap;
+	}
+
 	public void processFrameLine(String frameLine) {
 		// tokens are separated by tabs
-		// toks[0]: frame name
-		// toks[1]: lexical unit
-		// toks[2]: token nums, separated by "_"
-		// toks[3]: target word(s), separated by " "
-		// toks[4]: sentence number
-		String[] toks = frameLine.split("\t");
-		frameName = (String)Interner.globalIntern(toks[0]);
-		sentNum = new Integer(toks[4]);
+		// tokens[0]: frame name
+		// tokens[1]: lexical unit
+		// tokens[2]: token nums, separated by "_"
+		// tokens[3]: target word(s), separated by " "
+		// tokens[4]: sentence number
+		final String[] tokens = frameLine.split("\t");
+		frameName = (String)Interner.globalIntern(tokens[0]);
+		sentNum = parseInt(tokens[4]);
 		// The above 3 lines are duplicated in parseFrameNameAndSentenceNum()
-		lexicalUnitName = (String)Interner.globalIntern(toks[1]);
-		String[] tokNums = toks[2].split("_");
+		lexicalUnitName = (String)Interner.globalIntern(tokens[1]);
+		String[] tokNums = tokens[2].split("_");
 		tokenNums = new int[tokNums.length];
-		for(int j = 0; j < tokNums.length; j ++)
-			tokenNums[j] = new Integer(tokNums[j]);
+		for(int j = 0; j < tokNums.length; j ++) {
+			tokenNums[j] = parseInt(tokNums[j]);
+		}
 		Arrays.sort(tokenNums);
 	}
 	
@@ -186,14 +147,7 @@ public class DataPoint {
 	public String getFrameName() {
 		return frameName;
 	}
-	
-	/**
-	 * @return Name of the lexical unit--lemma.POS, e.g. 'cause.v'
-	 */
-	public String getLexicalUnitName() {
-		return lexicalUnitName;
-	}
-	
+
 	public int[] getTokenNums() {
 		return tokenNums;
 	}
@@ -201,23 +155,6 @@ public class DataPoint {
 	public int getSentenceNum() {
 		return sentNum;
 	}
-	
-	/**
-	 * @return An array over potential parses--for each parse, an array of nodes from the parse tree which correspond to the frame target (frame-evoking element). 
-	 * Frame targets usually consist of a single word, though they may consist of two (e.g. phrasal verbs).
-	 */
-	public DependencyParse[][] getTargetNodes() {
-		int[] targetTokenNums = getTokenNums();
-		DependencyParse[][] targetNodes = new DependencyParse[parses.size()][targetTokenNums.length];
-		for (int p=0; p<parses.size(); p++) {
-			DependencyParse[] allNodes = parses.get(p).getIndexSortedListOfNodes();
-			for (int i=0; i<targetTokenNums.length; i++) {
-				targetNodes[p][i] = allNodes[targetTokenNums[i]];
-			}
-		}
-		return targetNodes;
-	}
-	
 
 	/**
 	 * @param parseFile Path to file with .sentences.all.tags extension
@@ -226,10 +163,8 @@ public class DataPoint {
 	public static List<DependencyParses> loadAllParses(String parseFile) {
 		List<String> parseLines = ParsePreparation.readSentencesFromFile(parseFile);
 		List<DependencyParses> parses = new ArrayList<DependencyParses>(parseLines.size());
-		int count=0;
 		for (String parseLine : parseLines){
 			parses.add(new DependencyParses(buildParsesForLine(parseLine)));
-			count++;
 		}
 		return parses;
 	}
@@ -239,47 +174,34 @@ public class DataPoint {
 		int numWords = new Integer(st.nextToken());	// number of word tokens in the sentence
 		String[] parts = new String[6];
 		
-		String nexttkn = st.nextToken().trim();
+		String nextToken = st.nextToken().trim();
 		for(int p = 0; p < 6; p ++)	// 0=>word tokens; 1=>POS tags; 2=>dependency types; 3=>parent indices; 4=>NE tags; 5=>lemmas from WordNet
 		{
 			parts[p]="";
 			while(true) {
 				for(int j = 0; j < numWords; j ++) {
-					String tkn = (j==0) ? nexttkn : st.nextToken().trim();
+					String tkn = (j==0) ? nextToken : st.nextToken().trim();
 					parts[p] += tkn+"\t";
 				}
 				parts[p]=parts[p].trim();
 				
 				if (st.hasMoreElements()) {
-					nexttkn = st.nextToken().trim();
-					if (nexttkn.equals("|")) {	// the | symbol (with tabs on either side) indicates that another series of tokens is present, e.g. k-best list of parses or POS taggings
+					nextToken = st.nextToken().trim();
+					if (nextToken.equals("|")) {	// the | symbol (with tabs on either side) indicates that another series of tokens is present, e.g. k-best list of parses or POS taggings
 						parts[p] += "\t||\t";
-						nexttkn = st.nextToken().trim();
+						nextToken = st.nextToken().trim();
 						continue;	// get 'numWords' more tokens for this part of the analysis
 					}
 				}
 				break;
 			}
 		}
-		DependencyParse[] theparses = DependencyParse.buildParseTrees(parts, 0.0);
-		for (DependencyParse parse : theparses)
+		DependencyParse[] dependencyParses = DependencyParse.buildParseTrees(parts, 0.0);
+		for (DependencyParse parse : dependencyParses)
 			parse.processSentence();
-		return theparses;
+		return dependencyParses;
 	}
-	
-	public static DependencyParses buildParsesForLineWithKBestCache(String parseLine, int sentNum)
-	{
-		String file = FEFileName.KBestParseDirectory+"/parse_"+sentNum+".jobj";
-		DependencyParses parses = (DependencyParses)SerializedObjects.readSerializedObject(file);
-		int size = parses.size();
-		for(int i = 0; i < size; i ++)
-		{
-			DependencyParse p = parses.get(i);
-			p.processSentence();
-		}
-		return parses;
-	}
-	
+
 	public Node buildAnnotationSetNode(Document doc, int parentId, int num, String orgLine) {
 		Node ret = doc.createElement("annotationSet");
 		int setId = parentId*100+num;
@@ -295,7 +217,7 @@ public class DataPoint {
 		
 		Node labels = doc.createElement("labels");
 		
-		List<Range> startEnds = getStartEnds(orgLine,true);
+		List<Range> startEnds = getStartEnds(true);
 		int count = 0;
 		for(Range startEnd : startEnds)
 		{
@@ -317,33 +239,36 @@ public class DataPoint {
 		return tokenIndexMap.get(tokenNum);
 	}
 	
-	private List<Range> getStartEnds(String orgLine, boolean mergeAdjacent)
-	{
+	private List<Range> getStartEnds(boolean mergeAdjacent) {
 		List<Range> result = new ArrayList<Range>();
 		int pTknNum = Integer.MIN_VALUE;
 		Range r = null;
-		for(int tknNum : tokenNums)
-		{
+		for(int tknNum : tokenNums) {
 			Range r2 = r;
 			r = tokenIndexMap.get(tknNum);
 			if (mergeAdjacent) {
-				if (pTknNum==(tknNum-1))	// this continues a range started with a previous token
+				if (pTknNum == tknNum - 1) {
+					// this continues a range started with a previous token
 					r = new Range0Based(r2.getStart(), r.getEnd());
-				else if (r2!=null)	// done with group of consecutive tokens
+				}
+				else if (r2!=null) {
+					// done with group of consecutive tokens
 					result.add(r2);
+				}
 			}
-			else
+			else {
 				result.add(r);
+			}
 			pTknNum = tknNum;
 			System.out.println(tokenIndexMap.get(tknNum));
 		}
-		if (mergeAdjacent) {	// still need to add the last range
+		if (mergeAdjacent) {
+			// still need to add the last range
 			result.add(r);
 		}
 		return result;
 	}
-	
-	
+
 	public static final String FN13_LEXICON_EXEMPLARS = "exemplars";
 	public static final String SEMEVAL07_TRAIN_SET = "train";
 	public static final String SEMEVAL07_DEV_SET = "dev";
@@ -432,31 +357,4 @@ public class DataPoint {
 		DOCUMENT_SENTENCE_RANGES.put(SEMEVAL07_TEST_SET, testMap);
 		}
 	}
-	
-	/**
-	 * @param dataSet One of {@link #SEMEVAL07_TRAIN_SET}, {@link #SEMEVAL07_DEV_SET}, or {@link #SEMEVAL07_TEST_SET}
-	 * @return e.g. "ANC/StephanopoulosCrimes"
-	 */
-	public static String getDocumentDescriptor(String dataSet, int sentenceIndex) {
-		for (String docDescriptor : DOCUMENT_SENTENCE_RANGES.get(dataSet).keySet()) {
-			if (DOCUMENT_SENTENCE_RANGES.get(dataSet).get(docDescriptor).contains(sentenceIndex))
-				return docDescriptor;
-		}
-		return null;
-	}
-	
-	/** @return One of {@literal "ANC"}, {@literal "NTI"}, or {@literal "PropBank"} */
-	public static String getSourceCorpus(String dataSet, int sentenceIndex) {
-		String fileDesc = getDocumentDescriptor(dataSet, sentenceIndex);
-		return fileDesc.substring(0, fileDesc.indexOf("/"));
-	}
-	
-	/** @return One of {@link #SEMEVAL07_TRAIN_SET}, {@link #SEMEVAL07_DEV_SET}, or {@link #SEMEVAL07_TEST_SET} */
-	public String getDataSet() { return dataSet; }
-	
-	/** @see {@link #getDocumentDescriptor(String, int)} */
-	public String getDocumentDescriptor() { return DataPoint.getDocumentDescriptor(getDataSet(), this.getSentenceNum()); }
-	
-	/** @see {@link #getSourceCorpus(String, int)} */
-	public String getSourceCorpus() { return DataPoint.getSourceCorpus(getDataSet(), this.getSentenceNum()); }
 }
