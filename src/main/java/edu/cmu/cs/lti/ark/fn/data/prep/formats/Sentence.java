@@ -68,4 +68,8 @@ public class Sentence {
 		}
 		return result;
 	}
+
+	public int size() {
+		return tokens.size();
+	}
 }

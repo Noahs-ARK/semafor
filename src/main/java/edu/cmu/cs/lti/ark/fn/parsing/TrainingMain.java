@@ -43,7 +43,7 @@ public class TrainingMain
 		String binaryFactorPresent = opts.binaryOverlapConstraint.get();
 		ArrayList<FrameFeatures> list = (ArrayList<FrameFeatures>)SerializedObjects.readSerializedObject(frameFeaturesCacheFile);
 		Training bpt = new Training();
-		bpt.init(modelFile, alphabetFile, list, lexiconObj, frFile, binaryFactorPresent);
+		bpt.init(modelFile, alphabetFile, list, frFile);
 		bpt.trainSGA(totalpasses,batchsize);
 		bpt.writeModel();
 	}	

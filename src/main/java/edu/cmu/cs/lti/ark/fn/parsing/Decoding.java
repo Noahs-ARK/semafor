@@ -21,24 +21,115 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import java.util.*;
-
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
+import edu.cmu.cs.lti.ark.fn.optimization.LDouble;
+import edu.cmu.cs.lti.ark.fn.optimization.LogMath;
 import edu.cmu.cs.lti.ark.util.FileUtil;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import edu.cmu.cs.lti.ark.fn.optimization.*;
 
+import java.util.*;
+
+import static com.google.common.collect.ImmutableList.copyOf;
+import static com.google.common.collect.Iterables.transform;
+import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
+import static java.lang.Math.min;
+
+/**
+ * Predict spans for roles using beam search.
+ */
 public class Decoding {
+	private static final int BEAM_WIDTH = 100;
+	private static final LDouble LOG_ZERO = LDouble.convertToLogDomain(0);
+	private static final Joiner TAB_JOINER = Joiner.on("\t");
+
 	protected int numLocalFeatures;
 	protected double[] localW;
 	private String mLocalAlphabetFile;
 	private String mLocalModelFile;
-	public static long count=0;
+	public static long count = 0;
 	protected List<FrameFeatures> mFrameList;
 	protected String mPredictionFile;	
 	protected List<String> mFrameLines;
+
+	private static final Comparator<Pair<String,LDouble>> logDoubleComparator = new Comparator<Pair<String,LDouble>>() {
+		public int compare(Pair<String, LDouble> o1, Pair<String, LDouble> o2) {
+			final LDouble one = o2.getSecond();
+			final LDouble two = o1.getSecond();
+			final Double oneValue = one.getValue();
+			final Double twoValue = two.getValue();
+			if(one.isPositive()) {
+				return two.isPositive() ? oneValue.compareTo(twoValue) : 1;
+			} else {
+				return two.isPositive() ? -1 : twoValue.compareTo(oneValue);
+			}
+		}
+	};
+
+	/** An assignment of spans to roles of a particular frame */
+	public static class RoleAssignments extends THashMap<String,String> {
+		private final Function<Map.Entry<String,String>,String> JOIN_ENTRY = new Function<Map.Entry<String, String>, String>() {
+			@Override public String apply(Map.Entry<String, String> input) {
+				return input.getKey() + "\t" + input.getValue();
+			}
+		};
+
+		public String format()  {
+			return TAB_JOINER.join(transform(entrySet(), JOIN_ENTRY));
+		}
+	}
+
+	/** A map from spans to their log score for a particular role */
+	public static class CandidatesForRole extends THashMap<String, LDouble> { }
+
+	/**
+	 * 0-indexed. Both ends inclusive. Null span is represented as [-1,-1].
+	 */
+	public static class Span extends Pair<Integer, Integer> {
+		public Span(Integer first, Integer second) {
+			super(first, second);
+		}
+
+		/**
+		 * Determines whether the given spans overlap
+		 *
+		 * @param other the other span
+		 * @return whether this and the other span overlap
+		 */
+		public boolean overlaps(Span other) {
+			int start = getFirst();
+			int end = getSecond();
+			int otherStart = other.getFirst();
+			int otherEnd = other.getSecond();
+			// null spans can't overlap with anything
+			if(start == -1 || otherStart == -1)
+				return false;
+			if(start < otherStart)
+				return end >= otherStart;
+			else
+				return otherEnd >= start;
+		}
+	}
+
+	public static class FrameArgumentsPrediction {
+		final public int count;
+		final public String initialDecisionLine;
+		final public RoleAssignments assignments;
+
+		public FrameArgumentsPrediction(int count, String initialDecisionLine, RoleAssignments assignments) {
+			this.count = count;
+			this.initialDecisionLine = initialDecisionLine;
+			this.assignments = assignments;
+		}
+
+		public String format() {
+			return 0 + "\t" + count + "\t" + initialDecisionLine + "\t" + assignments.format();
+		}
+	}
 
 	public void init(String modelFile, 
 					 String alphabetFile,
@@ -48,12 +139,11 @@ public class Decoding {
 		mLocalModelFile = modelFile;
 		mLocalAlphabetFile = alphabetFile;
 		readModel();
-		mFrameList=list;
+		mFrameList = list;
 		mPredictionFile = predictionFile;
-		mFrameLines=frameLines;
+		mFrameLines = frameLines;
 	}
-	
-	
+
 	public void init(String modelFile, String alphabetFile) {
 		mLocalModelFile = modelFile;
 		mLocalAlphabetFile = alphabetFile;
@@ -61,9 +151,9 @@ public class Decoding {
 	}
 	
 	public void setData(String predictionFile, List<FrameFeatures> list, List<String> frameLines) {
-		mFrameList=list;
+		mFrameList = list;
 		mPredictionFile = predictionFile;
-		mFrameLines=frameLines;
+		mFrameLines = frameLines;
 	}
 	
 	public void readModel() {	
@@ -78,13 +168,11 @@ public class Decoding {
 		}
 	}
 	
-	public ArrayList<String> decodeAll(boolean doOverlapCheck,
-									   int offset) {
+	public ArrayList<String> decodeAll(boolean doOverlapCheck, int offset) {
 		int size = mFrameList.size();
 		ArrayList<String> result = new ArrayList<String>();
-		for(int i = 0; i < size; i ++)
-		{
-			System.out.println("Decoding index:"+i);
+		for(int i = 0; i < size; i++) {
+			System.out.println("Decoding index:" + i);
 			String decisionLine = decode(i, doOverlapCheck, offset);
 			result.add(decisionLine);
 		}
@@ -95,420 +183,368 @@ public class Decoding {
 	}
 	
 	public String decode(int index, boolean doOverlapCheck, int offset) {
-		FrameFeatures f = mFrameList.get(index);
-		String dec = null;
+		final FrameFeatures frameFeatures = mFrameList.get(index);
+		final String frameLine = mFrameLines.get(index);
 		if(doOverlapCheck)
-			dec = getNonOverlappingDecision(f,mFrameLines.get(index), offset);
+			return getNonOverlappingDecision(frameFeatures, frameLine, offset);
 		else
-			dec = getDecision(f,mFrameLines.get(index), offset);
-		return dec;
+			return getUnconstrainedDecision(frameFeatures, frameLine, offset);
 	}
-	
-	public double getWeightSum(int[] feats, double[] w)
-	{
+
+	/**
+	 * Calculates the sum of the weights of firing features.
+	 *
+	 * @param feats indexes of firing features
+	 * @param w an array of weights into which feats indexes
+	 * @return the sum of the weights of firing features
+	 */
+	public double getWeightSum(int[] feats, double[] w) {
 		double weightSum = w[0];
-		for (int k = 0; k < feats.length; k++)
-		{
-			if(feats[k]!=0)
-			{
-				weightSum+=w[feats[k]];
+		for (int feat : feats) {
+			if (feat != 0) {
+				weightSum += w[feat];
 			}
 		}
 		return weightSum;
 	}
-	
-	public String getDecision(FrameFeatures mFF,String frameLine, int offset)
-	{
-		String frameName = mFF.frameName;
-		System.out.println("Frame:"+frameName);
-		String decisionLine=getInitialDecisionLine(frameLine, offset);
-		if(mFF.fElements.size()==0)
-		{
-			decisionLine="0\t1"+"\t"+decisionLine.trim();
-			return decisionLine;
-		}
+
+	/**
+	 * Choose spans for each role independently.
+	 *
+	 * @param frameFeatures features for each span
+	 * @param frameLine
+	 * @param offset
+	 * @return
+	 */
+	public String getUnconstrainedDecision(FrameFeatures frameFeatures, String frameLine, int offset) {
+		String frameName = frameFeatures.frameName;
+		System.out.println("Frame:" + frameName);
+		String decisionLine = getInitialDecisionLine(frameLine, offset);
+		if(frameFeatures.fElements.size() == 0)
+			return "0\t1\t" + decisionLine.trim();
 		int count = 1;
-		ArrayList<SpanAndCorrespondingFeatures[]> featsList = mFF.fElementSpansAndFeatures;
-		ArrayList<String> frameElements = mFF.fElements;
+		final ArrayList<SpanAndCorrespondingFeatures[]> featsList = frameFeatures.fElementSpansAndFeatures;
+		final ArrayList<String> frameElements = frameFeatures.fElements;
 		int listSize = featsList.size();
-		for(int i = 0; i < listSize; i ++)
-		{
+		for(int i = 0; i < listSize; i++) {
 			SpanAndCorrespondingFeatures[] featureArray = featsList.get(i);
+			String fe = frameElements.get(i);
 			int featArrLen = featureArray.length;
 			int maxIndex = -1;
 			double maxSum = -Double.MAX_VALUE;
-			for(int j = 0; j < featArrLen; j ++)
-			{
+			for(int j = 0; j < featArrLen; j ++) {
 				int[] feats = featureArray[j].features;
 				double weightSum=getWeightSum(feats, localW);
 				double expVal = Math.exp(weightSum);
-				if(expVal>maxSum)
-				{
+				if(expVal>maxSum) {
 					maxSum = expVal;
-					maxIndex=j;
+					maxIndex = j;
 				}
 			}
-			String maxSpan=featureArray[maxIndex].span[0]+"_"+featureArray[maxIndex].span[1];		
-			String fe = frameElements.get(i);
-			System.out.println("Frame element:"+fe+" Found span:"+maxSpan);
+			String maxSpan = featureArray[maxIndex].span[0] + "_" + featureArray[maxIndex].span[1];
+			System.out.println("Frame element:" + fe + " Found span:" + maxSpan);
+			// leave null spans unspecified
 			if(maxSpan.equals("-1_-1"))
 				continue;
 			count++;
-			String[] ocToks = maxSpan.split("_");
-			String modToks;
-			if(ocToks[0].equals(ocToks[1]))
-			{
-				modToks=ocToks[0];
-			}
-			else
-			{
-				modToks=ocToks[0]+":"+ocToks[1];
-			}
+			String modTokens = formatSpan(maxSpan);
 
-			decisionLine+=fe+"\t"+modToks+"\t";
+			decisionLine += fe + "\t" + modTokens + "\t";
 		}	
-		decisionLine="0\t"+count+"\t"+decisionLine.trim();
+		decisionLine = "0\t" + count + "\t" + decisionLine.trim();
 		return decisionLine;
 	}
-	
-	public String getInitialDecisionLine(String frameLine, int offset)
-	{
-		String[] frameToks = frameLine.split("\t");
-		String decisionLine="";
-		for(int i = 1; i <= 5; i ++)
-		{
-			String tok = frameToks[i];
+
+	/**
+	 * Adds 'offset' to the 6th field and discards the 1st field.
+	 *
+	 * @param frameLine
+	 * @param offset
+	 * @return frameline with offset added to its 5th field and the 1st field discarded
+	 */
+	public String getInitialDecisionLine(String frameLine, int offset) {
+		String[] frameTokens = frameLine.split("\t");
+		String decisionLine = "";
+		for(int i = 1; i <= 5; i++) {
+			String tok = frameTokens[i];
 			if (i == 5) {
-				int num = new Integer(tok);
+				int num = Integer.parseInt(tok);
 				num = num + offset;
-				tok = ""+num;
+				tok = "" + num;
 			}
-			decisionLine+=tok+"\t";
+			decisionLine += tok + "\t";
 		}	
 		return decisionLine;
 	}
-	
-	public static boolean pairwiseOverlap(String one, String two)
-	{
-		if(one.equals("-1_-1"))
-			return false;
-		if(two.equals("-1_-1"))
-			return false;
-		String[] toks = one.split("_");
-		int oneStart = new Integer(toks[0]);
-		int oneEnd = new Integer(toks[toks.length-1]);
-		
-		toks = two.split("_");
-		int twoStart = new Integer(toks[0]);
-		int twoEnd = new Integer(toks[toks.length-1]);
-		
-		if(oneStart<twoStart)
-		{
-			if(oneEnd<twoStart)
-			{
-				return false;
-			}
-			else
-			{
-				return true;
-			}
-		}
-		else
-		{
-			if(twoEnd<oneStart)
-			{
-				return false;
-			}
-			else
-			{
-				return true;
-			}
-		}
-		
+
+	/**
+	 * Determines whether the given spans overlap
+	 *
+	 * @param one the first span
+	 * @param two the second span
+	 * @return whether the given spans overlap
+	 */
+	private static boolean pairwiseOverlap(String one, String two) {
+		return parseRange(one).overlaps(parseRange(two));
 	}
-	
-	public static THashMap<String,String> getOnlyOverlappingFes(THashMap<String,String> map)
-	{
-		Set<String> keys = map.keySet();
-		THashMap<String,String> tempMap = new THashMap<String,String>();
-		for(String fe: keys)
-		{
-			String span = map.get(fe);
-			if(!span.equals("-1_-1"))
-			{
+
+	private static Span parseRange(String rangeStr) {
+		final String[] tokens = rangeStr.split("_");
+		int start = Integer.parseInt(tokens[0]);
+		int end = Integer.parseInt(tokens[tokens.length-1]);
+		return new Span(start, end);
+	}
+
+	/**
+	 * Filters out null spans from the given map.
+	 *
+	 * @param map the map to filter
+	 * @return a new map with only the entries which have non-null spans
+	 */
+	public static RoleAssignments getOnlyNonNullFrameElements(RoleAssignments map) {
+		final RoleAssignments tempMap = new RoleAssignments();
+		for(String fe: map.keySet()) {
+			final String span = map.get(fe);
+			if(!span.equals("-1_-1")) {
 				tempMap.put(fe, span);
 			}
 		}	
 		return tempMap;
 	}	
 	
-	public static boolean isThereOverlap(String spans,THashSet<String> seenSpans)
-	{
-		String[] toks = spans.split(":");
-		for(int i = 0; i < toks.length-1; i ++)
-		{
-			for(int j = i +1; j < toks.length; j ++)
-			{
-				if(pairwiseOverlap(toks[i],toks[j]))
+	private static boolean isThereOverlap(String spansStr, THashSet<String> seenSpans) {
+		return isThereOverlap(spansStr.split(":"), seenSpans);
+	}
+
+	private static boolean isThereOverlap(String[] spans, THashSet<String> seenSpans) {
+		for(int i : xrange(spans.length)) {
+			for(int j : xrange(i + 1, spans.length)) {
+				if (pairwiseOverlap(spans[i], spans[j])
+						|| seenSpans.contains(spans[i])
+						|| seenSpans.contains(spans[j])) {
 					return true;
-				if(seenSpans.contains(toks[i])||seenSpans.contains(toks[j]))
-					return true;
+				}
 			}
 		}
 		return false;
 	}
-	
-	public static THashMap<String,String> getCubePruningDecoding(THashMap<String,String> oMap, 
-																 ArrayList<String> feList, 
-																 THashMap<String,THashMap<String,LDouble>> vs, 
-																 int k, 
-																 THashSet<String> seenSpans)
-	{
-		THashMap<String,String> result = new THashMap<String,String>();
-		if(oMap.size()==0)
-			return result;
-		String[] fes = new String[oMap.size()];
-		int[] vIndex = new int[oMap.size()];
-		int count = 0;
-		int i = 0;
-		String[] vKeys = new String[vs.size()];
-		vs.keySet().toArray(vKeys);
-		for(String v:vKeys)
-		{
-			String fe = v;
-			if(!oMap.contains(fe))
-			{
-				i++;
-				continue;
-			}
-			fes[count]=""+fe;
-			vIndex[count]=i;
-			i++;
-			count++;
+
+	/**
+	 * Find the (approximately) best configuration of non-overlapping role-filling spans using beam search.
+	 *
+	 * @param overlappingSpanMap
+	 * @param candidatesAndScoresByRole map from role name to (map from span to score)
+	 * @param beamWidth the beam width
+	 * @param seenSpans a set of spans we've already seen
+	 * @return the best configuration of role-filling spans. a map from role name to span.
+	 */
+	public static RoleAssignments
+			getCubePruningDecoding(RoleAssignments overlappingSpanMap,
+								   THashMap<String, CandidatesForRole> candidatesAndScoresByRole,
+								   int beamWidth,
+								   THashSet<String> seenSpans) {
+		final ArrayList<RoleAssignments> kBest =
+				getCubePruningDecodingKBest(overlappingSpanMap, candidatesAndScoresByRole, 1, beamWidth, seenSpans);
+		return kBest.get(0);
+	}
+
+	/**
+	 * Find the k (approximately) best configuration of non-overlapping role-filling spans using beam search.
+	 *
+	 * @param overlappingSpanMap
+	 * @param candidatesAndScoresByRole map from role name to (map from span to score)
+	 * @param beamWidth the beam width
+	 * @param seenSpans a set of spans we've already seen
+	 * @return the k best configuration of role-filling spans. a map from role name to span
+	 */
+	public static ArrayList<RoleAssignments>
+			getCubePruningDecodingKBest(RoleAssignments overlappingSpanMap,
+										THashMap<String, CandidatesForRole> candidatesAndScoresByRole,
+										int k,
+										int beamWidth,
+										THashSet<String> seenSpans) {
+		final int numOverlappingSpans = overlappingSpanMap.size();
+		if(numOverlappingSpans == 0) {
+			return Lists.newArrayList(new RoleAssignments());
 		}
-		Comparator<Pair<String,LDouble>> comp = new Comparator<Pair<String,LDouble>>()
-		{
-			public int compare(Pair<String, LDouble> o1, Pair<String, LDouble> o2)
-			{
-				int check = isGreater(o1.getSecond(), o2.getSecond());
-				if(check==1)
-					return -1;
-				else if(check==0)
-					return 0;
-				else 
-					return 1;
+
+		// build up an array of overlapping spans
+		final ArrayList<String> roles = Lists.newArrayList();
+		for(String role : candidatesAndScoresByRole.keySet()) {
+			if (overlappingSpanMap.contains(role)) {
+				roles.add(role);
 			}
-		};
-		ArrayList<Pair<String,LDouble>> finalSpans = new ArrayList<Pair<String,LDouble>>();
-		for(i = 0; i < fes.length; i ++)
-		{
-			Map<String,LDouble> map = vs.get(fes[i]);
-			Set<String> set = map.keySet();
-			int size = set.size();
-			Pair<String,LDouble>[] pArray = new Pair[size];
-			int j = 0;
-			for(String key:set)
-			{
-				pArray[j] = new Pair<String,LDouble>(key,map.get(key));
-				j++;
+		}
+
+		// our beam
+		List<Pair<String,LDouble>> currentSpans = new ArrayList<Pair<String,LDouble>>();
+		// do beam search
+		for(int i = 0; i < roles.size(); i++) {
+			final Map<String,LDouble> candidatesAndScores = candidatesAndScoresByRole.get(roles.get(i));
+			final PriorityQueue<Pair<String,LDouble>> scoredSpans =
+					new PriorityQueue<Pair<String, LDouble>>(candidatesAndScores.size(), logDoubleComparator);
+			for(String candidate : candidatesAndScores.keySet()) {
+				scoredSpans.add(new Pair<String,LDouble>(candidate, candidatesAndScores.get(candidate)));
 			}
-			Arrays.sort(pArray,comp);
-			if(i==0)
-			{
-				int min = pArray.length;
-				if(k<min)
-					min=k;
-				for(int m = 0; m < min; m ++)
-				{
-					finalSpans.add(new Pair<String,LDouble>(pArray[m].getFirst(),pArray[m].getSecond()));
-				}
+			if(i == 0) {
+				currentSpans = safeTruncate(copyOf(scoredSpans), beamWidth);
 			}
-			else
-			{
-				int oldSize = finalSpans.size();
-				int newSize = oldSize*pArray.length;
-				Pair<String,LDouble>[] newArray = new Pair[newSize];
-				int countFinal = 0;
-				for(int m = 0; m < oldSize; m ++)
-				{
-					for(int n = 0; n < pArray.length; n ++)
-					{
-						String newSpan = finalSpans.get(m).getFirst()+":"+pArray[n].getFirst();
-						LDouble val = LDouble.convertToLogDomain(0); 
-						if(!isThereOverlap(newSpan,seenSpans))
-						{
-							val = LogMath.logtimes(finalSpans.get(m).getSecond(),pArray[n].getSecond());
-						}
-						newArray[countFinal] = new Pair<String,LDouble>(newSpan,val);
-						countFinal++;
+			else {
+				final PriorityQueue<Pair<String,LDouble>> newSpans =
+						new PriorityQueue<Pair<String, LDouble>>(currentSpans.size() * scoredSpans.size(), logDoubleComparator);
+				for (Pair<String, LDouble> span : currentSpans) {
+					for (Pair<String, LDouble> candidate : scoredSpans) {
+						final String newSpan = span.getFirst() + ":" + candidate.getFirst();
+						final LDouble val = isThereOverlap(newSpan, seenSpans)
+												? LOG_ZERO
+												: LogMath.logtimes(span.getSecond(), candidate.getSecond());
+						newSpans.add(new Pair<String, LDouble>(newSpan, val));
 					}
 				}
-				Arrays.sort(newArray,comp);
-				int min = newArray.length;
-				if(k<min)
-					min=k;
-				finalSpans = new ArrayList<Pair<String,LDouble>>();
-				for(int m = 0; m < min; m ++)
-					finalSpans.add(new Pair<String,LDouble>(newArray[m].getFirst(),newArray[m].getSecond()));
+				currentSpans = safeTruncate(copyOf(newSpans), beamWidth);
 			}
 		}
-		String[] toks = finalSpans.get(0).getFirst().split(":");
-		for(i = 0; i < fes.length; i ++)
-		{
-			result.put(fes[i], toks[i]);
-		}		
+
+		final ArrayList<RoleAssignments> results = Lists.newArrayList();
+		for(int i = 0; i < k && i < currentSpans.size(); i++) {
+			results.add(getRoleAssignments(roles, currentSpans.get(i)));
+		}
+		return results;
+	}
+
+	private static <T> List<T> safeTruncate(List<T> list, int beamWidth) {
+		return list.subList(0, min(list.size(), beamWidth));
+	}
+
+	private static RoleAssignments getRoleAssignments(List<String> fes, Pair<String, LDouble> assignments) {
+		final String[] tokens = assignments.getFirst().split(":");
+		final RoleAssignments result = new RoleAssignments();
+		for(int i = 0; i < fes.size(); i++) {
+			result.put(fes.get(i), tokens[i]);
+		}
 		return result;
 	}
-	
-	
-	public String getNonOverlappingDecision(FrameFeatures mFF, String frameLine, int offset)
-	{
-		String frameName = mFF.frameName;
-		System.out.println("Frame:"+frameName);
-		String decisionLine=getInitialDecisionLine(frameLine, offset);
-		if(mFF.fElements.size()==0)
-		{
-			decisionLine="0\t1"+"\t"+decisionLine.trim();
-			return decisionLine;
+
+	/**
+	 * Decode, respecting the constraint that arguments do not overlap.
+	 *
+	 * @param frameFeatures features for the given frame
+	 * @param frameLine String encoding of the frame
+	 * @param offset
+	 * @return a String encoding the best spans for all roles of the given frame
+	 */
+	public String getNonOverlappingDecision(FrameFeatures frameFeatures, String frameLine, int offset) {
+		final String frameName = frameFeatures.frameName;
+		final ArrayList<String> frameElements = frameFeatures.fElements;
+		final ArrayList<SpanAndCorrespondingFeatures[]> featuresList = frameFeatures.fElementSpansAndFeatures;
+		System.out.println("Frame:" + frameName);
+		String decisionLine = getInitialDecisionLine(frameLine, offset);
+		if(frameElements.size() == 0) {
+			return new FrameArgumentsPrediction(1, decisionLine, new RoleAssignments()).format();
 		}
-		if(mFF.fElements.size()==0)
-		{
-			decisionLine="0\t1"+"\t"+decisionLine.trim();
-			return decisionLine;
+
+		final RoleAssignments feMap = scoreAllSpans(frameElements, featuresList);
+		final RoleAssignments nonNullFrameElements = getOnlyNonNullFrameElements(feMap);
+		for (String role : nonNullFrameElements.keySet()) {
+			System.out.println(role + "\t" + nonNullFrameElements.get(role));
 		}
-		THashMap<String,String> feMap = new THashMap<String,String>();
-		ArrayList<SpanAndCorrespondingFeatures[]> featsList = mFF.fElementSpansAndFeatures;
-		ArrayList<String> frameElements = mFF.fElements;
-		int listSize = featsList.size();
-		for(int i = 0; i < listSize; i ++)
-		{
-			SpanAndCorrespondingFeatures[] featureArray = featsList.get(i);
-			int featArrLen = featureArray.length;
-			double weiFeatSum[] = new double[featArrLen];
-			int maxIndex = -1;
-			double maxSum = -Double.MAX_VALUE;
-			for(int j = 0; j < featArrLen; j ++)
-			{
-				int[] feats = featureArray[j].features;
-				weiFeatSum[j]=getWeightSum(feats, localW);
-				if(weiFeatSum[j]>maxSum)
-				{
-					maxSum = weiFeatSum[j];
-					maxIndex=j;
-				}
-			}
-			String outcome = featureArray[maxIndex].span[0]+"_"+featureArray[maxIndex].span[1];
-			feMap.put(frameElements.get(i), outcome);
-			System.out.println("Frame element:"+frameElements.get(i)+" Found span:"+outcome);
-		}
-		THashMap<String,String> oMap = getOnlyOverlappingFes(feMap);
-		if(oMap.size()>0)
-		{
-			Set<String> tempKeySet = oMap.keySet();
-			for(String key:tempKeySet)
-			{
-				System.out.println(key+"\t"+oMap.get(key));
-			}
-		}
-		THashSet<String> seenSpans = new THashSet<String>();
-		Set<String> keySet = feMap.keySet();
-		for(String key:keySet)
-		{
-			String span = feMap.get(key);
-			if(span.equals("-1_-1"))
-				continue;
-			if(!oMap.contains(key))
-				seenSpans.add(span);
-		}		
-		if(seenSpans.size()>0)
-			System.out.println("yes");		
-		THashMap<String,THashMap<String,LDouble>> vs = new THashMap<String,THashMap<String,LDouble>>();
-		for(int i = 0; i < listSize; i ++)
-		{
-			String fe = frameElements.get(i);
-			if(!oMap.contains(fe))
-				continue;
-			SpanAndCorrespondingFeatures[] featureArray = featsList.get(i);
-			THashMap<String,LDouble> valMap = new THashMap<String,LDouble>();
-			int featArrLen = featureArray.length;
-			double weiFeatSum[] = new double[featArrLen];
-			for(int j = 0; j < featArrLen; j ++)
-			{
-				int[] feats = featureArray[j].features;
-				weiFeatSum[j]=getWeightSum(feats, localW);
-				double expVal = Math.exp(weiFeatSum[j]);
-				LDouble lVal = LDouble.convertToLogDomain(expVal);
-				String span = featureArray[j].span[0]+"_"+featureArray[j].span[1];
-				valMap.put(span, lVal);
-			}
-			vs.put(frameElements.get(i), valMap);
-		}				
-		THashMap<String,String> nonOMap = getCubePruningDecoding(oMap, mFF.fElements, vs, 100, seenSpans);
-		keySet = nonOMap.keySet();
-		for(String key:keySet) {
-			feMap.put(key, nonOMap.get(key));
-		}		
-		keySet = feMap.keySet();
+		final THashSet<String> seenSpans = getSeenSpans(feMap, nonNullFrameElements);
+
+		final THashMap<String, CandidatesForRole> vs =
+				getCandidatesForRoles(featuresList, frameElements, nonNullFrameElements);
+
+		final RoleAssignments nonOverlappingMap =
+				getCubePruningDecoding(nonNullFrameElements, vs, BEAM_WIDTH, seenSpans);
+		feMap.putAll(nonOverlappingMap);
+
 		int count = 1;
-		for(String fe:keySet)
-		{
-			String outcome = feMap.get(fe);
+		for(String role: feMap.keySet()) {
+			String outcome = feMap.get(role);
 			if(outcome.equals("-1_-1"))
 				continue;
 			count++;
-			String[] ocToks = outcome.split("_");
-			String modToks;
-			if(ocToks[0].equals(ocToks[1]))
-			{
-				modToks=ocToks[0];
-			}
-			else
-			{
-				modToks=ocToks[0]+":"+ocToks[1];
-			}
-			decisionLine+=fe+"\t"+modToks+"\t";
+			String modTokens = formatSpan(outcome);
+			decisionLine += role + "\t" + modTokens + "\t";
 		}		
-		decisionLine="0\t"+count+"\t"+decisionLine.trim();
+		decisionLine = "0\t" + count + "\t" + decisionLine.trim();
 		System.out.println(decisionLine);
 		return decisionLine;
-	}	
-	
-	public static int isGreater(LDouble one, LDouble two)
-	{
-		if(one.isPositive()&&!two.isPositive())
-		{
-			return 1;
-		}
-		if(!one.isPositive()&&two.isPositive())
-		{
-			return -1;
-		}
-		
-		boolean sign = one.isPositive();
-		double oneValue = one.getValue();
-		double twoValue = two.getValue();
-		if(sign)
-		{
-			if(oneValue>twoValue)
-				return 1;
-			else if(oneValue==twoValue)
-				return 0;
-			else
-				return -1;
-		}
-		else
-		{
-			if(oneValue>twoValue)
-				return -1;
-			else if(oneValue==twoValue)
-				return 0;
-			else
-				return 1;
-		
-		}
 	}
 
-	public void wrapUp() {
-		// no op unless overridden
+	private RoleAssignments scoreAllSpans(List<String> frameElements,
+										  List<SpanAndCorrespondingFeatures[]> featuresList) {
+		final RoleAssignments feMap = new RoleAssignments();
+		for(int i = 0; i < featuresList.size(); i++) {
+			final SpanAndCorrespondingFeatures[] featureArray = featuresList.get(i);
+			final int featArrLen = featureArray.length;
+			final double weightedFeatureSum[] = new double[featArrLen];
+			int maxIndex = -1;
+			double maxSum = -Double.MAX_VALUE;
+			for(int j = 0; j < featArrLen; j++) {
+				final int[] feats = featureArray[j].features;
+				weightedFeatureSum[j] = getWeightSum(feats, localW);
+				if(weightedFeatureSum[j] > maxSum) {
+					maxSum = weightedFeatureSum[j];
+					maxIndex = j;
+				}
+			}
+			final String outcome = featureArray[maxIndex].span[0] + "_" + featureArray[maxIndex].span[1];
+			feMap.put(frameElements.get(i), outcome);
+			System.out.println("Frame element:" + frameElements.get(i) + " Found span:" + outcome);
+		}
+		return feMap;
 	}
+
+	private THashMap<String, CandidatesForRole>
+			getCandidatesForRoles(ArrayList<SpanAndCorrespondingFeatures[]> featuresList,
+								  ArrayList<String> roles,
+								  RoleAssignments nonNullFrameElements) {
+		int featuresListSize = featuresList.size();
+		final THashMap<String,CandidatesForRole> results = new THashMap<String,CandidatesForRole>();
+		for(int i = 0; i < featuresListSize; i++) {
+			final String role = roles.get(i);
+			if(!nonNullFrameElements.contains(role))
+				continue;
+			final CandidatesForRole candidatesForRole = new CandidatesForRole();
+			for (SpanAndCorrespondingFeatures spanAndFeatures : featuresList.get(i)) {
+				final String span = spanAndFeatures.span[0] + "_" + spanAndFeatures.span[1];
+				final int[] feats = spanAndFeatures.features;
+				final LDouble logScore = LDouble.convertToLogDomain(Math.exp(getWeightSum(feats, localW)));
+				candidatesForRole.put(span, logScore);
+			}
+			results.put(role, candidatesForRole);
+		}
+		return results;
+	}
+
+	/**
+	 * Take span in "start_end" form and convert to "start:end" form (or "start" if start==end)
+	 *
+	 * @param span the span to format
+	 * @return "start:end" form (or "start" if start==end)
+	 */
+	private String formatSpan(String span) {
+		String[] spanTokens = span.split("_");
+		return spanTokens[0].equals(spanTokens[1])
+				? spanTokens[0]
+				: spanTokens[0] + ":" + spanTokens[1];
+	}
+
+	private THashSet<String> getSeenSpans(RoleAssignments feMap, RoleAssignments oMap) {
+		final THashSet<String> seenSpans = new THashSet<String>();
+		final Set<String> roles = feMap.keySet();
+		for(String role : roles) {
+			final String span = feMap.get(role);
+			if (!span.equals("-1_-1")) {
+				if (!oMap.contains(role)) {
+					seenSpans.add(span);
+				}
+			}
+		}
+		if(seenSpans.size() > 0)
+			System.out.println("seenSpans.size() > 0");
+		return seenSpans;
+	}
+
+	public void wrapUp() { /* no op unless overridden */ }
 }

@@ -21,9 +21,8 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.google.common.base.Optional;
+import com.google.common.collect.*;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
@@ -81,7 +80,9 @@ public class DataPrep {
 	 * prints .spans file , which is later used to recover 
 	 * frame parse after prediction
 	 */
-	private final PrintStream ps;
+	private PrintWriter ps;
+
+	public static final ImmutableSet<String> NON_BREAKING_LEFT_CONSTITUENT_POS = ImmutableSet.of("DT", "JJ");
 
 	/**
 	 * is it generating an alphabet or using an alphabet
@@ -91,7 +92,7 @@ public class DataPrep {
 	public static boolean useOracleSpans = false;
 	
 	public DataPrep() throws IOException {
-		ps = FileUtil.openOutFile(FEFileName.spanfilename);
+		new File(FEFileName.spanfilename).delete(); // this is gross
 		tagLines = readLines(new FileInputStream(FEFileName.tagFilename));
 		load(tagLines, null, null);
 	}
@@ -99,36 +100,47 @@ public class DataPrep {
 	public DataPrep(List<String> tagLines,
 					List<String> frameElementLines,
 					WordNetRelations lwnr) throws IOException {
-		ps = FileUtil.openOutFile(FEFileName.spanfilename);
+		new File(FEFileName.spanfilename).delete(); // this is gross
 		load(tagLines, frameElementLines, lwnr);
 	}
 
 	public DataPrep(Sentence sentence, String frameElements, WordNetRelations lwnr) throws IOException {
-		ps = FileUtil.openOutFile(FEFileName.spanfilename);
+		new File(FEFileName.spanfilename).delete(); // this is gross
 		getDataPoints(sentence, frameElements, lwnr);
 	}
 
-	private ArrayList<int[]> addConstituent(DataPointWithFrameElements dataPoint) {
-		final DependencyParse parse = dataPoint.getParses().getBestParse();
-		final DependencyParse[] nodes = parse.getIndexSortedListOfNodes();
+	/**
+	 * Finds a set of candidate spans based on a dependency parse
+	 *
+	 * @param dataPoint
+	 * @param useOracleSpans
+	 * @param kBestParses
+	 * @return
+	 */
+	public static ArrayList<int[]> findSpans(DataPointWithFrameElements dataPoint,
+											 boolean useOracleSpans,
+											 int kBestParses) {
+		final DependencyParse bestParse = dataPoint.getParses().getBestParse();
+		final DependencyParse[] nodes = bestParse.getIndexSortedListOfNodes();
+		// nodes includes a dummy head node
 		final int length = nodes.length - 1;
-		// initialize the matrices
 		// indexes a set of spans by [start][end]
 		boolean[][] spanMatrix = new boolean[length][length];
-		final int[][] heads = new int[length][length];
-		//
+		// index from [start][end] to which parse the span came from
 		final int[][] depParses = new int[length][length];
+		// index from [start][end] to the index of the head of the span
+		final int[][] heads = new int[length][length];
 		for(int j : xrange(length)) {
 			for(int k : xrange(length)) {
 				heads[j][k] = -1;
 			}
 		}
 		spanMatrix = addGoldSpan(dataPoint, spanMatrix);
-		if(FEFileName.KBestParse > 1) {
+		if(kBestParses > 1) {
 			addKBestParses(dataPoint, depParses);
 		}
 		if(!useOracleSpans) {
-			findSpans(spanMatrix, heads, nodes);
+			addConstituents(spanMatrix, heads, nodes);
 		}
 		ArrayList<int[]> spanList = new ArrayList<int[]>();
 		for (int i : xrange(length)) {
@@ -138,6 +150,8 @@ public class DataPrep {
 				}
 			}
 		}
+		// null span is always a candidate
+		spanList.add(new int[]{-1, -1, 0});
 		return spanList;
 	}
 
@@ -173,12 +187,12 @@ public class DataPrep {
 				for (int i = 0; i < spanTokens.length; i += 2) {
 					spanList.add(new int[]{parseInt(spanTokens[i]), parseInt(spanTokens[i+1])});
 				}
+				//add null span to candidates
+				spanList.add(new int[]{-1, -1, 0});
 			}
 			else {
-				spanList = addConstituent(dp);
+				spanList = findSpans(dp, useOracleSpans, FEFileName.KBestParse);
 			}
-			//add null span to candidates
-			spanList.add(new int[]{-1, -1, 0});
 			candidateLines.add(spanList.toArray(new int[spanList.size()][]));
 		}
 		feIndex = 0;
@@ -193,9 +207,7 @@ public class DataPrep {
 
 		System.err.println("Loading data....");
 		final DataPointWithFrameElements dataPointWithElements = new DataPointWithFrameElements(sentence, feline);
-		final ArrayList<int[]> spanList = addConstituent(dataPointWithElements);
-		// null span is always a candidate
-		spanList.add(new int[]{-1, -1, 0});
+		final ArrayList<int[]> spanList = findSpans(dataPointWithElements, useOracleSpans, FEFileName.KBestParse);
 		return getTrainData(feline, spanList.toArray(new int[spanList.size()][]), sentence);
 	}
 
@@ -206,7 +218,7 @@ public class DataPrep {
 	 * @param goldDP the data point whose spans to add
 	 * @param spanMatrix the 2d boolean matrix to add spans to
 	 */
-	private boolean[][] addGoldSpan(DataPointWithFrameElements goldDP, boolean[][] spanMatrix) {
+	private static boolean[][] addGoldSpan(DataPointWithFrameElements goldDP, boolean[][] spanMatrix) {
 		List<Range0Based> spans = goldDP.getOvertFrameElementFillerSpans();
 		for(Range0Based span : spans) {
 			spanMatrix[span.getStart()][span.getEnd()] = true;
@@ -214,22 +226,23 @@ public class DataPrep {
 		return spanMatrix;
 	}
 
+
 	/**
 	 * Adds parses from goldDP to depParses
 	 *
 	 * @param goldDP the DataPointWithElements whose parses to add to depParses
 	 * @param depParses the array to add parses to
 	 */
-	private void addKBestParses(DataPointWithFrameElements goldDP, int[][] depParses) {
+	private static void addKBestParses(DataPointWithFrameElements goldDP, int[][] depParses) {
 		List<Range0Based> spans = goldDP.getOvertFrameElementFillerSpans();
 		DependencyParses parses = goldDP.getParses();
 		for (Range0Based span : spans) {
 			Range1Based span1 = new Range1Based(span);
-			Pair<Integer, DependencyParse> indexAndParse = parses.matchesSomeConstituent(span1);
-			if (indexAndParse == null) {
+			Optional<Pair<Integer, DependencyParse>> indexAndParse = parses.matchesSomeConstituent(span1);
+			if (!indexAndParse.isPresent()) {
 				depParses[span.getStart()][span.getEnd()] = 0;
 			} else {
-				int fIndex = indexAndParse.getFirst();
+				int fIndex = indexAndParse.get().getFirst();
 				depParses[span.getStart()][span.getEnd()] = fIndex;
 			}
 		}
@@ -246,7 +259,7 @@ public class DataPrep {
 		}
 	}
 
-	public int[][][] getNextTrainData() {
+	public int[][][] getNextTrainData() throws IOException {
 		final String feline = feLines.get(feIndex);
 		final int candidateTokens[][] = candidateLines.get(feIndex);
 		final int sentNum = parseInt(feline.split("\t")[5]);
@@ -257,7 +270,7 @@ public class DataPrep {
 		return allData.toArray(new int[allData.size()][][]);
 	}
 
-	private ArrayList<int[][]> getTrainData(String feline, int[][] candidateTokens, Sentence sentence) {
+	private ArrayList<int[][]> getTrainData(String feline, int[][] candidateTokens, Sentence sentence) throws IOException {
 		final DataPointWithFrameElements goldDP = new DataPointWithFrameElements(sentence, feline);
 		final String frame = goldDP.getFrameName();
 		final String[] canArgs = frameElementsForFrame.lookupFrameElements(frame);
@@ -267,21 +280,26 @@ public class DataPrep {
 		//add realized frame elements
 		final String frameElementNames[] = goldDP.getOvertFilledFrameElementNames();
 		final HashSet<String> realizedFes = Sets.newHashSet();
-		for (int i = 0; i < goldDP.getNumOvertFrameElementFillers(); i++) {
-			if(realizedFes.contains(frameElementNames[i]))
-				continue;
-			realizedFes.add(frameElementNames[i]);
-			addFeatureForOneArgument(goldDP, frame, frameElementNames[i], spans.get(i), dataPointList, candidateTokens);
-		}
-		//add null frame elements
-		if (canArgs != null) {
-			for (String frameElements : canArgs) {
-				if (!realizedFes.contains(frameElements)) {
-					addFeatureForOneArgument(goldDP, frame, frameElements,
-							CandidateFrameElementFilters.EMPTY_SPAN,
-							dataPointList, candidateTokens);
+		ps = new PrintWriter(new FileWriter(FEFileName.spanfilename, true));
+		try {
+			for (int i = 0; i < goldDP.getNumOvertFrameElementFillers(); i++) {
+				if(realizedFes.contains(frameElementNames[i]))
+					continue;
+				realizedFes.add(frameElementNames[i]);
+				addFeatureForOneArgument(goldDP, frame, frameElementNames[i], spans.get(i), dataPointList, candidateTokens);
+			}
+			//add null frame elements
+			if (canArgs != null) {
+				for (String frameElements : canArgs) {
+					if (!realizedFes.contains(frameElements)) {
+						addFeatureForOneArgument(goldDP, frame, frameElements,
+								CandidateFrameElementFilters.EMPTY_SPAN,
+								dataPointList, candidateTokens);
+					}
 				}
 			}
+		} finally {
+			closeQuietly(ps);
 		}
 		return dataPointList;
 	}
@@ -370,75 +388,130 @@ public class DataPrep {
 
 	// writes a list of features into a hash
 	public static void writeFeatureIndex(String alphabetFilename) {
-		PrintStream localps = FileUtil.openOutFile(alphabetFilename);
-		localps.println(numFeatures);
+		PrintStream printStream = FileUtil.openOutFile(alphabetFilename);
+		printStream.println(numFeatures);
 		String buf[] = new String[numFeatures + 1];
 		for (String feature : featureIndex.keySet()) {
 			buf[featureIndex.get(feature)] = feature;
 		}
 		for (int i = 1; i <= numFeatures; i++) {
-			localps.println(buf[i]);
+			printStream.println(buf[i]);
 		}
-		localps.close();
+		printStream.close();
 	}
 
-	public static void findSpans(boolean[][] spanMat, int[][] heads, DependencyParse[] nodes) {
+	/**
+	 * Calculates an array of constituent spans based on the given dependency parse.
+	 * A constituent span is a token and all of its descendants.
+	 * Adds the constituents to spanMatrix and heads
+	 *
+	 * @param spanMatrix an index from [start][end] -> isConstituent(start, end)
+	 * @param heads an index from [start][end] -> headOfSpan(start, end)
+	 * @param nodes the dependency parse
+	 */
+	private static void addConstituents(boolean[][] spanMatrix, int[][] heads, DependencyParse[] nodes) {
 		final int length = nodes.length - 1;
-		int[] parent = new int[length];
+		// left[i] is the index of the left-most descendant of i
 		int left[] = new int[length];
+		// right[i] is the index of the right-most descendant of i
 		int right[] = new int[length];
+		// translate parent indices from 1-based to 0-based
+		int[] parent = new int[length];
 		for (int i : xrange(length)) {
-			parent[i] = (nodes[i + 1].getParentIndex() - 1);
+			parent[i] = (nodes[i+1].getParentIndex() - 1);
 			left[i] = i;
 			right[i] = i;
 		}
+
+		// for each node i, expand i's ancestors' spans to include i
+		// NB: assumes children are contiguous (always true of projective parses)
 		for (int i : xrange(length)) {
-			int index = parent[i];
-			while (index >= 0) {
-				if (left[index] > i) {
-					left[index] = i;
+			int parentIndex = parent[i];
+			while (parentIndex >= 0) {
+				if (left[parentIndex] > i) {
+					left[parentIndex] = i;
+				} else if (right[parentIndex] < i) {
+					right[parentIndex] = i;
 				}
-				if (right[index] < i) {
-					right[index] = i;
-				}
-				index = parent[index];
+				parentIndex = parent[parentIndex];
 			}
 		}
 		for (int i : xrange(length)) {
-			spanMat[left[i]][right[i]] = true;
+			spanMatrix[left[i]][right[i]] = true;
 			heads[left[i]][right[i]] = i;
 		}
 		
-		// single words
+		// single words are always constituents
 		for (int i : xrange(length)) {
-			spanMat[i][i] = true;
-			heads[i][i]=i;
+			spanMatrix[i][i] = true;
+			heads[i][i] = i;
 		}
-		
+
+		// heuristics to try to recover finer-grained constituents when a node has multiple descendants
 		for (int i : xrange(length)) {
 			if(!(left[i] < i && right[i] > i)) continue;
 			//left
 			int justLeft = i - 1;
-			if(i - 1 >= 0) {
-				if(spanMat[left[i]][justLeft]) {
-					if (justLeft-left[i] != 0 || !nodes[justLeft + 1].getPOS().equals("DT")) {
-						if (justLeft - left[i] != 0 || !nodes[justLeft + 1].getPOS().equals("JJ")) {
-							spanMat[i][right[i]] = true;
-							heads[i][right[i]] = i;
-						}
+			if(justLeft >= 0) {
+				if(spanMatrix[left[i]][justLeft]) {
+					if (!(justLeft == left[i] && NON_BREAKING_LEFT_CONSTITUENT_POS.contains(nodes[justLeft+1].getPOS()))) {
+						spanMatrix[i][right[i]] = true;
+						heads[i][right[i]] = i;
 					}
 				}
 			}
-			
 			//right
 			int justRight = i + 1;
-			if(justRight <= length -1) {
-				if(spanMat[justRight][right[i]]) {
-					spanMat[left[i]][i]=true;
-					heads[left[i]][i]=i;
+			if(justRight <= length - 1) {
+				if(spanMatrix[justRight][right[i]]) {
+					spanMatrix[left[i]][i] = true;
+					heads[left[i]][i] = i;
 				}
 			}
 		}
+	}
+
+	/**
+	 * Calculates the list of constituents spans based on the given dependency parse.
+	 * A constituent span is a token and all of its descendants.
+	 * Ranges are 0-based, and include both endpoints.
+	 *
+	 * @param parse the dependency parse
+	 * @return the list of constituents in parse. results.get(i) is the span headed by token i.
+	 */
+	public static List<Range0Based> getConstituents(DependencyParse parse) {
+		final DependencyParse[] nodes = parse.getIndexSortedListOfNodes();
+		final int length = nodes.length - 1;
+		// left[i] is the index of the left-most descendant of i
+		int left[] = new int[length];
+		// right[i] is the index of the right-most descendant of i
+		int right[] = new int[length];
+		// translate parent indices from 1-based to 0-based
+		int[] parent = new int[length];
+		for (int i : xrange(length)) {
+			parent[i] = (nodes[i+1].getParentIndex() - 1);
+			left[i] = i;
+			right[i] = i;
+		}
+
+		// for each node i, expand i's ancestors' spans to include i
+		for (int i : xrange(length)) {
+			int parentIndex = parent[i];
+			while (parentIndex >= 0) {
+				if (left[parentIndex] > i) {
+					left[parentIndex] = i;
+				}
+				if (right[parentIndex] < i) {
+					right[parentIndex] = i;
+				}
+				parentIndex = parent[parentIndex];
+			}
+		}
+		ImmutableList.Builder<Range0Based> results = ImmutableList.builder();
+		for(int i : xrange(length)) {
+			results.add(new Range0Based(left[i], right[i]));
+		}
+		return results.build();
 	}
 
 	/**

@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.apache.commons.io.IOUtils.closeQuietly;
-import static org.apache.commons.io.IOUtils.readLines;
 
 public class LocalFeatureReading {
 	private String mEventsFile;
@@ -93,13 +92,13 @@ public class LocalFeatureReading {
 			int size = temp.size();
 			FrameFeatures f = mFrameFeaturesList.get(currentFrameFeaturesIndex);
 			if(f.fElements.size()==0) {
-				System.out.println(f.frameName+". No frame elements for the frame.");
+				System.out.println(f.frameName + ". No frame elements for the frame.");
 				currentFrameFeaturesIndex++;
 				if(currentFrameFeaturesIndex==mFrameFeaturesList.size()) {
 					break;
 				}
 				currentFEIndex = 0;
-				System.out.println("temp.size()="+temp.size());
+				System.out.println("temp.size()=" + temp.size());
 				skip = true;
 				continue;
 			}
@@ -199,7 +198,8 @@ public class LocalFeatureReading {
 		for(int i = 0; i < mFrameLines.size(); i ++) {
 			frameIndexMap.put(i, new ArrayList<Integer>());
 		}
-		List<String> lines = readLines(new FileInputStream(mSpansFile));
+		//List<String> lines = readLines(new FileInputStream(mSpansFile));
+		List<String> lines = readLines(mSpansFile);
 		int i;
 		int lineSize = lines.size();
 		ArrayList<String> feLines = Lists.newArrayList();
@@ -279,7 +279,7 @@ public class LocalFeatureReading {
 					System.exit(0);
 				}
 			}
-			FrameFeatures f = new FrameFeatures(frame,start,end);
+			FrameFeatures f = new FrameFeatures(frame, start, end);
 			for (Integer feLineNum1 : feLineNums) {
 				final String feLine = feLines.get(feLineNum1);
 				final String[] feLine1Toks = feLine.split("\t");
@@ -292,10 +292,9 @@ public class LocalFeatureReading {
 	}
 
 	/**
-	 * Read lines from a file ignoring empty lines
-	 * @param spansFile
-	 */
-	/*
+	* Read lines from a file ignoring empty lines
+	* @param spansFile
+	*/
 	private List<String> readLines(String spansFile) throws IOException {
 		ArrayList<String> lines = new ArrayList<String>();
 		BufferedReader bReader = null;
@@ -312,7 +311,7 @@ public class LocalFeatureReading {
 		}
 		return lines;
 	}
-	*/
+
 	public ArrayList<FrameFeatures> getMFrameFeaturesList() {
 		return mFrameFeaturesList;
 	}

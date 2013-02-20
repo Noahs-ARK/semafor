@@ -21,12 +21,12 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.optimization;
 
+import org.apache.hadoop.io.Writable;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
-
-import org.apache.hadoop.io.Writable;
 
 /**
  * Log-Double. A class to represent a double value along with a boolean indicating whether 
@@ -146,7 +146,7 @@ public class LDouble implements Serializable, Writable{
 	
 	public double exponentiate() {
 		double ret = Math.exp(value);
-		if (sign == false) {
+		if (!sign) {
 			ret = -1.0 * ret;
 		}
 		return ret;

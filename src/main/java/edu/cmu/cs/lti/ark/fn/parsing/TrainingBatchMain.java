@@ -21,13 +21,27 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import java.util.ArrayList;
-
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
 
+import java.util.ArrayList;
+
 public class TrainingBatchMain
 {
+	/**
+	 *
+	 * @param args command-line arguments as follows:
+	 *             frameFeaturesCacheFile: path to file containing a serialized cache of all of the features
+	 *                 extracted from the training data
+	 *             alphabetFile: path to file containing the alphabet
+	 *             trainFrameFile: path to file containing ?
+	 *             reg: type of regularization to use (ignored?)
+	 *             lambda: regularization hyperparameter
+	 *             binaryOverlapConstraint: ?
+	 *             numThreads: the number of parallel threads to run while optimizing
+	 *             modelFile: path to output file to write resulting model to. intermediate models will be written to
+	 *                 modelFile + "_" + i
+	 */
 	public static void main(String[] args)
 	{
 		FNModelOptions opts = new FNModelOptions(args);
@@ -41,7 +55,7 @@ public class TrainingBatchMain
 		String binaryFactorPresent = opts.binaryOverlapConstraint.get();
 		ArrayList<FrameFeatures> list = (ArrayList<FrameFeatures>)SerializedObjects.readSerializedObject(frameFeaturesCacheFile);
 		Training bpt = new Training();
-		bpt.init(modelFile, alphabetFile, list, frFile, binaryFactorPresent, reg, lambda, numThreads);
+		bpt.init(modelFile, alphabetFile, list, frFile, reg, lambda, numThreads);
 		bpt.trainBatch();
 	}	
 }

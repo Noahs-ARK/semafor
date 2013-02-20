@@ -1,13 +1,11 @@
 package edu.cmu.cs.lti.ark.fn.data.prep.formats;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.io.Resources;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 
@@ -23,7 +21,7 @@ import static org.junit.Assert.assertEquals;
  * @author sthomson@cs.cmu.edu
  */
 public class SentenceTest {
-	private static final String CONNL_FILENAME = "fixtures/example.conll";
+	public static final String CONNL_FILENAME = "fixtures/example.conll";
 	private static final String POS_FILENAME = "fixtures/example.pos.tagged";
 	private static final String MALT_FILENAME = "fixtures/example.maltparsed";
 	private static final String TOKENIZED_FILENAME = "fixtures/example.tokenized";

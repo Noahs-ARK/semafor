@@ -21,25 +21,18 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.Scanner;
-import java.util.Date;
-
-import riso.numerical.LBFGS;
-
-
 import edu.cmu.cs.lti.ark.fn.constants.FNConstants;
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.fn.optimization.SGA;
 import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
 import edu.cmu.cs.lti.ark.util.FileUtil;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
+import riso.numerical.LBFGS;
 
-public class Training
-{
+import java.io.PrintStream;
+import java.util.*;
+
+public class Training {
 	private String mModelFile;
 	private String mAlphabetFile;
 	private ArrayList<FrameFeatures> mFrameList; 
@@ -48,7 +41,6 @@ public class Training
 	private int numFeatures;
 	private ArrayList<String> mFrameLines;
 	private Random rand;
-	private String mReg;
 	private double mLambda;
 	private int numDataPoints;
 	private int mNumThreads;
@@ -60,12 +52,10 @@ public class Training
 
 	}
 	
-	public void init(String modelFile, 
-			String alphabetFile, 
-			ArrayList<FrameFeatures> list, 
-			String lexiconFile,
-			String frFile,
-			String binaryFactorPresent)
+	public void init(String modelFile,
+					 String alphabetFile,
+					 ArrayList<FrameFeatures> list,
+					 String frFile)
 	{
 		mModelFile = modelFile;
 		mAlphabetFile = alphabetFile;
@@ -73,20 +63,18 @@ public class Training
 		mFrameList = list;
 		mFrameLines = ParsePreparation.readSentencesFromFile(frFile);
 		rand = new Random(new Date().getTime());
-		mReg = "noreg";
 		mLambda = 0.0;
 		numDataPoints = mFrameList.size();
 		mNumThreads = 1;
 	}
 
-	public void init(String modelFile, 
-			String alphabetFile, 
-			ArrayList<FrameFeatures> list, 
-			String frFile,
-			String binaryFactorPresent,
-			String reg,
-			double lambda,
-			int numThreads)
+	public void init(String modelFile,
+					 String alphabetFile,
+					 ArrayList<FrameFeatures> list,
+					 String frFile,
+					 String reg,
+					 double lambda,
+					 int numThreads)
 	{
 		mModelFile = modelFile;
 		mAlphabetFile = alphabetFile;
@@ -94,7 +82,6 @@ public class Training
 		mFrameList = list;
 		mFrameLines = ParsePreparation.readSentencesFromFile(frFile);
 		rand = new Random(new Date().getTime());
-		mReg = reg;
 		mLambda = lambda;
 		numDataPoints = mFrameList.size();
 		mNumThreads = numThreads;
@@ -264,8 +251,11 @@ public class Training
 		        System.out.println("Task " + count + " : end");
 		      }
 		};
-	}	
-	
+	}
+
+	/**
+	 * @return the value of the function. fills out mGradients as a side-effect
+	 */
 	private double getValuesAndGradients() {
 		double value = 0.0;
 		Arrays.fill(mGradients, 0.0);

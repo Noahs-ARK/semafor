@@ -22,18 +22,17 @@
 
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.Map;
-
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.util.FileUtil;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import gnu.trove.THashMap;
 
+import java.util.*;
+
+/**
+ * AD^3
+ */
 public class JointDecoding extends Decoding {
 
 	private boolean mIgnoreNullSpansWhileJointDecoding;
@@ -175,7 +174,7 @@ public class JointDecoding extends Decoding {
 		if(doOverlapCheck)
 			dec = getNonOverlappingDecision(f,mFrameLines.get(index), offset, returnScores);
 		else
-			dec = getDecision(f,mFrameLines.get(index), offset);
+			dec = getUnconstrainedDecision(f, mFrameLines.get(index), offset);
 		return dec;
 	}
 
