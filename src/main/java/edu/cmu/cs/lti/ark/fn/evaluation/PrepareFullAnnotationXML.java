@@ -21,6 +21,10 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.evaluation;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimaps;
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
 import edu.cmu.cs.lti.ark.util.XmlUtils;
 import edu.cmu.cs.lti.ark.util.ds.Range;
@@ -38,10 +42,19 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
+import static edu.cmu.cs.lti.ark.util.XmlUtils.addAttribute;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
 
 public class PrepareFullAnnotationXML {
+	private static final Function<DataPointWithFrameElements,String> GET_FRAME =
+			new Function<DataPointWithFrameElements, String>() {
+				@Override public String apply(DataPointWithFrameElements input) {
+					return input.getFrameName();
+				}
+			};
+
 	/**
 	 * Generates the XML representation of a set of predicted semantic parses so evaluation 
 	 * can be performed (with SemEval Perl scripts)
@@ -85,12 +98,10 @@ public class PrepareFullAnnotationXML {
 		BufferedReader inFELines = new BufferedReader(new FileReader(testFEPredictionsFile));
 		// output of MapReduce--will have an extra number and tab at the beginning of each line
 		String pFELine;
-		String feLine;
-		while((pFELine=inFELines.readLine())!=null) {
-			feLine = pFELine.substring(pFELine.indexOf('\t') + 1);
-			int sentNum = DataPointWithFrameElements.parseFrameNameAndSentenceNum(feLine).getSecond();
+		while((pFELine=inFELines.readLine()) != null) {
+			int sentNum = DataPointWithFrameElements.parseFrameNameAndSentenceNum(pFELine).getSecond();
 			if (sentenceNums.contains(sentNum)) {
-				predictedFELines.add(feLine.trim());
+				predictedFELines.add(pFELine.trim());
 			}
 		}
 		closeQuietly(inFELines);
@@ -131,78 +142,91 @@ public class PrepareFullAnnotationXML {
 	 * @param predictedFELines Lines encoding predicted frames & FEs in the same format as the .sentences.frame.elements files
 	 * @param sentenceNums Global sentence number for the first sentence being predicted, so as to map FE lines to items in parses/orgLines
 	 * @param parses Lines encoding the parse for each sentence
-	 * @param orgLines The original sentences, untokenized
+	 * @param origLines The original sentences, untokenized
 	 * @return
 	 */
-	private static Document createXMLDoc(List<String> predictedFELines, Range sentenceNums,
-			List<String> parses, List<String> orgLines)
-	{
-		
-		
+	private static Document createXMLDoc(List<String> predictedFELines,
+										 Range sentenceNums,
+										 List<String> parses,
+										 List<String> origLines) {
+		final Document doc = XmlUtils.getNewDocument();
+		final Element corpus = doc.createElement("corpus");
+		addAttribute(doc, "ID", corpus, "100");
+		addAttribute(doc, "name", corpus, "ONE");
+		addAttribute(doc, "XMLCreated", corpus, new Date().toString());
+		final Element documents = doc.createElement("documents");
+		corpus.appendChild(documents);
+
+		final Element document = doc.createElement("document");
+		addAttribute(doc, "ID", document, "1");
+		addAttribute(doc, "description", document, "TWO");
+		documents.appendChild(document);
+
+		final Element paragraphs = doc.createElement("paragraphs");
+		document.appendChild(paragraphs);
+
+		final Element paragraph = doc.createElement("paragraph");
+		addAttribute(doc, "ID", paragraph, "2");
+		addAttribute(doc, "documentOrder", paragraph, "1");
+		paragraphs.appendChild(paragraph);
+
+		final Element sentences = doc.createElement("sentences");
+
 		// Map sentence offsets to frame annotation data points within each sentence
-		TIntObjectHashMap<Set<String>> predictions = new TIntObjectHashMap<Set<String>>();
+		final TIntObjectHashMap<Set<String>> predictions = new TIntObjectHashMap<Set<String>>();
 		for (String feLine : predictedFELines) {
-			int sentNum = DataPointWithFrameElements.parseFrameNameAndSentenceNum(feLine).getSecond();
-			
+			final int sentNum = DataPointWithFrameElements.parseFrameNameAndSentenceNum(feLine).getSecond();
+
 			if (!predictions.containsKey(sentNum))
 				predictions.put(sentNum, new THashSet<String>());
-			
+
 			predictions.get(sentNum).add(feLine);
 		}
-		
-		
-		Document doc = XmlUtils.getNewDocument();
-		Node corpus = doc.createElement("corpus");
-		XmlUtils.addAttribute(doc,"ID", (Element)corpus,""+100);
-		XmlUtils.addAttribute(doc,"name", (Element)corpus,"ONE");
-		XmlUtils.addAttribute(doc,"XMLCreated", (Element)corpus,""+new Date());
-		Node documents = doc.createElement("documents");
-		corpus.appendChild(documents);		
-		
-		Node document = doc.createElement("document");
-		XmlUtils.addAttribute(doc,"ID", (Element)document,""+1);
-		XmlUtils.addAttribute(doc,"description", (Element)document,"TWO");
-		documents.appendChild(document);
-		
-		Node paragraphs = doc.createElement("paragraphs");
-		document.appendChild(paragraphs);		
-		
-		Node paragraph = doc.createElement("paragraph");
-		XmlUtils.addAttribute(doc,"ID", (Element)paragraph,""+2);
-		XmlUtils.addAttribute(doc,"documentOrder", (Element)paragraph,"1");
-		paragraphs.appendChild(paragraph);	
-				
-		Node sentences = doc.createElement("sentences");
-		
-		for (int sent=sentenceNums.getStart(); sent<sentenceNums.getStart()+sentenceNums.length(); sent++)
-		{
-			String parseLine = parses.get(sent-sentenceNums.getStart());
-			
-			Node sentence = doc.createElement("sentence");
-			XmlUtils.addAttribute(doc,"ID", (Element)sentence,""+(sent-sentenceNums.getStart()));
-			
-			Node text = doc.createElement("text");
-			Node textNode = doc.createTextNode(orgLines.get(sent-sentenceNums.getStart()));
+
+		for (int sent = sentenceNums.getStart(); sent < sentenceNums.getStart() + sentenceNums.length(); sent++) {
+			final String parseLine = parses.get(sent-sentenceNums.getStart());
+
+			final Element sentence = doc.createElement("sentence");
+			addAttribute(doc, "ID", sentence, "" + (sent - sentenceNums.getStart()));
+
+			final Element text = doc.createElement("text");
+			final String origLine = origLines.get(sent - sentenceNums.getStart());
+			final Node textNode = doc.createTextNode(origLine);
 			text.appendChild(textNode);
 			sentence.appendChild(text);
-			
-			Node annotationSets = doc.createElement("annotationSets");
+			final Element tokensElt = doc.createElement("tokens");
+			final String[] tokens = origLine.trim().split(" ");
+			for (int i : xrange(tokens.length)) {
+				final String token = tokens[i];
+				final Element tokenElt = doc.createElement("token");
+				addAttribute(doc, "index", tokenElt, "" + i);
+				final Node tokenNode = doc.createTextNode(token);
+				tokenElt.appendChild(tokenNode);
+				tokensElt.appendChild(tokenElt);
+			}
+			sentence.appendChild(tokensElt);
+
+			final Element annotationSets = doc.createElement("annotationSets");
 			
 			int frameIndex = 0;	// index of the predicted frame within the sentence
-			Set<String> feLines = predictions.get(sent);
-			
-			if (feLines!=null) {
-				for (String feLine : feLines)
-				{
-						DataPointWithFrameElements dp = new DataPointWithFrameElements(parseLine, feLine);
-						String orgLine = orgLines.get(sent-sentenceNums.getStart());
-						dp.processOrgLine(orgLine);
-						
-						// Create the <annotationSet> node for the predicted frame annotation, and add it under the sentence
-						Node annotationSetNode = dp.buildAnnotationSetNode(doc, sent-sentenceNums.getStart(), frameIndex, orgLine);
-						annotationSets.appendChild(annotationSetNode);
-						frameIndex++;
-						
+			final Set<String> feLines = predictions.get(sent);
+
+			if (feLines != null) {
+				final List<DataPointWithFrameElements> dataPoints = Lists.newArrayList();
+				for (String feLine : feLines) {
+					final DataPointWithFrameElements dp = new DataPointWithFrameElements(parseLine, feLine);
+					dp.processOrgLine(origLine);
+					dataPoints.add(dp);
+				}
+				// group by frame (could be k-best list)
+				final ImmutableListMultimap<String,DataPointWithFrameElements> dataPointsByFrame =
+						Multimaps.index(dataPoints, GET_FRAME);
+				for (String frame : dataPointsByFrame.keySet()) {
+					final List<DataPointWithFrameElements> dps = dataPointsByFrame.get(frame);
+					// Create the <annotationSet> Element for the predicted frame annotation, and add it under the sentence
+					Element annotationSet = buildAnnotationSet(frame, dps, doc, sent - sentenceNums.getStart(), frameIndex);
+					annotationSets.appendChild(annotationSet);
+					frameIndex++;
 				}
 			}
 			sentence.appendChild(annotationSets);
@@ -211,5 +235,86 @@ public class PrepareFullAnnotationXML {
 		paragraph.appendChild(sentences);
 		doc.appendChild(corpus);
 		return doc;
+	}
+
+	public static Element buildAnnotationSet(String frame,
+											 List<DataPointWithFrameElements> dataPointList,
+											 Document doc,
+											 int parentId,
+											 int num) {
+		final Element ret = doc.createElement("annotationSet");
+		final int setId = parentId * 100 + num;
+		addAttribute(doc, "ID", ret, "" + setId);
+		addAttribute(doc, "frameName", ret, frame);
+
+		final Element layers = doc.createElement("layers");
+
+		// Target Layer
+		final Element targetLayer = doc.createElement("layer");
+		final int layerId1 = setId * 100 + 1;
+		addAttribute(doc, "ID", targetLayer, "" + layerId1);
+		addAttribute(doc, "name", targetLayer, "Target");
+		final Element targetLabels = doc.createElement("labels");
+		// Target info is inlined in every data point; might as well look at the first one
+		final DataPointWithFrameElements firstDataPoint = dataPointList.get(0);
+		final List<Range0Based> targetTokenRanges = firstDataPoint.getTokenStartEnds(true);
+		final List<Range0Based> targetCharRanges = firstDataPoint.getCharStartEnds(targetTokenRanges);
+		int count = 0;
+		for(int i : xrange(targetCharRanges.size())) {
+			final Range0Based charRange = targetCharRanges.get(i);
+			final Range0Based tokenRange = targetTokenRanges.get(i);
+			final int labelId1 = layerId1 * 100 + count + 1;
+			final Element label1 = doc.createElement("label");
+			addAttribute(doc, "ID", label1, "" + labelId1);
+			addAttribute(doc, "name", label1, "Target");
+			addAttribute(doc, "start", label1, "" + charRange.getStart());
+			addAttribute(doc, "end", label1, "" + charRange.getEnd());
+			addAttribute(doc, "tokenStart", label1, "" + tokenRange.getStart());
+			addAttribute(doc, "tokenEnd", label1, "" + tokenRange.getEnd());
+			targetLabels.appendChild(label1);
+			count = count + 3;
+		}
+		targetLayer.appendChild(targetLabels);
+		layers.appendChild(targetLayer);
+
+		// Frame Element Layers
+		for (DataPointWithFrameElements dataPointWithFrameElements : dataPointList) {
+			final int rank = dataPointWithFrameElements.rank + 1;
+			final double score = dataPointWithFrameElements.score;
+			final Element feLayer = doc.createElement("layer");
+			final int layerId = setId * 100 + rank + 1;
+			addAttribute(doc, "ID", feLayer, "" + layerId);
+			addAttribute(doc, "name", feLayer, "FE");
+			addAttribute(doc, "rank", feLayer, "" + rank);
+			addAttribute(doc, "score", feLayer, "" + score);
+			layers.appendChild(feLayer);
+
+			final Element labels = doc.createElement("labels");
+			feLayer.appendChild(labels);
+
+			final List<Range0Based> fillerSpans = dataPointWithFrameElements.getOvertFrameElementFillerSpans();
+			final String[] feNames = dataPointWithFrameElements.getOvertFilledFrameElementNames();
+			for (int i = 0; i < feNames.length; i++) {
+				final String feName = feNames[i];
+				final Range fillerSpan = fillerSpans.get(i);
+
+				final int labelId = layerId * 100 + i + 1;
+				final Element label = doc.createElement("label");
+				addAttribute(doc, "ID", label, "" + labelId);
+				addAttribute(doc, "name", label, feName);
+
+				final int tokenStart = fillerSpan.getStart();
+				final int tokenEnd = fillerSpan.getEnd();
+				final int startCharIndex = dataPointWithFrameElements.getCharacterIndicesForToken(tokenStart).getStart();
+				final int endCharIndex = dataPointWithFrameElements.getCharacterIndicesForToken(tokenEnd).getEnd();
+				addAttribute(doc, "start", label, "" + startCharIndex);
+				addAttribute(doc, "end", label, "" + endCharIndex);
+				addAttribute(doc, "tokenStart", label, "" + tokenStart);
+				addAttribute(doc, "tokenEnd", label, "" + tokenEnd);
+				labels.appendChild(label);
+			}
+		}
+		ret.appendChild(layers);
+		return ret;
 	}
 }

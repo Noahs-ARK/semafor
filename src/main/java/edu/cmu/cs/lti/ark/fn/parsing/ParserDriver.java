@@ -135,6 +135,9 @@ public class ParserDriver {
 		final String useRelaxedSegmentation = options.useRelaxedSegmentation.get();
 		final String outputFile = options.frameElementsOutputFile.get();
 		final String allLemmaTagsOutputFile = options.outAllLemmaTagsFile.get();
+		if(options.kBestOutput.absent())
+			options.kBestOutput.set("1");
+		final int kBestOutput = options.kBestOutput.get();
 
 		// unpack required data
 		final RequiredDataForFrameIdentification r = readObject(requiredDataFilename);
@@ -233,7 +236,7 @@ public class ParserDriver {
 			// argument identification
 			final List<String> argResult =
 					identifyArguments(wnr, eventsFilename, spansFilename, decoding, count, idResult,
-							allLemmaTagsSentences);
+							allLemmaTagsSentences, kBestOutput);
 			for (String result: argResult) {
 				outputWriter.write(result + "\n");
 			}
@@ -299,12 +302,13 @@ public class ParserDriver {
 												  Decoding decoding,
 												  int count,
 												  List<String> idResult,
-												  List<String> allLemmaTagsSentences) throws Exception {
+												  List<String> allLemmaTagsSentences,
+												  int kBestOutput) throws Exception {
 		CreateAlphabet.run(false, allLemmaTagsSentences, idResult, wnr);
 		final LocalFeatureReading lfr = new LocalFeatureReading(eventsFilename, spansFilename, idResult);
 		lfr.readLocalFeatures();
 		decoding.setData(null, lfr.getMFrameFeaturesList(), idResult);
-		return decoding.decodeAll(true, count);
+		return decoding.decodeAll(count, kBestOutput);
 	}
 
 	private static ArrayList<String> getGoldSegmentationBatch(List<String> segLines, List<Integer> tokenNums) {

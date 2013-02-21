@@ -179,7 +179,7 @@ public class LocalFeatureReading {
 		return ret;
 	}
 	
-	public void addIntSpanArray(ArrayList<SpanAndCorrespondingFeatures[]> list, int[][] arr)
+	private void addIntSpanArray(ArrayList<SpanAndCorrespondingFeatures[]> list, int[][] arr)
 	{
 		int len=arr.length;
 		SpanAndCorrespondingFeatures[] stringSpans = new SpanAndCorrespondingFeatures[len];
@@ -198,7 +198,6 @@ public class LocalFeatureReading {
 		for(int i = 0; i < mFrameLines.size(); i ++) {
 			frameIndexMap.put(i, new ArrayList<Integer>());
 		}
-		//List<String> lines = readLines(new FileInputStream(mSpansFile));
 		List<String> lines = readLines(mSpansFile);
 		int i;
 		int lineSize = lines.size();

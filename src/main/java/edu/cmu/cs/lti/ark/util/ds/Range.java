@@ -72,7 +72,7 @@ public abstract class Range implements Iterable<Integer> {
 	public int getEnd() {
 		return end;
 	}
-	
+
 	public int getBaseIndex() {
 		return baseIndex;
 	}

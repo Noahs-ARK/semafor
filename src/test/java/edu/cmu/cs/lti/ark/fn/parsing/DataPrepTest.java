@@ -19,7 +19,7 @@ import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 public class DataPrepTest {
 	final String maltLine = "My/PRP$/2/NMOD kitchen/NN/5/SBJ no/RB/5/ADV longer/RB/3/AMOD smells/VBZ/0/ROOT ././5/P";
 	private Sentence sentence = MaltCodec.decode(maltLine);
-	final String frameElementsLine = "1\tTemporal_collocation\tno.r\t2_3\tno longer\t0\n"; // +
+	final String frameElementsLine = "0\t1.0\t1\tTemporal_collocation\tno.r\t2_3\tno longer\t0\n"; // +
 	//"2\tBuilding_subparts\tkitchen.n\t1\tkitchen\t0\tBuilding_part\t1\n" +
 			//"1\tSensation\tsmells.v\t4\tsmells\t0\n";
 

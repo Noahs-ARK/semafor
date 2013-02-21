@@ -29,12 +29,11 @@ import edu.cmu.cs.lti.ark.util.CommandLineOptions;
  * @author Nathan Schneider (nschneid)
  * @since 2009-09-25
  */
-public final class FNModelOptions extends CommandLineOptions
-{
+public final class FNModelOptions extends CommandLineOptions {
 	public static final double TOL = 0.00000001;
 	
 	public FNModelOptions(String[] args) {
-		this(args,false);
+		this(args, false);
 	}
 	public FNModelOptions(String[] args, boolean ignoreUnknownOptions) {
 		super();
@@ -121,4 +120,5 @@ public final class FNModelOptions extends CommandLineOptions
 	public StringOption requiresMapFile = new StringOption("requiresmap");
 	public StringOption excludesMapFile = new StringOption("excludesmap");
 	public StringOption decodingType = new StringOption("decoding");
+	public PositiveIntOption kBestOutput = new PositiveIntOption("k-best-output");
 }

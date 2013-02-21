@@ -174,7 +174,9 @@ public abstract class CommandLineOptions {
 	
 	public class IntOption extends Option {
 		protected Range range;
-		public int get() { return (Integer)args.get(name); }
+		public int get() {
+			return (Integer)args.get(name);
+		}
 		public IntOption(String name) { this(name,null); }
 		public IntOption(String name, Range validRange) {
 			super(name);
@@ -191,10 +193,10 @@ public abstract class CommandLineOptions {
 		public String make(int v) { return make(toString(v)); }
 	}
 	public class NonnegativeIntOption extends IntOption {
-		public NonnegativeIntOption(String name) { super(name, new Range0Based(0,Integer.MAX_VALUE,true)); }
+		public NonnegativeIntOption(String name) { super(name, new Range0Based(0, Integer.MAX_VALUE - 1, true)); }
 	}
 	public class PositiveIntOption extends IntOption {
-		public PositiveIntOption(String name) { super(name, new Range1Based(1,Integer.MAX_VALUE,true)); }
+		public PositiveIntOption(String name) { super(name, new Range0Based(1, Integer.MAX_VALUE - 1, true)); }
 	}
 	public class DoubleOption extends Option {
 		public double get() { return (Double)args.get(name); }

@@ -115,8 +115,8 @@ public class JointDecoding extends Decoding {
 		return getNonOverlappingDecision(
 				mFF, 
 				frameLine, 
-				offset, 
-				localW,
+				offset,
+				modelWeights,
 				costAugmented,
 				goldFF,
 				false);
@@ -129,36 +129,20 @@ public class JointDecoding extends Decoding {
 		return getNonOverlappingDecision(
 				mFF, 
 				frameLine, 
-				offset, 
-				localW,
+				offset,
+				modelWeights,
 				false,
 				null,
 				returnScores);
 	}
 
-	public ArrayList<String> decodeAll(String overlapCheck, int offset, boolean returnScores) {
+	public ArrayList<String> decodeAll(int offset, boolean returnScores) {
 		int size = mFrameList.size();
 		ArrayList<String> result = new ArrayList<String>();
 		for(int i = 0; i < size; i ++)
 		{
 			System.out.println("Decoding index:"+i);
-			String decisionLine = decode(i,overlapCheck.equals("overlapcheck"), offset, returnScores);
-			result.add(decisionLine);
-		}
-		if (mPredictionFile != null) {
-			ParsePreparation.writeSentencesToFile(mPredictionFile, result);
-		}
-		return result;
-	}
-	
-	// does not return scores
-	public ArrayList<String> decodeAll(boolean doOverlapCheck, int offset) {
-		int size = mFrameList.size();
-		ArrayList<String> result = new ArrayList<String>();
-		for(int i = 0; i < size; i ++)
-		{
-			System.out.println("Decoding index:"+i);
-			String decisionLine = decode(i, doOverlapCheck, offset, false);
+			String decisionLine = decode(i, offset, returnScores);
 			result.add(decisionLine);
 		}
 		if (mPredictionFile != null) {
@@ -167,15 +151,25 @@ public class JointDecoding extends Decoding {
 		return result;
 	}
 
-	public String decode(int index, boolean doOverlapCheck, int offset, boolean returnScores)
+	public ArrayList<String> decodeAll(int offset, int kBestOutput) {
+		int size = mFrameList.size();
+		ArrayList<String> result = new ArrayList<String>();
+		for(int i = 0; i < size; i ++)
+		{
+			System.out.println("Decoding index:"+i);
+			String decisionLine = decode(i, offset, false);
+			result.add(decisionLine);
+		}
+		if (mPredictionFile != null) {
+			ParsePreparation.writeSentencesToFile(mPredictionFile, result);
+		}
+		return result;
+	}
+
+	public String decode(int index, int offset, boolean returnScores)
 	{
 		FrameFeatures f = mFrameList.get(index);
-		String dec = null;
-		if(doOverlapCheck)
-			dec = getNonOverlappingDecision(f,mFrameLines.get(index), offset, returnScores);
-		else
-			dec = getUnconstrainedDecision(f, mFrameLines.get(index), offset);
-		return dec;
+		return getNonOverlappingDecision(f, mFrameLines.get(index), offset, returnScores);
 	}
 
 	public Pair<Map<String, String>, Double> 

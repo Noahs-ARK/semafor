@@ -35,7 +35,7 @@ import java.io.Serializable;
  * @author Kevin Gimpel
  *
  */
-public class LDouble implements Serializable, Writable{
+public class LDouble implements Serializable, Writable, Comparable<LDouble> {
 	/**
 	 * 
 	 */
@@ -161,5 +161,16 @@ public class LDouble implements Serializable, Writable{
 	public void write(DataOutput out) throws IOException {
 		out.writeDouble(value);
 		out.writeBoolean(sign);
+	}
+
+	@Override
+	public int compareTo(LDouble other) {
+		final Double value = getValue();
+		final Double otherValue = other.getValue();
+		if(isPositive()) {
+			return other.isPositive() ? value.compareTo(otherValue) : 1;
+		} else {
+			return other.isPositive() ? -1 : otherValue.compareTo(value);
+		}
 	}
 }

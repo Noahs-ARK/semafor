@@ -21,14 +21,14 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.evaluation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import edu.cmu.cs.lti.ark.fn.parsing.RankedScoredRoleAssignment;
 import edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult;
-import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 
 import javax.annotation.Nullable;
@@ -38,8 +38,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Lists.transform;
 import static edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult.Frame;
+import static edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult.Frame.ScoredSpanList;
 import static edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult.Frame.Span;
 import static edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements.FrameElementAndSpan;
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
@@ -54,13 +56,24 @@ import static org.apache.commons.io.IOUtils.readLines;
  * @author Sam Thomson (sthomson@cs.cmu.edu)
  */
 public class PrepareFullAnnotationJson {
-	private static final ObjectMapper jsonMapper = new ObjectMapper();
-	// gets the sentence index given a frame.elements line
-	private static final Function<String,Integer> getSentenceIndex = new Function<String, Integer>() {
-		@Nullable @Override public Integer apply(@Nullable String input) {
-			return DataPointWithFrameElements.parseFrameNameAndSentenceNum(input).getSecond();
-		}
-	};
+	private static final Function<RankedScoredRoleAssignment,Integer> getSentenceIndex =
+			new Function<RankedScoredRoleAssignment, Integer>() {
+				@Nullable @Override public Integer apply(RankedScoredRoleAssignment input) {
+					return input.sentenceIdx;
+				}
+			};
+	private static final Function<String,RankedScoredRoleAssignment> processPredictionLine =
+			new Function<String, RankedScoredRoleAssignment>() {
+				@Nullable @Override public RankedScoredRoleAssignment apply(@Nullable String input) {
+					return RankedScoredRoleAssignment.fromPredictionLine(input);
+				}
+			};
+	private static final Function<RankedScoredRoleAssignment,String> getFrame =
+			new Function<RankedScoredRoleAssignment, String>() {
+				@Nullable @Override public String apply(RankedScoredRoleAssignment input) {
+					return input.frame;
+				}
+			};
 
 	/**
 	 * Generates the json representation of a set of predicted semantic parses
@@ -76,7 +89,6 @@ public class PrepareFullAnnotationJson {
 		ParseOptions options = new ParseOptions(args);
 		writeJsonForPredictions(
 				options.testFEPredictionsFile,
-				options.testParseFile,
 				options.testTokenizedFile,
 				options.outputFile);
 	}
@@ -85,37 +97,30 @@ public class PrepareFullAnnotationJson {
 	 * Generates the JSON representation of a set of predicted semantic parses
 	 *
 	 * @param testFEPredictionsFile Path to MapReduce output of the parser, formatted as frame elements lines
-	 * @param testParseFile Dependency parses for each sentence in the data
 	 * @param testTokenizedFile File Original form of each sentence in the data
 	 * @param outputFile Where to store the resulting json
 	 */
 	public static void writeJsonForPredictions(String testFEPredictionsFile,
-											   String testParseFile,
 											   String testTokenizedFile,
 											   String outputFile) throws Exception {
 		final FileReader tokenizedInput = new FileReader(testTokenizedFile);
 		try {
-			final FileReader parseInput = new FileReader(testParseFile);
+			final FileReader feInput = new FileReader(testFEPredictionsFile);
 			try {
-				final FileReader feInput = new FileReader(testFEPredictionsFile);
+				final BufferedWriter output = new BufferedWriter(new FileWriter(new File(outputFile)));
 				try {
-					final BufferedWriter output = new BufferedWriter(new FileWriter(new File(outputFile)));
-					try {
-						writeJsonForPredictions(tokenizedInput, feInput, parseInput, output);
-					} finally { closeQuietly(output); }
-				} finally { closeQuietly(feInput); }
-			} finally { closeQuietly(parseInput); }
+					writeJsonForPredictions(tokenizedInput, feInput, output);
+				} finally { closeQuietly(output); }
+			} finally { closeQuietly(feInput); }
 		} finally { closeQuietly(tokenizedInput); }
 	}
 
 	public static void writeJsonForPredictions(Reader tokenizedInput,
 											   Reader frameElementsInput,
-											   Reader parseInput,
 											   Writer output) throws IOException {
 		final List<String> tokenizedLines = readLines(tokenizedInput);
-		final Multimap<Integer, String> predictions = readFrameElementLines(frameElementsInput);
-		final List<String> parses = readLines(parseInput);
-		writeJson(predictions, parses, tokenizedLines, output);
+		final Multimap<Integer, RankedScoredRoleAssignment> predictions = readFrameElementLines(frameElementsInput);
+		writeJson(predictions, tokenizedLines, output);
 	}
 
 	/**
@@ -125,57 +130,53 @@ public class PrepareFullAnnotationJson {
 	 * @return a map from sentence num to a set of predicted frame elements for that sentence
 	 * @throws IOException if there is a problem reading from the file
 	 */
-	private static Multimap<Integer, String> readFrameElementLines(Reader feInput) throws IOException {
-		List<String> lines = readLines(feInput);
-		// output of MapReduce--will have an extra number and tab at the beginning of each line
-		// throw away the first field
-		lines = transform(lines, new Function<String, String>() {
-			@Override public String apply(String input) {
-				return input.substring(input.indexOf('\t') + 1).trim();
-			}
-		});
+	private static Multimap<Integer, RankedScoredRoleAssignment> readFrameElementLines(Reader feInput)
+			throws IOException {
+		final List<String> lines = readLines(feInput);
+		final List<RankedScoredRoleAssignment> roleAssignments = copyOf(transform(lines, processPredictionLine));
 		// group by sentence index
-		return Multimaps.index(lines, getSentenceIndex);
+		return Multimaps.index(roleAssignments, getSentenceIndex);
 	}
 
-	private static void writeJson(Multimap<Integer, String> predictions,
-								  List<String> parses,
+	private static void writeJson(Multimap<Integer, RankedScoredRoleAssignment> predictions,
 								  List<String> tokenizedLines,
 								  Writer output) throws IOException {
-		for(int i : xrange(parses.size())) {
-			final String parseLine = parses.get(i);
-			final Collection<String> feLines = predictions.get(i);
-			final String tokenizedLine = tokenizedLines.get(i);
-			final SemaforParseResult semaforParseResult = getSemaforParse(parseLine, feLines, tokenizedLine);
-			output.write(jsonMapper.writeValueAsString(semaforParseResult) + "\n");
+		for(int i : xrange(tokenizedLines.size())) {
+			final Collection<RankedScoredRoleAssignment> predictionsForSentence = predictions.get(i);
+			final List<String> tokens = Arrays.asList(tokenizedLines.get(i).split(" "));
+			final SemaforParseResult semaforParseResult = getSemaforParse(predictionsForSentence, tokens);
+			output.write(semaforParseResult.toJson() + "\n");
 		}
 	}
 
 	/**
-	 * Given predicted frame instances, including their frame elements, create a SemaforParse ready to be serialized to
+	 * Given predicted frame instances, including their frame elements, create a SemaforParseResult ready to be serialized to
 	 * JSON
 	 *
-	 * @param parseLine Line encoding the dependency parse of the sentence
-	 * @param feLines Lines encoding predicted frames & FEs in the same format as the .sentences.frame.elements files
-	 * @param tokenizedLine The original sentence, space-separated
+	 * @param rankedScoredRoleAssignments Lines encoding predicted frames & FEs in the same format as the .sentences.frame.elements files
 	 */
-	private static SemaforParseResult getSemaforParse(String parseLine, Iterable<String> feLines, String tokenizedLine) {
-		final List<String> tokens = Arrays.asList(tokenizedLine.split(" "));
+	private static SemaforParseResult getSemaforParse(Collection<RankedScoredRoleAssignment> rankedScoredRoleAssignments,
+													  List<String> tokens) {
 		final ArrayList<Frame> frames = Lists.newArrayList();
-		for (String feLine : feLines) {
-			final DataPointWithFrameElements dp = new DataPointWithFrameElements(parseLine, feLine);
-			dp.processOrgLine(tokenizedLine);
-			// extract target
-			final int[] indices = dp.getTokenNums();
-			final Span target = makeSpan(indices[0], indices[indices.length-1] + 1, dp.getFrameName(), tokens);
-			// extract frame elements
-			final List<FrameElementAndSpan> frameElementsAndSpans = dp.getFrameElementsAndSpans();
-			final ArrayList<Span> frameElements = Lists.newArrayList();
-			for(FrameElementAndSpan frameElementAndSpan : frameElementsAndSpans) {
-				final Range0Based range = frameElementAndSpan.span;
-				frameElements.add(makeSpan(range.getStart(), range.getEnd() + 1, frameElementAndSpan.name, tokens));
+		// group by frame
+		final ImmutableListMultimap<String,RankedScoredRoleAssignment> predictionsByFrame =
+				Multimaps.index(rankedScoredRoleAssignments, getFrame);
+		for (String frame : predictionsByFrame.keySet()) {
+			final List<RankedScoredRoleAssignment> predictionsForFrame = predictionsByFrame.get(frame);
+			final RankedScoredRoleAssignment first = predictionsForFrame.get(0);
+			final Span target = makeSpan(first.targetSpan.getStart(), first.targetSpan.getEnd() + 1, frame, tokens);
+			final List<ScoredSpanList> scoredSpanLists = Lists.newArrayList();
+			for (RankedScoredRoleAssignment ra : predictionsForFrame) {
+				// extract frame elements
+				final List<FrameElementAndSpan> frameElementsAndSpans = ra.fesAndSpans;
+				final List<Span> frameElements = Lists.newArrayList();
+				for(FrameElementAndSpan frameElementAndSpan : frameElementsAndSpans) {
+					final Range0Based range = frameElementAndSpan.span;
+					frameElements.add(makeSpan(range.getStart(), range.getEnd() + 1, frameElementAndSpan.name, tokens));
+				}
+				scoredSpanLists.add(new ScoredSpanList(ra.rank, ra.score, frameElements));
 			}
-			frames.add(new Frame(target, frameElements));
+			frames.add(new Frame(target, scoredSpanLists));
 		}
 		return new SemaforParseResult(frames, tokens);
 	}

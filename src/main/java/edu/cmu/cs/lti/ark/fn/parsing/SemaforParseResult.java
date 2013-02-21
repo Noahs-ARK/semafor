@@ -2,6 +2,8 @@ package edu.cmu.cs.lti.ark.fn.parsing;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.annotation.concurrent.Immutable;
 import java.util.List;
@@ -13,6 +15,8 @@ import java.util.List;
  */
 @Immutable
 public class SemaforParseResult {
+	private static final ObjectMapper jsonMapper = new ObjectMapper();
+
 	/** The list of predicted frames **/
 	final public List<Frame> frames;
 	/** The original text of the sentence **/
@@ -29,13 +33,28 @@ public class SemaforParseResult {
 		/** The target of the predicted frame **/
 		final public Span target;
 		/** The list of predicted frame elements for the frame */
-		final public List<Span> frameElements;
+		final public List<ScoredSpanList> annotationSets;
 
 		@JsonCreator
 		public Frame(@JsonProperty("target") Span target,
-					 @JsonProperty("frame_elements") List<Span> frameElements) {
+					 @JsonProperty("annotationSets") List<ScoredSpanList> annotationSets) {
 			this.target = target;
-			this.frameElements = frameElements;
+			this.annotationSets = annotationSets;
+		}
+
+		public static class ScoredSpanList {
+			final public int rank;
+			final public double score;
+			final public List<Span> frameElements;
+
+			@JsonCreator
+			public ScoredSpanList(@JsonProperty("rank") int rank,
+								  @JsonProperty("score") double score,
+								  @JsonProperty("frameElements") List<Span> frameElements) {
+				this.rank = rank;
+				this.score = score;
+				this.frameElements = frameElements;
+			}
 		}
 
 		public static class Span {
@@ -59,5 +78,9 @@ public class SemaforParseResult {
 				this.text = text;
 			}
 		}
+	}
+
+	public String toJson() throws JsonProcessingException {
+		return jsonMapper.writeValueAsString(this);
 	}
 }

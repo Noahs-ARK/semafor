@@ -21,8 +21,6 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import gnu.trove.THashMap;
-
 /**
  * File names listed here are mere examples. i.e. they are not hard coded. they
  * will be read from the command-line argument.

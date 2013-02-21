@@ -21,20 +21,20 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.utils;
 
-import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
+import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.util.Interner;
-import edu.cmu.cs.lti.ark.util.XmlUtils;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.Range;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParses;
 import gnu.trove.THashMap;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 import static java.lang.Integer.parseInt;
 
@@ -42,6 +42,7 @@ public class DataPoint {
 	private DependencyParses parses;
 	private String frameName;
 	private String lexicalUnitName;	// e.g. 'cause.v'
+	/* token indices of target phrase */
 	private int[] tokenNums;
 	private int sentNum;
 	
@@ -52,7 +53,7 @@ public class DataPoint {
 	 * @see #processOrgLine(String)
 	 * @see #getCharacterIndicesForToken(int)
 	 */
-	private THashMap<Integer,Range> tokenIndexMap;
+	private THashMap<Integer,Range0Based> tokenIndexMap;
 
 	// for benefit of subclasses
 	protected DataPoint() { }
@@ -73,7 +74,7 @@ public class DataPoint {
 	 */
 	public void processOrgLine(String tokenizedSentence) {
 		final StringTokenizer st = new StringTokenizer(tokenizedSentence.trim(), " ", true);
-		final THashMap<Integer, Range> localTokenIndexMap = new THashMap<Integer, Range>();
+		final THashMap<Integer, Range0Based> localTokenIndexMap = new THashMap<Integer, Range0Based>();
 		int count = 0;
 		int tokNum = 0;
 		while(st.hasMoreTokens()) {
@@ -156,19 +157,6 @@ public class DataPoint {
 		return sentNum;
 	}
 
-	/**
-	 * @param parseFile Path to file with .sentences.all.tags extension
-	 * @return List of parses for all sentences in the specified file
-	 */
-	public static List<DependencyParses> loadAllParses(String parseFile) {
-		List<String> parseLines = ParsePreparation.readSentencesFromFile(parseFile);
-		List<DependencyParses> parses = new ArrayList<DependencyParses>(parseLines.size());
-		for (String parseLine : parseLines){
-			parses.add(new DependencyParses(buildParsesForLine(parseLine)));
-		}
-		return parses;
-	}
-	
 	public static DependencyParse[] buildParsesForLine(String parseLine) {
 		StringTokenizer st = new StringTokenizer(parseLine, "\t");
 		int numWords = new Integer(st.nextToken());	// number of word tokens in the sentence
@@ -202,69 +190,46 @@ public class DataPoint {
 		return dependencyParses;
 	}
 
-	public Node buildAnnotationSetNode(Document doc, int parentId, int num, String orgLine) {
-		Node ret = doc.createElement("annotationSet");
-		int setId = parentId*100+num;
-		XmlUtils.addAttribute(doc,"ID", (Element)ret,""+setId);
-		XmlUtils.addAttribute(doc,"frameName", (Element)ret,frameName);
-		
-		Node layers = doc.createElement("layers");
-		Node layer = doc.createElement("layer");
-		int layerId = setId*100+1;
-		XmlUtils.addAttribute(doc,"ID", (Element)layer,""+layerId);
-		XmlUtils.addAttribute(doc,"name", (Element)layer,"Target");
-		layers.appendChild(layer);
-		
-		Node labels = doc.createElement("labels");
-		
-		List<Range> startEnds = getStartEnds(true);
-		int count = 0;
-		for(Range startEnd : startEnds)
-		{
-			int labelId = layerId*100+count+1;
-			Node label = doc.createElement("label");
-			XmlUtils.addAttribute(doc,"ID", (Element)label,""+labelId);
-			XmlUtils.addAttribute(doc,"name", (Element)label,"Target");
-			XmlUtils.addAttribute(doc,"start", (Element)label,""+startEnd.getStart());
-			XmlUtils.addAttribute(doc,"end", (Element)label,""+startEnd.getEnd());
-			labels.appendChild(label);
-			count = count+3;
-		}
-		layer.appendChild(labels);
-		ret.appendChild(layers);
-		return ret;
-	}
-	
 	public Range getCharacterIndicesForToken(int tokenNum) {
 		return tokenIndexMap.get(tokenNum);
 	}
-	
-	private List<Range> getStartEnds(boolean mergeAdjacent) {
-		List<Range> result = new ArrayList<Range>();
-		int pTknNum = Integer.MIN_VALUE;
-		Range r = null;
-		for(int tknNum : tokenNums) {
-			Range r2 = r;
-			r = tokenIndexMap.get(tknNum);
-			if (mergeAdjacent) {
-				if (pTknNum == tknNum - 1) {
-					// this continues a range started with a previous token
-					r = new Range0Based(r2.getStart(), r.getEnd());
-				}
-				else if (r2!=null) {
+
+	public List<Range0Based> getTokenStartEnds(boolean mergeAdjacent) {
+		final List<Range0Based> result = Lists.newArrayList();
+		Optional<Range0Based> oCurrent = Optional.absent();
+		for (int tknNum : tokenNums) {
+			if (!oCurrent.isPresent()) {
+				oCurrent = Optional.of(new Range0Based(tknNum, tknNum));
+			} else {
+				final Range0Based current = oCurrent.get();
+				if (mergeAdjacent && current.getStart() == tknNum - 1) {
+					// merge with previous
+					oCurrent = Optional.of(new Range0Based(current.getStart(), tknNum));
+				} else {
 					// done with group of consecutive tokens
-					result.add(r2);
+					result.add(current);
+					oCurrent = Optional.of(new Range0Based(tknNum, tknNum));
 				}
 			}
-			else {
-				result.add(r);
-			}
-			pTknNum = tknNum;
-			System.out.println(tokenIndexMap.get(tknNum));
 		}
-		if (mergeAdjacent) {
-			// still need to add the last range
-			result.add(r);
+		// add the final span
+		if (oCurrent.isPresent()) result.add(oCurrent.get());
+		return result;
+	}
+
+	public List<Range0Based> getCharacterStartEnds(boolean mergeAdjacent) {
+		return getCharStartEnds(getTokenStartEnds(mergeAdjacent));
+	}
+
+	public List<Range0Based> getCharStartEnds(List<Range0Based> tokenRanges) {
+		final List<Range0Based> result = Lists.newArrayList();
+		for (Range0Based tokenRange : tokenRanges) {
+			final Range0Based charRange =
+					new Range0Based(
+							tokenIndexMap.get(tokenRange.getStart()).getStart(),
+							tokenIndexMap.get(tokenRange.getEnd()).getEnd()
+					);
+			result.add(charRange);
 		}
 		return result;
 	}

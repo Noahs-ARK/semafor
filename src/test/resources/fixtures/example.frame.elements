@@ -1,15 +1,30 @@
-0	1	Temporal_collocation	no.r	2_3	no longer	0
-0	2	Building_subparts	kitchen.n	1	kitchen	0	Building_part	1
-0	1	Sensation	smells.v	4	smells	0
-0	3	Measure_linear_extent	miles.n	1	miles	1	Unit	1	Count	0
-0	2	Time_vector	later.r	2	later	1	Event	3:19
-0	2	Roadways	trail.n	4	trail	1	Roadway	4
-0	2	Natural_features	creek.n	7	creek	1	Locale	7
-0	2	Leadership	run.n	8	run	1	Leader	7
-0	2	Relational_quantity	nearly.r	9	nearly	1	Denoted_quantity	9
-0	1	Rank	level.n	10	level	1
-0	1	Increment	other.j	13	other	1
-0	1	Sensation	sound.n	16	sound	1
-0	1	Motion_directional	falls.n	19	Falls	1
-0	2	Adorning	fills.v	20	fills	1	Theme	11:19
-0	1	Expressing_publicly	air.n	22	air	1
+0	33.892262139847176	1	Temporal_collocation	no.r	2_3	no longer	0
+1	30.874447542261787	2	Temporal_collocation	no.r	2_3	no longer	0	Trajector_event	0:1
+0	16.78375806061181	2	Building_subparts	kitchen.n	1	kitchen	0	Building_part	1
+1	14.724378630169126	2	Building_subparts	kitchen.n	1	kitchen	0	Building_part	0:1
+0	33.65353312566051	1	Sensation	smells.v	4	smells	0
+1	29.86554230591554	2	Sensation	smells.v	4	smells	0	Descriptor	2:3
+0	19.38157607876535	3	Measure_linear_extent	miles.n	1	miles	1	Count	0	Unit	1
+1	17.369171450113363	2	Measure_linear_extent	miles.n	1	miles	1	Unit	1
+0	16.6588938534817	2	Time_vector	later.r	2	later	1	Event	3:19
+1	16.503761146001466	3	Time_vector	later.r	2	later	1	Event	3:19	Distance	0:1
+0	61.628179616060464	2	Roadways	trail.n	4	trail	1	Roadway	4
+1	57.42272512765068	2	Roadways	trail.n	4	trail	1	Roadway	3:8
+0	34.75138033340299	2	Natural_features	creek.n	7	creek	1	Locale	7
+1	29.155521483661627	1	Natural_features	creek.n	7	creek	1
+0	56.12578644597252	2	Leadership	run.n	8	run	1	Leader	7
+1	55.15061995070657	2	Leadership	run.n	8	run	1	Leader	6:8
+0	14.948836142705515	2	Relational_quantity	nearly.r	9	nearly	1	Denoted_quantity	9
+1	12.806056768251274	3	Relational_quantity	nearly.r	9	nearly	1	Denoted_quantity	9	Individuals	3:8
+0	3.854960471680883	1	Rank	level.n	10	level	1
+1	2.9376804497868196	2	Rank	level.n	10	level	1	Rank	9
+0	15.174473439735468	1	Increment	other.j	13	other	1
+1	14.056323771940129	2	Increment	other.j	13	other	1	Class	15:19
+0	34.71622963574865	1	Sensation	sound.n	16	sound	1
+1	32.217929188416974	2	Sensation	sound.n	16	sound	1	Percept	17:19
+0	94.32792340841507	1	Motion_directional	falls.n	19	Falls	1
+1	93.71771474093431	2	Motion_directional	falls.n	19	Falls	1	Theme	18
+0	12.164899153204807	2	Adorning	fills.v	20	fills	1	Theme	11:19
+1	12.128270534170642	3	Adorning	fills.v	20	fills	1	Theme	11:19	Location	21:22
+0	85.91249757204947	1	Expressing_publicly	air.n	22	air	1
+1	80.30901632826692	2	Expressing_publicly	air.n	22	air	1	Communicator	21:22

@@ -21,44 +21,37 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.utils;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-
 import edu.cmu.cs.lti.ark.fn.parsing.CandidateFrameElementFilters;
 import edu.cmu.cs.lti.ark.util.Interner;
-import edu.cmu.cs.lti.ark.util.XmlUtils;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
-import edu.cmu.cs.lti.ark.util.ds.Range;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParses;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 import static edu.cmu.cs.lti.ark.fn.parsing.CandidateFrameElementFilters.createSpanRange;
+import static java.lang.Double.parseDouble;
 import static java.lang.Integer.parseInt;
+import static java.util.Arrays.asList;
 
-public class DataPointWithFrameElements extends DataPoint
-{
+public class DataPointWithFrameElements extends DataPoint {
+	private static Joiner TAB_JOINER = Joiner.on("\t");
+
 	private final int numSpans;	// includes the target span and any frame elements
-
-	private List<FrameElementAndSpan> frameElementsAndSpans;
-	
-	private String target;
-	
-	private static final String RE_FE = "(\t([^\\t]+)\t(\\d+([:]\\d+)?))";	// \t frame_name \t token_range
+	public List<FrameElementAndSpan> frameElementsAndSpans;
+	public String target;
+	public final int rank;
+	public final double score;
 
 	public static class FrameElementAndSpan {
 		public final String name;
@@ -70,12 +63,19 @@ public class DataPointWithFrameElements extends DataPoint
 		}
 	}
 
+	/**
+	 * Frame line that's only been partly broken down
+	 */
 	protected static class CountFrameAndElements {
+		public final int rank;
+		public final double score;
 		public final int count;
 		public final String frame;
 		public final String elements;
 
-		public CountFrameAndElements(int count, String frame, String elements) {
+		public CountFrameAndElements(int rank, double score, int count, String frame, String elements) {
+			this.rank = rank;
+			this.score = score;
 			this.count = count;
 			this.frame = frame;
 			this.elements = elements;
@@ -94,25 +94,25 @@ public class DataPointWithFrameElements extends DataPoint
 		super(parses, dataSet);
 		final CountFrameAndElements parts = decomposeFELine(frameElementsLine);
 		numSpans = parts.count;
+		rank = parts.rank;
+		score = parts.score;
 		processFrameLine(parts.frame);
 		frameElementsAndSpans = processFrameElements(parts.elements);
 	}
 
 	/**
-	 *
 	 * @param frameElementsLine a string encoded in the frame.elements format
 	 * @return @code{(numSpans, (mainFramePortion, fePortion))}
 	 */
 	protected static CountFrameAndElements decomposeFELine(String frameElementsLine) {
-		Pattern r = Pattern.compile("^(\\d+)\t([^\\t]*\t[^\\t]*\t[^\\t]*\t[^\\t]*\t\\d+)(" + RE_FE + "*)\\s*$");
-		Matcher m = r.matcher(frameElementsLine);
-		if (!m.find()) {
-			throw new RuntimeException("Error processing frame elements line:\n" + frameElementsLine);
-		}
-		int numSpans = parseInt(m.group(1));
-		String mainFramePortion = m.group(2);
-		String fePortion = m.group(3);
-		return new CountFrameAndElements(numSpans, mainFramePortion, fePortion);
+		String[] tokens = frameElementsLine.trim().split("\t");
+		int rank = parseInt(tokens[0]);
+		double score = parseDouble(tokens[1]);
+		int numSpans = parseInt(tokens[2]);
+		final List<String> tokenList = asList(tokens);
+		String mainFramePortion = TAB_JOINER.join(tokenList.subList(3, 8));
+		String fePortion = TAB_JOINER.join(tokenList.subList(8, tokens.length));
+		return new CountFrameAndElements(rank, score, numSpans, mainFramePortion, fePortion);
 	}
 	
 	public static Pair<String,Integer> parseFrameNameAndSentenceNum(String frameElementsLine) {
@@ -123,27 +123,29 @@ public class DataPointWithFrameElements extends DataPoint
 	public ImmutableList<FrameElementAndSpan> processFrameElements(String frameElementsString) {
 		// Frame elements
 		ImmutableList.Builder<FrameElementAndSpan> fesAndSpans = ImmutableList.builder();
-		
-		int i = 0;
-		if (!frameElementsString.trim().equals("")) {
-			Matcher feM = Pattern.compile(RE_FE).matcher(frameElementsString);
-			while (feM.find()) {
-				final String feName = (String)Interner.globalIntern(feM.group(2));
-				final String feSpan = feM.group(3);
+		final String trimmed = frameElementsString.trim();
+		if (!trimmed.equals("")) {
+			String[] tokens = trimmed.split("\t");
+			for (int i = 0; i < tokens.length; i += 2) {
+				final String feName = tokens[i];
+				final String feSpan = tokens[i+1];
 				final Range0Based span = getSpan(feSpan);
 				fesAndSpans.add(new FrameElementAndSpan(feName, span));
-				i++;
 			}
 		}
-		if (i != numSpans-1) {
+		final ImmutableList<FrameElementAndSpan> results = fesAndSpans.build();
+		if (results.size() != numSpans - 1) {
 			// sanity check
-			System.err.println("Unable to read correct number of frame elements from string (found " + Integer.toString(i) + ", should be " + Integer.toString(numSpans-1) + "):\n" + frameElementsString);
-			System.exit(1);
+			throw new RuntimeException("Unable to read correct number of frame elements from string (found " +
+					Integer.toString(results.size()) +
+					", should be " + Integer.toString(numSpans-1) +
+					"):\n" +
+					frameElementsString);
 		}
-		return fesAndSpans.build();
+		return results;
 	}
 
-	private Range0Based getSpan(String feSpan) {
+	public static Range0Based getSpan(String feSpan) {
 		int feStart;
 		int feEnd;
 		if (feSpan.contains(":")) {
@@ -225,40 +227,6 @@ public class DataPointWithFrameElements extends DataPoint
 
 	public List<FrameElementAndSpan> getFrameElementsAndSpans() {
 		return frameElementsAndSpans;
-	}
-
-	public Node buildAnnotationSetNode(Document doc, int parentId, int num, String orgLine) {
-		Node node = super.buildAnnotationSetNode(doc, parentId, num, orgLine);
-		
-		Node layers = XmlUtils.applyXPath(node, "layers")[0];
-		Node feLayer = doc.createElement("layer");
-		int setId = parentId*100+num;
-		int layerId = setId*100+2;
-		XmlUtils.addAttribute(doc,"ID", (Element)feLayer,""+layerId);
-		XmlUtils.addAttribute(doc,"name", (Element)feLayer,"FE");
-		layers.appendChild(feLayer);
-		Node labels = doc.createElement("labels");
-		feLayer.appendChild(labels);
-		
-		List<Range0Based> fillerSpans = getOvertFrameElementFillerSpans();
-		String[] feNames = getOvertFilledFrameElementNames();
-		for (int i=0; i<feNames.length; i++) {
-			String feName = feNames[i];
-			Range fillerSpan = fillerSpans.get(i);
-			
-			int labelId = layerId*100+i+1;
-			Node label = doc.createElement("label");
-			XmlUtils.addAttribute(doc,"ID", (Element)label,""+labelId);
-			XmlUtils.addAttribute(doc,"name", (Element)label,feName);
-			
-			int startCharIndex = getCharacterIndicesForToken(fillerSpan.getStart()).getStart();
-			int endCharIndex = getCharacterIndicesForToken(fillerSpan.getEnd()).getEnd();
-			XmlUtils.addAttribute(doc,"start", (Element)label,""+startCharIndex);
-			XmlUtils.addAttribute(doc,"end", (Element)label,""+endCharIndex);
-			labels.appendChild(label);
-		}
-		
-		return node;
 	}
 
 	public static String getTokens(String sentence, int[] intNums) {

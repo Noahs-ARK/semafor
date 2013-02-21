@@ -1,14 +1,17 @@
 {
       "frames": [
         {
-          "frame_elements": [
+	  "annotationSets": [
+              {"score": 10.2, 
+          "frameElements": [
             {
               "start": 10,
               "end": 11,
               "name": "Relatives",
               "text": "family"
             }
-          ],
+          ]
+          }],
           "target": {
             "start": 10,
             "end": 11,
@@ -17,14 +20,17 @@
           }
         },
         {
-          "frame_elements": [
+          "annotationSets": [
+              {"score": 10.2,
+          "frameElements": [
             {
               "start": 12,
               "end": 13,
               "name": "Vehicle",
               "text": "vehicles"
             }
-          ],
+          ]
+	  }],
           "target": {
             "start": 12,
             "end": 13,
@@ -33,7 +39,9 @@
           }
         },
         {
-          "frame_elements": [
+          "annotationSets": [
+              {"score": 10.2,
+          "frameElements": [
             {
               "start": 7,
               "end": 13,
@@ -46,7 +54,8 @@
               "name": "Member",
               "text": "member"
             }
-          ],
+          ]
+	  }],
           "target": {
             "start": 6,
             "end": 7,
@@ -55,7 +64,9 @@
           }
         },
         {
-          "frame_elements": [
+          "annotationSets": [
+              {"score": 10.2,
+          "frameElements": [
             {
               "start": 6,
               "end": 7,
@@ -68,7 +79,8 @@
               "name": "Age",
               "text": "newest"
             }
-          ],
+          ]
+	  }],
           "target": {
             "start": 5,
             "end": 6,
@@ -77,14 +89,17 @@
           }
         },
         {
-          "frame_elements": [
+          "annotationSets": [
+              {"score": 10.2,
+          "frameElements": [
             {
               "start": 1,
               "end": 2,
               "name": "Person",
               "text": "Soldiers"
             }
-          ],
+          ]
+	  }],
           "target": {
             "start": 1,
             "end": 2,
