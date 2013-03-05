@@ -1,0 +1,6 @@
+This product includes software developed by
+The Apache Software Foundation (http://www.apache.org/)
+Apache log4j 1.2 (http://logging.apache.org/log4j/1.2/)
+LIBSVM -- A Library for Support Vector Machines (http://www.csie.ntu.edu.tw/~cjlin/libsvm/).
+LIBLINEAR -- A Library for Large Linear Classification (http://www.csie.ntu.edu.tw/~cjlin/liblinear/)
+Memory efficient implementations of HashMap and HashSet by Google Inc. (http://www.java2s.com/Tutorial/Java/0140__Collections/Amemoryefficienthashmap.htm and http://www.java2s.com/Code/Java/Collections-Data-Structure/Amemoryefficienthashset.htm)

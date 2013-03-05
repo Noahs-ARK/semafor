@@ -178,7 +178,7 @@ public class DataPrep {
 
 		System.err.println("Loading data....");
 		for (String feline : feLines) {
-			final int sentNum = parseInt(feline.split("\t")[5]);
+			final int sentNum = parseInt(feline.split("\t")[7]);
 			DataPointWithFrameElements dp = new DataPointWithFrameElements(tagLines.get(sentNum), feline);
 			ArrayList<int[]> spanList;
 			if (hasCandidateFile) {
@@ -262,7 +262,7 @@ public class DataPrep {
 	public int[][][] getNextTrainData() throws IOException {
 		final String feline = feLines.get(feIndex);
 		final int candidateTokens[][] = candidateLines.get(feIndex);
-		final int sentNum = parseInt(feline.split("\t")[5]);
+		final int sentNum = parseInt(feline.split("\t")[7]);
 		final String parseLine = tagLines.get(sentNum);
 		final Sentence sentence = Sentence.fromAllLemmaTagsArray(AllLemmaTags.readLine(parseLine));
 		final ArrayList<int[][]> allData = getTrainData(feline, candidateTokens, sentence);

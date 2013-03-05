@@ -28,8 +28,10 @@ import gnu.trove.TIntObjectHashMap;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import static java.lang.Integer.parseInt;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
 public class LocalFeatureReading {
@@ -260,16 +262,20 @@ public class LocalFeatureReading {
 		mFrameFeaturesList = new ArrayList<FrameFeatures>();
 		for(i = 0; i < mFrameLines.size(); i ++) {
 			String[] toks = mFrameLines.get(i).split("\t");
-			String frame = toks[1].trim();
-			String[] span = toks[3].split("_");
-			int start = new Integer(span[0]);
-			int end = new Integer(span[span.length-1]);
+			// throw away the first two fields (rank and score)
+			// hack around the fact that parsing this goddamn file format is hardcoded in like 20 different places
+			List<String> tokens = Arrays.asList(toks).subList(2, toks.length);
+
+			String frame = tokens.get(1).trim();
+			String[] span = tokens.get(3).split("_");
+			int start = parseInt(span[0]);
+			int end = parseInt(span[span.length-1]);
 			ArrayList<Integer> feLineNums = frameIndexMap.get(i);
-			if(feLineNums.size()>0) {
+			if(feLineNums.size() > 0) {
 				String assocFeLine = feLines.get(feLineNums.get(0));
 				String[] aFLToks = assocFeLine.split("\t");
-				int aStart = new Integer(aFLToks[3]);
-				int aEnd = new Integer(aFLToks[4]);
+				int aStart = parseInt(aFLToks[3]);
+				int aEnd = parseInt(aFLToks[4]);
 				if(start==aStart&&end==aEnd) {
 
 				}

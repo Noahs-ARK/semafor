@@ -266,8 +266,8 @@ public class ParserDriver {
 			final String bestFrame = idModel.getBestFrame(input, parseLine);
 			final String tokenRepresentation = getTokenRepresentation(tokens[1], parseLine);
 			final String[] split = tokenRepresentation.trim().split("\t");
-			// 1\tBestFrame\tTargetTokenNum(s)\tSentenceOffset
-			idResult.add(TAB.join(1, bestFrame, split[0], tokens[1], split[1], sentNum));
+			// rank(=0) \t score(=1.0) \t numTargets+numFes(=1) \t bestFrame \t targetTokenNum(s) \t sentenceOffset
+			idResult.add(TAB.join(0, 1.0, 1, bestFrame, split[0], tokens[1], split[1], sentNum));
 		}
 		return idResult;
 	}

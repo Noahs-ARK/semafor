@@ -1,45 +1,40 @@
+#!/bin/sh
 ######################## ENVIRONMENT VARIABLES ###############################
 ######### change the following according to your own local setup #############
 
 
-BASE_DIR="/cab0/sthomson/code/semafor"
-
-# SEMAFOR home: Please change the following path to the absolute path
+# assumes this script (config.sh) lives in "${BASE_DIR}/semafor/release/"
+BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
+# path to the absolute path
 # where you decompressed SEMAFOR.
-#SEMAFOR_HOME=/usr2/dipanjan/experiments/FramenetParsing/www/semafor-semantic-parser
 SEMAFOR_HOME="${BASE_DIR}/semafor"
 
-# Temporary folder location: Change the path to your custom temp directory
-TEMP_DIR="${SEMAFOR_HOME}/release/temp"
+# Temporary folder location: Change the path to a custom temp directory
+TMPDIR="${SEMAFOR_HOME}/temp"
 
 # This indicates whether MST parser should run in the server mode or not
 # Modes are "server" and "noserver"
 MST_MODE=noserver
-#MST_MODE="server"
 
 # Location of the MST parser root directory: Please change the 
 # following path to the place where you decompressed stackedParserServer
 # (to be downloaded from http://semafor-semantic-parser.googlecode.com/files/stackedParserServer.tgz).
-#MST_PARSER_HOME=/usr2/dipanjan/experiments/FramenetParsing/www/stackedParserServer
 MST_PARSER_HOME="${BASE_DIR}/stackedParserServer"
 
 # Name of the machine where the MST parser server is running
 # default is localhost, change if necessary.
-#MST_MACHINE=malbec11.ark.cs.cmu.edu
-#MST_MACHINE=localhost
-MST_MACHINE=cab.ark.cs.cmu.edu
+MST_MACHINE=localhost
 
 # Number of the port at which you want to run the MST parser --
 # change if necessary.
 MST_PORT=12345
 
 # Change the following to the bin directory of your $JAVA_HOME
-#JAVA_HOME_BIN=/usr2/dipanjan/software/jdk1.6.0_06/bi
-JAVA_HOME_BIN="$JAVA_HOME/bin"
+JAVA_HOME_BIN="/usr/bin"
 
 # Change the following to the directory where you decompressed 
 # the models for SEMAFOR 2.0.
-MODEL_DIR="${BASE_DIR}/models"
+MODEL_DIR="${BASE_DIR}/models/malt_20121129"
 
 # If you want to use gold targets, 
 # point to gold target file's absolute path. 
@@ -68,7 +63,6 @@ USE_GRAPH_FILE=yes
 # decoding in the form AD^3 (see Das et al. *SEM 2012 paper) that respects
 # multiple constraints, use "ad3". Note that results may not match *SEM 2012
 # because of different Java implementation (paper used C++).
-#DECODING_TYPE=ad3
 DECODING_TYPE="beam"
 
 
@@ -76,7 +70,7 @@ DECODING_TYPE="beam"
 
 echo "Environment variables:"
 echo "SEMAFOR_HOME=${SEMAFOR_HOME}"
-echo "TEMP_DIR=${TEMP_DIR}"
+echo "TMPDIR=${TMPDIR}"
 echo "MST_PARSER_HOME=${MST_PARSER_HOME}"
 echo "MST_MODE=${MST_MODE}"
 echo "MST_MACHINE=${MST_MACHINE}"

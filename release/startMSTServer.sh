@@ -18,9 +18,16 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+set -e # fail fast
 
 source "$(dirname `readlink -f ${0}`)/config"
 cd ${MST_PARSER_HOME}
 echo "Current directory: ${MST_PARSER_HOME}"
+
+TEMP_DIR=$(mktemp -d -t mst.XXXXXXXXXX)
+echo "TEMP_DIR: ${TEMP_DIR}"
+
 ${JAVA_HOME_BIN}/java -classpath ".:./lib/trove.jar:./lib/mallet.jar:./lib/mallet-deps.jar" -Xms8g -Xmx8g \
 mst.DependencyEnglish2OProjParser ${MODEL_DIR}/wsj.model ${TEMP_DIR} ${MST_PORT}
+
+rm -r "${TEMP_DIR}"

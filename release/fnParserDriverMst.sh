@@ -1,5 +1,5 @@
 #!/bin/bash
-#    The driver script for SEMAFOR.
+#    The driver script for SEMAFOR using MSTParser as its dependency parser.
 #    Written by Dipanjan Das (dipanjan@cs.cmu.edu)
 #    with suggestions from Thomas Kleinbauer (thomas.kleinbauer@dfki.de)
 #    Copyright (C) 2011
@@ -19,7 +19,10 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-source "$(dirname ${0})/config"
+set -e # fail fast
+
+MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "${MY_DIR}/config.sh"
 
 if [ $# -lt 1 -o $# -gt 2 ]; then
    echo "USAGE: `basename "${0}"` <input-file> [<output-file>]"
@@ -46,6 +49,8 @@ else
    OUTPUT_FILE="${INPUT_FILE}.out"
 fi
 
+TEMP_DIR=$(mktemp -d -t semafor.XXXXXXXXXX)
+echo "TEMP_DIR: ${TEMP_DIR}"
 
 CLEAN_INPUT=${TEMP_DIR}/$$.input
 grep -v '^\s*$' ${INPUT_FILE} > ${CLEAN_INPUT}

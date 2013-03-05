@@ -104,7 +104,7 @@ The file named "config" under release/ lists a set of variables which should be 
 
 SEMAFOR_HOME : absolute path where semaforV2.1.tgz has been decompressed.
 
-TEMP_DIR : absolute path to a temporary directory for SEMAFOR to use.
+TMPDIR : absolute path to a temporary directory for SEMAFOR to use.
 
 MST_MODE : the provided MST parser package can now run in "server" or "noserver" modes; this variable should be set accordingly. When the parser is running on 
 server mode, SEMAFOR takes several minutes less to initialize its models; hence, it is a very advantageous mode given that one has a high memory machine on which 

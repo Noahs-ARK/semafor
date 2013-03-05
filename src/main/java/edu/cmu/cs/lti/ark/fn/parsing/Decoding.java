@@ -39,6 +39,7 @@ import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Iterables.transform;
 import static edu.cmu.cs.lti.ark.fn.optimization.LogMath.logtimes;
 import static edu.cmu.cs.lti.ark.util.ds.Scored.scored;
+import static java.lang.Integer.parseInt;
 import static java.lang.Math.min;
 
 /**
@@ -226,11 +227,11 @@ public class Decoding {
 		return weightSum;
 	}
 
-	/** Adds 'offset' to the 6th field and discards the 1st field. */
+	/** Adds 'offset' to the sentence field and discards the 1st two fields. */
 	protected String getInitialDecisionLine(String frameLine, int offset) {
 		String[] frameTokens = frameLine.split("\t");
-		frameTokens[5] = "" + (Integer.parseInt(frameTokens[5]) + offset);
-		return TAB_JOINER.join(copyOf(frameTokens).subList(1, frameTokens.length)).trim();
+		frameTokens[7] = "" + (parseInt(frameTokens[7]) + offset);
+		return TAB_JOINER.join(copyOf(frameTokens).subList(3, frameTokens.length)).trim();
 	}
 
 	private static <T> List<T> safeTruncate(List<T> list, int beamWidth) {
