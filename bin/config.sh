@@ -3,14 +3,16 @@
 ######### change the following according to your own local setup #############
 
 
-# assumes this script (config.sh) lives in "${BASE_DIR}/semafor/release/"
+# assumes this script (config.sh) lives in "${BASE_DIR}/semafor/bin/"
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
 # path to the absolute path
 # where you decompressed SEMAFOR.
 SEMAFOR_HOME="${BASE_DIR}/semafor"
 
-# Temporary folder location: Change the path to a custom temp directory
-TMPDIR="${SEMAFOR_HOME}/temp"
+# Temporary folder location:
+# Change the path to a custom temp directory if you want to control where Semafor puts its
+# temp files. Will use system default if not specified.
+#TMPDIR="${SEMAFOR_HOME}/temp"
 
 # This indicates whether MST parser should run in the server mode or not
 # Modes are "server" and "noserver"

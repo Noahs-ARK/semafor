@@ -26,8 +26,8 @@ package edu.cmu.cs.lti.ark.fn.parsing;
  * will be read from the command-line argument.
  * */
 public class FEFileName {
-	public static String stopwordFilename="stopwords.txt";
-	public static String wordnetFilename="file_properties.xml";
+	public static String stopwordFilename = "dict/stopwords.txt";
+	public static String wordnetFilename = "dict/file_properties.xml";
 	public static String feDictFilename = null;
 	
 	public static String tmpDirname="../tmp/";

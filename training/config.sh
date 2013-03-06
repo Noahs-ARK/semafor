@@ -1,6 +1,6 @@
 #!/bin/bash -e                                                                                       
 
-source "$(dirname ${0})/../release/config"
+source "$(dirname ${0})/../bin/config"
 
 # choose a name for the model to train
 model_name="models_0.0"
@@ -23,8 +23,8 @@ model_dir="${datadir}/${model_name}"
 
 
 # config files
-wordnet_config_file="${SEMAFOR_HOME}/file_properties.xml"
-stopwords_file="${SEMAFOR_HOME}/stopwords.txt"
+wordnet_config_file="${SEMAFOR_HOME}/dict/file_properties.xml"
+stopwords_file="${SEMAFOR_HOME}/dict/stopwords.txt"
 
 framenet_map_file="${datadir}/framenet.original.map"
 all_related_words_file="${datadir}/allrelatedwords.ser"

@@ -13,10 +13,11 @@ clunky set of steps. Your kind patience is required to train the models :-)
   git clone git@github.com:sammthomson/semafor.git
   cd semafor
 
-  Modify the variables in ./release/config as needed.
+  Modify the variables in ./bin/config.sh as needed.
 
   Run:
-  ./release/cleanAndCompile.sh
+
+  mvn package
 
   Make sure you have the required data.
   You'll need the "lu" folder from framenet 1.5
