@@ -33,24 +33,27 @@ public class SemaforParseResult {
 		/** The target of the predicted frame **/
 		final public Span target;
 		/** The list of predicted frame elements for the frame */
-		final public List<ScoredSpanList> annotationSets;
+		final public List<ScoredRoleAssignment> annotationSets;
 
 		@JsonCreator
 		public Frame(@JsonProperty("target") Span target,
-					 @JsonProperty("annotationSets") List<ScoredSpanList> annotationSets) {
+					 @JsonProperty("annotationSets") List<ScoredRoleAssignment> annotationSets) {
 			this.target = target;
 			this.annotationSets = annotationSets;
 		}
 
-		public static class ScoredSpanList {
+		public static class ScoredRoleAssignment {
+			/** The rank of this role assignment within a k-best list */
 			final public int rank;
+			/** The score this role assignment received under our model */
 			final public double score;
+			/** The assignment of spans to roles */
 			final public List<Span> frameElements;
 
 			@JsonCreator
-			public ScoredSpanList(@JsonProperty("rank") int rank,
-								  @JsonProperty("score") double score,
-								  @JsonProperty("frameElements") List<Span> frameElements) {
+			public ScoredRoleAssignment(@JsonProperty("rank") int rank,
+										@JsonProperty("score") double score,
+										@JsonProperty("frameElements") List<Span> frameElements) {
 				this.rank = rank;
 				this.score = score;
 				this.frameElements = frameElements;

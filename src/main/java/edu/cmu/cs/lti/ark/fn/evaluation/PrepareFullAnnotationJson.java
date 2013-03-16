@@ -41,7 +41,6 @@ import java.util.List;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Lists.transform;
 import static edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult.Frame;
-import static edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult.Frame.ScoredSpanList;
 import static edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult.Frame.Span;
 import static edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements.FrameElementAndSpan;
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
@@ -165,7 +164,7 @@ public class PrepareFullAnnotationJson {
 			final List<RankedScoredRoleAssignment> predictionsForFrame = predictionsByFrame.get(frame);
 			final RankedScoredRoleAssignment first = predictionsForFrame.get(0);
 			final Span target = makeSpan(first.targetSpan.getStart(), first.targetSpan.getEnd() + 1, frame, tokens);
-			final List<ScoredSpanList> scoredSpanLists = Lists.newArrayList();
+			final List<Frame.ScoredRoleAssignment> scoredRoleAssignments = Lists.newArrayList();
 			for (RankedScoredRoleAssignment ra : predictionsForFrame) {
 				// extract frame elements
 				final List<FrameElementAndSpan> frameElementsAndSpans = ra.fesAndSpans;
@@ -174,9 +173,9 @@ public class PrepareFullAnnotationJson {
 					final Range0Based range = frameElementAndSpan.span;
 					frameElements.add(makeSpan(range.getStart(), range.getEnd() + 1, frameElementAndSpan.name, tokens));
 				}
-				scoredSpanLists.add(new ScoredSpanList(ra.rank, ra.score, frameElements));
+				scoredRoleAssignments.add(new Frame.ScoredRoleAssignment(ra.rank, ra.score, frameElements));
 			}
-			frames.add(new Frame(target, scoredSpanLists));
+			frames.add(new Frame(target, scoredRoleAssignments));
 		}
 		return new SemaforParseResult(frames, tokens);
 	}
