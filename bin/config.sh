@@ -36,7 +36,7 @@ JAVA_HOME_BIN="/usr/bin"
 
 # Change the following to the directory where you decompressed 
 # the models for SEMAFOR 2.0.
-MODEL_DIR="${BASE_DIR}/models/malt_20121129"
+MODEL_DIR="${BASE_DIR}/models/semafor_malt_model_20121129"
 
 # If you want to use gold targets, 
 # point to gold target file's absolute path. 

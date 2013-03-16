@@ -21,12 +21,12 @@
 
 set -e # fail fast
 
+
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "${MY_DIR}/config.sh"
 
-
-if [ $# -lt 2 -o $# -gt 2 ]; then
-   echo "USAGE: `basename "${0}"` <input-file> <output-file>"
+if [ $# -lt 2 -o $# -gt 3 ]; then
+   echo "USAGE: `basename "${0}"` <input-file> <output-file> [<output-format>]"
    exit 1
 fi
 
@@ -45,6 +45,20 @@ INPUT_FILE="${1}"
 
 # where to write the output
 OUTPUT_FILE="${2}"
+
+# what format to use to write the output
+if [ ${3} = "xml" ]
+then
+    OUTPUT_FORMAT="xml"
+elif [ ${3} = "json" ] || [ -z ${3} ]
+then
+    OUTPUT_FORMAT="json" # default
+else
+    echo "output format must be \"xml\" or \"json\"."
+    exit 1
+fi
+
+
 
 TEMP_DIR=$(mktemp -d -t semafor.XXXXXXXXXX)
 echo "TEMP_DIR: ${TEMP_DIR}"
@@ -144,13 +158,27 @@ end=`expr ${end% *}`
 echo "${end} sentences"
 
 
-echo "Producing final json document:"
-time ${JAVA_HOME_BIN}/java -classpath ${CLASSPATH} \
-    -Xms8g -Xmx8g \
-    edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationJson \
-    testFEPredictionsFile:${FRAME_ELEMENTS_OUTPUT_FILE} \
-    testTokenizedFile:${TOKENIZED} \
-    outputFile:${OUTPUT_FILE}.json
+echo "Producing final ${OUTPUT_FORMAT} document:"
+if [ "${OUTPUT_FORMAT}" == "xml" ] ; then
+    time ${JAVA_HOME_BIN}/java -classpath ${CLASSPATH} \
+        -Xms4g -Xmx4g \
+        edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationXML \
+        testFEPredictionsFile:${FRAME_ELEMENTS_OUTPUT_FILE} \
+        startIndex:0 \
+        endIndex:${end} \
+        testParseFile:${ALL_LEMMA_TAGS_FILE} \
+        testTokenizedFile:${TOKENIZED} \
+        outputFile:${OUTPUT_FILE} ;
+elif [ "${OUTPUT_FORMAT}" == "json" ] ; then
+    time ${JAVA_HOME_BIN}/java -classpath ${CLASSPATH} \
+        -Xms8g -Xmx8g \
+        edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationJson \
+        testFEPredictionsFile:${FRAME_ELEMENTS_OUTPUT_FILE} \
+        testTokenizedFile:${TOKENIZED} \
+        outputFile:${OUTPUT_FILE} ;
+else
+    exit 1 ;
+fi
 
 
 echo "Finished frame-semantic parsing."

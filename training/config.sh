@@ -1,6 +1,6 @@
 #!/bin/bash -e                                                                                       
 
-source "$(dirname ${0})/../bin/config"
+source "$(dirname ${0})/../bin/config.sh"
 
 # choose a name for the model to train
 model_name="models_0.0"
