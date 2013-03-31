@@ -20,7 +20,7 @@
 
 
 
-SEMAFOR-3.0-SNAPSHOT
+SEMAFOR-3.0-alpha-01
 ====================
 
 SEMAFOR: Semantic Analysis of Frame Representations is a tool for automatic analysis of the frame-semantic structure of
@@ -217,8 +217,8 @@ Compilation is easiest using Maven (<http://maven.apache.org/>).
 
     mvn package
 
-will compile and package Semafor-3.0-SNAPSHOT.jar (including all dependencies) to the target/ directory.
-Many scripts in bin/ point to Semafor-3.0-SNAPSHOT.jar, so run `mvn package` immediately after installing, and again
+will compile and package Semafor-3.0-alpha-01.jar (including all dependencies) to the target/ directory.
+Many scripts in bin/ point to Semafor-3.0-alpha-01.jar, so run `mvn package` immediately after installing, and again
 after making any changes to source code.
 
 
