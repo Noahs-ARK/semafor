@@ -80,7 +80,7 @@ Underneath the root folder, there are the following files and folders:
 
   <dt>dict/</dt>
     <dd>
-      WordNet data files. License information can be viewed at: <http://wordnet.princeton.edu/wordnet/license/>
+      WordNet data files. License information can be viewed at: http://wordnet.princeton.edu/wordnet/license/
     </dd>
 
   <dt>lib/</dt>
@@ -252,18 +252,18 @@ Run the following command to execute SEMAFOR.
 5. Known Issues:
 ================
 
-- [x] Currently, SEMAFOR requires 8GB of RAM to execute because of its dependence on the MST parser,
+  - [x] Currently, SEMAFOR requires 8GB of RAM to execute because of its dependence on the MST parser,
 which loads a large model trained on the English Penn Treebank.
 
-	FIXED(sam): added a MaltParser option
+    FIXED(sam): added a MaltParser option
 
-- [x] The output of SEMAFOR is an XML file. If there are several thousand sentences to be parsed
+  - [x] The output of SEMAFOR is an XML file. If there are several thousand sentences to be parsed
 by SEMAFOR, then it becomes cumbersome to view the XML file. Modifying fnParserDriver.sh to
 view raw text versions of SEMAFOR output is possible.
 
     FIXED(sam): added a one-per-line json output, and set Semafor to use it by default.
 
-- [ ] The `start` and `end` character offsets in the xml output correspond to offsets *after* tokenization, making them
+  - [ ] The `start` and `end` character offsets in the xml output correspond to offsets *after* tokenization, making them
     more or less useless.
     I (Sam) have added `tokenStart` and `tokenEnd` attributes and a `tokens` element to the xml output to hopefully
     facilitate a workaround.
