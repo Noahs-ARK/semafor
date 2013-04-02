@@ -69,7 +69,7 @@ TEST_PARSED_FILE="${TEMP_DIR}/conll"
 ALL_LEMMA_TAGS_FILE="${TEMP_DIR}/all.lemma.tags"
 FRAME_ELEMENTS_OUTPUT_FILE="${TEMP_DIR}/fes"
 
-CLASSPATH=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-01.jar"
+CLASSPATH=".:${SEMAFOR_HOME}/target/Semafor-3.0-SNAPSHOT.jar"
 echo CLASSPATH="$CLASSPATH"
 
 

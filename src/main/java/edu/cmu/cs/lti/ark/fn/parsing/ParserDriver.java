@@ -228,7 +228,7 @@ public class ParserDriver {
 			}
 			/* actual parsing */
 			// get segments
-			List<String> segments = getSegments(allRelatedWords, segmentationMode, goldSegReader, allLemmaTagsSentences);
+			final List<String> segments = getSegments(allRelatedWords, segmentationMode, goldSegReader, allLemmaTagsSentences);
 
 			// frame identification
 			final List<String> idResult = identifyFrames(idModel, allLemmaTagsSentences, segments);
@@ -252,7 +252,7 @@ public class ParserDriver {
 		decoding.wrapUp();
 	}
 
-	private static List<String> identifyFrames(FastFrameIdentifier idModel,
+	public static List<String> identifyFrames(FastFrameIdentifier idModel,
 											   List<String> allLemmaTagsSentences,
 											   List<String> segments) throws IOException {
 		final List<String> inputForFrameId = getRightInputForFrameIdentification(segments);
@@ -272,7 +272,7 @@ public class ParserDriver {
 		return idResult;
 	}
 
-	private static List<String> getSegments(Set<String> allRelatedWords,
+	public static List<String> getSegments(Set<String> allRelatedWords,
 											SegmentationMode segmentationMode,
 											BufferedReader goldSegReader,
 											List<String> allLemmaTagsSentences) throws IOException {
@@ -296,7 +296,7 @@ public class ParserDriver {
 		return segments;
 	}
 
-	private static List<String> identifyArguments(WordNetRelations wnr,
+	public static List<String> identifyArguments(WordNetRelations wnr,
 												  String eventsFilename,
 												  String spansFilename,
 												  Decoding decoding,
@@ -307,7 +307,7 @@ public class ParserDriver {
 		CreateAlphabet.run(false, allLemmaTagsSentences, idResult, wnr);
 		final LocalFeatureReading lfr = new LocalFeatureReading(eventsFilename, spansFilename, idResult);
 		lfr.readLocalFeatures();
-		decoding.setData(null, lfr.getMFrameFeaturesList(), idResult);
+		decoding.setData(lfr.getMFrameFeaturesList(), idResult);
 		return decoding.decodeAll(count, kBestOutput);
 	}
 

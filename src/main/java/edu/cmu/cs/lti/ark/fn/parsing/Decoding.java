@@ -28,7 +28,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
-import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.fn.optimization.LDouble;
 import edu.cmu.cs.lti.ark.util.FileUtil;
 import edu.cmu.cs.lti.ark.util.ds.Scored;
@@ -56,7 +55,6 @@ public class Decoding {
 	private String mLocalAlphabetFile;
 	private String mLocalModelFile;
 	protected List<FrameFeatures> mFrameList;
-	protected String mPredictionFile;	
 	protected List<String> mFrameLines;
 
 	/** 0-indexed. Both ends inclusive. Null span is represented as [-1,-1]. */
@@ -138,11 +136,9 @@ public class Decoding {
 
 	public void init(String modelFile,
 					 String alphabetFile,
-					 String predictionFile,
 					 List<FrameFeatures> list,
 					 List<String> frameLines) {
 		mFrameList = list;
-		mPredictionFile = predictionFile;
 		mFrameLines = frameLines;
 		init(modelFile, alphabetFile);
 	}
@@ -153,9 +149,8 @@ public class Decoding {
 		readModel();
 	}
 	
-	public void setData(String predictionFile, List<FrameFeatures> list, List<String> frameLines) {
+	public void setData(List<FrameFeatures> list, List<String> frameLines) {
 		mFrameList = list;
-		mPredictionFile = predictionFile;
 		mFrameLines = frameLines;
 	}
 	
@@ -185,7 +180,6 @@ public class Decoding {
 	public ArrayList<String> decodeAll(int offset, int kBestOutput) {
 		final ArrayList<String> results = new ArrayList<String>();
 		for(int i = 0; i < mFrameList.size(); i++) {
-			System.out.println("Decoding index: " + i);
 			final FrameFeatures frameFeatures = mFrameList.get(i);
 			final String initialDecisionLine = getInitialDecisionLine(mFrameLines.get(i), offset);
 			final List<Scored<RoleAssignments>> predictions = getPredictions(frameFeatures, kBestOutput);
@@ -195,9 +189,6 @@ public class Decoding {
 				predictionLines.add(formatPrediction(j, initialDecisionLine, prediction.value, prediction.score));
 			}
 			results.add(Joiner.on("\n").join(predictionLines));
-		}
-		if (mPredictionFile != null) {
-			ParsePreparation.writeSentencesToFile(mPredictionFile, results);
 		}
 		return results;
 	}
@@ -247,8 +238,6 @@ public class Decoding {
 	 * @return a list of Strings encoding the best k configurations of spans for all roles of the given frame
 	 */
 	public List<Scored<RoleAssignments>> getPredictions(FrameFeatures frameFeatures, int kBestOutput) {
-		System.out.println("Frame: " + frameFeatures.frameName);
-
 		// group by role
 		final Map<String, CandidatesForRole> candidatesAndScoresByRole =
 				scoreCandidatesForRoles(frameFeatures.fElements, frameFeatures.fElementSpansAndFeatures);

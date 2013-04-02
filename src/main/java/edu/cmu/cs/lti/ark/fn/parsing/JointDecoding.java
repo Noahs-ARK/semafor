@@ -22,7 +22,6 @@
 
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.util.FileUtil;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
@@ -61,13 +60,12 @@ public class JointDecoding extends Decoding {
 		}
 	}
 
-	public void init(String modelFile, 
-			String alphabetFile,
-			String predictionFile,
-			ArrayList<FrameFeatures> list,
-			ArrayList<String> frameLines)
+	public void init(String modelFile,
+	                 String alphabetFile,
+	                 ArrayList<FrameFeatures> list,
+	                 ArrayList<String> frameLines)
 	{
-		super.init(modelFile, alphabetFile, predictionFile, list, frameLines);
+		super.init(modelFile, alphabetFile, list, frameLines);
 		mIgnoreNullSpansWhileJointDecoding = false;
 	}
 
@@ -76,15 +74,14 @@ public class JointDecoding extends Decoding {
 		jd.setFactorFile(mFactorFile);
 	}
 	
-	public void init(String modelFile, 
-			String alphabetFile,
-			String predictionFile,
-			ArrayList<FrameFeatures> list,
-			ArrayList<String> frameLines,
-			boolean ignoreNullSpansWhileJointDecoding,
-			int numThreads)
+	public void init(String modelFile,
+	                 String alphabetFile,
+	                 ArrayList<FrameFeatures> list,
+	                 ArrayList<String> frameLines,
+	                 boolean ignoreNullSpansWhileJointDecoding,
+	                 int numThreads)
 	{
-		super.init(modelFile, alphabetFile, predictionFile, list, frameLines);
+		super.init(modelFile, alphabetFile, list, frameLines);
 		mIgnoreNullSpansWhileJointDecoding = ignoreNullSpansWhileJointDecoding;
 		mNumThreads = numThreads;
 	}	
@@ -136,21 +133,6 @@ public class JointDecoding extends Decoding {
 				returnScores);
 	}
 
-	public ArrayList<String> decodeAll(int offset, boolean returnScores) {
-		int size = mFrameList.size();
-		ArrayList<String> result = new ArrayList<String>();
-		for(int i = 0; i < size; i ++)
-		{
-			System.out.println("Decoding index:"+i);
-			String decisionLine = decode(i, offset, returnScores);
-			result.add(decisionLine);
-		}
-		if (mPredictionFile != null) {
-			ParsePreparation.writeSentencesToFile(mPredictionFile, result);
-		}
-		return result;
-	}
-
 	public ArrayList<String> decodeAll(int offset, int kBestOutput) {
 		int size = mFrameList.size();
 		ArrayList<String> result = new ArrayList<String>();
@@ -159,9 +141,6 @@ public class JointDecoding extends Decoding {
 			System.out.println("Decoding index:"+i);
 			String decisionLine = decode(i, offset, false);
 			result.add(decisionLine);
-		}
-		if (mPredictionFile != null) {
-			ParsePreparation.writeSentencesToFile(mPredictionFile, result);
 		}
 		return result;
 	}
@@ -173,11 +152,7 @@ public class JointDecoding extends Decoding {
 	}
 
 	public Pair<Map<String, String>, Double> 
-	getDecodedMap(FrameFeatures mFF, 
-			String frameLine, 
-			int offset, double[] w,
-			boolean costAugmented,
-			FrameFeatures goldFF) {
+			getDecodedMap(FrameFeatures mFF, double[] w, boolean costAugmented, FrameFeatures goldFF) {
 		String frameName = mFF.frameName;
 		System.out.println("Frame:"+frameName);
 		ArrayList<SpanAndCorrespondingFeatures[]> featsList = mFF.fElementSpansAndFeatures;
@@ -249,7 +224,7 @@ public class JointDecoding extends Decoding {
 			return p;
 		}
 		// vs is the set of FEs on which joint decoding has to be done
-		Pair<Map<String, String>, Double> pair = getDecodedMap(mFF, frameLine, offset, w, costAugmented, goldFF);
+		Pair<Map<String, String>, Double> pair = getDecodedMap(mFF, w, costAugmented, goldFF);
 		return pair;
 	}
 
@@ -271,7 +246,7 @@ public class JointDecoding extends Decoding {
 		}
 		System.out.println("Frame:"+frameName);
 		// vs is the set of FEs on which joint decoding has to be done
-		Pair<Map<String, String>, Double> pair = getDecodedMap(mFF, frameLine, offset, w, costAugmented, goldFF);
+		Pair<Map<String, String>, Double> pair = getDecodedMap(mFF, w, costAugmented, goldFF);
 		Map<String, String> feMap = pair.getFirst();
 		Set<String> keySet = feMap.keySet();
 		int count = 1;
@@ -306,18 +281,5 @@ public class JointDecoding extends Decoding {
 		Map<String, Set<Pair<String, String>>> requiresMapObj = 
 			(Map<String, Set<Pair<String, String>>>) SerializedObjects.readSerializedObject(requiresMap);
 		jd.setMaps(exclusionMap, requiresMapObj);
-	}
-}
-
-
-class WeightComparator implements Comparator<Pair<int[], Double>> {
-	public int compare(Pair<int[], Double> o1, Pair<int[], Double> o2) {
-		if (o1.getSecond() > o2.getSecond()) {
-			return -1;
-		} else if (o1.getSecond() == o1.getSecond()) {
-			return 0;
-		} else {
-			return 1;
-		}
 	}
 }

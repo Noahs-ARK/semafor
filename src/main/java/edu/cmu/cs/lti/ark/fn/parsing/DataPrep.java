@@ -37,7 +37,6 @@ import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParses;
 import java.io.*;
 import java.util.*;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 import static java.lang.Integer.parseInt;
 import static org.apache.commons.io.IOUtils.closeQuietly;
@@ -92,7 +91,7 @@ public class DataPrep {
 	public static boolean useOracleSpans = false;
 	
 	public DataPrep() throws IOException {
-		new File(FEFileName.spanfilename).delete(); // this is gross
+		new FileOutputStream(new File(FEFileName.spanfilename), false).close(); // clobber file. this is gross
 		tagLines = readLines(new FileInputStream(FEFileName.tagFilename));
 		load(tagLines, null, null);
 	}
@@ -100,13 +99,8 @@ public class DataPrep {
 	public DataPrep(List<String> tagLines,
 					List<String> frameElementLines,
 					WordNetRelations lwnr) throws IOException {
-		new File(FEFileName.spanfilename).delete(); // this is gross
+		new FileOutputStream(new File(FEFileName.spanfilename), false).close(); // clobber file. this is gross
 		load(tagLines, frameElementLines, lwnr);
-	}
-
-	public DataPrep(Sentence sentence, String frameElements, WordNetRelations lwnr) throws IOException {
-		new File(FEFileName.spanfilename).delete(); // this is gross
-		getDataPoints(sentence, frameElements, lwnr);
 	}
 
 	/**
@@ -196,19 +190,6 @@ public class DataPrep {
 			candidateLines.add(spanList.toArray(new int[spanList.size()][]));
 		}
 		feIndex = 0;
-	}
-
-	public ArrayList<int[][]> getDataPoints(Sentence sentence, String feline, WordNetRelations lwnr) throws IOException {
-		checkNotNull(sentence);
-		checkNotNull(feline);
-		checkNotNull(lwnr);
-		if (frameElementsForFrame == null) frameElementsForFrame = new FEDict(FEFileName.feDictFilename);
-		if (wordNetRelations == null) wordNetRelations = lwnr;
-
-		System.err.println("Loading data....");
-		final DataPointWithFrameElements dataPointWithElements = new DataPointWithFrameElements(sentence, feline);
-		final ArrayList<int[]> spanList = findSpans(dataPointWithElements, useOracleSpans, FEFileName.KBestParse);
-		return getTrainData(feline, spanList.toArray(new int[spanList.size()][]), sentence);
 	}
 
 	/**
