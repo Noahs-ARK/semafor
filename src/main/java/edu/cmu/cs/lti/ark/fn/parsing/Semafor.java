@@ -93,11 +93,11 @@ public class Semafor {
 		final String tempDirectory = options.tempDir.get();
 		final int port = options.port.get();
 
-		runServer(modelDirectory, tempDirectory, port);
+		runSocketServer(modelDirectory, tempDirectory, port);
 	}
 
-	private static void runServer(String modelDirectory, String tempDirectory, int port) throws Exception {
-		final Semafor server = getSemaforServer(modelDirectory, tempDirectory);
+	private static void runSocketServer(String modelDirectory, String tempDirectory, int port) throws Exception {
+		final Semafor server = getSemaforInstance(modelDirectory, tempDirectory);
 		// Set up socket server
 		final ServerSocket serverSocket = new ServerSocket(port);
 		Socket clientSocket;
@@ -113,7 +113,7 @@ public class Semafor {
 		}
 	}
 
-	private static Semafor getSemaforServer(String modelDirectory, String tempDirectory)
+	private static Semafor getSemaforInstance(String modelDirectory, String tempDirectory)
 			throws IOException, ClassNotFoundException, URISyntaxException {
 		final String graphFilename = new File(modelDirectory, GRAPH_FILENAME).getAbsolutePath();
 		final String requiredDataFilename = new File(modelDirectory, REQUIRED_DATA_FILENAME).getAbsolutePath();
@@ -153,7 +153,6 @@ public class Semafor {
 
 		System.err.println("Initializing alphabet for argument identification..");
 		CreateAlphabet.setDataFileNames(alphabetFilename, frameElementMapFilename, eventsFilename, spansFilename);
-		//final HashMap<String, Integer> featureIndex = DataPrep.readFeatureIndex(new File(alphabetFilename));
 		final FEDict frameElementsForFrame = new FEDict(frameElementMapFilename);
 
 		final Decoding decoder = new Decoding();
