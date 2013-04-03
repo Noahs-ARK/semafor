@@ -22,9 +22,9 @@
 package edu.cmu.cs.lti.ark.fn.parsing;
 
 import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec;
@@ -57,8 +57,6 @@ import static edu.cmu.cs.lti.ark.util.SerializedObjects.readObject;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
 public class Semafor {
-	private static final Joiner TAB = Joiner.on("\t");
-
 	/* trained model files */
 	private static final String GRAPH_FILENAME = "sparsegraph.gz";
 	private static final String REQUIRED_DATA_FILENAME = "reqData.jobj";
@@ -66,7 +64,6 @@ public class Semafor {
 	private static final String ALPHABET_FILENAME = "parser.conf";
 	private static final String FRAME_ELEMENT_MAP_FILENAME = "framenet.frame.element.map";
 	private static final String ARG_MODEL_FILENAME = "argmodel.dat";
-
 	/* temp files */
 	private static final String EVENTS_FILENAME = "events.bin";
 	private static final String SPANS_FILENAME = "spans";
@@ -83,23 +80,22 @@ public class Semafor {
 	/**
 	 *  required flags:
 	 *  model-dir
-	 *  tempdir
 	 *  port
 	 */
 	public static void main(String[] args) throws Exception {
-		// parse options
 		final FNModelOptions options = new FNModelOptions(args);
 		final String modelDirectory = options.modelDirectory.get();
-		final String tempDirectory = options.tempDir.get();
 		final int port = options.port.get();
-
+		final File tempDirectory = Files.createTempDir();
+		tempDirectory.deleteOnExit();
 		runSocketServer(modelDirectory, tempDirectory, port);
 	}
 
-	private static void runSocketServer(String modelDirectory, String tempDirectory, int port) throws Exception {
+	private static void runSocketServer(String modelDirectory, File tempDirectory, int port) throws Exception {
 		final Semafor server = getSemaforInstance(modelDirectory, tempDirectory);
 		// Set up socket server
 		final ServerSocket serverSocket = new ServerSocket(port);
+		System.err.println("Listening on port: " + port);
 		Socket clientSocket;
 		while(true) {
 			try {
@@ -113,7 +109,7 @@ public class Semafor {
 		}
 	}
 
-	private static Semafor getSemaforInstance(String modelDirectory, String tempDirectory)
+	private static Semafor getSemaforInstance(String modelDirectory, File tempDirectory)
 			throws IOException, ClassNotFoundException, URISyntaxException {
 		final String graphFilename = new File(modelDirectory, GRAPH_FILENAME).getAbsolutePath();
 		final String requiredDataFilename = new File(modelDirectory, REQUIRED_DATA_FILENAME).getAbsolutePath();
@@ -121,8 +117,13 @@ public class Semafor {
 		final String alphabetFilename = new File(modelDirectory, ALPHABET_FILENAME).getAbsolutePath();
 		final String frameElementMapFilename = new File(modelDirectory, FRAME_ELEMENT_MAP_FILENAME).getAbsolutePath();
 		final String argModelFilename = new File(modelDirectory, ARG_MODEL_FILENAME).getAbsolutePath();
-		final String eventsFilename = new File(tempDirectory, EVENTS_FILENAME).getAbsolutePath();
-		final String spansFilename = new File(tempDirectory, SPANS_FILENAME).getAbsolutePath();
+		final File eventsFile = new File(tempDirectory, EVENTS_FILENAME);
+		eventsFile.deleteOnExit();
+		final String eventsFilename = eventsFile.getAbsolutePath();
+		final File spansFile = new File(tempDirectory, SPANS_FILENAME);
+		spansFile.deleteOnExit();
+		final String spansFilename = spansFile.getAbsolutePath();
+
 
 		// unpack required data
 		final RequiredDataForFrameIdentification r = readObject(requiredDataFilename);

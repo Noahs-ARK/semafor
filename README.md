@@ -225,13 +225,13 @@ Running the Frame-Semantic Parser
 =================================
 
 1. MaltParser
---------------------
+-------------
 
     ./bin/fnParserDriverMalt.sh <absolute-path-to-input-file-with-one-sentence-per-line> [<output-file>] [<output-format>]
 
 
 2. MST
--------------
+------
 
 If the MST parser is to be run in server mode, in other words, if `MST_MODE=server`, then before running SEMAFOR,
 the user should log on to the chosen server machine (`MST_MACHINE`), install SEMAFOR exactly as described above and run:
@@ -247,6 +247,23 @@ Run the following command to execute SEMAFOR.
 
     ./bin/fnParserDriverMst.sh <absolute-path-to-input-file-with-one-sentence-per-line> [<output-file>]
 
+3. Server Mode
+--------------
+
+SEMAFOR can also be run as a TCP socket server.
+It accepts dependency parses in conll format, and replies with json frame-semantic parses.
+Run the following command
+
+    java -Xms4g -Xmx4g -jar target/Semafor-3.0-SNAPSHOT.jar model-dir:<directory-of-trained-model> port:<port>
+
+
+The message: `Listening on port: NNNN` will appear once the server has loaded
+the model and is ready to accept connections (where `NNNN` is the port).
+You can test that it's working with the following:
+
+    cat src/test/resources/fixtures/example.conll | nc localhost NNNN
+
+(where `NNNN` is again the port).
 
 5. Known Issues:
 ================
