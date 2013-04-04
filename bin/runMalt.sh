@@ -51,7 +51,7 @@ TOKENIZED="${OUTPUT_DIR}/tokenized"
 POS_TAGGED="${OUTPUT_DIR}/pos.tagged"
 TEST_PARSED_FILE="${OUTPUT_DIR}/conll"
 
-CLASSPATH=".:${SEMAFOR_HOME}/target/Semafor-3.0-SNAPSHOT.jar"
+CLASSPATH=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-02.jar"
 
 
 echo "**********************************************************************"
