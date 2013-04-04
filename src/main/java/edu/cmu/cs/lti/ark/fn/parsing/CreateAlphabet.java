@@ -22,7 +22,6 @@
 package edu.cmu.cs.lti.ark.fn.parsing;
 
 import com.google.common.collect.Lists;
-import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.utils.BitOps;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.FileUtil;
@@ -120,23 +119,12 @@ public class CreateAlphabet {
 
 	public static List<int[][][]> getDataPoints(List<String> tagLines,
 												List<String> frameElementLines,
-												WordNetRelations lwnr) throws IOException {
-		DataPrep dataPrep = new DataPrep(tagLines, frameElementLines, lwnr);
+												WordNetRelations wnr) throws IOException {
+		DataPrep dataPrep = new DataPrep(tagLines, frameElementLines, wnr);
 		List<int[][][]> dataPoints = Lists.newArrayList();
 		while(dataPrep.hasNext()){
 			dataPoints.add(dataPrep.getNextTrainData());
 		}
 		return dataPoints;
-	}
-
-	public static int[][][] getDataPoints(Sentence sentence,
-										  String frameElements,
-										  WordNetRelations lwnr) throws IOException {
-		DataPrep dataPrep = new DataPrep(sentence, frameElements, lwnr);
-		List<int[][][]> dataPoints = Lists.newArrayList();
-		while(dataPrep.hasNext()){
-			dataPoints.add(dataPrep.getNextTrainData());
-		}
-		return dataPoints.get(0);
 	}
 }

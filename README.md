@@ -20,11 +20,10 @@
 
 
 
-SEMAFOR-3.0-alpha-01
-====================
+SEMAFOR: Semantic Analysis of Frame Representations
+===================================================
 
-SEMAFOR: Semantic Analysis of Frame Representations is a tool for automatic analysis of the frame-semantic structure of
-English text.
+SEMAFOR is a tool for automatic analysis of the frame-semantic structure of English text.
 
 [FrameNet](<http://framenet.icsi.berkeley.edu>) is a lexical resource that groups predicates in a hierarchy of structured
 concepts, known as *frames*. Each frame in the lexicon in turn defines several named *roles* corresponding to aspects of
@@ -217,8 +216,8 @@ Compilation is easiest using Maven (<http://maven.apache.org/>).
 
     mvn package
 
-will compile and package Semafor-3.0-alpha-01.jar (including all dependencies) to the target/ directory.
-Many scripts in bin/ point to Semafor-3.0-alpha-01.jar, so run `mvn package` immediately after installing, and again
+will compile and package Semafor-3.0-SNAPSHOT.jar (including all dependencies) to the target/ directory.
+Many scripts in bin/ point to Semafor-3.0-SNAPSHOT.jar, so run `mvn package` immediately after installing, and again
 after making any changes to source code.
 
 
@@ -226,13 +225,13 @@ Running the Frame-Semantic Parser
 =================================
 
 1. MaltParser
---------------------
+-------------
 
     ./bin/fnParserDriverMalt.sh <absolute-path-to-input-file-with-one-sentence-per-line> [<output-file>] [<output-format>]
 
 
 2. MST
--------------
+------
 
 If the MST parser is to be run in server mode, in other words, if `MST_MODE=server`, then before running SEMAFOR,
 the user should log on to the chosen server machine (`MST_MACHINE`), install SEMAFOR exactly as described above and run:
@@ -248,6 +247,23 @@ Run the following command to execute SEMAFOR.
 
     ./bin/fnParserDriverMst.sh <absolute-path-to-input-file-with-one-sentence-per-line> [<output-file>]
 
+3. Server Mode
+--------------
+
+SEMAFOR can also be run as a TCP socket server.
+It accepts dependency parses in conll format, and replies with json frame-semantic parses.
+Run the following command
+
+    java -Xms4g -Xmx4g -jar target/Semafor-3.0-SNAPSHOT.jar model-dir:<directory-of-trained-model> port:<port>
+
+
+The message: `Listening on port: NNNN` will appear once the server has loaded
+the model and is ready to accept connections (where `NNNN` is the port).
+You can test that it's working with the following:
+
+    cat src/test/resources/fixtures/example.conll | nc localhost NNNN
+
+(where `NNNN` is again the port).
 
 5. Known Issues:
 ================

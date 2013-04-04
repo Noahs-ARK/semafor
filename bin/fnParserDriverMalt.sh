@@ -69,43 +69,10 @@ TEST_PARSED_FILE="${TEMP_DIR}/conll"
 ALL_LEMMA_TAGS_FILE="${TEMP_DIR}/all.lemma.tags"
 FRAME_ELEMENTS_OUTPUT_FILE="${TEMP_DIR}/fes"
 
-CLASSPATH=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-01.jar"
-echo CLASSPATH="$CLASSPATH"
+CLASSPATH=".:${SEMAFOR_HOME}/target/Semafor-3.0-SNAPSHOT.jar"
+echo CLASSPATH="${CLASSPATH}"
 
-
-echo "**********************************************************************"
-echo "Tokenizing file: ${INPUT_FILE}"
-sed -f ${SEMAFOR_HOME}/scripts/tokenizer.sed ${INPUT_FILE} > ${TOKENIZED}
-echo "Finished tokenization."
-echo "**********************************************************************"
-echo
-echo
-
-echo "**********************************************************************"
-echo "Part-of-speech tagging tokenized data...."
-pushd ${SEMAFOR_HOME}/scripts/jmx
-./mxpost tagger.project < ${TOKENIZED} > ${POS_TAGGED}
-popd
-# convert to conll so Malt can read it
-${JAVA_HOME_BIN}/java -classpath ${CLASSPATH} \
-    edu.cmu.cs.lti.ark.fn.data.prep.formats.ConvertFormat \
-    --input ${POS_TAGGED} \
-    --inputFormat pos \
-    --output ${POS_TAGGED}.conll \
-    --outputFormat conll
-echo "Finished part-of-speech tagging."
-echo "**********************************************************************"
-echo
-echo
-
-echo "**********************************************************************"
-echo "Running MaltParser...."
-pushd ${SEMAFOR_HOME}/scripts/maltparser-1.7.2
-java -Xmx2g -jar maltparser-1.7.2.jar -w ${MODEL_DIR} -c engmalt.linear-1.7 -i ${POS_TAGGED}.conll -o ${TEST_PARSED_FILE}
-echo "Finished converting malt parse to conll format."
-echo "**********************************************************************"
-echo
-echo
+bash ${MY_DIR}/runMalt.sh ${INPUT_FILE} ${TEMP_DIR}
 
 
 if [ "${AUTO_TARGET_ID_MODE}" == "relaxed" ]

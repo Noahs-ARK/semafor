@@ -61,7 +61,7 @@ public class PrepareFullAnnotationJson {
 					return input.sentenceIdx;
 				}
 			};
-	private static final Function<String,RankedScoredRoleAssignment> processPredictionLine =
+	public static final Function<String,RankedScoredRoleAssignment> processPredictionLine =
 			new Function<String, RankedScoredRoleAssignment>() {
 				@Nullable @Override public RankedScoredRoleAssignment apply(@Nullable String input) {
 					return RankedScoredRoleAssignment.fromPredictionLine(input);
@@ -118,20 +118,19 @@ public class PrepareFullAnnotationJson {
 											   Reader frameElementsInput,
 											   Writer output) throws IOException {
 		final List<String> tokenizedLines = readLines(tokenizedInput);
-		final Multimap<Integer, RankedScoredRoleAssignment> predictions = readFrameElementLines(frameElementsInput);
+		final Multimap<Integer, RankedScoredRoleAssignment> predictions =
+				parseRoleAssignments(readLines(frameElementsInput));
 		writeJson(predictions, tokenizedLines, output);
 	}
 
 	/**
 	 * Reads predicted frame elements from testFEPredictionsFile and groups them by sentence index
 	 *
-	 * @param feInput the input stream from which to read predicted frame elements
+	 * @param lines the predicted frame elements
 	 * @return a map from sentence num to a set of predicted frame elements for that sentence
 	 * @throws IOException if there is a problem reading from the file
 	 */
-	private static Multimap<Integer, RankedScoredRoleAssignment> readFrameElementLines(Reader feInput)
-			throws IOException {
-		final List<String> lines = readLines(feInput);
+	public static Multimap<Integer, RankedScoredRoleAssignment> parseRoleAssignments(List<String> lines) {
 		final List<RankedScoredRoleAssignment> roleAssignments = copyOf(transform(lines, processPredictionLine));
 		// group by sentence index
 		return Multimaps.index(roleAssignments, getSentenceIndex);
@@ -154,8 +153,8 @@ public class PrepareFullAnnotationJson {
 	 *
 	 * @param rankedScoredRoleAssignments Lines encoding predicted frames & FEs in the same format as the .sentences.frame.elements files
 	 */
-	private static SemaforParseResult getSemaforParse(Collection<RankedScoredRoleAssignment> rankedScoredRoleAssignments,
-													  List<String> tokens) {
+	public static SemaforParseResult getSemaforParse(Collection<RankedScoredRoleAssignment> rankedScoredRoleAssignments,
+													 List<String> tokens) {
 		final ArrayList<Frame> frames = Lists.newArrayList();
 		// group by frame
 		final ImmutableListMultimap<String,RankedScoredRoleAssignment> predictionsByFrame =

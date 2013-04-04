@@ -150,6 +150,11 @@ public class Token {
 		return lemma;
 	}
 
+	public Token setLemma(@Nullable String lemma) {
+		return new Token(getId(), getForm(), lemma, getCpostag(), getPostag(), getFeats(),
+				getHead(), getDeprel(), getPhead(), getPdeprel());
+	}
+
 	@Nullable
 	public String getCpostag() {
 		return cpostag;
@@ -226,16 +231,16 @@ public class Token {
 		final String[] fields = line.trim().split("\t");
 		checkArgument(fields.length == 10, "ConllToken must have 10 \"\\t\"-separated fields");
 		return new Token(
-				parseConllField(fields[0], parseInt),
-				parseConllField(fields[1], parseStr),
-				parseConllField(fields[2], parseStr),
-				parseConllField(fields[3], parseStr),
-				parseConllField(fields[4], parseStr),
-				parseConllField(fields[5], parseStr),
-				parseConllField(fields[6], parseInt),
-				parseConllField(fields[7], parseStr),
-				parseConllField(fields[8], parseStr),
-				parseConllField(fields[9], parseStr));
+				parseConllField(fields[0], parseInt),  // id
+				parseConllField(fields[1], parseStr),  // form
+				parseConllField(fields[2], parseStr),  // lemma
+				parseConllField(fields[3], parseStr),  // cpostag
+				parseConllField(fields[4], parseStr),  // postag
+				parseConllField(fields[5], parseStr),  // feats
+				parseConllField(fields[6], parseInt),  // head
+				parseConllField(fields[7], parseStr),  // deprel
+				parseConllField(fields[8], parseStr),  // phead
+				parseConllField(fields[9], parseStr)); // pdeprel
 	}
 
 	public static PosToken fromPosTagged(String tokenStr) {
