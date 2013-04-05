@@ -6,7 +6,7 @@
 
     <groupId>edu.cmu.cs.lti.ark</groupId>
     <artifactId>Semafor</artifactId>
-    <version>3.0-alpha-02</version>
+    <version>3.0-alpha-03</version>
 
     <repositories>
         <repository>

@@ -114,7 +114,7 @@ then
     ${JAVA_HOME_BIN}/java -classpath ".:./lib/trove.jar:./lib/mallet-deps.jar:./lib/mallet.jar" \
 	-Xms8g -Xmx8g mst.DependencyParser \
 	test separate-lab \
-	model-name:${MODEL_DIR}/wsj.model \
+	model-name:${MST_MODEL_DIR}/wsj.model \
 	decode-type:proj order:2 \
 	test-file:${INPUT_FILE}.conll.input \
 	output-file:${INPUT_FILE}.conll.output \
@@ -135,7 +135,7 @@ fi
 
 if [ "${USE_GRAPH_FILE}" == "yes" ]
 then
-    GRAPH_FILE="${MODEL_DIR}/sparsegraph.gz"
+    GRAPH_FILE="${MST_MODEL_DIR}/sparsegraph.gz"
 else
     GRAPH_FILE=null
 fi
@@ -155,21 +155,21 @@ ${JAVA_HOME_BIN}/java \
     mstport:${MST_PORT} \
     posfile:${INPUT_FILE}.pos.tagged \
     test-parsefile:${INPUT_FILE}.conll.output \
-    fnidreqdatafile:${MODEL_DIR}/reqData.jobj \
+    fnidreqdatafile:${MST_MODEL_DIR}/reqData.jobj \
     goldsegfile:${GOLD_TARGET_FILE} \
     userelaxed:${RELAXED_FLAG} \
     testtokenizedfile:${INPUT_FILE}.tokenized \
-    idmodelfile:${MODEL_DIR}/idmodel.dat \
-    alphabetfile:${MODEL_DIR}/parser.conf \
-    framenet-femapfile:${MODEL_DIR}/framenet.frame.element.map \
+    idmodelfile:${MST_MODEL_DIR}/idmodel.dat \
+    alphabetfile:${MST_MODEL_DIR}/parser.conf \
+    framenet-femapfile:${MST_MODEL_DIR}/framenet.frame.element.map \
     eventsfile:${INPUT_FILE}.events.bin \
     spansfile:${INPUT_FILE}.spans \
-    model:${MODEL_DIR}/argmodel.dat \
+    model:${MST_MODEL_DIR}/argmodel.dat \
     useGraph:${GRAPH_FILE} \
     frameelementsoutputfile:${INPUT_FILE}.fes \
     alllemmatagsfile:${ALL_LEMMA_TAGS_FILE} \
-    requiresmap:${MODEL_DIR}/requires.map \
-    excludesmap:${MODEL_DIR}/excludes.map \
+    requiresmap:${MST_MODEL_DIR}/requires.map \
+    excludesmap:${MST_MODEL_DIR}/excludes.map \
     decoding:${DECODING_TYPE}
 
 end=`wc -l ${INPUT_FILE}.tokenized`

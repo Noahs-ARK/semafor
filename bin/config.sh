@@ -36,7 +36,8 @@ JAVA_HOME_BIN="/usr/bin"
 
 # Change the following to the directory where you decompressed 
 # the models for SEMAFOR 2.0.
-MODEL_DIR="${BASE_DIR}/models/semafor_malt_model_20121129"
+MALT_MODEL_DIR="${BASE_DIR}/models/semafor_malt_model_20121129"
+MST_MODEL_DIR="${BASE_DIR}/models/sem_2_1_20120522"
 
 # If you want to use gold targets, 
 # point to gold target file's absolute path. 
@@ -78,7 +79,7 @@ echo "MST_MODE=${MST_MODE}"
 echo "MST_MACHINE=${MST_MACHINE}"
 echo "MST_PORT=${MST_PORT}"
 echo "JAVA_HOME_BIN=${JAVA_HOME_BIN}"
-echo "MODEL_DIR=${MODEL_DIR}"
+echo "MALT_MODEL_DIR=${MALT_MODEL_DIR}"
 echo "GOLD_TARGET_FILE=${GOLD_TARGET_FILE}"
 echo "AUTO_TARGET_ID_MODE=${AUTO_TARGET_ID_MODE}"
 echo "USE_GRAPH_FILE=${USE_GRAPH_FILE}"

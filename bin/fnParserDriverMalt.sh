@@ -69,7 +69,7 @@ TEST_PARSED_FILE="${TEMP_DIR}/conll"
 ALL_LEMMA_TAGS_FILE="${TEMP_DIR}/all.lemma.tags"
 FRAME_ELEMENTS_OUTPUT_FILE="${TEMP_DIR}/fes"
 
-CLASSPATH=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-02.jar"
+CLASSPATH=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-03.jar"
 echo CLASSPATH="${CLASSPATH}"
 
 bash ${MY_DIR}/runMalt.sh ${INPUT_FILE} ${TEMP_DIR}
@@ -85,7 +85,7 @@ fi
 
 if [ "${USE_GRAPH_FILE}" == "yes" ]
 then
-    GRAPH_FILE="${MODEL_DIR}/sparsegraph.gz"
+    GRAPH_FILE="${MALT_MODEL_DIR}/sparsegraph.gz"
 else
     GRAPH_FILE=null
 fi
@@ -102,21 +102,21 @@ time ${JAVA_HOME_BIN}/java \
     mstport:12345 \
     posfile:${POS_TAGGED} \
     test-parsefile:${TEST_PARSED_FILE} \
-    fnidreqdatafile:${MODEL_DIR}/reqData.jobj \
+    fnidreqdatafile:${MALT_MODEL_DIR}/reqData.jobj \
     goldsegfile:${GOLD_TARGET_FILE} \
     userelaxed:${RELAXED_FLAG} \
     testtokenizedfile:${TOKENIZED} \
-    idmodelfile:${MODEL_DIR}/idmodel.dat \
-    alphabetfile:${MODEL_DIR}/parser.conf \
-    framenet-femapfile:${MODEL_DIR}/framenet.frame.element.map \
+    idmodelfile:${MALT_MODEL_DIR}/idmodel.dat \
+    alphabetfile:${MALT_MODEL_DIR}/parser.conf \
+    framenet-femapfile:${MALT_MODEL_DIR}/framenet.frame.element.map \
     eventsfile:${TEMP_DIR}/events.bin \
     spansfile:${TEMP_DIR}/spans \
-    model:${MODEL_DIR}/argmodel.dat \
+    model:${MALT_MODEL_DIR}/argmodel.dat \
     useGraph:${GRAPH_FILE} \
     frameelementsoutputfile:${FRAME_ELEMENTS_OUTPUT_FILE} \
     alllemmatagsfile:${ALL_LEMMA_TAGS_FILE} \
-    requiresmap:${MODEL_DIR}/requires.map \
-    excludesmap:${MODEL_DIR}/excludes.map \
+    requiresmap:${MALT_MODEL_DIR}/requires.map \
+    excludesmap:${MALT_MODEL_DIR}/excludes.map \
     decoding:${DECODING_TYPE} \
     k-best-output:1
 

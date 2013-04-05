@@ -47,26 +47,22 @@ INPUT_FILE="${1}"
 OUTPUT_DIR="${2}"
 
 
+TOKENIZED="${OUTPUT_DIR}/tokenized"
 POS_TAGGED="${OUTPUT_DIR}/pos.tagged"
-TEST_PARSED_FILE="${OUTPUT_DIR}/conll"
-
-CLASSPATH=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-03.jar"
-
-bash ${MY_DIR}/tokenizeAndPosTag.sh ${INPUT_FILE} ${OUTPUT_DIR}
 
 
 echo "**********************************************************************"
-echo "Running MaltParser...."
-# convert to conll so Malt can read it
-time ${JAVA_HOME_BIN}/java -classpath ${CLASSPATH} \
-    edu.cmu.cs.lti.ark.fn.data.prep.formats.ConvertFormat \
-    --input ${POS_TAGGED} \
-    --inputFormat pos \
-    --output ${POS_TAGGED}.conll \
-    --outputFormat conll
-pushd ${SEMAFOR_HOME}/scripts/maltparser-1.7.2
-time java -Xmx2g -jar maltparser-1.7.2.jar -w ${MALT_MODEL_DIR} -c engmalt.linear-1.7 -i ${POS_TAGGED}.conll -o ${TEST_PARSED_FILE}
-echo "Finished rrunning MaltParser."
+echo "Tokenizing file: ${INPUT_FILE}"
+time sed -f ${SEMAFOR_HOME}/scripts/tokenizer.sed ${INPUT_FILE} > ${TOKENIZED}
+echo "Finished tokenization."
 echo "**********************************************************************"
 echo
 echo
+
+echo "**********************************************************************"
+echo "Part-of-speech tagging tokenized data...."
+pushd ${SEMAFOR_HOME}/scripts/jmx
+time ./mxpost tagger.project < ${TOKENIZED} > ${POS_TAGGED}
+popd
+echo "Finished part-of-speech tagging tokenized data."
+echo "**********************************************************************"

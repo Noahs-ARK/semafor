@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Lists.transform;
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec.ConllCodec;
@@ -100,8 +101,10 @@ public class Semafor {
 		while(true) {
 			try {
 				clientSocket = serverSocket.accept();
-				final PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-				final BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+				final PrintWriter out =
+						new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream(), UTF_8), true);
+				final BufferedReader in =
+						new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), UTF_8));
 				server.runParser(in, out);
 			} catch (Exception e) {
 				e.printStackTrace(System.err);
