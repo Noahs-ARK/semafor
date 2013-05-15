@@ -244,9 +244,11 @@ public class Token {
 	}
 
 	public static PosToken fromPosTagged(String tokenStr) {
-		final String[] fields = tokenStr.split("_");
-		checkArgument(fields.length == 2, "PosToken must have 2 \"_\"-separated fields");
-		return new PosToken(fields[0], fields[1]);
+		final int splitPoint = tokenStr.lastIndexOf("_");
+		checkArgument(splitPoint != -1, "PosToken must have 2 \"_\"-separated fields");
+		final String token = tokenStr.substring(0, splitPoint);
+		final String pos = tokenStr.substring(splitPoint + 1, tokenStr.length());
+		return new PosToken(token, pos);
 	}
 
 	public String toPosTagged() {

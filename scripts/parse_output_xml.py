@@ -1,47 +1,12 @@
 #!/usr/bin/env python
 """
-Parse the xml output of Semafor into json.
+Parse the xml output of Semafor (or full-text annotations) into json.
 The text of each span is added (even though it is technically redundant), to
 increase readability.
 
-The json format is:
-
-{
-  "tokens": [ "My", "kitchen", "no", "longer", "smells", "." ],
-  "frames": [
-    {
-      "target": {
-        "start": 1,
-        "end": 2,
-        "name": "Building_subparts",
-        "text": "kitchen"
-      },
-      "annotationSets": [
-        {
-          "frameElements": [
-            {
-              "start": 1,
-              "end": 2,
-              "name": "Building_part",
-              "text": "kitchen"
-            },
-            {
-              "start": 0,
-              "end": 1,
-              "name": "Whole",
-              "text": "My"
-            }
-          ],
-          "score": 18.21350901550272,
-          "rank": 0
-        }
-      ]
-    },
-    ...
-  ]
-}
 Author: Sam Thomson (sthomson@cs.cmu.edu)
 """
+from collections import defaultdict
 from itertools import chain
 from json import dumps
 import sys
@@ -82,18 +47,30 @@ def parse_annotation_set(annotation_set_elt, text):
     layers = annotation_set_elt.getElementsByTagName('layer')
     # extract the target of the frame
     target_layer = [l for l in layers if l.getAttribute('name') == "Target"][0]
-    target_label = target_layer.getElementsByTagName('label')
-    target = parse_label(target_label[0], text) if target_label else {}
-    target['name'] = name
+    target_spans = [parse_label(label, text) for label in target_layer.getElementsByTagName('label')]
+    for span in target_spans:
+        span.pop("name")
+    #target = parse_label(target_label[0], text) if target_label else {}
+    target = {
+        'name': name,
+        'spans': sorted(target_spans, key=lambda x: x["start"]),
+    }
     # extract the frame elements
     frame_element_layer = [l for l in layers
                            if l.getAttribute('name') == "FE"][0]
-    frame_element_labels = [l for l in frame_element_layer.getElementsByTagName('label')
+    frame_element_labels = [parse_label(l, text) for l in frame_element_layer.getElementsByTagName('label')
                             if l.getAttribute("itype").lower() not in ("ini", "dni", "cni", "inc")]
+    frame_elements_by_role = defaultdict(list)
+    for label in frame_element_labels:
+        frame_elements_by_role[label.pop("name")].append(label)
     return {
         "target": target,
         "annotationSets": [{
-            "frameElements": [parse_label(fe, text) for fe in frame_element_labels]
+            #"frameElements": [parse_label(fe, text) for fe in frame_element_labels]
+            "frameElements": [{
+                "name": name,
+                "spans": sorted(spans, key=lambda x: x["start"])
+            } for name, spans in frame_elements_by_role.items()]
         }]
     }
 
@@ -112,7 +89,7 @@ def parse_sentence(sentence_elt):
     layers = sentence_elt.getElementsByTagName("layer")
     wsl = [l.getElementsByTagName("label") for l in layers if "wsl" == l.getAttribute("name").lower()]
     ner = [l.getElementsByTagName("label") for l in layers if "ner" == l.getAttribute("name").lower()]
-    pos = [l.getElementsByTagName("label") for l in layers if "pos" == l.getAttribute("name").lower()]
+    pos = [l.getElementsByTagName("label") for l in layers if "penn" == l.getAttribute("name").lower()]
     frames = [parse_annotation_set(annotation_set, text)
               for annotation_set in frame_sets]
     result = dict(sentence_elt.attributes.items())

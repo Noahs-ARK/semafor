@@ -31,12 +31,12 @@ public class SemaforParseResult {
 
 	public static class Frame {
 		/** The target of the predicted frame **/
-		final public Span target;
+		final public NamedSpanSet target;
 		/** The list of predicted frame elements for the frame */
 		final public List<ScoredRoleAssignment> annotationSets;
 
 		@JsonCreator
-		public Frame(@JsonProperty("target") Span target,
+		public Frame(@JsonProperty("target") NamedSpanSet target,
 					 @JsonProperty("annotationSets") List<ScoredRoleAssignment> annotationSets) {
 			this.target = target;
 			this.annotationSets = annotationSets;
@@ -48,15 +48,29 @@ public class SemaforParseResult {
 			/** The score this role assignment received under our model */
 			final public double score;
 			/** The assignment of spans to roles */
-			final public List<Span> frameElements;
+			final public List<NamedSpanSet> frameElements;
 
 			@JsonCreator
 			public ScoredRoleAssignment(@JsonProperty("rank") int rank,
 										@JsonProperty("score") double score,
-										@JsonProperty("frameElements") List<Span> frameElements) {
+										@JsonProperty("frameElements") List<NamedSpanSet> frameElements) {
 				this.rank = rank;
 				this.score = score;
 				this.frameElements = frameElements;
+			}
+		}
+
+		public static class NamedSpanSet {
+			/** The name of the target or frame element **/
+			final public String name;
+			/** The set of spans which make up the target or frame element */
+			final public List<Span> spans;
+
+			@JsonCreator
+			public NamedSpanSet(@JsonProperty("name") String name,
+								@JsonProperty("spans") List<Span> spans) {
+				this.name = name;
+				this.spans = spans;
 			}
 		}
 
@@ -65,19 +79,15 @@ public class SemaforParseResult {
 			final public int start;
 			/** The end index of the target or frame element, 0-indexed on word boundaries **/
 			final public int end;
-			/** The name of the target or frame element **/
-			final public String name;
 			/** The original text of the target or frame element **/
 			final public String text;
 
 			@JsonCreator
 			public Span(@JsonProperty("start") int start,
 						@JsonProperty("end") int end,
-						@JsonProperty("name") String name,
 						@JsonProperty("text") String text) {
 				this.start = start;
 				this.end = end;
-				this.name = name;
 				this.text = text;
 			}
 		}

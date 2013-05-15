@@ -23,10 +23,7 @@ package edu.cmu.cs.lti.ark.fn.evaluation;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
+import com.google.common.collect.*;
 import edu.cmu.cs.lti.ark.fn.parsing.RankedScoredRoleAssignment;
 import edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
@@ -41,6 +38,7 @@ import java.util.List;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Lists.transform;
 import static edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult.Frame;
+import static edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult.Frame.NamedSpanSet;
 import static edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult.Frame.Span;
 import static edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements.FrameElementAndSpan;
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
@@ -162,12 +160,12 @@ public class PrepareFullAnnotationJson {
 		for (String frame : predictionsByFrame.keySet()) {
 			final List<RankedScoredRoleAssignment> predictionsForFrame = predictionsByFrame.get(frame);
 			final RankedScoredRoleAssignment first = predictionsForFrame.get(0);
-			final Span target = makeSpan(first.targetSpan.getStart(), first.targetSpan.getEnd() + 1, frame, tokens);
+			final NamedSpanSet target = makeSpan(first.targetSpan.getStart(), first.targetSpan.getEnd() + 1, frame, tokens);
 			final List<Frame.ScoredRoleAssignment> scoredRoleAssignments = Lists.newArrayList();
 			for (RankedScoredRoleAssignment ra : predictionsForFrame) {
 				// extract frame elements
 				final List<FrameElementAndSpan> frameElementsAndSpans = ra.fesAndSpans;
-				final List<Span> frameElements = Lists.newArrayList();
+				final List<NamedSpanSet> frameElements = Lists.newArrayList();
 				for(FrameElementAndSpan frameElementAndSpan : frameElementsAndSpans) {
 					final Range0Based range = frameElementAndSpan.span;
 					frameElements.add(makeSpan(range.getStart(), range.getEnd() + 1, frameElementAndSpan.name, tokens));
@@ -179,7 +177,9 @@ public class PrepareFullAnnotationJson {
 		return new SemaforParseResult(frames, tokens);
 	}
 
-	private static Span makeSpan(int start, int end, String name, List<String> tokens) {
-		return new Span(start, end, name, Joiner.on(" ").join(tokens.subList(start, end)));
+	private static NamedSpanSet makeSpan(int start, int end, String name, List<String> tokens) {
+		final ImmutableList<Span> spans =
+				ImmutableList.of(new Span(start, end, Joiner.on(" ").join(tokens.subList(start, end))));
+		return new NamedSpanSet(name, spans);
 	}
 }

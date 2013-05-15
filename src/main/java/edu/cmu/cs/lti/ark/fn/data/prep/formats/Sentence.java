@@ -59,7 +59,7 @@ public class Sentence {
 		String[][] result = new String[NUM_PARSE_ROWS][length];
 		for(int id : xrange(length)) {
 			Token token = tokens.get(id);
-			result[PARSE_TOKEN_ROW][id] = token.getForm();
+			result[PARSE_TOKEN_ROW][id] = token.getForm() == null ? "_": token.getForm();
 			result[PARSE_POS_ROW][id] = token.getPostag() == null ? "_": token.getPostag();
 			result[PARSE_NE_ROW][id] = "O";
 			result[PARSE_DEPREL_ROW][id] = token.getDeprel() == null ? "_" : token.getDeprel();
