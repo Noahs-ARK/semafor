@@ -50,7 +50,6 @@ def parse_annotation_set(annotation_set_elt, text):
     target_spans = [parse_label(label, text) for label in target_layer.getElementsByTagName('label')]
     for span in target_spans:
         span.pop("name")
-    #target = parse_label(target_label[0], text) if target_label else {}
     target = {
         'name': name,
         'spans': sorted(target_spans, key=lambda x: x["start"]),
@@ -66,7 +65,6 @@ def parse_annotation_set(annotation_set_elt, text):
     return {
         "target": target,
         "annotationSets": [{
-            #"frameElements": [parse_label(fe, text) for fe in frame_element_labels]
             "frameElements": [{
                 "name": name,
                 "spans": sorted(spans, key=lambda x: x["start"])
@@ -90,8 +88,9 @@ def parse_sentence(sentence_elt):
     wsl = [l.getElementsByTagName("label") for l in layers if "wsl" == l.getAttribute("name").lower()]
     ner = [l.getElementsByTagName("label") for l in layers if "ner" == l.getAttribute("name").lower()]
     pos = [l.getElementsByTagName("label") for l in layers if "penn" == l.getAttribute("name").lower()]
-    frames = [parse_annotation_set(annotation_set, text)
-              for annotation_set in frame_sets]
+    frames = (parse_annotation_set(annotation_set, text)
+              for annotation_set in frame_sets)
+    frames = [frame for frame in frames if frame['target']['spans']]  # filter out frames with no target
     result = dict(sentence_elt.attributes.items())
     result.update({
         "tokens": text.split(),
