@@ -99,9 +99,6 @@ class Span(object):
                 continue
             self._s.append(slice(start,stop))
 
-    def adjacent(self, other):
-        pass
-
     def __add__(self, that):
         if len(self._s)!=1 or len(that._s)!=1: assert False
         if self._s[0].stop==that._s[0].start: return Span(self._s[0].start,that._s[0].stop)
@@ -123,6 +120,11 @@ class Span(object):
 
     def __len__(self):
         return len(set(self))
+    
+    def __call__(self, sequence, typ=list or str):
+        if typ in (str,unicode):
+            return repr(typ(' '.join(sequence[i] for i in self)))
+        return typ(sequence[i] for i in self)
 
     def encompasses(self, that):
         return set(that)<=set(self)
@@ -135,7 +137,7 @@ class Span(object):
 
     def contiguous(self):
         return self.maxstop-self.minstart==len(self)
-
+    
     def subspans(self):
         return [Span(s.start,s.stop) for s in self._s]
 
@@ -160,23 +162,30 @@ def score_sentence(gold, pred):
         predFrames[targetSpan] = f['target']['name']
         # ignore all but the top-ranked set of argument predictions
         predArgs[targetSpan] = {
-            Span(*[i for sp in elt['spans'] for i in [sp['start'],sp['end']]]): elt['name']
+            Span(*[i for sp in elt['spans'] for i in [sp['start'],sp['end']]]): elt['name'] 
             for elt in f['annotationSets'][0]['frameElements']
         }
     goldTargetCoverage = set(range(num_tokens)) # tokens that should in principle be part of a target
     goldTargetSpans = set() # target spans with gold frame annotations, plus other tokens that should in principle belong to a target
     goldFrameTargetCoverage = set() # tokens in target spans with gold frame annotations
-    excluded = {
-        Span(entry['start'],entry['end']): entry['name']
-        for entry in gold['wsl']
-    }
-    # TODO: make sure we handle NEs correctly (they should not be targets)
+    
+    wsl = {Span(entry['start'],entry['end']): (entry['name'],entry['text']) for entry in gold['wsl']}
+    DATENAMES = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday','january','february','march','april','may','june','july','august','september','october','november','december']
+    DATENAMES += [v for d in DATENAMES for v in [d[:3],d[:3]+'.']]
+    ner = {Span(entry['start'],entry['end']): (entry['name'],entry['text']) for entry in gold['ner']}
+    excluded = set(wsl.keys()) | {sp for sp,(etype,text) in ner.items() if etype!='WEA' and not (etype=='date' and text.lower() in DATENAMES)}
+    excludedTokens = set()
+    for sp in excluded:
+        excludedTokens |= set(sp)
+    
     for span in excluded:
         goldTargetCoverage -= set(span)
     goldFrames = {}
     goldArgs = {}
     for f in gold['frames']:
         targetSpan = Span(*[i for sp in f['target']['spans'] for i in [sp['start'], sp['end']]])
+        if f['target']['spans'][0]['text']=='morning' and targetSpan not in predFrames:
+            pass
         # if targetSpan not in predFrames:
         #     tokens = gold['tokens']
         #     token_pos = [(tokens[i], gold['pos'][i]['name']) for i in list(targetSpan)]
@@ -190,6 +199,16 @@ def score_sentence(gold, pred):
             Span(*[i for sp in elt['spans'] for i in [sp['start'],sp['end']]]): elt['name']
             for elt in f['annotationSets'][0]['frameElements']
         }
+        if targetSpan in excluded:
+            if targetSpan in wsl:  # obviously a bug with WSL
+                print('WSL bug:', targetSpan, targetSpan(gold['tokens'],str), file=sys.stderr)
+                excluded.remove(targetSpan)
+            else:
+                print(f['target']['spans'][0]['text'], {entry['name'] for entry in gold['ner'] if entry['start']==targetSpan.minstart}, file=sys.stderr)
+        elif len(targetSpan)>1:
+            for sp in excluded:
+                if targetSpan.overlaps(sp):
+                    print('Target span',targetSpan,targetSpan(gold['tokens'],str),'overlaps with excluded span',sp,sp(gold['tokens'],str), file=sys.stderr)
     for tkn in goldTargetCoverage:
         if tkn not in goldFrameTargetCoverage:
             goldTargetSpans.add(Span(tkn,tkn+1))
