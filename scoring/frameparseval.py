@@ -174,12 +174,8 @@ def score_sentence(gold, pred):
     DATENAMES += [v for d in DATENAMES for v in [d[:3],d[:3]+'.']]
     ner = {Span(entry['start'],entry['end']): (entry['name'],entry['text']) for entry in gold['ner']}
     excluded = set(wsl.keys()) | {sp for sp,(etype,text) in ner.items() if etype!='WEA' and not (etype=='date' and text.lower() in DATENAMES)}
-    excludedTokens = set()
-    for sp in excluded:
-        excludedTokens |= set(sp)
     
-    for span in excluded:
-        goldTargetCoverage -= set(span)
+    
     goldFrames = {}
     goldArgs = {}
     for f in gold['frames']:
@@ -209,6 +205,9 @@ def score_sentence(gold, pred):
             for sp in excluded:
                 if targetSpan.overlaps(sp):
                     print('Target span',targetSpan,targetSpan(gold['tokens'],str),'overlaps with excluded span',sp,sp(gold['tokens'],str), file=sys.stderr)
+    
+    for span in excluded:
+        goldTargetCoverage -= set(span)
     for tkn in goldTargetCoverage:
         if tkn not in goldFrameTargetCoverage:
             goldTargetSpans.add(Span(tkn,tkn+1))
@@ -216,7 +215,7 @@ def score_sentence(gold, pred):
     c['Targets by span'] = goldTargetSpans, set(predFrames.keys())
     correctTargetSpans = set(goldFrames.keys()) & set(predFrames.keys())
 
-    c['Frames with correct targets (ignore precision)'] = len(correctTargetSpans), set(goldFrames.items()), set(predFrames.items())
+    c['Frames with correct targets (ignore P)'] = len(correctTargetSpans), set(goldFrames.items()), set(predFrames.items())
 
     for span in goldFrames.keys():
         if span not in correctTargetSpans:
