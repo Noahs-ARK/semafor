@@ -245,6 +245,10 @@ def score_sentence(gold, pred):
     allGoldArgs = set((tspan,)+arg for tspan,args in goldArgs.items() for arg in args.items())
     allPredArgs = set((tspan,)+arg for tspan,args in predArgs.items() for arg in args.items())
     c['Arguments, labeled (correct targets only)'] = allGoldArgs, allPredArgs
+    
+    # TODO: provided the target is correct, arguments can get credit regardless of the predicted frame label
+    # should this be changed/made an option?
+    
     return c
 
 
