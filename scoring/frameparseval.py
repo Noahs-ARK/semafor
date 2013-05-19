@@ -10,7 +10,7 @@ If k-best argument predictions are present, only considers the top-ranked set.
 """
 
 from __future__ import print_function, division
-import sys, json, codecs, itertools
+import sys, json, codecs, itertools, operator
 from pandas import DataFrame
 
 
@@ -106,6 +106,9 @@ class Span(object):
         raise Exception('Cannot add non-adjacent spans: '+repr(self)+' + ' + repr(that))
         #TODO: allow adding so as to produce multiple spans
 
+    def __lt__(self, that):
+        return self.minstart<that.minstart or self.maxstop<that.maxstop
+
     def __eq__(self, that):
         return self._s==that._s
 
@@ -123,7 +126,7 @@ class Span(object):
     
     def __call__(self, sequence, typ=list or str):
         if typ in (str,unicode):
-            return repr(typ(' '.join(sequence[i] for i in self)))
+            return typ(' '.join(sequence[i] for i in self))
         return typ(sequence[i] for i in self)
 
     def encompasses(self, that):
@@ -151,6 +154,8 @@ class Span(object):
 
 
 def score_sentence(gold, pred):
+    assert len(gold['tokens'])==len(pred['tokens']) and ' '.join(gold['tokens'])==' '.join(pred['tokens'])
+    
     c = PRCounter()
     num_tokens = len(gold['tokens'])
     predTargetCoverage = set()
@@ -180,14 +185,6 @@ def score_sentence(gold, pred):
     goldArgs = {}
     for f in gold['frames']:
         targetSpan = Span(*[i for sp in f['target']['spans'] for i in [sp['start'], sp['end']]])
-        if f['target']['spans'][0]['text']=='morning' and targetSpan not in predFrames:
-            pass
-        # if targetSpan not in predFrames:
-        #     tokens = gold['tokens']
-        #     token_pos = [(tokens[i], gold['pos'][i]['name']) for i in list(targetSpan)]
-        #     if "morning" in ''.join([x for x,y in token_pos]):
-        #         pred_tokens = [[(tokens[i], gold['pos'][i]['name']) for i in list(pred)] for pred in predFrames]
-        #         print(','.join('_'.join(t_p) for t_p in token_pos), gold, pred)
         goldTargetSpans.add(targetSpan)
         goldFrameTargetCoverage |= set(targetSpan)
         goldFrames[targetSpan] = f['target']['name']
@@ -197,14 +194,22 @@ def score_sentence(gold, pred):
         }
         if targetSpan in excluded:
             if targetSpan in wsl:  # obviously a bug with WSL
-                print('WSL bug:', targetSpan, targetSpan(gold['tokens'],str), file=sys.stderr)
+                print('WSL bug:', targetSpan, repr(targetSpan(gold['tokens'],str)), file=sys.stderr)
                 excluded.remove(targetSpan)
             else:
                 print(f['target']['spans'][0]['text'], {entry['name'] for entry in gold['ner'] if entry['start']==targetSpan.minstart}, file=sys.stderr)
         elif len(targetSpan)>1:
             for sp in excluded:
                 if targetSpan.overlaps(sp):
-                    print('Target span',targetSpan,targetSpan(gold['tokens'],str),'overlaps with excluded span',sp,sp(gold['tokens'],str), file=sys.stderr)
+                    print('Target span',targetSpan,repr(targetSpan(gold['tokens'],str)),'overlaps with excluded span',sp,repr(sp(gold['tokens'],str)), file=sys.stderr)
+    
+    # if True:
+    #         gstuff = [(sp,fr,sp(gold['tokens'],str)) for sp,fr in sorted(goldFrames.items(), key=operator.itemgetter(0))]
+    #         pstuff = [(sp,fr,sp(pred['tokens'],str)) for sp,fr in sorted(predFrames.items(), key=operator.itemgetter(0))]
+    #         if gstuff and pstuff and 'morning' in zip(*gstuff)[2] and 'morning' not in zip(*pstuff)[2]:
+    #             print(pstuff, file=sys.stderr)
+    #             print(gstuff, file=sys.stderr)
+    #             assert False
     
     for span in excluded:
         goldTargetCoverage -= set(span)
