@@ -56,7 +56,7 @@ def get_lemma(form, pos):
         return form
 
 
-def get_course_pos(pos):
+def get_coarse_pos(pos):
     pos = pos.upper()
     if pos == "PRP" or pos == "PRP$" or len(pos) <= 2:
         cpostag = pos
@@ -85,7 +85,7 @@ def get_non_target_token_idxs(gold_sentence):
 def extract_features(conll_tokens):
     conll_tokens = [
         default_conll_token(lemma=get_lemma(t.form, t.postag),
-                            cpostag=get_course_pos(t.postag))
+                            cpostag=get_coarse_pos(t.postag))
         for t in conll_tokens
     ]
     with_walls = [LEFT_ANCHOR] + conll_tokens + [RIGHT_ANCHOR]

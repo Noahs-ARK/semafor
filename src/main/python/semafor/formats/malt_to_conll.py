@@ -71,11 +71,7 @@ def read_conll(lines):
             yield result
             result = []
         else:
-            try:
-                result.append(ConllToken(*line.split('\t')))
-            except TypeError, e:
-                print(line)
-                raise e
+            result.append(ConllToken(*line.split('\t')))
     if result:
         yield result
 
