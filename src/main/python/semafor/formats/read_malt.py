@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from collections import namedtuple
-import sys
 
 MaltToken = namedtuple('MaltToken', 'form postag head deprel')
 

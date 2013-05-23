@@ -8,7 +8,7 @@ Author: Sam Thomson (sthomson@cs.cmu.edu)
 """
 import sys
 from collections import namedtuple
-from read_malt import read_malt
+from semafor.formats.read_malt import read_malt
 
 # Specification of the CoNLL format
 # (from http://ilk.uvt.nl/conll/ ):
@@ -52,14 +52,32 @@ CONLL_FIELDS = (
     # be meaningfull or simply 'ROOT'
     'pdeprel'
 )
-ConllToken = namedtuple('ConllToken', ' '.join(CONLL_FIELDS))
+
+ConllToken = namedtuple('ConllToken', CONLL_FIELDS)
 
 
 def default_conll_token(**kwargs):
-    " Creates a new ConllToken, with unspecified fields filled with '_'s "
+    """ Creates a new ConllToken, with unspecified fields filled with '_'s """
     defaults = dict((name, '_') for name in CONLL_FIELDS)
     defaults.update(**kwargs)
     return ConllToken(**defaults)
+
+
+def read_conll(lines):
+    result = []
+    for line in lines:
+        line = line.strip()
+        if line == '':
+            yield result
+            result = []
+        else:
+            try:
+                result.append(ConllToken(*line.split('\t')))
+            except TypeError, e:
+                print(line)
+                raise e
+    if result:
+        yield result
 
 
 def malt_to_conll(malt_tokens):

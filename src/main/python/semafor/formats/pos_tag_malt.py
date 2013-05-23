@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
-from read_malt import read_malt
+from semafor.formats.read_malt import read_malt
+
 
 def pos_tag(line):
     # word/pos/idx_of_parent/dep_label -> word_pos
