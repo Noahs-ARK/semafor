@@ -35,6 +35,7 @@ import java.util.*;
 
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Iterables.any;
+import static com.google.common.primitives.Ints.min;
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.*;
 import static edu.cmu.cs.lti.ark.fn.evaluation.ParseUtils.GOLD_TARGET_SUFFIX;
 import static edu.cmu.cs.lti.ark.util.IntRanges.range;
@@ -45,14 +46,14 @@ public class RoteSegmenter implements Segmenter {
 	public static final int MAX_LEN = 4;
 
 	private static final ImmutableSet<String> FORBIDDEN_WORDS =
-			ImmutableSet.of("a", "an", "as ", "for ", "i ", "in particular ",
-					"it ", "of course ", "so ", "the ", "with");
+			ImmutableSet.of("a", "an", "as", "for", "i", "in particular",
+					"it", "of course", "so", "the", "with");
 	// if these words precede "of", "of" should not be discarded
 	private static final ImmutableSet<String> PRECEDING_WORDS_OF =
-			ImmutableSet.of("%", "all ", "face ", "few ", "half ", "majority ",
-					"many ", "member ", "minority ", "more ", "most ", "much ",
-					"none ", "one ", "only ", "part ", "proportion ",
-					"quarter ", "share ", "some ", "third");
+			ImmutableSet.of("%", "all", "face", "few", "half", "majority",
+					"many", "member", "minority", "more", "most", "much",
+					"none", "one", "only", "part", "proportion",
+					"quarter", "share", "some", "third");
 	// if these words follow "of", "of" should not be discarded
 	private static final ImmutableSet<String> FOLLOWING_WORDS_OF =
 			ImmutableSet.of("all", "group", "their", "them", "us");
@@ -78,8 +79,7 @@ public class RoteSegmenter implements Segmenter {
 	}
 
 	public List<String> getSegmentation(Sentence sentence) {
-		final List<Token> tokens = sentence.getTokens();
-		final int numTokens = tokens.size();
+		final int numTokens = sentence.getTokens().size();
 		// start indices that we haven't used yet
 		final Set<Integer> remainingStartIndices = Sets.newHashSet(xrange(numTokens));
 		final ImmutableList.Builder<String> allNgramIndices = ImmutableList.builder();  // results
@@ -87,7 +87,7 @@ public class RoteSegmenter implements Segmenter {
 		final List<String> lemmas = getLemmasAndCoursePos(sentence);
 
 		// look for ngrams, backing off to smaller n
-		for(int n : range(1, MAX_LEN).asList().reverse()) {
+		for(int n : range(1, MAX_LEN + 1).asList().reverse()) {
 			for(int start : xrange(numTokens - n + 1)) {
 				if(!remainingStartIndices.contains(start)) continue;
 				final int end = start + n;
@@ -156,7 +156,7 @@ public class RoteSegmenter implements Segmenter {
 		if(LOC_PREPS.contains(token)) return false;
 		if(DIR_PREPS.contains(token)) return false;
 		if(TEMPORAL_PREPS.contains(token)) return false;
-		if(FORBIDDEN_POS_PREFIXES.contains(pos.substring(0, 2))) return false;
+		if(FORBIDDEN_POS_PREFIXES.contains(pos.substring(0, min(2, pos.length())))) return false;
 		// skip "of course" and "in particular"
 		if(token.equals("course") && precedingWord.equals("of")) return false;
 		if(token.equals("particular") && precedingWord.equals("in")) return false;
@@ -176,12 +176,14 @@ public class RoteSegmenter implements Segmenter {
 					followingNE.startsWith("LOCATION") ||
 					precedingNE.startsWith("CARDINAL");
 		}
+		// remove modal "will"s and "have"s
 		if(token.equals("will")) return !pos.equals("MD");
 		if(idx < mNodeList.length) {
 			// TODO: Why idx+1?
 			final DependencyParse headNode = mNodeList[idx+1];
 			if(lemma.equals("have")) return any(headNode.getChildren(), isObject);
 		}
+		// remove all forms of "be"
 		return !lemma.equals("be");
 	}
 	
@@ -219,9 +221,9 @@ public class RoteSegmenter implements Segmenter {
 
 	/**
 	 * @param tokenNums the last tsv field is the index of the sentence in `parses`
-	 * @param parseLines a list of
-	 * @param allRelatedWords
-	 * @return
+	 * @param parseLines a list of AllLemmaTags-formatted sentences
+	 * @param allRelatedWords ignored. we already have a field with this info
+	 * @return a list of predicted targets, one line per sentence
 	 */
 	@Override
 	public List<String> getSegmentations(List<String> tokenNums, List<String> parseLines, Set<String> allRelatedWords) {

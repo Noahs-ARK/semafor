@@ -67,10 +67,10 @@ public class PrepareFullAnnotationJson {
 					return RankedScoredRoleAssignment.fromPredictionLine(input);
 				}
 			};
-	private static final Function<RankedScoredRoleAssignment,String> getFrame =
-			new Function<RankedScoredRoleAssignment, String>() {
-				@Nullable @Override public String apply(RankedScoredRoleAssignment input) {
-					return input.frame;
+	private static final Function<RankedScoredRoleAssignment,Range0Based> getTargetSpan =
+			new Function<RankedScoredRoleAssignment, Range0Based>() {
+				@Override public Range0Based apply(RankedScoredRoleAssignment input) {
+					return input.targetSpan;
 				}
 			};
 
@@ -156,13 +156,14 @@ public class PrepareFullAnnotationJson {
 	public static SemaforParseResult getSemaforParse(Collection<RankedScoredRoleAssignment> rankedScoredRoleAssignments,
 													 List<String> tokens) {
 		final ArrayList<Frame> frames = Lists.newArrayList();
-		// group by frame
-		final ImmutableListMultimap<String,RankedScoredRoleAssignment> predictionsByFrame =
-				Multimaps.index(rankedScoredRoleAssignments, getFrame);
-		for (String frame : predictionsByFrame.keySet()) {
-			final List<RankedScoredRoleAssignment> predictionsForFrame = predictionsByFrame.get(frame);
+		// group by target span (assumes only one predicted frame per target span)
+		final ImmutableListMultimap<Range0Based,RankedScoredRoleAssignment> predictionsByFrame =
+				Multimaps.index(rankedScoredRoleAssignments, getTargetSpan);
+		for (Range0Based targetSpan : predictionsByFrame.keySet()) {
+			final List<RankedScoredRoleAssignment> predictionsForFrame = predictionsByFrame.get(targetSpan);
 			final RankedScoredRoleAssignment first = predictionsForFrame.get(0);
-			final Span target = makeSpan(first.targetSpan.getStart(), first.targetSpan.getEnd() + 1, frame, tokens);
+			final Span target =
+					makeSpan(first.targetSpan.getStart(), first.targetSpan.getEnd() + 1, first.frame, tokens);
 			final List<Frame.ScoredRoleAssignment> scoredRoleAssignments = Lists.newArrayList();
 			for (RankedScoredRoleAssignment ra : predictionsForFrame) {
 				// extract frame elements
