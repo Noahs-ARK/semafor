@@ -112,7 +112,7 @@ public class Semafor {
 		}
 	}
 
-	private static Semafor getSemaforInstance(String modelDirectory, File tempDirectory)
+	public static Semafor getSemaforInstance(String modelDirectory, File tempDirectory)
 			throws IOException, ClassNotFoundException, URISyntaxException {
 		final String graphFilename = new File(modelDirectory, GRAPH_FILENAME).getAbsolutePath();
 		final String requiredDataFilename = new File(modelDirectory, REQUIRED_DATA_FILENAME).getAbsolutePath();
@@ -208,22 +208,42 @@ public class Semafor {
 		// look up lemmas
 		final Sentence sentence = addLemmas(unLemmatizedSentence);
 		// find targets
+		final List<String> segments = predictTargets(sentence);
+		// frame identification
+		final List<String> idResult = predictFrames(sentence, segments);
+		// argument identification
+		return predictArguments(sentence, idResult);
+	}
+
+	public List<String> predictTargets(Sentence sentence) throws IOException {
 		final List<String> allLemmaTagsSentences =
 				ImmutableList.of(AllLemmaTags.makeLine(sentence.toAllLemmaTagsArray()));
-		final List<String> segments =
-				ParserDriver.getSegments(allRelatedWords, SegmentationMode.STRICT, null, allLemmaTagsSentences);
+		return ParserDriver.getSegments(allRelatedWords, SegmentationMode.STRICT, null, allLemmaTagsSentences);
+	}
 
-		// frame identification
-		final List<String> idResult = ParserDriver.identifyFrames(idModel, allLemmaTagsSentences, segments);
+	public List<String> predictFrames(Sentence sentence, List<String> segments) throws IOException {
+		final List<String> allLemmaTagsSentences =
+				ImmutableList.of(AllLemmaTags.makeLine(sentence.toAllLemmaTagsArray()));
+		return ParserDriver.identifyFrames(idModel, allLemmaTagsSentences, segments);
+	}
 
-		// argument identification
-		final List<String> argResult =
-				ParserDriver.identifyArguments(wordNetRelations, eventsFilename, spansFilename, decoder, 0, idResult,
-						allLemmaTagsSentences, 1);
+	public SemaforParseResult predictArguments(Sentence sentence, List<String> idResult) throws Exception {
+		final List<String> argResult = predictArgumentLines(sentence, idResult, 1);
+		System.out.println("argResult:");
+		for (String line : argResult) {
+			System.out.println(line);
+		}
 		return getSemaforParseResult(sentence, argResult);
 	}
 
-	private SemaforParseResult getSemaforParseResult(Sentence sentence, List<String> results) {
+	public List<String> predictArgumentLines(Sentence sentence, List<String> idResult, int kBest) throws Exception {
+		final List<String> allLemmaTagsSentences =
+				ImmutableList.of(AllLemmaTags.makeLine(sentence.toAllLemmaTagsArray()));
+		return ParserDriver.identifyArguments(wordNetRelations, eventsFilename, spansFilename, decoder, 0, idResult,
+				allLemmaTagsSentences, kBest);
+	}
+
+	public SemaforParseResult getSemaforParseResult(Sentence sentence, List<String> results) {
 		final List<RankedScoredRoleAssignment> roleAssignments =
 				copyOf(transform(results, PrepareFullAnnotationJson.processPredictionLine));
 		List<String> tokens = Lists.newArrayListWithExpectedSize(sentence.size());
@@ -233,7 +253,7 @@ public class Semafor {
 		return PrepareFullAnnotationJson.getSemaforParse(roleAssignments, tokens);
 	}
 
-	private Sentence addLemmas(Sentence sentence) {
+	public Sentence addLemmas(Sentence sentence) {
 		return new Sentence(Lists.transform(sentence.getTokens(), new Function<Token, Token>() {
 			@Override public Token apply(Token input) {
 				final String lemma = wordNetRelations.getLemmaForWord(input.getForm(), input.getPostag());

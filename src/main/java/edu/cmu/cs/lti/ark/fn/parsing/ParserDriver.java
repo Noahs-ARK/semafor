@@ -85,9 +85,9 @@ public class ParserDriver {
 	public static void main(String[] args) throws Exception {
 		// parse options
 		final FNModelOptions options = new FNModelOptions(args);
-		final String mstServerMode = options.mstServerMode.get();
 
-		/* Initializing connection to the MST server, if it exists */
+		final String mstServerMode = options.mstServerMode.get();
+		// Initializing connection to the MST server, if it exists
 		String mstServer = null;
 		int mstPort = -1;
 		if (mstServerMode.equals(SERVER_FLAG)) {
