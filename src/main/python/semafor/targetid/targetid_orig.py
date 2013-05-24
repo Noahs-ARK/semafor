@@ -92,8 +92,6 @@ def get_segmentation(sentence):
             end = start + n
             ngramSpan = slice(start, end)
             ngramLemmas = ' '.join(lemmas[start:end])
-            if n==1 and start==numTokens-5:
-                pass
             if ngramLemmas in WHITELIST:
                 # found a good ngram, add it to results, and remove it from startIndices so we don't overlap later
                 candidate_target = sentence[ngramSpan]
