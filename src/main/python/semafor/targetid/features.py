@@ -14,9 +14,8 @@ import os
 import sys
 #from nltk import FreqDist
 
-sys.path.append("/Users/sam/repo/project/semafor/semafor/src/main/python")
-from nltk.corpus import wordnet as wn
 from semafor.scoring.frameparseval import DATE_NAMES
+from semafor.formats.wordnet import get_lemma
 from semafor.formats.malt_to_conll import ConllToken, read_conll, default_conll_token
 
 TRAIN_DATA_DIR = "/Users/sam/repo/project/semafor/semafor/training/data/naacl2012"
@@ -35,25 +34,14 @@ INTRATOKEN_JOIN = u':'.join
 #FEATURES = ("prev_lemma", "prev_pos", "lemma", "pos", "next_lemma", "next_pos")
 #Features = namedtuple("Features", FEATURES)
 #DataPoint = namedtuple("DataPoint", ("is_target", "features"))
-WN_POSTAGS = {
-    'j': wn.ADJ,
-    'v': wn.VERB,
-    'n': wn.NOUN,
-    'r': wn.ADV,
-}
+
 
 
 def ngrams(words, n):
     return zip(*[words[i:] for i in range(n)])
 
 
-def get_lemma(form, pos):
-    form = form.lower()
-    wn_pos = WN_POSTAGS.get(pos[:1].lower(), '')
-    if wn_pos:
-        return wn.morphy(form, wn_pos) or form
-    else:
-        return form
+
 
 
 def get_coarse_pos(pos):

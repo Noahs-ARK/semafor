@@ -9,6 +9,7 @@ Author: Sam Thomson (sthomson@cs.cmu.edu)
 import sys
 from collections import namedtuple
 from semafor.formats.read_malt import read_malt
+from semafor.formats.wordnet import get_lemma
 
 # Specification of the CoNLL format
 # (from http://ilk.uvt.nl/conll/ ):
@@ -63,7 +64,8 @@ def default_conll_token(**kwargs):
     return ConllToken(**defaults)
 
 
-def read_conll(lines):
+def read_conll(lines, lookup_lemmas=False):
+    """If no lemma is present and lookup_lemmas is True, consults WordNet by calling get_lemma()."""
     result = []
     for line in lines:
         line = line.strip()
@@ -71,13 +73,23 @@ def read_conll(lines):
             yield result
             result = []
         else:
-            result.append(ConllToken(*line.split('\t')))
+            parts = line.split('\t')
+            parts[CONLL_FIELDS.index('id')] = int(parts[CONLL_FIELDS.index('id')])    # token ID
+            if parts[CONLL_FIELDS.index('head')]!='_':
+                parts[CONLL_FIELDS.index('head')] = int(parts[CONLL_FIELDS.index('head')])
+            if parts[CONLL_FIELDS.index('phead')]!='_':
+                parts[CONLL_FIELDS.index('phead')] = int(parts[CONLL_FIELDS.index('phead')])
+            if lookup_lemmas and parts[CONLL_FIELDS.index('lemma')]=='_': # consult WordNet
+                form = parts[CONLL_FIELDS.index('form')]
+                postag = parts[CONLL_FIELDS.index('postag')]
+                parts[CONLL_FIELDS.index('lemma')] = get_lemma(form, postag)
+            result.append(ConllToken(*parts))
     if result:
         yield result
 
 
 def malt_to_conll(malt_tokens):
-    " Converts one line of MaltParser's output to CoNLL format """
+    """Converts one line of MaltParser's output to CoNLL format"""
     output = []
     for i, token in enumerate(malt_tokens):
         conll_token = default_conll_token(
