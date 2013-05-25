@@ -99,7 +99,7 @@ def get_segmentation(sentence):
                 candidate_target = sentence[ngramSpan]
                 if shouldIncludeToken(candidate_target, sentence):
                     yield candidate_target
-                remainingStartIndices -= set(range(ngramSpan.start, ngramSpan.stop))
+                    remainingStartIndices -= set(range(ngramSpan.start, ngramSpan.stop))
 
 
 def shouldIncludeToken(candidate_target_tokens, sentence):
