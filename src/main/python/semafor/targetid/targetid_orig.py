@@ -5,11 +5,13 @@ and filters out some of the unigrams according to heuristics.
 
 Argument: path to CoNLL-format file for the input
 
-Output format: tab-separated lines like
+Legacy output format (default): tab-separated lines like
 
 9_10#true    1#true    11#true    13#true    15#true    0
 
 (underscore-spearated token IDs for each target; last column is sentence ID)
+
+Pass -j to produce JSON output.
 
 We observe a couple of differences from SEMAFOR's RoteSegmenter:
 1) In SEMAFOR 3.0, lemmas were not lowercased before being looked up in the whitelist, 
@@ -28,7 +30,7 @@ We observe a couple of differences from SEMAFOR's RoteSegmenter:
 """
 
 from __future__ import print_function
-import sys, os, codecs
+import sys, os, codecs, json
 
 from semafor.formats.malt_to_conll import read_conll
 
@@ -141,18 +143,38 @@ def shouldIncludeToken(candidate_target_tokens, sentence):
     if lemma=="have": return any(1 for t in sentence if t.head==token.id and t.deprel=='OBJ') # 'have' is a target iff it has an object
     return lemma!="be"
 
-def main(fileP):
+def main(fileP, output_format='legacy' or 'json'):
     with codecs.open(fileP, 'r', 'utf-8') as inF:
         for sentId, sentence in enumerate(read_conll(inF, lookup_lemmas=True)):
             assert None not in sentence
+            
             targets = list(get_segmentation(sentence))
-            print('\t'.join('_'.join(str(token.id-1) for token in target_tokens)+'#true' for target_tokens in targets) + '\t' + str(sentId))
+            
+            if output_format.lower()=='json':
+                sentJ = {"tokens": [tkn.form for tkn in sentence], 
+                         "frames": []}
+                for target in targets:
+                    spansJ = []
+                    for tkn in sorted(target, key=lambda x: x.id):
+                        # group contiguous tokens into spans
+                        if spansJ and spansJ[-1]["end"]==tkn.id:
+                            spansJ["end"]+=1
+                            spansJ["text"]+= ' ' + tkn.form
+                        else:
+                            spansJ.append({"start": tkn.id-1, "end": tkn.id, "text": tkn.form})
+                    sentJ["frames"].append({"target": {"spans": spansJ}})
+                print(json.dumps(sentJ))
+            else:
+                print('\t'.join('_'.join(str(token.id-1) for token in target_tokens)+'#true' for target_tokens in targets) + '\t' + str(sentId))
             # output format: 9_10#true    1#true    11#true    13#true    15#true    0
             # underscore-spearated token IDs for each target; last column is sentence ID
             # (if no targets, will simply be a tab followed by sentence number)
-            #if sentId==1:
-            #    print(targets, file=sys.stderr)
 
 if __name__=='__main__':
-    fileP = sys.argv[1]
-    main(fileP)
+    args = sys.argv[1:]
+    fmt = 'legacy'
+    if args[0]=='-j':
+        fmt = 'json'
+        args.pop(0)
+    fileP, _ = args+[None]
+    main(fileP, output_format=fmt)
