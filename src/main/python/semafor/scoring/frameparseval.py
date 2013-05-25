@@ -9,7 +9,7 @@ If k-best argument predictions are present, only considers the top-ranked set.
 @since: 2013-05-15
 """
 from __future__ import print_function, division
-import sys, json, codecs, itertools
+import sys, json, codecs, itertools, math
 from pandas import DataFrame
 
 DATE_NAMES = [
@@ -46,6 +46,8 @@ class PRCounter(object):
     def __setitem__(self, k, v):
         if isinstance(v[0], int):
             N, gold_set, pred_set = v
+            if gold_set or pred_set:
+                assert N>0,(N,gold_set,pred_set)
         else:
             gold_set, pred_set = v
             N = ''
@@ -58,8 +60,19 @@ class PRCounter(object):
         entry['P'] = entry['Numer'] / entry['PDenom'] if entry['PDenom'] else float('nan')
         entry['R'] = entry['Numer'] / entry['RDenom'] if entry['RDenom'] else float('nan')
         entry['F'] = 2 * entry['P'] * entry['R'] / (entry['P'] + entry['R']) if (entry['P'] + entry['R']) else float('nan')
-        entry['T'] = None if N == '' else N - len(gold_set ^ pred_set) / 2
-        entry['Acc'] = {'': None, 0: float('nan')}[N] if not N else entry['T'] / N
+        if N=='':
+            entry['T'] = None
+            entry['Acc'] = None
+        else:
+            if len(gold_set)==len(pred_set)==N:
+                entry['T'] = entry['Numer']
+            else:
+                tp = entry['Numer']
+                fp = len(pred_set-gold_set)
+                fn = len(gold_set-pred_set)
+                entry['T'] = N-fp-fn
+            assert entry['T']>=0,(entry,gold_set,pred_set)
+            entry['Acc'] = float('nan') if N==0 else entry['T'] / N
         df = DataFrame.from_items([(e, {k: entry[e]}) for e in PRCounter.COLUMNS])
         self._df = self._df.append(df)
 
@@ -67,11 +80,26 @@ class PRCounter(object):
         return str(self._df)
 
     def __add__(self, that):
-        new_df = self._df + that._df
-        # counts get added, now we need to recompute ratios
+        # ensure all rows are present for both tables, filling in 0 if necessary
+        # (otherwise the empty rows will be treated as if they contain NaN when adding)
+        
+        me = self._df
+        you = that._df
+        for row in me.index:
+            if row not in that._df.index:
+                you = you.append(DataFrame.from_items([(e, {row: '' if me[e][row]=='' else 0}) for e in PRCounter.COLUMNS]))
+        for row in you.index:
+            if row not in self._df.index:
+                me = me.append(DataFrame.from_items([(e, {row: '' if you[e][row]=='' else 0}) for e in PRCounter.COLUMNS]))
+        
+        # add counts
+        new_df = me + you
+        
+        # recompute ratios
         new_df['P'] = new_df['Numer'] / new_df['PDenom']
         new_df['R'] = new_df['Numer'] / new_df['RDenom']
-        new_df['F'] = 2 * new_df['P'] * new_df['R'] / (new_df['P'] + new_df['R'])
+        denom = (new_df['P'] + new_df['R'])
+        new_df['F'] = 2 * new_df['P'] * new_df['R'] / denom[denom>0]
         new_df['Acc'] = new_df['T'] / new_df['N']
         result = PRCounter()
         result._df = new_df
@@ -190,12 +218,15 @@ def get_predictions_by_span(frames):
     for frame in frames:
         target_span = span_from_element(frame['target'])
         target_coverage |= set(target_span)
-        frame_names[target_span] = frame['target']['name']
+        frame_names[target_span] = frame['target'].get('name')  # None if no frame name (just evaluating target ID)
         # ignore all but the top-ranked set of argument predictions
-        arguments[target_span] = {
-            span_from_element(fe): fe['name']
-            for fe in frame['annotationSets'][0]['frameElements']
-        }
+        if 'annotationSets' in frame:
+            arguments[target_span] = {
+                span_from_element(fe): fe['name']
+                for fe in frame['annotationSets'][0]['frameElements']
+            }
+        else:
+            arguments[target_span] = {}
     return target_coverage, frame_names, arguments
 
 
@@ -219,7 +250,8 @@ def get_non_targets(gold_sentence):
 
 
 def score_sentence(gold, predicted):
-    assert len(gold['tokens']) == len(predicted['tokens']) and ' '.join(gold['tokens']) == ' '.join(predicted['tokens'])
+    #TODO
+    #assert len(gold['tokens']) == len(predicted['tokens']) and ' '.join(gold['tokens']) == ' '.join(predicted['tokens'])
     sentence_stats = PRCounter()
     num_tokens = len(gold['tokens'])
     pred_target_coverage, pred_frames, pred_args = get_predictions_by_span(predicted['frames'])
@@ -265,45 +297,55 @@ def score_sentence(gold, predicted):
     for tkn in gold_target_coverage:
         if tkn not in gold_frame_target_coverage:
             gold_target_spans.add(Span(tkn, tkn + 1))
+    
     sentence_stats['Targets by token'] = num_tokens, gold_target_coverage, pred_target_coverage
     sentence_stats['Targets by span'] = gold_target_spans, set(pred_frames.keys())
-
-    correct_target_spans = set(gold_frames.keys()) & set(pred_frames.keys())
-    sentence_stats['Frames with correct targets (ignore P)'] = len(correct_target_spans), set(gold_frames.items()), set(pred_frames.items())
-
-    for span in gold_frames.keys():
-        if span not in correct_target_spans:
-            del gold_frames[span]
-    for span in pred_frames.keys():
-        if span not in correct_target_spans:
-            del pred_frames[span]
-    assert len(gold_frames)==len(pred_frames)==len(correct_target_spans),(gold_frames,pred_frames,correct_target_spans)
-    sentence_stats['Frames (correct targets only)'] = len(correct_target_spans), set(gold_frames.items()), set(pred_frames.items())
-
-    all_gold_args = set((tspan,arg) for tspan, args in gold_args.items() for arg in args)
-    all_pred_args = set((tspan,arg) for tspan, args in pred_args.items() for arg in args)
-    sentence_stats['Argument spans with correct targets'] = all_gold_args, all_pred_args
-
-    all_gold_args = set((tspan,)+arg for tspan, args in gold_args.items() for arg in args.items())
-    all_pred_args = set((tspan,)+arg for tspan, args in pred_args.items() for arg in args.items())
-    sentence_stats['Arguments, labeled, with correct targets'] = all_gold_args, all_pred_args
-
-    for span in gold_args.keys():
-        if span not in correct_target_spans:
-            del gold_args[span]
-    for span in pred_args.keys():
-        if span not in correct_target_spans:
-            del pred_args[span]
-    all_gold_args = set((tspan,arg) for tspan, args in gold_args.items() for arg in args)
-    all_pred_args = set((tspan,arg) for tspan, args in pred_args.items() for arg in args)
-    sentence_stats['Argument spans (correct targets only)'] = all_gold_args, all_pred_args
-
-    all_gold_args = set((tspan,)+arg for tspan, args in gold_args.items() for arg in args.items())
-    all_pred_args = set((tspan,)+arg for tspan, args in pred_args.items() for arg in args.items())
-    sentence_stats['Arguments, labeled (correct targets only)'] = all_gold_args, all_pred_args
     
+    #if 0<sentence_stats._df['R']['Targets by span']<0.3:
+    #    assert False,(gold_frames, pred_frames, gold['tokens'])
+    
+    if any(pred_frames.values()):   # some frames were predicted
+    
+        correct_target_spans = set(gold_frames.keys()) & set(pred_frames.keys())
+        sentence_stats['Frames with correct targets (ignore P)'] = set(gold_frames.items()), set(pred_frames.items())
+    
+        for span in gold_frames.keys():
+            if span not in correct_target_spans:
+                del gold_frames[span]
+        for span in pred_frames.keys():
+            if span not in correct_target_spans:
+                del pred_frames[span]
+        assert len(gold_frames)==len(pred_frames)==len(correct_target_spans),(gold_frames,pred_frames,correct_target_spans)
+        sentence_stats['Frames (correct targets only)'] = len(correct_target_spans), set(gold_frames.items()), set(pred_frames.items())
+    
+        if any(pred_args.values()): # some arguments were predicted
+            
+            all_gold_args = set((tspan,arg) for tspan, args in gold_args.items() for arg in args)
+            all_pred_args = set((tspan,arg) for tspan, args in pred_args.items() for arg in args)
+            sentence_stats['Argument spans with correct targets'] = all_gold_args, all_pred_args
+        
+            all_gold_args = set((tspan,)+arg for tspan, args in gold_args.items() for arg in args.items())
+            all_pred_args = set((tspan,)+arg for tspan, args in pred_args.items() for arg in args.items())
+            sentence_stats['Arguments, labeled, with correct targets'] = all_gold_args, all_pred_args
+        
+            for span in gold_args.keys():
+                if span not in correct_target_spans:
+                    del gold_args[span]
+            for span in pred_args.keys():
+                if span not in correct_target_spans:
+                    del pred_args[span]
+            all_gold_args = set((tspan,arg) for tspan, args in gold_args.items() for arg in args)
+            all_pred_args = set((tspan,arg) for tspan, args in pred_args.items() for arg in args)
+            sentence_stats['Argument spans (correct targets only)'] = all_gold_args, all_pred_args
+        
+            all_gold_args = set((tspan,)+arg for tspan, args in gold_args.items() for arg in args.items())
+            all_pred_args = set((tspan,)+arg for tspan, args in pred_args.items() for arg in args.items())
+            sentence_stats['Arguments, labeled (correct targets only)'] = all_gold_args, all_pred_args
+        
     # TODO: provided the target is correct, arguments can get credit regardless of the predicted frame label
     # should this be changed/made an option?
+    #print(sentence_stats.to_string())
+    #assert False
     return sentence_stats
 
 
@@ -311,7 +353,7 @@ if __name__=='__main__':
     gold_filename, pred_filename = sys.argv[1:]
     scores = None
     with codecs.open(gold_filename, 'r', 'utf-8') as gold_file, codecs.open(pred_filename, 'r', 'utf-8') as pred_file:
-        for gold_line, pred_line in zip(gold_file, pred_file):
+        for sentNum,(gold_line,pred_line) in enumerate(zip(gold_file, pred_file)):
             sent_scores = score_sentence(json.loads(gold_line), json.loads(pred_line))
             if scores is None:
                 scores = sent_scores
