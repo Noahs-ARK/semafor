@@ -108,7 +108,7 @@ def get_segmentation(sentence):
     # start indices that we haven't used yet
     remainingStartIndices = set(range(numTokens))
     
-    lemmas = [token.lemma + "_" + get_coarse_pos(token.postag) for token in sentence]
+    lemmas = [token.lemma + "_" + get_coarse_pos(token.postag.upper()) for token in sentence]
 
     # look for ngrams, backing off to smaller n
     for n in range(MAX_LEN, 0, -1):
@@ -130,8 +130,8 @@ def get_segmentation(sentence):
                         yes = True
                 elif n==1:
                     # decide based on POSTARGETDICT vs. POSDICT counts
-                    pos = sentence[start].postag
-                    if not pos.startswith('NNP'):
+                    pos = sentence[start].postag.upper()
+                    if not pos.startswith('NNP'): # not a proper noun
                         cpos = ngramLemmas[-1]
                         if cpos in POSDICT and POSTARGETDICT.get(cpos,0)/POSDICT[cpos] >= 0.5:
                             yes = True
