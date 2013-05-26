@@ -28,25 +28,26 @@ def build_target_dicts(targetdictFP, unifreqFP, dataFP='../scoring/cv.train.sent
                 posmap = {stuff['start']: stuff for stuff in sentence['pos']}
                 sentence['pos'] = [posmap.get(i, {'start': i, 'end': i+1, 'name': '?', 'text': sentence['tokens'][i]}) for i in range(len(sentence['tokens']))]
             
-            uniFreq.update(get_lemma(entry['text'], entry['name'])+'_'+entry['name'].upper()[0] for entry in sentence['pos'])
-            tokenOffsets = set(range(len(sentence['tokens'])))
+            tokenOffsets = set()    # tokens of interest: either part of a target or present in the WSL
+            
+            for wslentry in sentence['wsl']:
+                tokenOffsets |= {i for i in range(wslentry['start'],wslentry['end'])}
             
             # targets
             for frame in sentence['frames']:
                 target_toks = {i for span in frame['target']['spans'] for i in range(span['start'],span['end'])}
-                tokenOffsets -= target_toks
+                tokenOffsets |= target_toks
                 lemmas = [get_lemma(entry['text'], entry['name'])+'_'+entry['name'].upper()[0] for i in sorted(target_toks) for entry in [sentence['pos'][i]]]
                 targets[' '.join(lemmas)] += 1
-                
-            # subtract from unigram counts tokens neither part of any target  
-            # nor marked as excluded in the word sense layer
-            for wslentry in sentence['wsl']:
-                tokenOffsets -= {i for i in range(wslentry['start'],wslentry['end'])}
-            for i in tokenOffsets:
-                remaining_entry = sentence['pos'][i]
-                w, pos = remaining_entry['text'], remaining_entry['name']
-                remaining_lemma = get_lemma(w, pos)+'_'+pos.upper()[0]
-                uniFreq[remaining_lemma] -= 1
+            
+            
+            # unigram counts
+            # ignore tokens tagged as proper nouns (consequence: if there are proper noun unigram targets, 
+            # the target/unigram ratio can be greater than 1)
+            uniFreq.update(get_lemma(entry['text'], entry['name'])+'_'+entry['name'].upper()[0] 
+                           for entry in sentence['pos'] if entry['start'] in tokenOffsets and not entry['name'].startswith('NP') and not entry['name'].startswith('NNP'))
+            
+            
     
     with codecs.open(unifreqFP, 'w', 'utf-8') as outF:
         for w,n in uniFreq.items():

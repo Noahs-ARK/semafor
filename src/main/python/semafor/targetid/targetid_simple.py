@@ -126,7 +126,7 @@ def get_segmentation(sentence):
 
                 if TARGETDICT.get(ngramLemmas,0)>=5:
                     # for unigrams, decide based on TARGETDICT vs. UNIDICT counts
-                    if n>1 or (TARGETDICT[ngramLemmas]/UNIDICT[ngramLemmas] >= 0.5 and not sentence[start].postag.upper().startswith('NNP')):
+                    if n>1 or (TARGETDICT[ngramLemmas]/(UNIDICT[ngramLemmas] or 1) >= 0.5 and not sentence[start].postag.upper().startswith('NNP')):
                         yes = True
                 elif n==1:
                     # decide based on POSTARGETDICT vs. POSDICT counts
