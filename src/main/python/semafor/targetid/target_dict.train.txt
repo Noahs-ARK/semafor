@@ -49,7 +49,7 @@ rename_V	3
 cave_N	3
 buying_N	1
 conflicting_J	1
-with_I	2
+with_I	3
 contribute_V	2
 contract_N	7
 opposite_I	1
@@ -125,7 +125,6 @@ strain_V	1
 participation_N	2
 miss_V	2
 climate_N	2
-some_J	1
 support_N	1
 particular_J	5
 centrifuge_N	17
@@ -202,7 +201,7 @@ conclusion_N	2
 request_V	4
 fulfillment_N	2
 blatant_J	1
-face_N	5
+face_N	4
 gather_V	3
 store_V	6
 sales_N	10
@@ -678,6 +677,7 @@ remains_N	1
 synthesis_N	1
 competition_N	1
 historically_R	3
+ascertain_V	1
 build_V	47
 crowded_J	1
 known_J	1
@@ -708,10 +708,9 @@ names_N	4
 amateur_N	1
 wit_N	1
 double_J agent_N	1
-program_I	1
 suitable_J	1
 mayor_N	2
-program_N	177
+program_N	178
 clan_N	1
 forefather_N	1
 affect_V	3
@@ -915,10 +914,10 @@ drown_V	1
 acclaimed_J	1
 entry_N	1
 links_N	1
-ascertain_V	1
+even_R	1
 massive_J	3
-good_J	8
-good_N	4
+good_J	10
+good_N	2
 explain_V	2
 bent_J	1
 victory_N	4
@@ -936,7 +935,6 @@ trip_N	3
 draw_V	4
 regime_N	12
 boat_N	1
-youth_N	1
 control_V	9
 nice_J	2
 everywhere_R	4
@@ -992,6 +990,7 @@ attack_V	4
 visitor_N	13
 above_I	3
 prove_V	3
+their_P	1
 carry_V on_R	1
 certainty_N	1
 band_N	4
@@ -1064,6 +1063,7 @@ east_N	3
 diminish_V	2
 stream_N	1
 poetry_N	2
+the_D	1
 host_N	2
 high_N	1
 poisonous_J	1
@@ -1106,7 +1106,6 @@ slay_V	1
 interpret_V	1
 side_N	5
 cater_V	1
-controlled_D	1
 mean_V	6
 april_N fool's_N day_N	1
 spot_N	3
@@ -1118,6 +1117,7 @@ reserves_N	2
 island_N	58
 east_R	1
 at_I present_J	1
+television_N	1
 southern_J	5
 fish_V	1
 native_J	2
@@ -1175,7 +1175,6 @@ alleged_J	2
 present_R	1
 rugged_J	1
 hill_N	6
-ton_N	1
 decide_V	2
 compliance_N	1
 actual_J	2
@@ -1200,7 +1199,6 @@ strip_V	1
 sea_N	9
 multinational_J	2
 strip_N	1
-go_N	1
 willing_J	9
 arouse_V	1
 reappraise_V	1
@@ -1255,7 +1253,7 @@ easy_J	6
 culturally_R	1
 stock_N	1
 all_R over_I	1
-issues_R	1
+ton_N	1
 objective_N	7
 father_N	1
 hospitalize_V	2
@@ -1566,7 +1564,7 @@ leave_V	11
 example_N	11
 booklet_N	1
 team_N	8
-for_I	1
+for_I	2
 storage_N	4
 gulf_N	1
 colonist_N	1
@@ -1734,7 +1732,6 @@ dance_V	1
 condemn_V	2
 findings_N	1
 stocks_N	3
-dealing_I	1
 target_N	1
 regulation_N	5
 should_M	59
@@ -1861,7 +1858,6 @@ interest_V	1
 real_J	2
 goal_N	11
 court_N	4
-become_N	1
 meld_V	1
 rooms_N	2
 reply_N	1
@@ -1989,7 +1985,7 @@ go_V on_I	1
 canadian_J	2
 stranger_N	2
 variant_N	1
-to_T	10
+to_T	12
 form_N	13
 yield_V	1
 edition_N	1
@@ -2009,6 +2005,7 @@ aim_V	1
 services_N	5
 swing_V	1
 national_J	23
+accuser_N	1
 pick_V	1
 collaborate_V	3
 national_N	7
@@ -2084,7 +2081,6 @@ world_N	27
 subvert_V	1
 cascade_V	1
 covert_J	5
-state_T	1
 state_V	11
 possession_N	1
 lose_V	5
@@ -2334,6 +2330,7 @@ mane_N	2
 acquire_V	36
 prevail_V	2
 development_N	55
+elitist_N	1
 schoolteacher_N	2
 hidden_J	2
 conclude_V	11
@@ -2588,7 +2585,7 @@ previous_J	2
 lane_N	1
 report_V	26
 concerned_J	1
-issue_N	8
+issue_N	9
 highway_N	4
 dynamite_N	1
 dance_N	1
@@ -2617,7 +2614,7 @@ strife_N	2
 have_V	93
 innocent_J	1
 fail_V	7
-have_J	1
+youth_N	1
 worship_N	2
 advise_V	1
 turkish_J	2
@@ -2625,7 +2622,6 @@ best_J	11
 sporadic_J	1
 resolve_V	5
 judge_V	3
-abandoned_P	1
 bully_V	1
 active_J	6
 authorize_V	1
@@ -2730,7 +2726,6 @@ submission_N	1
 visible_J	3
 signal_N	1
 start_V	9
-refuse_T	1
 decisive_J	1
 weaponize_J	1
 respect_V	1

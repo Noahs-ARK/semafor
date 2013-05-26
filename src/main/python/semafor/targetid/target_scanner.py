@@ -24,17 +24,18 @@ def build_target_dicts(targetdictFP, unifreqFP, dataFP='../scoring/cv.train.sent
             if len(sentence['tokens'])!=len(sentence['pos']):
                 # sometimes the data is buggy and missing a POS tag :( 
                 # stopgap: insert ? as the tag
+                # TODO: fix this in preprocessing, make an assert here
                 posmap = {stuff['start']: stuff for stuff in sentence['pos']}
                 sentence['pos'] = [posmap.get(i, {'start': i, 'end': i+1, 'name': '?', 'text': sentence['tokens'][i]}) for i in range(len(sentence['tokens']))]
             
-            uniFreq.update(get_lemma(w,p['name'])+'_'+p['name'].upper()[0] for w,p in zip(sentence['tokens'],sentence['pos']))
+            uniFreq.update(get_lemma(entry['text'], entry['name'])+'_'+entry['name'].upper()[0] for entry in sentence['pos'])
             tokenOffsets = set(range(len(sentence['tokens'])))
             
             # targets
             for frame in sentence['frames']:
                 target_toks = {i for span in frame['target']['spans'] for i in range(span['start'],span['end'])}
                 tokenOffsets -= target_toks
-                lemmas = [get_lemma(sentence['tokens'][i],sentence['pos'][i]['name'])+'_'+sentence['pos'][i]['name'].upper()[0] for i in sorted(target_toks)]
+                lemmas = [get_lemma(entry['text'], entry['name'])+'_'+entry['name'].upper()[0] for i in sorted(target_toks) for entry in [sentence['pos'][i]]]
                 targets[' '.join(lemmas)] += 1
                 
             # subtract from unigram counts tokens neither part of any target  
@@ -42,7 +43,9 @@ def build_target_dicts(targetdictFP, unifreqFP, dataFP='../scoring/cv.train.sent
             for wslentry in sentence['wsl']:
                 tokenOffsets -= {i for i in range(wslentry['start'],wslentry['end'])}
             for i in tokenOffsets:
-                remaining_lemma = get_lemma(sentence['tokens'][i],sentence['pos'][i]['name'])+'_'+sentence['pos'][i]['name'].upper()[0]
+                remaining_entry = sentence['pos'][i]
+                w, pos = remaining_entry['text'], remaining_entry['name']
+                remaining_lemma = get_lemma(w, pos)+'_'+pos.upper()[0]
                 uniFreq[remaining_lemma] -= 1
     
     with codecs.open(unifreqFP, 'w', 'utf-8') as outF:

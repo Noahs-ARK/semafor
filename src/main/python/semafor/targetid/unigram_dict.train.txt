@@ -260,7 +260,7 @@ virgilia_N	1
 bilateral_J	0
 eastern_N	3
 hope_N	2
-elitists_V	0
+eastern_J	6
 increasingly_R	3
 machine_N	2
 bernard_N	1
@@ -460,9 +460,8 @@ alarming_J	1
 voluntarily_R	1
 mobile_J	0
 madly_R	1
-program_I	1
 629_C	1
-program_N	177
+program_N	178
 forefather_N	1
 prep_N	0
 classical_J	1
@@ -475,7 +474,6 @@ bristle_V	0
 principle_N	0
 vanish_V	1
 turn_N	1
-principle_C	0
 rain_N	0
 plan_N	21
 all-inclusive_J	0
@@ -643,7 +641,7 @@ zero_C	2
 failing_N	0
 merger_N	0
 investigator_N	0
-d.c._N	1
+dilorenzo_N	1
 zero_N	0
 commence_V	1
 kim_N	2
@@ -671,7 +669,6 @@ thanks_N	1
 i.e._F	4
 joke_N	0
 esfahan_N	5
-secretive_J	1
 queen_N	1
 nodong_J	0
 nodong_N	0
@@ -833,7 +830,6 @@ house_N	20
 bullet_N	1
 treaty_N	23
 automatic_J	0
-having_J	1
 stray_V	0
 hypochlorite_N	0
 determine_V	2
@@ -958,7 +954,7 @@ dear_N	1
 nationwide_J	0
 illustrate_V	1
 entire_J	3
-lesvos_N	3
+israel_N	27
 more_J	24
 complement_V	2
 unsafeguarded_J	0
@@ -1064,14 +1060,13 @@ completeness_N	2
 twenty_C	1
 id:lcc-m-7_C	1
 coordinate_V	0
-for_V	1
 proportion_N	1
 item_N	5
 trackball_N	0
 dimension_N	0
 kidnapping_N	1
 }_)	1
-for_I	452
+for_I	453
 gulf_N	12
 speculation_N	0
 ranch_V	0
@@ -1180,11 +1175,11 @@ experiment_N	0
 celtic_N	1
 feature_N	0
 pahlavi_N	1
-israel_N	27
+load_V	3
 branch_N	1
 weld_V	1
 ninth_J	0
-abandon_V	3
+abandon_V	4
 $5.5_N	0
 preferably_R	1
 legalize_V	0
@@ -1294,7 +1289,7 @@ reassess_V	0
 aegis_N	0
 seriously_R	3
 replicate_V	0
-socialist_J	0
+socialist_J	1
 unify_V	1
 socialist_N	0
 similarity_N	1
@@ -1324,7 +1319,6 @@ emerge_V	5
 depose_V	1
 greece_N	14
 sunshine_N	3
-ready_N	0
 deployment_N	5
 perfringens_N	1
 mt._N	2
@@ -1377,6 +1371,7 @@ reckon_V	0
 populate_V	0
 id:lcch_0001_J	0
 services_N	7
+accuser_N	1
 collaborate_V	3
 initial_J	2
 7325_C	1
@@ -1424,10 +1419,10 @@ illicit_J	8
 zealand_N	1
 thira_N	2
 $20,000_N	0
-state_N	115
+state_N	116
 subvert_V	1
 inflation_N	0
-state_T	1
+technocrat_N	0
 state_V	11
 lose_V	5
 megiddo_N	1
@@ -1515,7 +1510,6 @@ gabriel_N	1
 rapidly_R	4
 list_N	3
 mainway_N	1
-van_N	1
 salary_N	0
 availability_N	0
 sickly_J	0
@@ -1724,7 +1718,7 @@ demagogic_J	0
 marco_N	1
 drug-financed_V	0
 chat_N	1
-eastern_J	6
+precaution_N	0
 negev_N	1
 colonial_J	0
 mohamed_N	3
@@ -1912,10 +1906,9 @@ flash_N	0
 rename_V	3
 buying_N	1
 universal_N	3
-with_I	361
+with_I	363
 covenant_N	2
 opposite_N	0
-with_P	1
 opposite_I	1
 opposite_J	0
 upon_I	4
@@ -1982,7 +1975,7 @@ constituent_N	0
 deny_V	22
 cbw_J	0
 renowned_J	1
-constituent_J	0
+brief_N	2
 superior_J	0
 diversion_N	0
 totally_R	3
@@ -2000,7 +1993,7 @@ finish_V	3
 coll_N	2
 correspondent_N	0
 leaders_N	11
-face_V	1
+face_V	2
 maine_N	1
 general_N	10
 demoralize_V	0
@@ -2012,9 +2005,8 @@ censorship_N	0
 redirect_V	1
 shehab-3_C	6
 ag_N	2
-not_V	1
 underestimate_V	0
-not_R	243
+not_R	244
 irksome_J	1
 257_C	1
 winner_N	1
@@ -2287,9 +2279,8 @@ hammond_N	3
 child-care_J	0
 parnell_N	1
 bill_N	4
-it_P	569
+it_P	570
 around_I	21
-it_V	1
 1309_C	1
 casino_N	0
 morale_N	0
@@ -2624,7 +2615,7 @@ and_C	1571
 pre_N	0
 reasons:_N	0
 side_V	1
-and_I	1
+secretive_J	1
 laager_N	2
 side_N	5
 oliver_N	1
@@ -2633,11 +2624,10 @@ just_R	19
 supererogatory_J	0
 marc_N	1
 perceive_V	2
-television_V	0
 island_N	63
 howard_N	1
 save_V	0
-television_N	2
+television_N	3
 native_J	2
 reimburse_V	0
 designation_N	1
@@ -2675,14 +2665,13 @@ corresponding_J	0
 hasmoneans_N	1
 free_N	1
 free_J	4
-go_V	20
+go_V	21
 terrify_V	1
 really_R	6
 disco_N	0
 castor_N	1
 candidate_N	0
 emirate_N	1
-go_N	1
 frustration_N	0
 intricate_J	0
 shape_N	2
@@ -2731,7 +2720,7 @@ tiger_N	1
 changer_N	0
 reason_N	12
 skilled_J	1
-to_T	1454
+to_T	1456
 legion_N	1
 brazil_N	3
 manatee_N	1
@@ -2760,7 +2749,7 @@ unsubstantiated_J	0
 diffuse_V	0
 transit_N	1
 premier_J	0
-parts_N	2
+van_N	1
 premier_N	1
 transpek_N	1
 put_V	8
@@ -2771,7 +2760,6 @@ hospital_N	14
 readiness_N	0
 multiple_J	3
 jiangsu_N	1
-precaution_N	0
 fidel_N	1
 fountain_N	1
 select_J	0
@@ -3009,7 +2997,6 @@ monday_N	2
 deem_V	1
 half_P	1
 merrion_N	1
-revive_V	3
 planting_N	1
 quickly_R	4
 1952_C	1
@@ -3104,7 +3091,6 @@ double_J	1
 real_J	2
 line_V	4
 irrigate_V	0
-become_N	1
 rooms_N	2
 10,000_C	1
 involve_V	12
@@ -3286,7 +3272,7 @@ impossible_J	0
 ascent_N	1
 fbi_N	1
 amirkabir_N	1
-address_N	1
+rapid_J	1
 amid_I	2
 splendid_J	1
 1923_C	1
@@ -3303,11 +3289,10 @@ gitex_N	1
 highest-pitched_J	0
 wireless_N	1
 generating_N	0
-if_P	1
 seamless_J	0
 crew_N	1
 cement_N	1
-if_I	77
+if_I	78
 1300_C	1
 stephen_N	2
 vote_N	0
@@ -3633,16 +3618,14 @@ anglia_N	1
 intimately_R	2
 simon_N	1
 nazareth_N	1
-have_V	573
+have_V	574
 publisher_N	0
 fail_V	7
-have_J	1
 $100_N	0
 advise_V	1
 allot_V	0
 have_?	0
 lung_N	0
-abandoned_P	1
 exodus_N	0
 prospect_N	0
 gracious_J	2
@@ -3848,7 +3831,7 @@ palestinian_N	3
 palestinian_J	11
 unlinked_J	0
 disease_N	14
-dilorenzo_N	1
+d.c._N	1
 some_?	0
 excalibur_N	1
 discourage_V	2
@@ -3864,9 +3847,8 @@ sadf_N	4
 ritual_N	2
 1874_C	1
 known_J	1
-some_D	65
+some_D	66
 aerial-delivered_V	0
-some_J	1
 marshall_N	2
 al_N	26
 /_S	18
@@ -3902,7 +3884,7 @@ paula_zahn_N	16
 park_V	4
 promulgation_N	0
 park_N	2
-(_(	410
+(_(	411
 1821_C	1
 feb._N	4
 peculiarity_N	1
@@ -3929,7 +3911,6 @@ sign_V	28
 dignitary_N	0
 sign_N	5
 spiritual_J	0
-(_I	1
 instructions:_N	0
 onslaught_N	2
 pit_N	0
@@ -3973,7 +3954,6 @@ receiver_N	0
 271_C	1
 210_C	1
 leading_J	4
-with_V	1
 exposure_N	0
 penetrate_V	0
 successor_N	0
@@ -4219,7 +4199,6 @@ highlight_V	0
 strain_N	6
 espectador_N	3
 well-fortified_V	1
-refuse_T	1
 refuse_V	4
 worse_R	1
 uncertain_J	4
@@ -4296,13 +4275,12 @@ takeover_N	0
 naxos_N	4
 deficient_J	1
 .''_N	0
-become_V	40
+become_V	41
 courtyard_N	1
 css-8s_N	0
 490_C	1
 counterpart_N	0
 d-_N	1
-to_I	1
 city-state_N	3
 coffee_N	3
 alkyl_N	0
@@ -4384,9 +4362,9 @@ one_C	77
 standpoint_N	0
 one_N	8
 machinery_N	1
-good_J	8
+good_J	10
 medina_N	1
-good_N	5
+good_N	3
 neo_N	0
 hand_V	1
 rife_J	1
@@ -4429,6 +4407,7 @@ subordinate_N	1
 addition_N	0
 subordinate_J	1
 provoke_V	1
+fabricate_V	1
 refer_V	0
 above_R	2
 predict_V	3
@@ -4496,6 +4475,7 @@ test_V	16
 iran_N	559
 vicar_N	2
 financially_R	1
+parts_N	2
 discipline_N	0
 calibre_N	0
 fighter_N	0
@@ -4588,7 +4568,7 @@ aside_R	2
 royal_J	0
 royal_N	2
 content_N	0
-face_N	5
+face_N	4
 -based_J	0
 monitoring_N	1
 outset_N	2
@@ -4610,7 +4590,6 @@ operator_N	0
 tribal_J	0
 culturally_R	1
 feelings_N	1
-issues_R	1
 natural_J	0
 father_N	1
 agrupados_N	1
@@ -4954,7 +4933,6 @@ negotiate_V	5
 3,000_C	4
 thereby_R	1
 details_N	0
-dealing_I	1
 being_N	3
 militant_J	0
 regulation_N	5
@@ -5226,11 +5204,11 @@ elicit_V	1
 6576_C	1
 flexibility_N	0
 importance_N	4
-arrogant_W	0
 california_N	3
 soler_N	1
 self-definition_N	0
 under_I	68
+arrogant_J	1
 polluted_J	0
 indictment_N	2
 lampedusa_N	2
@@ -5351,6 +5329,7 @@ discretion_N	0
 acquire_V	36
 rhodes_N	1
 helena_N	1
+elitist_N	1
 chips_N	0
 mostly_R	5
 munition_V	1
@@ -5367,7 +5346,7 @@ id:lcch_0010_N	0
 goldstein_N	2
 id:lcc-m-14_C	1
 brief_J	1
-brief_N	2
+constituent_J	0
 situate_V	2
 turkey_N	5
 hurt_V	1
@@ -5376,7 +5355,6 @@ wrist_N	0
 generally_R	8
 coast_N	16
 fulfillment_N	2
-on_(	1
 section_N	3
 expansion_N	3
 carlos_N	1
@@ -5395,7 +5373,7 @@ tokyo_N	1
 tactical_J	0
 theme_N	0
 bell-ringer_N	0
-on_I	323
+on_I	324
 indian-iranian_J	0
 on_R	4
 theme_V	0
@@ -5468,6 +5446,7 @@ update_N	0
 component-how_W	3
 spread_N	1
 iraq_N	47
+address_N	1
 panic_N	0
 operating_N	1
 spread_V	3
@@ -5532,7 +5511,7 @@ issue_V	3
 such_P	8
 subscriber_N	0
 such_J	20
-issue_N	8
+issue_N	9
 allah_N	3
 1,_C	1
 incubation_N	0
@@ -5721,7 +5700,7 @@ multipurpose_J	0
 supreme_N	1
 number_N	9
 recruiting_N	0
-)_)	413
+)_)	414
 often_R	16
 ruling_N	0
 distinction_N	1
@@ -5743,7 +5722,6 @@ entanglement_N	1
 hummingbird_N	1
 reaffirm_V	2
 conditions_N	2
-)_V	1
 thrive_V	2
 minute_N	2
 df-11_C	1
@@ -5958,14 +5936,12 @@ basic_J	1
 480_C	2
 nearly_R	11
 institute_V	1
-._V	1
 end_V	18
-._S	2369
+._S	2371
 institute_N	11
 ascertain_V	1
 representative_N	5
 end_N	21
-._D	1
 determination_N	0
 affairs_N	6
 delos_N	4
@@ -6175,8 +6151,7 @@ clothes_N	2
 flow_V	1
 doc_N	0
 phoenicia_N	1
-them_P	48
-them_S	1
+them_P	49
 flow_N	1
 belarus_N	0
 displease_V	1
@@ -6258,11 +6233,9 @@ conflict_N	5
 ,_,	2853
 kalayeh_N	2
 behalf_N	0
-even_V	1
 bob_N	3
-even_R	39
+even_R	41
 notably_R	2
-even_I	1
 explain_V	2
 disperse_V	1
 fit_V	1
@@ -6298,15 +6271,13 @@ freedom_N	0
 estimated_J	1
 besiege_V	1
 council_N	6
-their_J	1
 tea_N	2
 fresh_J	1
 mustard_N	16
 monument_N	0
 probe_V	2
 visitor_N	14
-their_S	1
-their_P	136
+their_P	138
 shaikh_N	1
 df-3_C	2
 war_V	1
@@ -6353,7 +6324,7 @@ magnesium_N	0
 empirical_J	0
 the_N	3
 spy_V	0
-the_D	3378
+the_D	3379
 cr_N	1
 rome_N	5
 oath_N	0
@@ -6366,7 +6337,6 @@ tie_N	2
 regulatory_J	0
 consolidate_V	1
 establishment_N	3
-the_)	1
 id:lcch_0011_J	0
 u.n._N	6
 greatest_J	0
@@ -6380,7 +6350,6 @@ push_V	3
 slay_V	1
 interpret_V	1
 cater_V	2
-controlled_D	1
 controlled_J	0
 spot_N	3
 weaken_V	2
@@ -6432,7 +6401,7 @@ discordant_J	0
 farm_N	1
 usable_J	0
 sustain_V	0
-do_V	138
+do_V	139
 puncture_V	0
 ataturk_N	1
 present_V	0
@@ -6497,7 +6466,6 @@ take_V	26
 chivalry_N	0
 ease_N	0
 ~_S	1
-who_R	1
 base_N	6
 who_W	66
 va_N	1
@@ -6646,7 +6614,7 @@ magic_N	2
 deal_N	31
 srai_N	3
 sooner_R	1
-deal_V	3
+deal_V	4
 allocate_V	0
 indiana_N	2
 pap_N	0
@@ -6749,9 +6717,7 @@ india_N	23
 holiday_N	0
 dwindle_V	3
 dusk_N	1
-by_I	303
-by_N	1
-did_R	1
+by_I	304
 foe_N	0
 aggressively_R	1
 geneva_N	3
@@ -6786,7 +6752,7 @@ muammar_N	1
 eliminate_V	5
 tropical_J	0
 $89_N	1
-technocrat_N	0
+ready_N	0
 45_C	2
 4/87_C	1
 conquer_V	5
@@ -6831,7 +6797,7 @@ cruelty_N	0
 clinton_N	9
 biotechnology_N	15
 authoritarian_J	1
-rapid_J	1
+revive_V	3
 recovery_N	0
 rapid_N	1
 address_V	6
@@ -6997,7 +6963,6 @@ recycle_V	0
 stranger_N	2
 portent_N	1
 form_N	12
-to_P	1
 dynasty_N	0
 kent_N	1
 greeting_N	0
@@ -7018,7 +6983,6 @@ italian_N	1
 neither_R	1
 italian_J	1
 underpaid_J	0
-accusers_V	0
 neither_D	2
 assert_V	4
 icbm_N	7
@@ -7028,7 +6992,6 @@ being_J	0
 early_J	24
 gene_N	1
 early_R	2
-load_V	3
 conform_V	1
 launcher_N	0
 fun_N	0
@@ -7513,7 +7476,7 @@ id:lcc-m-60_C	1
 rank_N	0
 unix_N	1
 abound_V	1
-fabricate_V	1
+1947_C	4
 vi_F	2
 contradictory_J	0
 clique_N	1
@@ -7539,7 +7502,7 @@ barrier_N	0
 secret_N	0
 polymeric_J	0
 beginning_N	7
-1947_C	4
+lesvos_N	3
 biomechanics_N	1
 attendant_N	0
 computer-security_N	0
