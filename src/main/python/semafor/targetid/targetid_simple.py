@@ -124,9 +124,11 @@ def get_segmentation(sentence):
                 #if shouldIncludeToken(candidate_target, sentence):
                 yes = False
 
-                if TARGETDICT.get(ngramLemmas,0)>=5:
+                if n>1 and TARGETDICT[ngramLemmas]>=1:
+                    yes = True
+                elif n==1 and (TARGETDICT[ngramLemmas]>=5 or UNIDICT[ngramLemmas]>=10):
                     # for unigrams, decide based on TARGETDICT vs. UNIDICT counts
-                    if n>1 or (TARGETDICT[ngramLemmas]/(UNIDICT[ngramLemmas] or 1) >= 0.5 and not sentence[start].postag.upper().startswith('NNP')):
+                    if (TARGETDICT[ngramLemmas]/(UNIDICT[ngramLemmas] or 1) >= 0.5 and not sentence[start].postag.upper().startswith('NNP')):
                         yes = True
                 elif n==1:
                     # decide based on POSTARGETDICT vs. POSDICT counts
