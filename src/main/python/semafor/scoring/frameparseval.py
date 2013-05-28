@@ -254,7 +254,7 @@ def get_non_targets(gold_sentence):
     return wsl, excluded_spans, poses
 
 
-def score_sentence(gold, predicted, posC):
+def score_sentence(gold, predicted, errors):
     #TODO
     #assert len(gold['tokens']) == len(predicted['tokens']) and ' '.join(gold['tokens']) == ' '.join(predicted['tokens'])
     sentence_stats = PRCounter()
@@ -306,13 +306,22 @@ def score_sentence(gold, predicted, posC):
     sentence_stats['Targets by token'] = num_tokens, gold_target_coverage, pred_target_coverage
     sentence_stats['Targets by span'] = gold_target_spans, set(pred_frames.keys())
     
-    #if 0<sentence_stats._df['R']['Targets by span']<0.3:
-    #    assert False,(gold_frames, pred_frames, gold['tokens'])
     for sp in gold_target_spans-set(pred_frames.keys()):
-        if len(sp)==1:  # record POS tag of missed target
-            #if poses.get(sp,'?')=='NN':
-            #    assert False,gold['tokens'][sp._s[0]]
-            posC[poses.get(sp,'?')] += 1
+        # missed target
+        pos = ''
+        if len(sp)==1:  # record POS tag
+            pos = poses.get(sp,'?')
+            errors['miss'][pos] += 1
+            pos = '_'+pos
+        errors['miss'][sp(gold['tokens'],str)+pos] += 1
+    for sp in set(pred_frames.keys())-gold_target_spans:
+        # extra target
+        pos = ''
+        if len(sp)==1:  # record POS tag
+            pos = poses.get(sp,'?')
+            errors['extra'][pos] += 1
+            pos = '_'+pos
+        errors['extra'][sp(gold['tokens'],str)+pos] += 1
     
     
     if any(pred_frames.values()):   # some frames were predicted
@@ -364,13 +373,13 @@ if __name__=='__main__':
     gold_filename, pred_filename = sys.argv[1:]
     scores = None
     with codecs.open(gold_filename, 'r', 'utf-8') as gold_file, codecs.open(pred_filename, 'r', 'utf-8') as pred_file:
-        posC = Counter()
+        errors = {'miss': Counter(), 'extra': Counter()}
         for sentNum,(gold_line,pred_line) in enumerate(zip(gold_file, pred_file)):
-            sent_scores = score_sentence(json.loads(gold_line), json.loads(pred_line), posC)
+            sent_scores = score_sentence(json.loads(gold_line), json.loads(pred_line), errors)
             if scores is None:
                 scores = sent_scores
             else:
                 scores = scores + sent_scores
-    print(posC, file=sys.stderr)
+    print(errors, file=sys.stderr)
     print(scores.to_string())
     
