@@ -135,9 +135,44 @@ def get_segmentation(sentence):
                     pos = sentence[start].postag.upper()
                     if not pos.startswith('NNP'): # not a proper noun
                         cpos = ngramLemmas[-1]
-                        if cpos in POSDICT and POSTARGETDICT.get(cpos,0)/POSDICT[cpos] >= 0.5:
+                        if cpos in POSDICT and POSTARGETDICT[cpos]/POSDICT[cpos] >= 0.5:
                             yes = True
                 
+                # special cases
+                
+                # auxiliaries
+                if n==1 and ngramLemmas[:-1]=="will_":
+                    yes = (ngramLemmas!='will_M')
+                #elif n==1 and sentence[start].postag.upper()=='MD':
+                #    yes = True  # modals other than 'will'
+                #    # including these modals hurts more than it helps, probably due to inconsistent annotations
+                elif n==1 and ngramLemmas[:-1]=="have_":
+                    #if any(1 for t in sentence if t.lemma=='have') and any(1 for t in sentence if t.lemma=='question'):
+                    #    assert False,sentence
+                    yes = any(1 for t in sentence if t.head==start+1 and t.deprel.upper() in ('OBJ','DOBJ')) # 'have' is a target iff it has an object
+                #elif n==1 and ngramLemmas[:-1]=="of_":
+                #    prevToken, nextToken = sentence[start-1], sentence[start+1]
+                #    if prevToken.lemma in PRECEDING_WORDS_OF: yes = True
+                #    elif nextToken.form.lower() in FOLLOWING_WORDS_OF: yes = True
+                #    elif prevToken.postag[:2].upper() in ("JJ", "CD"): yes = True
+                #    elif nextToken.postag[:2].upper()=="CD": yes = True
+                #    elif ' '.join(t.postag for t in sentence[start+1:start+3]).upper()=="DT CD": yes = True
+                #    else: yes = False
+                #    #return nextToken.ne.startswith("GPE") or nextToken.ne.startswith("LOCATION") or nextToken.ne.startswith("CARDINAL")
+                #    # including certain 'of' uses hurts more than it helps, probably due to inconsistent annotations
+                
+                
+                if yes:
+                    # further filtering
+                    if n==1:
+                        if tuple(map(lambda x: x.lemma, sentence[start:start+2])) in [('of','course'),('in','particular')]:
+                            yes = False
+                        if tuple(map(lambda x: x.lemma, sentence[start-1:start+1])) in [('of','course'),('in','particular')]:
+                            yes = False
+                        
+                        
+                            
+                        
                 if yes:
                     yield candidate_target
                     remainingStartIndices -= set(range(ngramSpan.start, ngramSpan.stop))
