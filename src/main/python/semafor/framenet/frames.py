@@ -74,21 +74,6 @@ class Frame(object):
                (self.name, [fe.name for fe in self.frame_elements])
 
 
-def fe_from_dom_node(node):
-    fe_id = node.attributes["ID"].nodeValue
-    name = node.attributes["name"].nodeValue
-    core_type = node.attributes["coreType"].nodeValue
-    return FrameElement(fe_id, name, core_type)
-
-
-def frame_from_dom_node(node):
-    frame_id = node.attributes["ID"].nodeValue
-    name = node.attributes["name"].nodeValue
-    fe_nodes = node.getElementsByTagName("fe")
-    fes = [fe_from_dom_node(fe) for fe in fe_nodes]
-    return Frame(frame_id, name, fes)
-
-
 class FrameHierarchy(object):
     """ Represents the FrameNet hierarchy """
     PARTIAL_CREDIT_PER_HOP = .8
@@ -121,7 +106,7 @@ class FrameHierarchy(object):
                     if data['relation_type'] == relation_type]
         return children
 
-    def get_ancestor(self, obj, relation_type=RelationTypes.INHERITANCE):
+    def ancestor(self, obj, relation_type=RelationTypes.INHERITANCE):
         parents = self.parents(obj, relation_type=relation_type)
         while parents:
             if len(parents) > 1:
@@ -152,41 +137,63 @@ class FrameHierarchy(object):
     @staticmethod
     def load(frames_filename=FRAMES_FILENAME,
              frame_relations_filename=FRAME_RELATIONS_FILENAME):
-        frames_dom = parse(frames_filename)
-        frames = [frame_from_dom_node(node)
-                  for node in frames_dom.getElementsByTagName("frame")]
-        graph = nx.MultiDiGraph()
-        for frame in frames:
-            frame_key = Frame.key_for(frame.id)
-            graph.add_node(frame_key, type="frame", obj=frame)
-            for fe in frame.frame_elements:
-                graph.add_node(fe.key, type="fe", obj=fe)
-                graph.add_edge(frame_key, fe.key, relation_type="frame_element")
+        return load_hierarchy(frames_filename, frame_relations_filename)
 
-        frame_relations_dom = parse(frame_relations_filename)
-        relation_types = frame_relations_dom.getElementsByTagName("frame-relation-type")
-        for relation_type_node in relation_types:
-            relation_type = relation_type_node.attributes["name"].nodeValue
-            frame_relations = relation_type_node.getElementsByTagName("frame-relation")
-            for frame_relation in frame_relations:
-                parent_id = frame_relation.attributes["supID"].nodeValue
-                child_id = frame_relation.attributes["subID"].nodeValue
-                graph.add_edge(Frame.key_for(parent_id),
-                               Frame.key_for(child_id),
+
+# LOAD HIERARCHY FROM XML FILES
+def fe_from_dom_node(node):
+    fe_id = node.attributes["ID"].nodeValue
+    name = node.attributes["name"].nodeValue
+    core_type = node.attributes["coreType"].nodeValue
+    return FrameElement(fe_id, name, core_type)
+
+
+def frame_from_dom_node(node):
+    frame_id = node.attributes["ID"].nodeValue
+    name = node.attributes["name"].nodeValue
+    fe_nodes = node.getElementsByTagName("fe")
+    fes = [fe_from_dom_node(fe) for fe in fe_nodes]
+    return Frame(frame_id, name, fes)
+
+
+def load_hierarchy(frames_filename=FRAMES_FILENAME,
+                   frame_relations_filename=FRAME_RELATIONS_FILENAME):
+    frames_dom = parse(frames_filename)
+    frames = [frame_from_dom_node(node)
+              for node in frames_dom.getElementsByTagName("frame")]
+    graph = nx.MultiDiGraph()
+    for frame in frames:
+        frame_key = Frame.key_for(frame.id)
+        graph.add_node(frame_key, type="frame", obj=frame)
+        for fe in frame.frame_elements:
+            graph.add_node(fe.key, type="fe", obj=fe)
+            graph.add_edge(frame_key, fe.key, relation_type="frame_element")
+
+    frame_relations_dom = parse(frame_relations_filename)
+    relation_types = frame_relations_dom.getElementsByTagName("frame-relation-type")
+    for relation_type_node in relation_types:
+        relation_type = relation_type_node.attributes["name"].nodeValue
+        frame_relations = relation_type_node.getElementsByTagName("frame-relation")
+        for frame_relation in frame_relations:
+            parent_id = frame_relation.attributes["supID"].nodeValue
+            child_id = frame_relation.attributes["subID"].nodeValue
+            graph.add_edge(Frame.key_for(parent_id),
+                           Frame.key_for(child_id),
+                           relation_type=relation_type)
+            fe_relations = frame_relation.getElementsByTagName("fe-relation")
+            for fe_relation in fe_relations:
+                parent_id = fe_relation.attributes["supID"].nodeValue
+                child_id = fe_relation.attributes["subID"].nodeValue
+                graph.add_edge(FrameElement.key_for(parent_id),
+                               FrameElement.key_for(child_id),
                                relation_type=relation_type)
-                fe_relations = frame_relation.getElementsByTagName("fe-relation")
-                for fe_relation in fe_relations:
-                    parent_id = fe_relation.attributes["supID"].nodeValue
-                    child_id = fe_relation.attributes["subID"].nodeValue
-                    graph.add_edge(FrameElement.key_for(parent_id),
-                                   FrameElement.key_for(child_id),
-                                   relation_type=relation_type)
-        return FrameHierarchy(graph)
+    return FrameHierarchy(graph)
 
 
 if "__main__" == __name__:
-    # cache all pairwise frame distances
-    frame_distance_cache_filename = sys.argv[1]
-    hierarchy = FrameHierarchy.load()
+    # cache all pairwise frame costs
+    frame_cost_cache_filename = sys.argv[1]
+    hierarchy = load_hierarchy()
     distances = hierarchy._get_all_distances()
-    distances.to_csv(frame_distance_cache_filename)
+    costs = 1 - (FrameHierarchy.PARTIAL_CREDIT_PER_HOP ** distances)
+    costs.to_csv(frame_cost_cache_filename)
