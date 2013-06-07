@@ -53,7 +53,6 @@ with codecs.open(UNIDICT_PATH, 'r', 'utf-8') as unidictF:
 
 MAX_LEN = 4 # the maximum length of ngrams we'll look for
 
-FORBIDDEN_WORDS = frozenset('a an as for i it so the with'.split())
 
 # if these words precede "of", "of" should not be discarded
 PRECEDING_WORDS_OF = frozenset('''%
@@ -80,13 +79,6 @@ PRECEDING_WORDS_OF = frozenset('''%
 
 # if these words follow "of", "of" should not be discarded
 FOLLOWING_WORDS_OF = frozenset('all group their them us'.split())
-
-# all prepositions should be discarded
-LOC_PREPS = frozenset('above against at below beside by in on over under'.split())
-
-TEMPORAL_PREPS = frozenset('after before'.split())
-DIR_PREPS = frozenset('into through to'.split())
-FORBIDDEN_POS_PREFIXES = frozenset(["PR", "CC", "IN", "TO"])
 
 
 def get_coarse_pos(pos):
@@ -168,63 +160,6 @@ def get_segmentation(sentence):
                 if yes:
                     yield candidate_target
                     remainingStartIndices -= set(range(ngramSpan.start, ngramSpan.stop))
-
-
-def shouldIncludeToken(candidate_target_tokens, sentence):
-    """
-    Determines whether an ngram should be kept as a target or discarded based on hand-built rules.
-    """
-    # always include ngrams, n > 1
-    if len(candidate_target_tokens) > 1:
-        return True
-
-    token = candidate_target_tokens[0]
-    idx = token.id - 1    # token ID is 1-based
-    assert token is sentence[idx]
-    # look up the word in pData
-    form = token.form.lower()
-    pos = token.postag
-    lemma = token.lemma
-    # look up the preceding and following words in pData, if they exist
-    prevToken = sentence[idx - 1] if idx - 1 >= 0 else None
-    nextToken = sentence[idx + 1] if idx + 1 < len(sentence) else None
-
-    if form in FORBIDDEN_WORDS:
-        return False
-    if form in LOC_PREPS:
-        return False
-    if form in DIR_PREPS:
-        return False
-    if form in TEMPORAL_PREPS:
-        return False
-    if pos[:2] in FORBIDDEN_POS_PREFIXES:
-        return False
-    # skip "of course" and "in particular"
-    if prevToken and (prevToken.form.lower(), form) in [('of', 'course'), ('in', 'particular')]:
-        return False
-
-    if form == "of":
-        if prevToken.lemma in PRECEDING_WORDS_OF:
-            return True
-        if nextToken.form.lower() in FOLLOWING_WORDS_OF:
-            return True
-        if prevToken.postag[:2] in ("JJ", "CD"): return True
-        if nextToken.postag[:2] == "CD":
-            return True
-        if nextToken.postag[:2] == "DT":
-            if idx + 2 < len(sentence):
-                nextNextToken = sentence[idx + 2]
-                if nextNextToken.postag[:2] == "CD":
-                    return True
-        return nextToken.ne.startswith("GPE") or nextToken.ne.startswith("LOCATION") or nextToken.ne.startswith(
-            "CARDINAL")
-
-    if form == "will":
-        return pos != "MD"
-    if lemma == "have":
-        # 'have' is a target iff it has an object
-        return any(1 for t in sentence if t.head == token.id and t.deprel == 'OBJ')
-    return lemma != "be"
 
 
 def main(fileP, output_format='legacy' or 'json'):
