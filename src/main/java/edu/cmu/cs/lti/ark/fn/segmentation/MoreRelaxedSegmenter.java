@@ -333,12 +333,12 @@ public class MoreRelaxedSegmenter implements Segmenter {
 	}
 
 	@Override
-	public List<String> getSegmentations(List<String> tokenNums,
+	public List<String> getSegmentations(List<String> sentenceIdxs,
 										 List<String> parses,
 										 Set<String> allRelatedWords)
 	{
 		ArrayList<String> result = new ArrayList<String>();
-		for(String tokenNum: tokenNums)
+		for(String tokenNum: sentenceIdxs)
 		{
 			String[] toks = tokenNum.split("\t");
 			String gold = "";

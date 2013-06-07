@@ -277,8 +277,8 @@ public class ParserDriver {
 											BufferedReader goldSegReader,
 											List<String> allLemmaTagsSentences) throws IOException {
 		final int size = allLemmaTagsSentences.size();
-		final List<Integer> tokenNums = range(size).asList();
-		final List<String> tokenNumStrs = transform(tokenNums, toStringFunction());
+		final List<Integer> sentenceIdxs = range(size).asList();
+		final List<String> sentenceIdxStrs = transform(sentenceIdxs, toStringFunction());
 		List<String> segments;
 		if (segmentationMode.equals(GOLD)) {
 			final ArrayList<String> segLines = Lists.newArrayList();
@@ -287,11 +287,11 @@ public class ParserDriver {
 				if (segLine == null) break;
 				segLines.add(segLine);
 			}
-			segments = getGoldSegmentationBatch(segLines, tokenNums);
+			segments = getGoldSegmentationBatch(segLines, sentenceIdxs);
 		} else {
 			final Segmenter segmenter =
 					segmentationMode.equals(STRICT) ? new RoteSegmenter(allRelatedWords) : new MoreRelaxedSegmenter();
-			segments = segmenter.getSegmentations(tokenNumStrs, allLemmaTagsSentences, allRelatedWords);
+			segments = segmenter.getSegmentations(sentenceIdxStrs, allLemmaTagsSentences, allRelatedWords);
 		}
 		return segments;
 	}
@@ -311,22 +311,24 @@ public class ParserDriver {
 		return decoding.decodeAll(count, kBestOutput);
 	}
 
-	private static ArrayList<String> getGoldSegmentationBatch(List<String> segLines, List<Integer> tokenNums) {
+	private static ArrayList<String> getGoldSegmentationBatch(List<String> segLines, List<Integer> sentenceIdxs) {
 		final ArrayList<String> segs = Lists.newArrayList();
 		for(int j : xrange(segLines.size())) {
 			final String segLine = segLines.get(j);
-			final Integer tokenNum = tokenNums.get(j);
-			segs.add(getGoldSegmentation(segLine, tokenNum));
+			final Integer sentenceIdx = sentenceIdxs.get(j);
+			segs.add(getGoldSegmentation(segLine, sentenceIdx));
 		}
 		return segs;
 	}
 
-	private static String getGoldSegmentation(String segLine, Integer tokenNum) {
+	private static String getGoldSegmentation(String segLine, Integer sentenceIdx) {
 		List<String> result = Lists.newArrayList();
 		for (String tok: segLine.trim().split("\\s")) {
-			result.add(tok + GOLD_TARGET_SUFFIX);
+			if (tok.length() > 0) {
+				result.add(tok + GOLD_TARGET_SUFFIX);
+			}
 		}
-		return TAB.join(TAB.join(result), tokenNum);
+		return TAB.join(TAB.join(result), sentenceIdx);
 	}
 
 	private static SegmentationMode getSegmentationMode(String goldSegFile, String useRelaxedSegmentation) {

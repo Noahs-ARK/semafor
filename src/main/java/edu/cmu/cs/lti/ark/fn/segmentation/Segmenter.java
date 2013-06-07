@@ -5,5 +5,5 @@ import java.util.Set;
 
 
 public interface Segmenter {
-	List<String> getSegmentations(List<String> tokenNums, List<String> parses, Set<String> allRelatedWords);
+	List<String> getSegmentations(List<String> sentenceIdxs, List<String> parses, Set<String> allRelatedWords);
 }

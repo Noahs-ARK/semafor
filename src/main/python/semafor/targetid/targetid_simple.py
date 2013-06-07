@@ -162,6 +162,14 @@ def get_segmentation(sentence):
                     remainingStartIndices -= set(range(ngramSpan.start, ngramSpan.stop))
 
 
+def format_target_line(sentId, targets):
+    # output format: 9_10    1    11    13    15    0
+    # underscore-separated token IDs for each target; last column is sentence ID
+    # (if no targets, will simply be a tab followed by sentence number)
+    return '\t'.join('_'.join(str(token.id - 1) for token in target_tokens)
+                     for target_tokens in targets)
+
+
 def main(fileP, output_format='legacy' or 'json'):
     with codecs.open(fileP, 'r', 'utf-8') as inF:
         for sentId, sentence in enumerate(read_conll(inF, lookup_lemmas=True)):
@@ -184,11 +192,7 @@ def main(fileP, output_format='legacy' or 'json'):
                     sentJ["frames"].append({"target": {"spans": spansJ}})
                 print(json.dumps(sentJ))
             else:
-                # output format: 9_10#true    1#true    11#true    13#true    15#true    0
-                # underscore-separated token IDs for each target; last column is sentence ID
-                # (if no targets, will simply be a tab followed by sentence number)
-                print('\t'.join('_'.join(str(token.id - 1) for token in target_tokens) + '#true' for target_tokens in
-                                targets) + '\t' + str(sentId))
+                print(format_target_line(sentId, targets))
 
 
 if __name__ == '__main__':

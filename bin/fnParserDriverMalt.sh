@@ -77,11 +77,17 @@ bash ${MY_DIR}/runMalt.sh ${INPUT_FILE} ${TEMP_DIR}
 
 if [ "${AUTO_TARGET_ID_MODE}" == "relaxed" ]
 then 
-    RELAXED_FLAG=yes
-else
-    RELAXED_FLAG=no
+    # Use python version for relaxed target id'ing
+    # treat this output as gold targets in ParserDriver.java
+    GOLD_TARGET_FILE="${TEMP_DIR}/targets"
+    echo "**********************************************************************"
+    echo "Performing relaxed segmentation"
+    PYTHONPATH="${PYTHONPATH}:${SEMAFOR_HOME}/src/main/python/" \
+        python ${SEMAFOR_HOME}/src/main/python/semafor/targetid/targetid_simple.py \
+        "${TEST_PARSED_FILE}" \
+        > "${GOLD_TARGET_FILE}"
 fi
-
+RELAXED_FLAG=no
 
 if [ "${USE_GRAPH_FILE}" == "yes" ]
 then
@@ -89,6 +95,7 @@ then
 else
     GRAPH_FILE=null
 fi
+
 
 echo "**********************************************************************"
 echo "Performing frame-semantic parsing"

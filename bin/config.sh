@@ -4,7 +4,7 @@
 
 
 # assumes this script (config.sh) lives in "${BASE_DIR}/semafor/bin/"
-BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
+BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." > /dev/null && pwd )"
 # path to the absolute path
 # where you decompressed SEMAFOR.
 SEMAFOR_HOME="${BASE_DIR}/semafor"
