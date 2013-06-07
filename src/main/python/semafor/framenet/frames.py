@@ -2,6 +2,7 @@
 """
 Utilities for walking the frame hierarchy
 """
+from itertools import chain
 import sys
 from xml.dom.minidom import parse
 
@@ -80,12 +81,12 @@ class FrameHierarchy(object):
 
     def __init__(self, graph):
         self._full_graph = graph
-        self._frames = {
+        self.frames = {
             n['obj'].name: n['obj']
             for i, n in graph.nodes(data=True)
             if n['type'] == 'frame'
         }
-        self._frame_graph = nx.subgraph(graph, [f.key for f in self._frames.values()])
+        self._frame_graph = nx.subgraph(graph, [f.key for f in self.frames.values()])
         self._distances = None
 
     def parents(self, n, relation_type=RelationTypes.INHERITANCE):
@@ -106,14 +107,13 @@ class FrameHierarchy(object):
                     if data['relation_type'] == relation_type]
         return children
 
-    def ancestor(self, obj, relation_type=RelationTypes.INHERITANCE):
+    def ancestors(self, obj, relation_type=RelationTypes.INHERITANCE):
         parents = self.parents(obj, relation_type=relation_type)
-        while parents:
-            if len(parents) > 1:
-                print("multiple parents!: %s" % parents)
-            obj = parents[0]
-            parents = self.parents(obj, relation_type=relation_type)
-        return obj
+        return set(parents) | set(chain(*[self.ancestors(p, relation_type) for p in parents]))
+
+    def descendants(self, obj, relation_type=RelationTypes.INHERITANCE):
+        children = self.children(obj, relation_type=relation_type)
+        return set(children) | set(chain(*[self.descendants(c, relation_type) for c in children]))
 
     # TODO(smt): memoizing decorator would be nicer
     def _get_all_distances(self):
