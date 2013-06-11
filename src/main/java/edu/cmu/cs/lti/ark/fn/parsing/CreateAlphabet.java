@@ -45,12 +45,13 @@ public class CreateAlphabet {
 		FEFileName.eventFilename =  args[2];
 		FEFileName.alphafilename = args[3];
 		FEFileName.spanfilename = args[4];		
-		FEFileName.feDictFilename = args[9];
-		
+
 		boolean genAlpha = Boolean.parseBoolean(args[5]);
 		if(genAlpha) System.out.println("Generating alphabet too...");
 		FEFileName.KBestParse = new Integer(args[6]);
 		FEFileName.KBestParseDirectory = args[7];
+		FEFileName.feDictFilename = args[9];
+
 		run(genAlpha, null, null, null);
 	}	
 	

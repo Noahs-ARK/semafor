@@ -3,14 +3,12 @@
 source "$(dirname ${0})/../bin/config.sh"
 
 # choose a name for the model to train
-model_name="models_0.0"
+model_name="turbo_20130609"
 
 # should set to roughly the number of cores available
 num_threads=8
 
-
-classpath="..:${SEMAFOR_HOME}:${SEMAFOR_HOME}/lib/semafor-deps.jar"
-
+classpath=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-03.jar"
 # the directory that contains framenet.frame.element.map and framenet.original.map
 datadir="${SEMAFOR_HOME}/training/data"
 # the directory that contains all the lexical unit xmls for FrameNet 1.5
@@ -26,14 +24,17 @@ model_dir="${datadir}/${model_name}"
 wordnet_config_file="${SEMAFOR_HOME}/dict/file_properties.xml"
 stopwords_file="${SEMAFOR_HOME}/dict/stopwords.txt"
 
+old_model_dir="${MST_MODEL_DIR}"
+
 framenet_map_file="${datadir}/framenet.original.map"
-all_related_words_file="${datadir}/allrelatedwords.ser"
-hv_correspondence_file="${datadir}/hvmap.ser"
-wn_related_words_for_words_file="${datadir}/wnallrelwords.ser"
-wn_map_file="${datadir}/wnMap.ser"
-revised_map_file="${datadir}/revisedrelmap.ser"
-lemma_cache_file="${datadir}/hvlemmas.ser"
-fn_id_req_data_file="${datadir}/reqData.jobj"
+fe_dict_file="${datadir}/framenet.frame.element.map"
+all_related_words_file="${old_model_dir}/allrelatedwords.ser"
+hv_correspondence_file="${old_model_dir}/hvmap.ser"
+wn_related_words_for_words_file="${old_model_dir}/wnallrelwords.ser"
+wn_map_file="${old_model_dir}/wnMap.ser"
+revised_map_file="${old_model_dir}/revisedrelmap.ser"
+lemma_cache_file="${old_model_dir}/hvlemmas.ser"
+fn_id_req_data_file="${old_model_dir}/reqData.jobj"
 
 
 # paths to the gold-standard annotated sentences, and dependency-parsed version of it
@@ -44,4 +45,6 @@ fe_file_length=`wc -l ${fe_file}`
 fe_file_length=`expr ${fe_file_length% *}`
 
 # path to store the alphabet we create:
-alphabet_file=${datadir}/alphabet_combined.dat
+alphabet_file="${model_dir}/alphabet_combined.dat"
+
+SCAN_DIR="${model_dir}/scan"
