@@ -21,25 +21,24 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.identification;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
+import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
+import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
+import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
+import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
+import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectIdentityHashingStrategy;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
-import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
-import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
-import edu.cmu.cs.lti.ark.util.SerializedObjects;
-import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
-import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
-import gnu.trove.*;
+import static edu.cmu.cs.lti.ark.util.SerializedObjects.*;
 
-public class AlphabetCreation	
-{
+public class AlphabetCreation {
 	private THashMap<String, THashSet<String>> mFrameMap=null;
 	private WordNetRelations mWnr = null;
 	private ArrayList<String> mListOfParses = null;
@@ -53,28 +52,26 @@ public class AlphabetCreation
 	private THashMap<String, THashSet<String>> clusterMap = null;
 	private int K = -1;
 	
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		FNModelOptions options = new FNModelOptions(args);
 		String alphabetFile=options.modelFile.get();
 		String eventDir = options.eventsFile.get();
 		String feFile = options.trainFrameElementFile.get();
 		ArrayList<String> parses = ParsePreparation.readSentencesFromFile(options.trainParseFile.get());
-		THashMap<String, THashSet<String>> frameMap = (THashMap<String, THashSet<String>>)SerializedObjects.readSerializedObject(options.frameNetMapFile.get());
+		THashMap<String, THashSet<String>> frameMap = readObject(options.frameNetMapFile.get());
 		WordNetRelations wnr = null;
-		THashMap<String,String> lemmaCache = (THashMap<String,String>)SerializedObjects.readSerializedObject(options.lemmaCacheFile.get());
-		THashMap<String,THashSet<String>> relCache = (THashMap<String,THashSet<String>>)SerializedObjects.readSerializedObject(options.wnMapFile.get());
+		THashMap<String,String> lemmaCache = readObject(options.lemmaCacheFile.get());
+		THashMap<String,THashSet<String>> relCache = readObject(options.wnMapFile.get());
 		boolean useClusters = options.clusterFeats.get().equals("true");
 		THashMap<String, THashSet<String>> clusterMap=null;
 		AlphabetCreation alph = new AlphabetCreation(alphabetFile,eventDir,feFile,parses,frameMap,wnr,lemmaCache,relCache);
-		if(useClusters)
-		{
-			clusterMap= (THashMap<String, THashSet<String>>)SerializedObjects.readSerializedObject(options.synClusterMap.get());
+		if(useClusters) {
+			clusterMap = readObject(options.synClusterMap.get());
 			int K = options.clusterK.get();
 			alph.runAlphabetCreation(clusterMap,K);
-		}
-		else
+		} else {
 			alph.runAlphabetCreation();
+		}
 	} 
 	
 	public AlphabetCreation(String alphabetFile,
@@ -97,33 +94,23 @@ public class AlphabetCreation
 		this.relCache=relCache;
 	}
 	
-	public void runAlphabetCreation()
-	{
+	public void runAlphabetCreation() throws IOException {
 		System.out.println("Creating alphabet....");
-		try
+		BufferedReader bReader = new BufferedReader(new FileReader(mFrameElementsFile));
+		String line = null;
+		int count = 0;
+		while((line=bReader.readLine())!=null)
 		{
-			BufferedReader bReader = new BufferedReader(new FileReader(mFrameElementsFile));
-			String line = null;
-			int count = 0;
-			while((line=bReader.readLine())!=null)
-			{
-				line=line.trim();
-				System.out.println("Processing line:"+line);
-				processLine(line,count);
-				count++;
-			}
-			bReader.close();
+			line=line.trim();
+			System.out.println("Processing line:"+line);
+			processLine(line,count);
+			count++;
 		}
-		catch(Exception e)
-		{
-			System.out.println("Problem in reading fe file. exiting..");
-			System.exit(0);
-		}
+		bReader.close();
 		writeAlphabetFile();
 	}	
 	
-	public void runAlphabetCreation(THashMap<String, THashSet<String>> clusterMap, int K)
-	{
+	public void runAlphabetCreation(THashMap<String, THashSet<String>> clusterMap, int K) throws IOException {
 		this.clusterMap=clusterMap;
 		this.K=K;
 		runAlphabetCreation();
@@ -251,7 +238,7 @@ public class AlphabetCreation
 		}
 		System.out.println();
 		String file = mEventDir+"/feats_"+index+".jobj";
-		SerializedObjects.writeSerializedObject(allFeatures, file);
+		writeSerializedObject(allFeatures, file);
 		System.out.println("Created feature object for index:"+index+" alphsize:"+alphabet.size());
 		allFeatures=null;
 		System.gc();

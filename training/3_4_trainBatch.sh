@@ -3,13 +3,16 @@
 set -e # fail fast
 
 # step 4: training the frame identification model.
+echo
+echo "step 4: training the frame identification model."
+echo
 
 source "$(dirname ${0})/config.sh"
 
 mkdir -p ${model_dir}
 
 # clobber the log file
-log_file="${datadir}/log"
+log_file="${model_dir}/log"
 if [ -e ${log_file} ]; then
     rm "${log_file}"
 fi
@@ -17,11 +20,11 @@ fi
 
 ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8g -Xmx8g \
   edu.cmu.cs.lti.ark.fn.identification.TrainBatchModelDerThreaded \
-  alphabetfile:${datadir}/alphabet_combined.dat \
-  eventsfile:${datadir}/events \
+  alphabetfile:${model_dir}/alphabet_combined.dat \
+  eventsfile:${model_dir}/events \
   model:${model_dir}/idmodel.dat \
   regularization:reg \
   lambda:0.0 \
   restartfile:null \
-  logoutputfile:${datadir}/log \
+  logoutputfile:${model_dir}/log \
   numthreads:${num_threads}

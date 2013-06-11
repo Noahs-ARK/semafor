@@ -21,28 +21,24 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.identification;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.logging.FileHandler;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
-
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
-import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.BasicFileIO;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
-import gnu.trove.*;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
+import java.util.logging.FileHandler;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 public class CreateEventsUnsupported	
 {
@@ -156,48 +152,39 @@ public class CreateEventsUnsupported
 		}
 	}
 	
-	public void processBatch(int i, int start, int end)
-	{
+	public void processBatch(int i, int start, int end) throws IOException {
 		mLogger.info("Thread " + i +": Creating events....");
 		if (end > mEndIndex) {
 			end = mEndIndex;
 		}
 		mLogger.info("Thread " + i + ": start:" + start +" end:" + end);
-		try
+		BufferedReader bReader =
+			new BufferedReader(new FileReader(mFrameElementsFile));
+		String line = null;
+		int count = 0;
+		BufferedReader parseReader =
+			new BufferedReader(new FileReader(mParseFile));
+		String parseLine = parseReader.readLine();
+		int parseOffset = 0;
+		while((line=bReader.readLine())!=null)
 		{
-			BufferedReader bReader = 
-				new BufferedReader(new FileReader(mFrameElementsFile));
-			String line = null;
-			int count = 0;
-			BufferedReader parseReader = 
-				new BufferedReader(new FileReader(mParseFile));
-			String parseLine = parseReader.readLine();
-			int parseOffset = 0;
-			while((line=bReader.readLine())!=null)
-			{
-				if (count < start) {// skip frame elements prior to the specified range
-					count++;
-					continue;
-				}
-				line=line.trim();
-				mLogger.info("Thread + " + i + ": Processing:"+count);
-				Pair<String, Integer> pair = 
-					processLine(line, count, parseLine, parseOffset, parseReader);
+			if (count < start) {// skip frame elements prior to the specified range
 				count++;
-				if (count == end) {
-					break;
-				}
-				parseLine = pair.getFirst();
-				parseOffset = pair.getSecond();
+				continue;
 			}
-			bReader.close();
-			parseReader.close();
+			line=line.trim();
+			mLogger.info("Thread + " + i + ": Processing:"+count);
+			Pair<String, Integer> pair =
+				processLine(line, count, parseLine, parseOffset, parseReader);
+			count++;
+			if (count == end) {
+				break;
+			}
+			parseLine = pair.getFirst();
+			parseOffset = pair.getSecond();
 		}
-		catch(Exception e)
-		{
-			System.out.println("Problem in reading fe file. exiting..");
-			System.exit(0);
-		}
+		bReader.close();
+		parseReader.close();
 	}
 
 	public Runnable createTask(final int count, final int start, final int end)
@@ -205,8 +192,13 @@ public class CreateEventsUnsupported
 		return new Runnable() {
 		      public void run() {
 		        mLogger.info("Task " + count + " : start");
-		        processBatch(count, start, end);
-		        mLogger.info("Task " + count + " : end");
+				  try {
+					  processBatch(count, start, end);
+				  } catch (IOException e) {
+					  e.printStackTrace();
+					  System.exit(0);
+				  }
+				  mLogger.info("Task " + count + " : end");
 		      }
 		    };
 	}

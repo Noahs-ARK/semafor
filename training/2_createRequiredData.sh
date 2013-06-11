@@ -4,6 +4,8 @@ set -e # fail fast
 
 source "$(dirname ${0})/config.sh"
 
+echo "RequiredDataCreation"
+echo
 # run it
 ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms2g -Xmx2g \
     edu.cmu.cs.lti.ark.fn.identification.RequiredDataCreation \
