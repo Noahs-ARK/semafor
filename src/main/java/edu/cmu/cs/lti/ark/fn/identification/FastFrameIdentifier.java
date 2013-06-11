@@ -218,7 +218,7 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode {
 	}
 
 	public String getBestFrame(int[] tokenIndices, Sentence sentence, SmoothedGraph graph) {
-		Set<String> candidateFrames = getCandidateFrames(tokenIndices, sentence, graph);
+		final Set<String> candidateFrames = getCandidateFrames(tokenIndices, sentence, graph);
 		return pickBestFrame(candidateFrames, sentence, tokenIndices);
 	}
 
