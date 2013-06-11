@@ -21,71 +21,53 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.identification;
 
+import edu.cmu.cs.lti.ark.fn.optimization.LDouble;
+import gnu.trove.TIntObjectHashMap;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
-import edu.cmu.cs.lti.ark.fn.optimization.LDouble;
-import gnu.trove.TIntObjectHashMap;
 
+import static org.apache.commons.io.IOUtils.closeQuietly;
 
-public class ConvertAlphabetFile
-{
-	
-	public static void main(String[] args) throws Exception
-	{
-		String alphabetFile = args[0];
-		String modelFile = args[1];
-		String outFile = args[2];	
-		
-		TIntObjectHashMap<String> map = new TIntObjectHashMap<String>();
-		try
-		{
-			String line = null;
-			int count = 0;
-			BufferedReader bReader = new BufferedReader(new FileReader(alphabetFile));
-			while((line=bReader.readLine())!=null)
-			{
-				if(count==0)
-				{
-					count++;
-					continue;
-				}
-				String[] toks = line.trim().split("\t");
-				map.put(new Integer(toks[1]),toks[0]);
-				
-			}
-			bReader.close();
+/**
+ * Script to combine the alphabet file (containing a map from feature id -> feature name)
+ * and a model file (containing learned parameters, one per line, in order) into a model file
+ * containing feature name -> learned weight for feature.
+ */
+public class ConvertAlphabetFile {
+	public static void main(String[] args) throws Exception {
+		final String alphabetFile = args[0];
+		final String modelFile = args[1];
+		final String outFile = args[2];
+
+		// read in map from  feature id -> feature name
+		final TIntObjectHashMap<String> featureNameById = new TIntObjectHashMap<String>();
+		final BufferedReader alphabetReader = new BufferedReader(new FileReader(alphabetFile));
+		// first line is the number of features
+		final int numFeatures = Integer.parseInt(alphabetReader.readLine());
+		String line;
+		int count = 1;
+		while((line=alphabetReader.readLine()) != null) {
+			final String[] toks = line.trim().split("\t");
+			featureNameById.put(Integer.parseInt(toks[1]), toks[0]);
+
 		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}		
-		
-		try
-		{
-			BufferedWriter bWriter = new BufferedWriter(new FileWriter(outFile));
-			BufferedReader bReader = new BufferedReader(new FileReader(modelFile));
-			int count = 0;
-			String line = null;
-			while((line=bReader.readLine())!=null)
-			{
-				if(count==0)
-				{
-					count++;
-					continue;
-				}
-				double val = new Double(line.trim());
-				String feat = map.get(count);
-				bWriter.write(feat+"\t"+(LDouble.convertToLogDomain(val))+"\n");
-				count++;
-			}			
-			bReader.close();
-			bWriter.close();
+		assert numFeatures == count;
+		closeQuietly(alphabetReader);
+
+		final BufferedWriter bWriter = new BufferedWriter(new FileWriter(outFile));
+		final BufferedReader modelReader = new BufferedReader(new FileReader(modelFile));
+		modelReader.readLine(); // ignore first line
+		count = 1;
+		while((line=modelReader.readLine()) != null) {
+			final double val = Double.parseDouble(line.trim());
+			final String feat = featureNameById.get(count);
+			bWriter.write(feat + "\t" + LDouble.convertToLogDomain(val) + "\n");
+			count++;
 		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}	
+		closeQuietly(modelReader);
+		closeQuietly(bWriter);
 	}	
 }
