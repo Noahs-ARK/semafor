@@ -30,17 +30,13 @@ import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;
 import edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationJson;
-import edu.cmu.cs.lti.ark.fn.identification.FrameIdentificationRelease;
 import edu.cmu.cs.lti.ark.fn.identification.GraphBasedFrameIdentifier;
 import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
-import edu.cmu.cs.lti.ark.fn.identification.SmoothedGraph;
 import edu.cmu.cs.lti.ark.fn.segmentation.RoteSegmenter;
 import edu.cmu.cs.lti.ark.fn.segmentation.SegmentationMode;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectDoubleHashMap;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -58,10 +54,7 @@ import static edu.cmu.cs.lti.ark.util.SerializedObjects.readObject;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
 public class Semafor {
-	/* trained model files */
-	private static final String GRAPH_FILENAME = "sparsegraph.gz";
-	private static final String REQUIRED_DATA_FILENAME = "reqData.jobj";
-	private static final String ID_MODEL_FILE = "idmodel.dat";
+	public static final String REQUIRED_DATA_FILENAME = "reqData.jobj";
 	private static final String ALPHABET_FILENAME = "parser.conf";
 	private static final String FRAME_ELEMENT_MAP_FILENAME = "framenet.frame.element.map";
 	private static final String ARG_MODEL_FILENAME = "argmodel.dat";
@@ -92,7 +85,7 @@ public class Semafor {
 		runSocketServer(modelDirectory, tempDirectory, port);
 	}
 
-	private static void runSocketServer(String modelDirectory, File tempDirectory, int port) throws Exception {
+	public static void runSocketServer(String modelDirectory, File tempDirectory, int port) throws Exception {
 		final Semafor server = getSemaforInstance(modelDirectory, tempDirectory);
 		// Set up socket server
 		final ServerSocket serverSocket = new ServerSocket(port);
@@ -114,9 +107,7 @@ public class Semafor {
 
 	public static Semafor getSemaforInstance(String modelDirectory, File tempDirectory)
 			throws IOException, ClassNotFoundException, URISyntaxException {
-		final String graphFilename = new File(modelDirectory, GRAPH_FILENAME).getAbsolutePath();
 		final String requiredDataFilename = new File(modelDirectory, REQUIRED_DATA_FILENAME).getAbsolutePath();
-		final String idParamsFile = new File(modelDirectory, ID_MODEL_FILE).getAbsolutePath();
 		final String alphabetFilename = new File(modelDirectory, ALPHABET_FILENAME).getAbsolutePath();
 		final String frameElementMapFilename = new File(modelDirectory, FRAME_ELEMENT_MAP_FILENAME).getAbsolutePath();
 		final String argModelFilename = new File(modelDirectory, ARG_MODEL_FILENAME).getAbsolutePath();
@@ -131,9 +122,6 @@ public class Semafor {
 		// unpack required data
 		final RequiredDataForFrameIdentification r = readObject(requiredDataFilename);
 		final Set<String> allRelatedWords = r.getAllRelatedWords();
-		final THashMap<String,THashSet<String>> frameMap = r.getFrameMap();
-		final THashMap<String,THashSet<String>> cMap = r.getcMap();
-		final Map<String, Map<String, Set<String>>> revisedRelationsMap = r.getRevisedRelMap();
 
 		/* Initializing WordNet config file */
 		final WordNetRelations wordNetRelations = new WordNetRelations();
@@ -142,16 +130,7 @@ public class Semafor {
 		wordNetRelations.setRelatedWordsForWord(relatedWordsForWord);
 		wordNetRelations.setWordNetMap(wordNetMap);
 
-		final Map<String, String> hvLemmas = r.getHvLemmaCache();
-		final TObjectDoubleHashMap<String> paramList =
-				FrameIdentificationRelease.parseParamFile(idParamsFile);
-
-		System.err.println("Initializing frame identification model...");
-		final SmoothedGraph graph = readObject(graphFilename);
-		System.err.println("Read graph successfully from: " + graphFilename);
-		final GraphBasedFrameIdentifier idModel =
-				new GraphBasedFrameIdentifier(paramList, "reg", 0.0, frameMap, cMap, relatedWordsForWord,
-						revisedRelationsMap, hvLemmas, graph);
+		final GraphBasedFrameIdentifier idModel = GraphBasedFrameIdentifier.getInstance(modelDirectory);
 
 		final RoteSegmenter segmenter = new RoteSegmenter(allRelatedWords);
 
