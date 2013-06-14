@@ -1,3 +1,5 @@
+nltk==2.0.4
+matplotlib==1.2.1
 numpy==1.6.1
 networkx==1.4
 pandas==0.10.1
