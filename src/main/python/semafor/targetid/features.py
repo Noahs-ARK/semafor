@@ -16,7 +16,7 @@ import sys
 
 from semafor.scoring.frameparseval import DATE_NAMES
 from semafor.formats.wordnet import get_lemma
-from semafor.formats.malt_to_conll import ConllToken, read_conll, default_conll_token
+from semafor.formats.malt_to_conll import ConllToken, read_conll
 
 TRAIN_DATA_DIR = "/Users/sam/repo/project/semafor/semafor/training/data/naacl2012"
 GOLD_FILENAME = os.path.join(TRAIN_DATA_DIR, "cv.%s.sentences.json")
@@ -71,11 +71,9 @@ def get_non_target_token_idxs(gold_sentence):
 
 
 def extract_features(conll_tokens):
-    conll_tokens = [
-        default_conll_token(lemma=get_lemma(t.form, t.postag),
-                            cpostag=get_coarse_pos(t.postag))
-        for t in conll_tokens
-    ]
+    for t in conll_tokens:
+        t.lemma = get_lemma(t.form, t.postag)
+        t.cpostag = get_coarse_pos(t.postag)
     with_walls = [LEFT_ANCHOR] + conll_tokens + [RIGHT_ANCHOR]
     trigrams = ngrams(with_walls, 3)
     for trigram in trigrams:
