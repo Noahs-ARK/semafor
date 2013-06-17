@@ -41,7 +41,6 @@ import java.util.StringTokenizer;
  * 
  * @author Nathan Schneider (nschneid)
  * @since 2009-04-07
- * @see edu.cmu.cs.lti.ark.fn.identification.AlphabetCreation
  * @see CandidateFrameElementFilters
  * @see edu.cmu.cs.lti.ark.fn.identification.FeatureExtractor
  */
