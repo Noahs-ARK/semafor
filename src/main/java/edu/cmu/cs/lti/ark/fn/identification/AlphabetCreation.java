@@ -152,9 +152,8 @@ public class AlphabetCreation {
 														  intTokNums, 
 														  unit, 
 														  data, 
-														  mWnr, 
-														  "test", 
-														  relCache,
+														  mWnr,
+						relCache,
 														  lemmaCache,
 														  parse,clusterMap,K);
 			else
@@ -162,9 +161,8 @@ public class AlphabetCreation {
 						  intTokNums, 
 						  unit, 
 						  data, 
-						  mWnr, 
-						  "test", 
-						  relCache,
+						  mWnr,
+						relCache,
 						  lemmaCache,
 						  parse);
 															

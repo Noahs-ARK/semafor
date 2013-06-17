@@ -21,21 +21,6 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.identification;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.logging.FileHandler;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
-
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
 import edu.cmu.cs.lti.ark.util.BasicFileIO;
@@ -43,7 +28,15 @@ import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
-import gnu.trove.*;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+
+import java.io.*;
+import java.util.*;
+import java.util.logging.FileHandler;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 public class AlphabetCreationThreaded	
 {
@@ -268,7 +261,6 @@ public class AlphabetCreationThreaded
 					intTokNums,
 					unit,
 					data,
-					"test",
 					mRelatedWordsForWord,
 					mRevisedRelationsMap,
 					mHVLemmas,

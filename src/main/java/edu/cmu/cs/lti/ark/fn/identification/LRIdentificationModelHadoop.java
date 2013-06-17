@@ -22,7 +22,6 @@
 package edu.cmu.cs.lti.ark.fn.identification;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.StringTokenizer;
 
@@ -33,7 +32,6 @@ import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import edu.cmu.cs.lti.ark.util.optimization.LDouble;
 import edu.cmu.cs.lti.ark.util.optimization.LogFormula;
-import edu.cmu.cs.lti.ark.util.optimization.LDouble.IdentityElement;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
@@ -76,7 +74,7 @@ public class LRIdentificationModelHadoop extends LRIdentificationModelSingleNode
 		for (String unit : hiddenUnits)
 		{
 			FeatureExtractor featex = new FeatureExtractor();
-			IntCounter<String> valMap = featex.extractFeatures(frame, intTokNums, unit, data, mWNR, mTrainOrTest, mWnRelationsCache,null,parse);	// last arg different from superclass method's call
+			IntCounter<String> valMap = featex.extractFeatures(frame, intTokNums, unit, data, mWNR, mWnRelationsCache,null,parse);	// last arg different from superclass method's call
 			Set<String> features = valMap.keySet();
 			LogFormula featSum = getFormulaObject(LogFormula.Op.PLUS);
 			

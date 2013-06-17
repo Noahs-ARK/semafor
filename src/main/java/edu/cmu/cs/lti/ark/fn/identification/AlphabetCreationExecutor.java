@@ -38,7 +38,6 @@ import java.util.logging.SimpleFormatter;
 
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
-import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.BasicFileIO;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
@@ -249,8 +248,7 @@ public class AlphabetCreationExecutor
 			valMap =  featex.extractFeaturesLessMemory(frame,
 					intTokNums, 
 					unit, 
-					data, 
-					"test", 
+					data,
 					mRelatedWordsForWord,
 					mRevisedRelationsMap,
 					mHVLemmas,

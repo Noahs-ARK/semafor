@@ -124,14 +124,13 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode {
 							intTokNums,
 							unit,
 							parseData,
-							"test",
 							mRelatedWordsForWord,
 							mRevisedRelationsMap,
 							mHVLemmas,
 							parse);
 			} else { // not supported
 				valMap =
-					featex.extractFeaturesWithClusters(frame, intTokNums, unit, parseData, mWNR, "test", null, null, parse, clusterMap, K);
+					featex.extractFeaturesWithClusters(frame, intTokNums, unit, parseData, mWNR, null, null, parse, clusterMap, K);
 			}
 			final Set<String> features = valMap.keySet();
 			double featSum = 0.0;

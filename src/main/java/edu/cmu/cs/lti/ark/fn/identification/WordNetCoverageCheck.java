@@ -21,7 +21,6 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.identification;
 
-import edu.cmu.cs.lti.ark.fn.identification.FeatureExtractor;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
@@ -146,9 +145,8 @@ public class WordNetCoverageCheck {
 					frame,
 					  intTokNums, 
 					  unit, 
-					  data,  
-					  "test", 
-					  relatedWordsForWord,
+					  data,
+					relatedWordsForWord,
 					  null,
 					  null,
 					  parse);

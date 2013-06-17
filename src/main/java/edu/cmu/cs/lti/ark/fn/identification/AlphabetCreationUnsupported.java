@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
@@ -216,8 +215,7 @@ public class AlphabetCreationUnsupported
 			valMap =  featex.extractFeaturesLessMemory(frame,
 					intTokNums, 
 					unit, 
-					data, 
-					"test", 
+					data,
 					mRelatedWordsForWord,
 					mRevisedRelationsMap,
 					mHVLemmas,

@@ -25,15 +25,11 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reporter;
 
 import riso.numerical.LBFGS;
@@ -262,7 +258,7 @@ public class LRIdentificationModelSingleNode extends LogModel
 		for (String unit : hiddenUnits)
 		{
 			FeatureExtractor featex = new FeatureExtractor();
-			IntCounter<String> valMap = featex.extractFeatures(frame, intTokNums, unit, data, mWNR, mTrainOrTest, null,null,parse);
+			IntCounter<String> valMap = featex.extractFeatures(frame, intTokNums, unit, data, mWNR, null,null,parse);
 			Set<String> features = valMap.keySet();
 			LogFormula featSum = getFormulaObject(LogFormula.Op.PLUS);
 			

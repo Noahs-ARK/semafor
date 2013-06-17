@@ -25,12 +25,9 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import org.apache.hadoop.mapred.Reporter;
-
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
-import edu.cmu.cs.lti.ark.util.optimization.LDouble;
 import edu.cmu.cs.lti.ark.util.optimization.LogFormula;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -100,7 +97,7 @@ public class FrameIdentificationDecoder extends LRIdentificationModelSingleNode
 		for (String unit : hiddenUnits)
 		{
 			FeatureExtractor featex = new FeatureExtractor();
-			IntCounter<String> valMap =  featex.extractFeatures(frame, intTokNums, unit, data, mWNR, "test", mWnRelationsCache,null,parse);
+			IntCounter<String> valMap =  featex.extractFeatures(frame, intTokNums, unit, data, mWNR, mWnRelationsCache,null,parse);
 			Set<String> features = valMap.keySet();
 			double featSum = 0.0;
 			for (String feat : features)
