@@ -13,12 +13,8 @@ if [ -e ${log_file} ]; then
     rm "${log_file}"
 fi
 
-
-
-# step 1: alphabet creation
-
 echo
-echo "Creating alphabet"
+echo "step 1: Creating alphabet"
 echo
 ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms6g -Xmx6g\
   edu.cmu.cs.lti.ark.fn.identification.AlphabetCreationThreaded \

@@ -2,7 +2,6 @@
 
 set -e # fail fast
 
-# step 4: training the frame identification model.
 echo
 echo "step 4: training the frame identification model."
 echo
@@ -16,7 +15,6 @@ log_file="${model_dir}/log"
 if [ -e ${log_file} ]; then
     rm "${log_file}"
 fi
-
 
 ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8g -Xmx8g \
   edu.cmu.cs.lti.ark.fn.identification.TrainBatchModelDerThreaded \

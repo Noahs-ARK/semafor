@@ -21,6 +21,7 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.identification;
 
+import com.google.common.collect.ImmutableSet;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.IFeatureExtractor;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
@@ -32,318 +33,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ * Extracts features for the frame identification model
+ */
 public class FeatureExtractor implements IFeatureExtractor {
-	private final Lock writeLock;
-
-	public FeatureExtractor() {
-		writeLock = new ReentrantReadWriteLock().writeLock();
-	}
-
-	public String getLowerCaseLemma(THashMap<String, String> lemmaCache,
-									String word,
-									String POS,
-									WordNetRelations wnr) {
-		final String pair = word + "_" + POS;
-		if (lemmaCache == null) {
-			return wnr.getLemmaForWord(word, POS).toLowerCase();
-		} else if (!lemmaCache.contains(pair)) {
-			lemmaCache.put(pair, wnr.getLemmaForWord(word, POS).toLowerCase());
-			return wnr.getLemmaForWord(word, POS).toLowerCase();
-		} else {
-			return lemmaCache.get(pair);
-		}
-	}
-
-	public String getLowerCaseLemma(Map<String, String> lemmaCache, String word, String POS) {
-		return lemmaCache.get(word + "_" + POS);
-	}
-
-	public String getLowerCaseLemma(int index, String[][] data) {
+	private static String getLowerCaseLemma(int index, String[][] data) {
 		return data[5][index];
-	}
-
-	public Set<String> getWNRelations(THashMap<String, THashSet<String>> wnCacheMap,
-									  String sWord,
-									  String tWord,
-									  WordNetRelations wnr) {
-		final String sWordLower = sWord.toLowerCase();
-		final String tWordLower = tWord.toLowerCase();
-		String pair = sWordLower + "\t" + tWordLower;
-		if (wnCacheMap == null) {
-			return wnr.getRelations(sWordLower, tWordLower);
-		} else if (!wnCacheMap.contains(pair)) {
-			final Set<String> relations = wnr.getRelations(sWordLower, tWordLower);
-			if (relations.contains(WordNetRelations.NO_RELATION)) {
-				return relations;
-			} else {
-				final THashSet<String> nR = new THashSet<String>();
-				for (String string : relations) {
-					nR.add(string);
-				}
-				wnCacheMap.put(pair, nR);
-				return relations;
-			}
-		} else {
-			return wnCacheMap.get(pair);
-		}
-	}
-
-	public String getClusterMembership(String token, THashMap<String, THashSet<String>> clusterMap, int K) {
-		final THashSet<String> set = clusterMap.get(token.toLowerCase());
-		final String k = "" + K;
-		String tag = null;
-		if (set != null) {
-			for (String string : set) {
-				final String[] arr = string.split("_");
-				if (arr[1].equals(k)) {
-					tag = "C" + arr[2];
-				}
-			}
-		}
-		return tag;
-	}
-
-	public IntCounter<String> extractFeaturesWithClusters(String mFrameName,
-														  int[] tokenNums,
-														  String hiddenWord,
-														  String[][] parseData,
-														  WordNetRelations wnr,
-														  THashMap<String, THashSet<String>> wnCacheMap,
-														  THashMap<String, String> lemmaCache,
-														  DependencyParse parse,
-														  THashMap<String, THashSet<String>> clusterMap,
-														  int K) {
-		Arrays.sort(tokenNums);
-		IntCounter<String> featureMap = new IntCounter<String>();
-
-		String hiddenUnitTokens = "";
-		String hiddenUnitLemmas = "";
-		String hiddenLemmaAndFPOS = "";
-
-		String actualTokens = "";
-		String actualLemmas = "";
-		String actualLemmaAndFPOS = "";
-
-		String hiddenPOSSeq = "";
-		String hiddenFinePOSSeq = "";
-
-		String actualPOSSeq = "";
-		String actualFinePOSSeq = "";
-
-		String[] hiddenToks = hiddenWord.split(" ");
-		for (String hiddenTok : hiddenToks) {
-			String[] arr = hiddenTok.split("_");
-			hiddenUnitTokens += arr[0] + " ";
-			hiddenPOSSeq += arr[1] + " ";
-			hiddenFinePOSSeq += arr[1].substring(0, 1) + " ";
-			writeLock.lock();
-			hiddenUnitLemmas += getLowerCaseLemma(lemmaCache, arr[0], arr[1], wnr) + " ";
-			hiddenLemmaAndFPOS += getLowerCaseLemma(lemmaCache, arr[0], arr[1], wnr) + "_" + arr[1].substring(0, 1) + " ";
-			writeLock.unlock();
-		}
-		hiddenUnitTokens = hiddenUnitTokens.trim();
-		hiddenUnitLemmas = hiddenUnitLemmas.trim();
-		hiddenPOSSeq = hiddenPOSSeq.trim();
-		hiddenFinePOSSeq = hiddenFinePOSSeq.trim();
-		hiddenLemmaAndFPOS = hiddenLemmaAndFPOS.trim();
-
-		for (int mTokenNum : tokenNums) {
-			String lexUnit = parseData[0][mTokenNum];
-			String pos = parseData[1][mTokenNum];
-			actualTokens += lexUnit + " ";
-			writeLock.lock();
-			actualLemmas += getLowerCaseLemma(lemmaCache, lexUnit, pos, wnr) + " ";
-			actualPOSSeq += pos + " ";
-			actualFinePOSSeq += pos.substring(0, 1) + " ";
-			actualLemmaAndFPOS += getLowerCaseLemma(lemmaCache, lexUnit, pos, wnr) + "_" + pos.substring(0, 1) + " ";
-			writeLock.unlock();
-		}
-		actualTokens = actualTokens.trim();
-		actualLemmas = actualLemmas.trim();
-		actualPOSSeq = actualPOSSeq.trim();
-		actualFinePOSSeq = actualFinePOSSeq.trim();
-		actualLemmaAndFPOS = actualLemmaAndFPOS.trim();
-
-		String hTag = getClusterMembership(hiddenUnitTokens, clusterMap, K);
-		String aTag = getClusterMembership(actualTokens, clusterMap, K);
-		String aLTag = getClusterMembership(actualLemmas, clusterMap, K);
-
-		if (hTag != null) {
-			String feature = "hTag:" + hTag + "_f:" + mFrameName;
-			featureMap.increment(feature);
-		}
-		if (aTag != null) {
-			String feature = "aTag:" + aTag + "_f:" + mFrameName;
-			featureMap.increment(feature);
-		}
-		if (aLTag != null) {
-			String feature = "aLTag:" + aLTag + "_f:" + mFrameName;
-			featureMap.increment(feature);
-		}	
-
-		/*
-		 * token relationships
-		 */
-		Set<String> relations;
-		if (wnCacheMap != null) {
-			String pair = hiddenUnitTokens.toLowerCase() + "\t" + actualTokens.toLowerCase();
-			if (!wnCacheMap.contains(pair)) {
-				relations = new THashSet<String>();
-				relations.add(WordNetRelations.NO_RELATION);
-			} else {
-				relations = wnCacheMap.get(pair);
-			}
-		} else {
-			writeLock.lock();
-			relations = getWNRelations(wnCacheMap, hiddenUnitTokens, actualTokens, wnr);
-			writeLock.unlock();
-		}
-		for (String relation : relations) {
-			String feature = "tRLn:" + relation + "_f:" + mFrameName;
-			featureMap.increment(feature);
-			feature = "tRLn:" + relation + "_hU:" + hiddenUnitTokens.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-			if (relation.equals(WordNetRelations.NO_RELATION)) {
-				continue;
-			}
-			feature = "tRLn:" + relation + "_hU:" + hiddenUnitTokens.replaceAll(" ", "_") + "_hP:" + hiddenFinePOSSeq.replaceAll(" ", "_") + "_aP:" + actualFinePOSSeq.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-		}
-
-		if (hTag != null && aTag != null) {
-			if (hTag.equals(aTag)) {
-				String feature = "haSameTag_f:" + mFrameName;
-				featureMap.increment(feature);
-				feature = "haSameTag_t:_" + aTag + "f:" + mFrameName;
-				featureMap.increment(feature);
-			}
-		}
-
-		if (hTag != null && aLTag != null) {
-			if (hTag.equals(aLTag)) {
-				String feature = "haLSameTag_f:" + mFrameName;
-				featureMap.increment(feature);
-				feature = "haLSameTag_t:_" + aLTag + "f:" + mFrameName;
-				featureMap.increment(feature);
-			}
-		}		
-
-		/*
-		 * features
-		 */
-		String feature = "hTs:" + hiddenUnitTokens.replaceAll(" ", "_") + "_f:" + mFrameName;
-		featureMap.increment(feature);
-		feature = "hLs:" + hiddenUnitLemmas.replaceAll(" ", "_") + "_f:" + mFrameName;
-		featureMap.increment(feature);
-		feature = "hLFPOSs:" + hiddenLemmaAndFPOS.replaceAll(" ", "_") + "_f:" + mFrameName;
-		featureMap.increment(feature);
-		if (hiddenUnitTokens.equals(actualTokens)) {
-			feature = "sTs_f:" + mFrameName;
-			featureMap.increment(feature);
-			feature = "sTs_hLs:" + hiddenUnitTokens.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-			feature = "sTs_pSeqs_A:" + actualFinePOSSeq.replaceAll(" ", "_") + "_H:" + hiddenFinePOSSeq.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-			feature = "sTs_pLSeqs_A:" + actualLemmaAndFPOS.replaceAll(" ", "_") + "_H:" + hiddenLemmaAndFPOS.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-		}
-		if (hiddenUnitLemmas.equals(actualLemmas)) {
-			feature = "sLs_f:" + mFrameName;
-			featureMap.increment(feature);
-			feature = "sLs_hLs:" + hiddenUnitTokens.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-			feature = "sLs_pSeqs_A:" + actualFinePOSSeq.replaceAll(" ", "_") + "_H:" + hiddenFinePOSSeq.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-			feature = "sLs_pLSeqs_A:" + actualLemmaAndFPOS.replaceAll(" ", "_") + "_H:" + hiddenLemmaAndFPOS.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-		}
-
-		/*
-		 * syntactic features
-		 */
-		DependencyParse[] sortedNodes = parse.getIndexSortedListOfNodes();
-
-		DependencyParse node = DependencyParse.getHeuristicHead(sortedNodes, tokenNums);
-
-		String headWord = node.getWord();
-		String hwC = getClusterMembership(headWord, clusterMap, K);
-		if (hwC != null) {
-			feature = "hwc:" + hwC + "f:" + mFrameName;
-			featureMap.increment(feature);
-		}
-
-		String nodePOS = node.getPOS().substring(0, 1);
-		List<DependencyParse> children = node.getChildren();
-		String subcat = "";
-		String clusterSubcat = "";
-		String dependencies = "";
-		String clusterDependencies = "";
-
-		THashSet<String> deps = new THashSet<String>();
-		THashSet<String> hwDeps = new THashSet<String>();
-
-		for (DependencyParse child : children) {
-			String lab = child.getLabelType();
-			deps.add(lab);
-			String childC = getClusterMembership(child.getWord(), clusterMap, K);
-			if (childC != null) {
-				hwDeps.add(childC);
-			}
-			if (nodePOS.equals("V")) {
-				if (!lab.equals("SUB") && !lab.equals("P") && !lab.equals("CC")) {
-					subcat += lab + "_";
-					if (childC != null)
-						clusterSubcat += childC + "_";
-				}
-			}
-		}
-		for (String dep : deps) {
-			dependencies += dep + "_";
-		}
-
-		for (String dep : hwDeps) {
-			clusterDependencies += dep + "_";
-		}
-
-		feature = "d:" + dependencies + "f:" + mFrameName;
-		featureMap.increment(feature);
-
-		feature = "cD:" + clusterDependencies + "f:" + mFrameName;
-		featureMap.increment(feature);
-
-
-		if (nodePOS.equals("V")) {
-			feature = "sC:" + subcat + "f:" + mFrameName;
-			featureMap.increment(feature);
-
-			feature = "sCC:" + clusterSubcat + "f:" + mFrameName;
-			featureMap.increment(feature);
-		}
-		DependencyParse dp = node.getParent();
-		String parPOS;
-		String parLab;
-		String parCluster;
-		if (dp == null) {
-			parPOS = "NULL";
-			parLab = "NULL";
-			parCluster = "NULL";
-		} else {
-			parPOS = dp.getPOS();
-			parLab = dp.getLabelType();
-			parCluster = getClusterMembership(dp.getWord(), clusterMap, K);
-		}
-		feature = "pP:" + parPOS + "_f:" + mFrameName;
-		featureMap.increment(feature);
-		feature = "pL:" + parLab + "_f:" + mFrameName;
-		featureMap.increment(feature);
-		if (parCluster != null) {
-			feature = "pC:" + parCluster + "_f:" + mFrameName;
-			featureMap.increment(feature);
-		}
-		return featureMap;
 	}
 
 	public IntCounter<String> extractFeatures(String mFrameName,
@@ -354,6 +51,34 @@ public class FeatureExtractor implements IFeatureExtractor {
 											  THashMap<String, THashSet<String>> wnCacheMap,
 											  THashMap<String, String> lemmaCache,
 											  DependencyParse parse) {
+		final IRelations wnRelations = new WNRelations(wnr, wnCacheMap);
+		final ILemmatizer lemmatizer = new CachingWordNetLemmatizer(wnr, lemmaCache);
+		boolean parseHasLemmas = false;
+		return extractFeatures(mFrameName, tokenNums, hiddenWord, parseData, parse, wnRelations, lemmatizer, parseHasLemmas);
+	}
+
+	public IntCounter<String> extractFeaturesLessMemory(String mFrameName,
+														int[] tokenNums,
+														String hiddenWord,
+														String[][] parseData,
+														Map<String, Set<String>> relatedWordsForWord,
+														Map<String, Map<String, Set<String>>> revisedRelationsMap,
+														Map<String, String> mHVLemmas,
+														DependencyParse parse) {
+		final IRelations wnRelations = new CachedRelations(revisedRelationsMap, relatedWordsForWord);
+		final ILemmatizer lemmatizer = new CachedLemmatizer(mHVLemmas);
+		boolean parseHasLemmas = true;
+		return extractFeatures(mFrameName, tokenNums, hiddenWord, parseData, parse, wnRelations, lemmatizer, parseHasLemmas);
+	}
+
+	private IntCounter<String> extractFeatures(String mFrameName,
+											   int[] tokenNums,
+											   String hiddenWord,
+											   String[][] parseData,
+											   DependencyParse parse,
+											   IRelations wnRelations,
+											   ILemmatizer lemmatizer,
+											   boolean parseHasLemmas) {
 		Arrays.sort(tokenNums);
 		IntCounter<String> featureMap = new IntCounter<String>();
 
@@ -371,16 +96,14 @@ public class FeatureExtractor implements IFeatureExtractor {
 		String actualPOSSeq = "";
 		String actualFinePOSSeq = "";
 
-		String[] hiddenToks = hiddenWord.split(" ");
-		for (String hiddenTok : hiddenToks) {
+		String[] hiddenTokens = hiddenWord.split(" ");
+		for (String hiddenTok : hiddenTokens) {
 			String[] arr = hiddenTok.split("_");
 			hiddenUnitTokens += arr[0] + " ";
 			hiddenPOSSeq += arr[1] + " ";
 			hiddenFinePOSSeq += arr[1].substring(0, 1) + " ";
-			writeLock.lock();
-			hiddenUnitLemmas += getLowerCaseLemma(lemmaCache, arr[0], arr[1], wnr) + " ";
-			hiddenLemmaAndFPOS += getLowerCaseLemma(lemmaCache, arr[0], arr[1], wnr) + "_" + arr[1].substring(0, 1) + " ";
-			writeLock.unlock();
+			hiddenUnitLemmas += lemmatizer.getLowerCaseLemma(arr[0], arr[1]) + " ";
+			hiddenLemmaAndFPOS += lemmatizer.getLowerCaseLemma(arr[0], arr[1]) + "_" + arr[1].substring(0, 1) + " ";
 		}
 		hiddenUnitTokens = hiddenUnitTokens.trim();
 		hiddenUnitLemmas = hiddenUnitLemmas.trim();
@@ -388,79 +111,82 @@ public class FeatureExtractor implements IFeatureExtractor {
 		hiddenFinePOSSeq = hiddenFinePOSSeq.trim();
 		hiddenLemmaAndFPOS = hiddenLemmaAndFPOS.trim();
 
-
 		for (int mTokenNum : tokenNums) {
 			String lexUnit = parseData[0][mTokenNum];
 			String pos = parseData[1][mTokenNum];
 			actualTokens += lexUnit + " ";
-			writeLock.lock();
-			actualLemmas += getLowerCaseLemma(lemmaCache, lexUnit, pos, wnr) + " ";
+			final String actualLemma = parseHasLemmas ? getLowerCaseLemma(mTokenNum, parseData)
+											: lemmatizer.getLowerCaseLemma(lexUnit, pos);
+			actualLemmas += actualLemma + " ";
 			actualPOSSeq += pos + " ";
 			actualFinePOSSeq += pos.substring(0, 1) + " ";
-			actualLemmaAndFPOS += getLowerCaseLemma(lemmaCache, lexUnit, pos, wnr) + "_" + pos.substring(0, 1) + " ";
-			writeLock.unlock();
+			actualLemmaAndFPOS += actualLemma + "_" + pos.substring(0, 1) + " ";
 		}
 		actualTokens = actualTokens.trim();
 		actualLemmas = actualLemmas.trim();
 		actualPOSSeq = actualPOSSeq.trim();
 		actualFinePOSSeq = actualFinePOSSeq.trim();
 		actualLemmaAndFPOS = actualLemmaAndFPOS.trim();
+		Set<String> relations = wnRelations.getRelations(actualTokens, hiddenUnitTokens);
 
-		/*
-		 * token relationships
-		 */
-		Set<String> relations;
-		if (wnCacheMap != null) {
-			String pair = hiddenUnitTokens.toLowerCase() + "\t" + actualTokens.toLowerCase();
-			if (!wnCacheMap.contains(pair)) {
-				relations = new THashSet<String>();
-				relations.add(WordNetRelations.NO_RELATION);
-			} else {
-				relations = wnCacheMap.get(pair);
-			}
-		} else {
-			writeLock.lock();
-			relations = getWNRelations(wnCacheMap, hiddenUnitTokens, actualTokens, wnr);
-			writeLock.unlock();
-		}
 		for (String relation : relations) {
-			String feature = "tRLn:" + relation + "_f:" + mFrameName;
+			String feature = "tRLn:" + relation +
+					"_f:" + mFrameName;
 			featureMap.increment(feature);
-			feature = "tRLn:" + relation + "_hU:" + hiddenUnitTokens.replaceAll(" ", "_") + "_f:" + mFrameName;
+			feature = "tRLn:" + relation +
+					"_hU:" + hiddenUnitTokens.replaceAll(" ", "_") +
+					"_f:" + mFrameName;
 			featureMap.increment(feature);
 			if (relation.equals(WordNetRelations.NO_RELATION))
 				continue;
-			feature = "tRLn:" + relation + "_hU:" + hiddenUnitTokens.replaceAll(" ", "_") + "_hP:" + hiddenFinePOSSeq.replaceAll(" ", "_") + "_aP:" + actualFinePOSSeq.replaceAll(" ", "_") + "_f:" + mFrameName;
+			feature = "tRLn:" + relation +
+					"_hU:" + hiddenUnitTokens.replaceAll(" ", "_") +
+					"_hP:" + hiddenFinePOSSeq.replaceAll(" ", "_") +
+					"_aP:" + actualFinePOSSeq.replaceAll(" ", "_") +
+					"_f:" + mFrameName;
 			featureMap.increment(feature);
 		}
 
 		/*
 		 * features
 		 */
-		String feature = "hTs:" + hiddenUnitTokens.replaceAll(" ", "_") + "_f:" + mFrameName;
+		String feature = "hTs:" + hiddenUnitTokens.replaceAll(" ", "_") +
+				"_f:" + mFrameName;
 		featureMap.increment(feature);
-		feature = "hLs:" + hiddenUnitLemmas.replaceAll(" ", "_") + "_f:" + mFrameName;
+		feature = "hLs:" + hiddenUnitLemmas.replaceAll(" ", "_") +
+				"_f:" + mFrameName;
 		featureMap.increment(feature);
-		feature = "hLFPOSs:" + hiddenLemmaAndFPOS.replaceAll(" ", "_") + "_f:" + mFrameName;
+		feature = "hLFPOSs:" + hiddenLemmaAndFPOS.replaceAll(" ", "_") +
+				"_f:" + mFrameName;
 		featureMap.increment(feature);
 		if (hiddenUnitTokens.equals(actualTokens)) {
 			feature = "sTs_f:" + mFrameName;
 			featureMap.increment(feature);
-			feature = "sTs_hLs:" + hiddenUnitTokens.replaceAll(" ", "_") + "_f:" + mFrameName;
+			feature = "sTs_hLs:" + hiddenUnitTokens.replaceAll(" ", "_") +
+					"_f:" + mFrameName;
 			featureMap.increment(feature);
-			feature = "sTs_pSeqs_A:" + actualFinePOSSeq.replaceAll(" ", "_") + "_H:" + hiddenFinePOSSeq.replaceAll(" ", "_") + "_f:" + mFrameName;
+			feature = "sTs_pSeqs_A:" + actualFinePOSSeq.replaceAll(" ", "_") +
+					"_H:" + hiddenFinePOSSeq.replaceAll(" ", "_") +
+					"_f:" + mFrameName;
 			featureMap.increment(feature);
-			feature = "sTs_pLSeqs_A:" + actualLemmaAndFPOS.replaceAll(" ", "_") + "_H:" + hiddenLemmaAndFPOS.replaceAll(" ", "_") + "_f:" + mFrameName;
+			feature = "sTs_pLSeqs_A:" + actualLemmaAndFPOS.replaceAll(" ", "_") +
+					"_H:" + hiddenLemmaAndFPOS.replaceAll(" ", "_") +
+					"_f:" + mFrameName;
 			featureMap.increment(feature);
 		}
 		if (hiddenUnitLemmas.equals(actualLemmas)) {
 			feature = "sLs_f:" + mFrameName;
 			featureMap.increment(feature);
-			feature = "sLs_hLs:" + hiddenUnitTokens.replaceAll(" ", "_") + "_f:" + mFrameName;
+			feature = "sLs_hLs:" + hiddenUnitTokens.replaceAll(" ", "_") +
+					"_f:" + mFrameName;
 			featureMap.increment(feature);
-			feature = "sLs_pSeqs_A:" + actualFinePOSSeq.replaceAll(" ", "_") + "_H:" + hiddenFinePOSSeq.replaceAll(" ", "_") + "_f:" + mFrameName;
+			feature = "sLs_pSeqs_A:" + actualFinePOSSeq.replaceAll(" ", "_") +
+					"_H:" + hiddenFinePOSSeq.replaceAll(" ", "_") +
+					"_f:" + mFrameName;
 			featureMap.increment(feature);
-			feature = "sLs_pLSeqs_A:" + actualLemmaAndFPOS.replaceAll(" ", "_") + "_H:" + hiddenLemmaAndFPOS.replaceAll(" ", "_") + "_f:" + mFrameName;
+			feature = "sLs_pLSeqs_A:" + actualLemmaAndFPOS.replaceAll(" ", "_") +
+					"_H:" + hiddenLemmaAndFPOS.replaceAll(" ", "_") +
+					"_f:" + mFrameName;
 			featureMap.increment(feature);
 		}
 
@@ -512,167 +238,117 @@ public class FeatureExtractor implements IFeatureExtractor {
 		return featureMap;
 	}
 
-	public IntCounter<String> extractFeaturesLessMemory(
-			String mFrameName,
-			int[] tokenNums,
-			String hiddenWord,
-			String[][] parseData,
-			Map<String, Set<String>> relatedWordsForWord,
-			Map<String, Map<String, Set<String>>> revisedRelationsMap,
-			Map<String, String> mHVLemmas,
-			DependencyParse parse) {
-		Arrays.sort(tokenNums);
-		IntCounter<String> featureMap = new IntCounter<String>();
+	public static interface IRelations {
+		public Set<String> getRelations(String actualTokens, String hiddenUnitTokens);
+	}
 
-		String hiddenUnitTokens = "";
-		String hiddenUnitLemmas = "";
-		String hiddenLemmaAndFPOS = "";
+	/** Finds token relationships */
+	private static class WNRelations implements IRelations {
+		private final WordNetRelations wnr;
+		private final THashMap<String, THashSet<String>> wnCacheMap;
+		private final ReentrantReadWriteLock.WriteLock writeLock;
 
-		String actualTokens = "";
-		String actualLemmas = "";
-		String actualLemmaAndFPOS = "";
-
-		String hiddenPOSSeq = "";
-		String hiddenFinePOSSeq = "";
-
-		String actualPOSSeq = "";
-		String actualFinePOSSeq = "";
-
-		String[] hiddenToks = hiddenWord.split(" ");
-		for (String hiddenTok : hiddenToks) {
-			String[] arr = hiddenTok.split("_");
-			hiddenUnitTokens += arr[0] + " ";
-			hiddenPOSSeq += arr[1] + " ";
-			hiddenFinePOSSeq += arr[1].substring(0, 1) + " ";
-			hiddenUnitLemmas += getLowerCaseLemma(mHVLemmas, arr[0], arr[1]) + " ";
-			hiddenLemmaAndFPOS += getLowerCaseLemma(mHVLemmas, arr[0], arr[1]) + "_" + arr[1].substring(0, 1) + " ";
-		}
-		hiddenUnitTokens = hiddenUnitTokens.trim();
-		hiddenUnitLemmas = hiddenUnitLemmas.trim();
-		hiddenPOSSeq = hiddenPOSSeq.trim();
-		hiddenFinePOSSeq = hiddenFinePOSSeq.trim();
-		hiddenLemmaAndFPOS = hiddenLemmaAndFPOS.trim();
-
-		for (int mTokenNum : tokenNums) {
-			String lexUnit = parseData[0][mTokenNum];
-			String pos = parseData[1][mTokenNum];
-			actualTokens += lexUnit + " ";
-			actualLemmas += getLowerCaseLemma(mTokenNum, parseData) + " ";
-			actualPOSSeq += pos + " ";
-			actualFinePOSSeq += pos.substring(0, 1) + " ";
-			actualLemmaAndFPOS += getLowerCaseLemma(mTokenNum, parseData) + "_" + pos.substring(0, 1) + " ";
-		}
-		actualTokens = actualTokens.trim();
-		actualLemmas = actualLemmas.trim();
-		actualPOSSeq = actualPOSSeq.trim();
-		actualFinePOSSeq = actualFinePOSSeq.trim();
-		actualLemmaAndFPOS = actualLemmaAndFPOS.trim();
-
-		/*
-		 * finding relationships without the WordNetRelations object
-		 */
-		Set<String> relations;
-		if (!relatedWordsForWord.containsKey(hiddenUnitTokens.toLowerCase())) {
-			System.out.println("Problem with hidden word:" + hiddenUnitTokens.toLowerCase() +
-					". Not contained in cache. Exiting:");
-			System.exit(-1);
-		}
-		Set<String> relatedWords =
-				relatedWordsForWord.get(hiddenUnitTokens.toLowerCase());
-		if (!relatedWords.contains(actualTokens.toLowerCase())) {
-			relations = new THashSet<String>();
-			relations.add(WordNetRelations.NO_RELATION);
-		} else {
-			relations =
-					revisedRelationsMap.get(hiddenUnitTokens.toLowerCase()).get(actualTokens.toLowerCase());
+		public WNRelations(WordNetRelations wnr, THashMap<String, THashSet<String>> wnCacheMap) {
+			this.wnr = wnr;
+			this.wnCacheMap = wnCacheMap;
+			writeLock = new ReentrantReadWriteLock().writeLock();
 		}
 
-		for (String relation : relations) {
-			String feature = "tRLn:" + relation + "_f:" + mFrameName;
-			featureMap.increment(feature);
-			feature = "tRLn:" + relation + "_hU:" + hiddenUnitTokens.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-			if (relation.equals(WordNetRelations.NO_RELATION))
-				continue;
-			feature = "tRLn:" + relation + "_hU:" + hiddenUnitTokens.replaceAll(" ", "_") + "_hP:" + hiddenFinePOSSeq.replaceAll(" ", "_") + "_aP:" + actualFinePOSSeq.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-		}
-
-		/*
-		 * features
-		 */
-		String feature = "hTs:" + hiddenUnitTokens.replaceAll(" ", "_") + "_f:" + mFrameName;
-		featureMap.increment(feature);
-		feature = "hLs:" + hiddenUnitLemmas.replaceAll(" ", "_") + "_f:" + mFrameName;
-		featureMap.increment(feature);
-		feature = "hLFPOSs:" + hiddenLemmaAndFPOS.replaceAll(" ", "_") + "_f:" + mFrameName;
-		featureMap.increment(feature);
-		if (hiddenUnitTokens.equals(actualTokens)) {
-			feature = "sTs_f:" + mFrameName;
-			featureMap.increment(feature);
-			feature = "sTs_hLs:" + hiddenUnitTokens.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-			feature = "sTs_pSeqs_A:" + actualFinePOSSeq.replaceAll(" ", "_") + "_H:" + hiddenFinePOSSeq.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-			feature = "sTs_pLSeqs_A:" + actualLemmaAndFPOS.replaceAll(" ", "_") + "_H:" + hiddenLemmaAndFPOS.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-		}
-		if (hiddenUnitLemmas.equals(actualLemmas)) {
-			feature = "sLs_f:" + mFrameName;
-			featureMap.increment(feature);
-			feature = "sLs_hLs:" + hiddenUnitTokens.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-			feature = "sLs_pSeqs_A:" + actualFinePOSSeq.replaceAll(" ", "_") + "_H:" + hiddenFinePOSSeq.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-			feature = "sLs_pLSeqs_A:" + actualLemmaAndFPOS.replaceAll(" ", "_") + "_H:" + hiddenLemmaAndFPOS.replaceAll(" ", "_") + "_f:" + mFrameName;
-			featureMap.increment(feature);
-		}
-
-		/*
-		 * syntactic features
-		 */
-		DependencyParse[] sortedNodes = parse.getIndexSortedListOfNodes();
-
-		DependencyParse node = DependencyParse.getHeuristicHead(sortedNodes, tokenNums);
-
-		String nodePOS = node.getPOS().substring(0, 1);
-		List<DependencyParse> children = node.getChildren();
-		String subcat = "";
-		String dependencies = "";
-		THashSet<String> deps = new THashSet<String>();
-		for (DependencyParse child : children) {
-			String lab = child.getLabelType();
-			deps.add(lab);
-			if (nodePOS.equals("V")) {
-				if (!lab.equals("SUB") && !lab.equals("P") && !lab.equals("CC")) {
-					subcat += lab + "_";
+		public Set<String> getRelations(String actualTokens, String hiddenUnitTokens) {
+			// TODO(smt): use a LoadingCache
+			Set<String> relations;
+			final String sWordLower = hiddenUnitTokens.toLowerCase();
+			final String tWordLower = actualTokens.toLowerCase();
+			final String pair = sWordLower + "\t" + tWordLower;
+			if (wnCacheMap != null) {
+				if (!wnCacheMap.contains(pair)) {
+					relations = ImmutableSet.of(WordNetRelations.NO_RELATION);
+				} else {
+					relations = wnCacheMap.get(pair);
+				}
+			} else {
+				writeLock.lock();
+				try {
+					relations = wnr.getRelations(sWordLower, tWordLower);
+				} finally {
+					writeLock.unlock();
 				}
 			}
+			return relations;
 		}
-		for (String dep : deps) {
-			dependencies += dep + "_";
-		}
-		feature = "d:" + dependencies + "f:" + mFrameName;
-		featureMap.increment(feature);
-		if (nodePOS.equals("V")) {
-			feature = "sC:" + subcat + "f:" + mFrameName;
-			featureMap.increment(feature);
-		}
-		DependencyParse dp = node.getParent();
-		String parPOS;
-		String parLab;
-		if (dp == null) {
-			parPOS = "NULL";
-			parLab = "NULL";
-		} else {
-			parPOS = dp.getPOS();
-			parLab = dp.getLabelType();
-		}
-		feature = "pP:" + parPOS + "_f:" + mFrameName;
-		featureMap.increment(feature);
-		feature = "pL:" + parLab + "_f:" + mFrameName;
-		featureMap.increment(feature);
+	}
 
-		return featureMap;
+	/** Finds relationships without the WordNetRelations object */
+	private static class CachedRelations implements IRelations {
+		private final Map<String, Map<String, Set<String>>> revisedRelationsMap;
+		private final Map<String, Set<String>> relatedWordsForWord;
+
+		public CachedRelations(Map<String, Map<String, Set<String>>> revisedRelationsMap,
+							   Map<String, Set<String>> relatedWordsForWord) {
+			this.revisedRelationsMap = revisedRelationsMap;
+			this.relatedWordsForWord = relatedWordsForWord;
+		}
+
+		public Set<String> getRelations(String actualTokens, String hiddenUnitTokens) {
+			Set<String> relations;
+			final String sWordLower = hiddenUnitTokens.toLowerCase();
+			final String tWordLower = actualTokens.toLowerCase();
+			if (!relatedWordsForWord.containsKey(sWordLower)) {
+				throw new RuntimeException("Hidden word:" + sWordLower + ". Not contained in cache.");
+			}
+			Set<String> relatedWords = relatedWordsForWord.get(sWordLower);
+			if (!relatedWords.contains(tWordLower)) {
+				relations = ImmutableSet.of(WordNetRelations.NO_RELATION);
+			} else {
+				relations = revisedRelationsMap.get(sWordLower).get(tWordLower);
+			}
+			return relations;
+		}
+	}
+
+	public static interface ILemmatizer {
+		String getLowerCaseLemma(String word, String POS);
+	}
+
+	public static class CachingWordNetLemmatizer implements ILemmatizer {
+		private final WordNetRelations wnr;
+		private final THashMap<String, String> lemmaCache;
+		private final ReentrantReadWriteLock.WriteLock writeLock;
+
+		public CachingWordNetLemmatizer(WordNetRelations wnr, THashMap<String, String> lemmaCache){
+			this.wnr = wnr;
+			this.lemmaCache = lemmaCache;
+			writeLock = new ReentrantReadWriteLock().writeLock();
+		}
+
+		@Override
+		public String getLowerCaseLemma(String word, String POS) {
+			// TODO(smt): use LoadingCache
+			final String pair = word + "_" + POS;
+			writeLock.lock();
+			try {
+				if (!lemmaCache.contains(pair)) {
+					final String lemma = wnr.getLemmaForWord(word, POS).toLowerCase();
+					lemmaCache.put(pair, lemma);
+					return lemma;
+				} else {
+					return lemmaCache.get(pair);
+				}
+			} finally {
+				writeLock.unlock();
+			}
+		}
+	}
+
+	public static class CachedLemmatizer implements ILemmatizer {
+		private final Map<String, String> lemmaCache;
+
+		public CachedLemmatizer(Map<String, String> lemmaCache) {
+			this.lemmaCache = lemmaCache;
+		}
+
+		public String getLowerCaseLemma(String word, String POS) {
+			return lemmaCache.get(word + "_" + POS);
+		}
 	}
 }

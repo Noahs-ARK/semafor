@@ -46,7 +46,7 @@ public class AlphabetCreationThreaded {
 	private Map<String, Set<String>> mRelatedWordsForWord = null;
 	private int mStartIndex = -1;
 	private int mEndIndex = -1;
-	private Logger mLogger = null;
+	private Logger logger = null;
 	private int mNumThreads = 0;
 	private Map<String, Map<String, Set<String>>> mRevisedRelationsMap;
 	private Map<String, String> mHVLemmas;
@@ -123,14 +123,14 @@ public class AlphabetCreationThreaded {
 		mRelatedWordsForWord = relatedWordsForWord;
 		mStartIndex = startIndex;
 		mEndIndex = endIndex;
-		mLogger = logger;
+		this.logger = logger;
 		mNumThreads = numThreads;
 		mHVLemmas = lemmaCache;
 		mRevisedRelationsMap = rMap;
 	}
 
 	public void createEvents() {
-		ThreadPool threadPool = new ThreadPool(mNumThreads);
+		final ThreadPool threadPool = new ThreadPool(mNumThreads);
 		for (int i = 0; i < mNumThreads; i++) {
 			threadPool.runTask(createTask(i));
 		}
@@ -138,7 +138,7 @@ public class AlphabetCreationThreaded {
 	}
 
 	public void processBatch(int i) {
-		mLogger.info("Thread " + i + ": Creating events....");
+		logger.info("Thread " + i + ": Creating events....");
 		int dataCount = mEndIndex - mStartIndex;
 		int batchSize = (int) (Math.ceil((double) dataCount / (double) mNumThreads));
 		int start = i * batchSize + mStartIndex;
@@ -147,7 +147,7 @@ public class AlphabetCreationThreaded {
 			end = mEndIndex;
 		}
 		Map<String, Integer> alphabet = new THashMap<String, Integer>();
-		mLogger.info("Thread " + i + ": start:" + start + " end:" + end);
+		logger.info("Thread " + i + ": start:" + start + " end:" + end);
 		int count = 0;
 		try {
 			BufferedReader bReader =
@@ -163,7 +163,7 @@ public class AlphabetCreationThreaded {
 					continue;
 				}
 				line = line.trim();
-				mLogger.info("Thread + " + i + ": Processing:" + count);
+				logger.info("Thread + " + i + ": Processing:" + count);
 				Pair<String, Integer> pair =
 						processLine(line, count, parseLine, parseOffset, parseReader, alphabet);
 				count++;
@@ -199,9 +199,9 @@ public class AlphabetCreationThreaded {
 	public Runnable createTask(final int threadId) {
 		return new Runnable() {
 			public void run() {
-				mLogger.info("Task " + threadId + " : start");
+				logger.info("Task " + threadId + " : start");
 				processBatch(threadId);
-				mLogger.info("Task " + threadId + " : end");
+				logger.info("Task " + threadId + " : end");
 			}
 		};
 	}
@@ -284,7 +284,7 @@ public class AlphabetCreationThreaded {
 			allFeatures[count] = getFeatures(f, intTokNums, data, alphabet);
 			count++;
 		}
-		mLogger.info("Processed index:" + index + " alphsize:" + alphabet.size());
+		logger.info("Processed index:" + index + " alphsize:" + alphabet.size());
 		return new Pair<String, Integer>(parseLine, parseOffset);
 	}
 }

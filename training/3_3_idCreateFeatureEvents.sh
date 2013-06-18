@@ -4,7 +4,6 @@ set -e # fail fast
 
 source "$(dirname ${0})/config.sh"
 
-# step 3.3: creating feature events for each datapoint
 echo
 echo "step 3.3: creating feature events for each datapoint"
 echo

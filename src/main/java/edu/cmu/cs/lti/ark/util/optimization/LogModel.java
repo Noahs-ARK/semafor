@@ -21,13 +21,12 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.util.optimization;
 
-import java.util.*;
-
 import edu.cmu.cs.lti.ark.util.optimization.LDouble.IdentityElement;
+import gnu.trove.TObjectDoubleHashMap;
 
-
-import riso.numerical.LBFGS;
-import gnu.trove.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * A model manages a couple of things.
@@ -49,7 +48,8 @@ public abstract class LogModel {
 	/**
 	 * Mappings from indices to parameter values and gradients
 	 */
-	protected LDouble[] V, G;
+	public LDouble[] V;
+	protected LDouble[] G;
 	protected Alphabet A;
 	protected TObjectDoubleHashMap<String> savedValues;
 	/**
