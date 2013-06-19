@@ -16,7 +16,7 @@ fi
 echo
 echo "step 1: Creating alphabet"
 echo
-${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms6g -Xmx6g\
+${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms6g -Xmx6g -XX:ParallelGCThreads=1 \
   edu.cmu.cs.lti.ark.fn.identification.AlphabetCreationThreaded \
   train-fefile:${fe_file} \
   train-parsefile:${parsed_file} \

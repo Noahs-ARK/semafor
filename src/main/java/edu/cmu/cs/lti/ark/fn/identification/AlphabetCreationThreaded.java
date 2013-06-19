@@ -150,15 +150,14 @@ public class AlphabetCreationThreaded {
 		logger.info("Thread " + i + ": start:" + start + " end:" + end);
 		int count = 0;
 		try {
-			BufferedReader bReader =
-					new BufferedReader(new FileReader(mFrameElementsFile));
+			BufferedReader bReader = new BufferedReader(new FileReader(mFrameElementsFile));
 			String line;
-			BufferedReader parseReader =
-					new BufferedReader(new FileReader(mParseFile));
+			BufferedReader parseReader = new BufferedReader(new FileReader(mParseFile));
 			String parseLine = parseReader.readLine();
 			int parseOffset = 0;
 			while ((line = bReader.readLine()) != null) {
-				if (count < start) {// skip frame elements prior to the specified range
+				// skip frame elements prior to the specified range
+				if (count < start) {
 					count++;
 					continue;
 				}
@@ -248,17 +247,21 @@ public class AlphabetCreationThreaded {
 		return res;
 	}
 
-	private Pair<String, Integer> processLine(String line, int index,
-											  String parseLine, int parseOffset, BufferedReader parseReader,
+	private Pair<String, Integer> processLine(String line,
+											  int index,
+											  String parseLine,
+											  int parseOffset,
+											  BufferedReader parseReader,
 											  Map<String, Integer> alphabet) {
 		String[] toks = line.split("\t");
-		int sentNum = new Integer(toks[5]);
+		final List<String> tokens = Arrays.asList(toks).subList(2, toks.length);  // throw out first two fields
+		int sentNum = new Integer(tokens.get(5));
 		while (parseOffset < sentNum) {
 			parseLine = BasicFileIO.getLine(parseReader);
 			parseOffset++;
 		}
-		String frameName = toks[1];
-		String[] tokNums = toks[3].split("_");
+		String frameName = tokens.get(1);
+		String[] tokNums = tokens.get(3).split("_");
 		int[] intTokNums = new int[tokNums.length];
 		for (int j = 0; j < tokNums.length; j++)
 			intTokNums[j] = new Integer(tokNums[j]);

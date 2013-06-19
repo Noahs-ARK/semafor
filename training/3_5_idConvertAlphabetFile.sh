@@ -15,7 +15,7 @@ echo "Combining alphabet file with learned params for Frame IDing"
 echo "Using model file: ${model_file}"
 echo
 
-${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8g -Xmx8g \
+${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8g -Xmx8g -XX:ParallelGCThreads=1 \
   edu.cmu.cs.lti.ark.fn.identification.ConvertAlphabetFile \
   ${alphabet_file} \
   ${model_file} \

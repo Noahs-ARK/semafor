@@ -6,8 +6,6 @@ set -e # fail fast
 
 my_dir="$(dirname ${0})"
 
-${my_dir}/2_createRequiredData.sh
-
-${my_dir}/trainIdModel.sh
-
-${my_dir}/trainArgModel.sh
+${my_dir}/4_1_createAlphabet.sh
+${my_dir}/4_2_cacheFeatureVectors.sh
+${my_dir}/4_3_training.sh

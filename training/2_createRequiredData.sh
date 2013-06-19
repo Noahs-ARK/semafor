@@ -7,7 +7,8 @@ source "$(dirname ${0})/config.sh"
 echo
 echo "RequiredDataCreation"
 echo
-${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms2g -Xmx2g \
+mkdir -p "${model_dir}"
+${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms2g -Xmx2g -XX:ParallelGCThreads=2 \
     edu.cmu.cs.lti.ark.fn.identification.RequiredDataCreation \
       stopwords-file:${stopwords_file} \
       wordnet-configfile:${wordnet_config_file} \

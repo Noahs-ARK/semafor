@@ -74,7 +74,7 @@ public class FeatureExtractor implements IFeatureExtractor {
 	}
 
 	private static String getCpostag(String postag) {
-		return postag.substring(0, 1).toLowerCase();
+		return postag.substring(0, 1).toUpperCase();
 	}
 
 	/**
@@ -102,17 +102,19 @@ public class FeatureExtractor implements IFeatureExtractor {
 		// hiddenLexUnit is in format: "form1_pos1 form2_pos2 ... formn_posn"
 		final String[] hiddenTokenAndPos = hiddenLexUnit.split(" ");
 		final List<String> hiddenTokenAndCpostags = Lists.newArrayList(hiddenTokenAndPos.length);
+		final List<String> hiddenTokens = Lists.newArrayList(hiddenTokenAndPos.length);
 		//final List<String> hiddenLemmas = Lists.newArrayList(hiddenTokenAndPos.length);
 		final List<String> hiddenCpostags = Lists.newArrayList(hiddenTokenAndPos.length);
 		final List<String> hiddenLemmaAndCpostags = Lists.newArrayList(hiddenTokenAndPos.length);
 		for (String hiddenTok : hiddenTokenAndPos) {
 			final String[] arr = hiddenTok.split("_");
 			final String form = arr[0];
-			final String postag = arr[1];
+			final String postag = arr[1].toUpperCase();
 			final String cpostag = getCpostag(postag);
 			final String lemma = lemmatizer.getLowerCaseLemma(form, postag);
 			hiddenCpostags.add(cpostag);
 			//hiddenLemmas.add(lemma);
+			hiddenTokens.add(form);
 			hiddenTokenAndCpostags.add(form + "_" + cpostag);
 			hiddenLemmaAndCpostags.add(lemma + "_" + cpostag);
 		}
@@ -124,15 +126,17 @@ public class FeatureExtractor implements IFeatureExtractor {
 		// Get lemmas and postags for target
 		final List<String> actualTokenAndCpostags = Lists.newArrayList(targetTokenIdxs.length);
 		//final List<String> actualLemmas = Lists.newArrayList(targetTokenIdxs.length);
+		final List<String> actualTokens = Lists.newArrayList(targetTokenIdxs.length);
 		final List<String> actualCpostags = Lists.newArrayList(targetTokenIdxs.length);
 		final List<String> actualLemmaAndCpostags = Lists.newArrayList(targetTokenIdxs.length);
 		Arrays.sort(targetTokenIdxs);
 		for (int tokenIdx : targetTokenIdxs) {
 			final String form = allLemmaTags[PARSE_TOKEN_ROW][tokenIdx];
-			final String postag = allLemmaTags[PARSE_POS_ROW][tokenIdx];
+			final String postag = allLemmaTags[PARSE_POS_ROW][tokenIdx].toUpperCase();
 			final String cpostag = getCpostag(postag);
 			final String lemma = parseHasLemmas ? allLemmaTags[PARSE_LEMMA_ROW][tokenIdx]
 											: lemmatizer.getLowerCaseLemma(form, postag);
+			actualTokens.add(form);
 			actualTokenAndCpostags.add(form + "_" + cpostag);
 			//actualLemmas.add(lemma);
 			actualCpostags.add(cpostag);
@@ -143,7 +147,7 @@ public class FeatureExtractor implements IFeatureExtractor {
 		final String actualCpostagsStr = UNDERSCORE.join(actualCpostags);
 		final String actualLemmaAndCpostagsStr = UNDERSCORE.join(actualLemmaAndCpostags);
 
-		final Set<String> relations = wnRelations.getRelations(SPACE.join(actualTokenAndCpostags), SPACE.join(hiddenTokenAndCpostags));
+		final Set<String> relations = wnRelations.getRelations(SPACE.join(actualTokens), SPACE.join(hiddenTokens));
 
 		final IntCounter<String> featureMap = new IntCounter<String>();
 		/*
@@ -162,7 +166,7 @@ public class FeatureExtractor implements IFeatureExtractor {
 		// add a feature for each word in the sentence
 		for (int tokenIdx : xrange(allLemmaTags[0].length)) {
 			final String form = allLemmaTags[PARSE_TOKEN_ROW][tokenIdx];
-			final String postag = allLemmaTags[PARSE_POS_ROW][tokenIdx];
+			final String postag = allLemmaTags[PARSE_POS_ROW][tokenIdx].toUpperCase();
 			final String cpostag = getCpostag(postag);
 			final String lemma = parseHasLemmas ? allLemmaTags[PARSE_LEMMA_ROW][tokenIdx]
 					: lemmatizer.getLowerCaseLemma(form, postag);
@@ -251,18 +255,18 @@ public class FeatureExtractor implements IFeatureExtractor {
 
 		final SortedSet<String> depLabels = Sets.newTreeSet(); // unordered set of arc labels of children
 		for (DependencyParse child : children) {
-			depLabels.add(child.getLabelType().toLowerCase());
+			depLabels.add(child.getLabelType().toUpperCase());
 		}
 		final String dependencyFtr = "d:" + UNDERSCORE.join(depLabels);
 		featureMap.increment(UNDERSCORE.join(
 				dependencyFtr,
 				frameFtr));
 
-		if (headCpostag.equals("v")) {
+		if (headCpostag.equals("V")) {
 			final List<String> subcat = Lists.newArrayList(children.size()); // ordered arc labels of children
 			for (DependencyParse child : children) {
-				final String labelType = child.getLabelType().toLowerCase();
-				if (!labelType.equals("sub") && !labelType.equals("p") && !labelType.equals("cc")) {
+				final String labelType = child.getLabelType().toUpperCase();
+				if (!labelType.equals("SUB") && !labelType.equals("P") && !labelType.equals("CC")) {
 					// TODO(smt): why exclude "sub"?
 					subcat.add(labelType);
 				}
@@ -343,7 +347,7 @@ public class FeatureExtractor implements IFeatureExtractor {
 			final String sWordLower = hiddenUnitTokens.toLowerCase();
 			final String tWordLower = actualTokens.toLowerCase();
 			if (!relatedWordsForWord.containsKey(sWordLower)) {
-				throw new RuntimeException("Hidden word:" + sWordLower + ". Not contained in cache.");
+				throw new RuntimeException("Hidden word \"" + sWordLower + "\" not contained in cache.");
 			}
 			Set<String> relatedWords = relatedWordsForWord.get(sWordLower);
 			if (!relatedWords.contains(tWordLower)) {

@@ -14,7 +14,7 @@ if [ -e ${log_file} ]; then
     rm "${log_file}"
 fi
 
-${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8000m -Xmx8000m \
+${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8000m -Xmx8000m -XX:ParallelGCThreads=1 \
   edu.cmu.cs.lti.ark.fn.identification.CreateEventsUnsupported \
   train-fefile:${fe_file} \
   train-parsefile:${parsed_file} \

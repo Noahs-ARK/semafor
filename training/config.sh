@@ -28,13 +28,13 @@ old_model_dir="${MST_MODEL_DIR}"
 
 framenet_map_file="${datadir}/framenet.original.map"
 fe_dict_file="${datadir}/framenet.frame.element.map"
-all_related_words_file="${old_model_dir}/allrelatedwords.ser"
-hv_correspondence_file="${old_model_dir}/hvmap.ser"
-wn_related_words_for_words_file="${old_model_dir}/wnallrelwords.ser"
-wn_map_file="${old_model_dir}/wnMap.ser"
-revised_map_file="${old_model_dir}/revisedrelmap.ser"
-lemma_cache_file="${old_model_dir}/hvlemmas.ser"
-fn_id_req_data_file="${old_model_dir}/reqData.jobj"
+all_related_words_file="${model_dir}/allrelatedwords.ser"
+hv_correspondence_file="${model_dir}/hvmap.ser"
+wn_related_words_for_words_file="${model_dir}/wnallrelwords.ser"
+wn_map_file="${model_dir}/wnMap.ser"
+revised_map_file="${model_dir}/revisedrelmap.ser"
+lemma_cache_file="${model_dir}/hvlemmas.ser"
+fn_id_req_data_file="${model_dir}/reqData.jobj"
 
 
 # paths to the gold-standard annotated sentences, and dependency-parsed version of it
@@ -48,3 +48,5 @@ fe_file_length=`expr ${fe_file_length% *}`
 alphabet_file="${model_dir}/alphabet_combined.dat"
 
 SCAN_DIR="${model_dir}/scan"
+
+echo model_dir="${model_dir}"
