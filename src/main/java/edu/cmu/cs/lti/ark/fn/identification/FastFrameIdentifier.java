@@ -109,8 +109,7 @@ public class FastFrameIdentifier {
 		double result = 0.0;
 		for (String unit : hiddenUnits) {
 			IntCounter<String> valMap;
-			FeatureExtractor featex = new FeatureExtractor();
-			valMap = featex.extractFeaturesLessMemory(frame,
+			valMap = FeatureExtractor.extractFeaturesLessMemory(frame,
 							intTokNums,
 							unit,
 							parseData,

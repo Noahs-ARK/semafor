@@ -36,6 +36,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.*;
+import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 
 /**
  * Extracts features for the frame identification model
@@ -97,13 +98,11 @@ public class FeatureExtractor implements IFeatureExtractor {
 													 IRelations wnRelations,
 													 ILemmatizer lemmatizer,
 													 boolean parseHasLemmas) {
-		final IntCounter<String> featureMap = new IntCounter<String>();
-
 		// Get lemmas and postags for prototype
 		// hiddenLexUnit is in format: "form1_pos1 form2_pos2 ... formn_posn"
 		final String[] hiddenTokenAndPos = hiddenLexUnit.split(" ");
-		final List<String> hiddenTokens = Lists.newArrayList(hiddenTokenAndPos.length);
-		final List<String> hiddenLemmas = Lists.newArrayList(hiddenTokenAndPos.length);
+		final List<String> hiddenTokenAndCpostags = Lists.newArrayList(hiddenTokenAndPos.length);
+		//final List<String> hiddenLemmas = Lists.newArrayList(hiddenTokenAndPos.length);
 		final List<String> hiddenCpostags = Lists.newArrayList(hiddenTokenAndPos.length);
 		final List<String> hiddenLemmaAndCpostags = Lists.newArrayList(hiddenTokenAndPos.length);
 		for (String hiddenTok : hiddenTokenAndPos) {
@@ -112,40 +111,41 @@ public class FeatureExtractor implements IFeatureExtractor {
 			final String postag = arr[1];
 			final String cpostag = getCpostag(postag);
 			final String lemma = lemmatizer.getLowerCaseLemma(form, postag);
-			hiddenTokens.add(form);
 			hiddenCpostags.add(cpostag);
-			hiddenLemmas.add(lemma);
+			//hiddenLemmas.add(lemma);
+			hiddenTokenAndCpostags.add(form + "_" + cpostag);
 			hiddenLemmaAndCpostags.add(lemma + "_" + cpostag);
 		}
-		final String hiddenTokensStr = UNDERSCORE.join(hiddenTokens);
-		final String hiddenLemmasStr = UNDERSCORE.join(hiddenLemmas);
+		final String hiddenTokenAndCpostagsStr = UNDERSCORE.join(hiddenTokenAndCpostags);
+		//final String hiddenLemmasStr = UNDERSCORE.join(hiddenLemmas);
 		final String hiddenCpostagsStr = UNDERSCORE.join(hiddenCpostags);
 		final String hiddenLemmaAndCpostagsStr = UNDERSCORE.join(hiddenLemmaAndCpostags);
 
 		// Get lemmas and postags for target
-		final List<String> actualTokens = Lists.newArrayList(targetTokenIdxs.length);
-		final List<String> actualLemmas = Lists.newArrayList(targetTokenIdxs.length);
+		final List<String> actualTokenAndCpostags = Lists.newArrayList(targetTokenIdxs.length);
+		//final List<String> actualLemmas = Lists.newArrayList(targetTokenIdxs.length);
 		final List<String> actualCpostags = Lists.newArrayList(targetTokenIdxs.length);
 		final List<String> actualLemmaAndCpostags = Lists.newArrayList(targetTokenIdxs.length);
 		Arrays.sort(targetTokenIdxs);
 		for (int tokenIdx : targetTokenIdxs) {
-			final String lexUnit = allLemmaTags[PARSE_TOKEN_ROW][tokenIdx];
+			final String form = allLemmaTags[PARSE_TOKEN_ROW][tokenIdx];
 			final String postag = allLemmaTags[PARSE_POS_ROW][tokenIdx];
 			final String cpostag = getCpostag(postag);
-			final String actualLemma = parseHasLemmas ? allLemmaTags[PARSE_LEMMA_ROW][tokenIdx]
-											: lemmatizer.getLowerCaseLemma(lexUnit, postag);
-			actualTokens.add(lexUnit);
-			actualLemmas.add(actualLemma);
+			final String lemma = parseHasLemmas ? allLemmaTags[PARSE_LEMMA_ROW][tokenIdx]
+											: lemmatizer.getLowerCaseLemma(form, postag);
+			actualTokenAndCpostags.add(form + "_" + cpostag);
+			//actualLemmas.add(lemma);
 			actualCpostags.add(cpostag);
-			actualLemmaAndCpostags.add(actualLemma + "_" + cpostag);
+			actualLemmaAndCpostags.add(lemma + "_" + cpostag);
 		}
-		final String actualTokensStr = UNDERSCORE.join(actualTokens);
-		final String actualLemmasStr = UNDERSCORE.join(actualLemmas);
+		final String actualTokenAndCpostagsStr = UNDERSCORE.join(actualTokenAndCpostags);
+		//final String actualLemmasStr = UNDERSCORE.join(actualLemmas);
 		final String actualCpostagsStr = UNDERSCORE.join(actualCpostags);
 		final String actualLemmaAndCpostagsStr = UNDERSCORE.join(actualLemmaAndCpostags);
 
-		final Set<String> relations = wnRelations.getRelations(SPACE.join(actualTokens), SPACE.join(hiddenTokens));
+		final Set<String> relations = wnRelations.getRelations(SPACE.join(actualTokenAndCpostags), SPACE.join(hiddenTokenAndCpostags));
 
+		final IntCounter<String> featureMap = new IntCounter<String>();
 		/*
 		 * base features
 		 * will be conjoined in various ways
@@ -154,17 +154,28 @@ public class FeatureExtractor implements IFeatureExtractor {
 		final String frameFtr = "f:" + frameName;
 		final String actualCpostagsFtr = "aP:" + actualCpostagsStr;
 		final String actualLemmaAndCpostagsFtr = "aLP:" + actualLemmaAndCpostagsStr;
-		final String hiddenTokensFtr = "hT:" + hiddenTokensStr;
-		final String hiddenLemmasFtr = "hL:" + hiddenLemmasStr;
+		final String hiddenTokenAndCpostagsFtr = "hT:" + hiddenTokenAndCpostagsStr;
+		//final String hiddenLemmasFtr = "hL:" + hiddenLemmasStr;
 		final String hiddenCpostagsFtr = "hP:" + hiddenCpostagsStr;
 		final String hiddenLemmaAndCpostagsFtr = "hLP:" + hiddenLemmaAndCpostagsStr;
 
+		// add a feature for each word in the sentence
+		for (int tokenIdx : xrange(allLemmaTags[0].length)) {
+			final String form = allLemmaTags[PARSE_TOKEN_ROW][tokenIdx];
+			final String postag = allLemmaTags[PARSE_POS_ROW][tokenIdx];
+			final String cpostag = getCpostag(postag);
+			final String lemma = parseHasLemmas ? allLemmaTags[PARSE_LEMMA_ROW][tokenIdx]
+					: lemmatizer.getLowerCaseLemma(form, postag);
+			featureMap.increment("sTP:" + form + "_" + cpostag);
+			featureMap.increment("sLP:" + lemma + "_" + cpostag);
+		}
+
 		featureMap.increment(UNDERSCORE.join(
-				hiddenTokensFtr,
+				hiddenTokenAndCpostagsFtr,
 				frameFtr));
-		featureMap.increment(UNDERSCORE.join(
-				hiddenLemmasFtr,
-				frameFtr));
+//		featureMap.increment(UNDERSCORE.join(
+//				hiddenLemmasFtr,
+//				frameFtr));
 		featureMap.increment(UNDERSCORE.join(
 				hiddenLemmaAndCpostagsFtr,
 				frameFtr));
@@ -178,24 +189,24 @@ public class FeatureExtractor implements IFeatureExtractor {
 					frameFtr));
 			featureMap.increment(UNDERSCORE.join(
 					relationFeature,
-					hiddenTokensStr,
+					hiddenTokenAndCpostagsStr,
 					frameFtr));
 			featureMap.increment(UNDERSCORE.join(
 					relationFeature,
-					hiddenTokensStr,
+					hiddenTokenAndCpostagsStr,
 					hiddenCpostagsFtr,
 					actualCpostagsFtr,
 					frameFtr));
 		}
 
-		if (hiddenTokensStr.equals(actualTokensStr)) {
+		if (hiddenTokenAndCpostagsStr.equals(actualTokenAndCpostagsStr)) {
 			final String tokenMatchFtr = "sTs";
 			featureMap.increment(UNDERSCORE.join(
 					tokenMatchFtr,
 					frameFtr));
 			featureMap.increment(UNDERSCORE.join(
 					tokenMatchFtr,
-					hiddenTokensFtr,
+					hiddenTokenAndCpostagsFtr,
 					frameFtr));
 			featureMap.increment(UNDERSCORE.join(
 					tokenMatchFtr,
@@ -208,14 +219,14 @@ public class FeatureExtractor implements IFeatureExtractor {
 					hiddenLemmaAndCpostagsFtr,
 					frameFtr));
 		}
-		if (hiddenLemmasStr.equals(actualLemmasStr)) {
+		if (hiddenLemmaAndCpostagsStr.equals(actualLemmaAndCpostagsStr)) {
 			final String lemmaMatchFtr = "sLs";
 			featureMap.increment(UNDERSCORE.join(
 					lemmaMatchFtr,
 					frameFtr));
 			featureMap.increment(UNDERSCORE.join(
 					lemmaMatchFtr,
-					hiddenTokensFtr,
+					hiddenTokenAndCpostagsFtr,
 					frameFtr));
 			featureMap.increment(UNDERSCORE.join(
 					lemmaMatchFtr,
@@ -238,11 +249,11 @@ public class FeatureExtractor implements IFeatureExtractor {
 
 		final List<DependencyParse> children = head.getChildren();
 
-		final SortedSet<String> deps = Sets.newTreeSet(); // unordered set of arc labels of children
+		final SortedSet<String> depLabels = Sets.newTreeSet(); // unordered set of arc labels of children
 		for (DependencyParse child : children) {
-			deps.add(child.getLabelType().toLowerCase());
+			depLabels.add(child.getLabelType().toLowerCase());
 		}
-		final String dependencyFtr = "d:" + UNDERSCORE.join(deps);
+		final String dependencyFtr = "d:" + UNDERSCORE.join(depLabels);
 		featureMap.increment(UNDERSCORE.join(
 				dependencyFtr,
 				frameFtr));
@@ -267,15 +278,13 @@ public class FeatureExtractor implements IFeatureExtractor {
 		featureMap.increment(UNDERSCORE.join(
 				parentPosFtr,
 				frameFtr));
-		final String parentLemmaFtr = "pL:" + ((parent == null) ? "NULL" : parent.getLabelType());
+		final String parentLabelFtr = "pL:" + ((parent == null) ? "NULL" : parent.getLabelType());
 		featureMap.increment(UNDERSCORE.join(
-				parentLemmaFtr,
+				parentLabelFtr,
 				frameFtr));
 
 		return featureMap;
 	}
-
-
 
 	/** Finds token relationships */
 	public static interface IRelations {

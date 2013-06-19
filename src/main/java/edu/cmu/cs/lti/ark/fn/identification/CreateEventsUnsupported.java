@@ -227,8 +227,7 @@ public class CreateEventsUnsupported
 		for (String unit : hiddenUnits)
 		{
 			IntCounter<String> valMap = null;
-			FeatureExtractor featex = new FeatureExtractor();
-			valMap =  featex.extractFeaturesLessMemory(frame,
+			valMap =  FeatureExtractor.extractFeaturesLessMemory(frame,
 					intTokNums, 
 					unit, 
 					data,

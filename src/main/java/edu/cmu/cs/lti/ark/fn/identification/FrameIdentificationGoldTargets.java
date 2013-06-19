@@ -21,17 +21,6 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.identification;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
-
-
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
@@ -39,6 +28,11 @@ import edu.cmu.cs.lti.ark.util.optimization.LDouble;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectDoubleHashMap;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
 
 
 public class FrameIdentificationGoldTargets
@@ -107,16 +101,7 @@ public class FrameIdentificationGoldTargets
 				revisedRelationsMap,
 				hvLemmas);
 		System.out.println("Size of originalSentences list:"+originalIndices.size());
-		
-		boolean useClusters = options.clusterFeats.get().equals("true");
-		if(useClusters)
-		{
-			System.out.println("Using cluster based features...");
-			THashMap<String, THashSet<String>> clusterMap= (THashMap<String, THashSet<String>>)SerializedObjects.readSerializedObject(options.synClusterMap.get());
-			int K = options.clusterK.get();
-			idModel.setClusterInfo(clusterMap,K);
-		}
-		
+
 		boolean usegraph = !options.useGraph.get().equals("null");
 		SmoothedGraph sg = null;
 		if (usegraph) {
