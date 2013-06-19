@@ -3,7 +3,7 @@
 source "$(dirname ${0})/../bin/config.sh"
 
 # choose a name for the model to train
-model_name="turbo_20130609"
+model_name="mst_frame_id_20130619"
 
 # should set to roughly the number of cores available
 num_threads=8
@@ -14,7 +14,7 @@ datadir="${SEMAFOR_HOME}/training/data"
 # the directory that contains all the lexical unit xmls for FrameNet 1.5
 # you can also add your own xmls to this directory
 # for format information, take a look at the lu/ directory under the FrameNet release
-luxmldir="${datadir}/lu"
+luxmldir="${datadir}/framenet15/lu"
 
 # the directory the resulting model will end up in
 model_dir="${datadir}/${model_name}"

@@ -38,6 +38,7 @@ JAVA_HOME_BIN="/usr/bin"
 # the models for SEMAFOR 2.0.
 MALT_MODEL_DIR="${BASE_DIR}/models/semafor_malt_model_20121129"
 MST_MODEL_DIR="${BASE_DIR}/models/sem_2_1_20120522"
+TURBO_MODEL_DIR="{BASE_DIR}/models/turbo_20130606"
 
 # If you want to use gold targets, 
 # point to gold target file's absolute path. 
