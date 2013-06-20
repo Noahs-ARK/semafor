@@ -21,9 +21,9 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.identification;
 
-import com.beust.jcommander.internal.Lists;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.IFeatureExtractor;
@@ -101,11 +101,11 @@ public class FeatureExtractor implements IFeatureExtractor {
 		// Get lemmas and postags for prototype
 		// hiddenLexUnit is in format: "form1_pos1 form2_pos2 ... formn_posn"
 		final String[] hiddenTokenAndPos = hiddenLexUnit.split(" ");
-		final List<String> hiddenTokenAndCpostags = Lists.newArrayList(hiddenTokenAndPos.length);
-		final List<String> hiddenTokens = Lists.newArrayList(hiddenTokenAndPos.length);
+		final List<String> hiddenTokenAndCpostags = Lists.newArrayListWithExpectedSize(hiddenTokenAndPos.length);
+		final List<String> hiddenTokens = Lists.newArrayListWithExpectedSize(hiddenTokenAndPos.length);
 		//final List<String> hiddenLemmas = Lists.newArrayList(hiddenTokenAndPos.length);
-		final List<String> hiddenCpostags = Lists.newArrayList(hiddenTokenAndPos.length);
-		final List<String> hiddenLemmaAndCpostags = Lists.newArrayList(hiddenTokenAndPos.length);
+		final List<String> hiddenCpostags = Lists.newArrayListWithExpectedSize(hiddenTokenAndPos.length);
+		final List<String> hiddenLemmaAndCpostags = Lists.newArrayListWithExpectedSize(hiddenTokenAndPos.length);
 		for (String hiddenTok : hiddenTokenAndPos) {
 			final String[] arr = hiddenTok.split("_");
 			final String form = arr[0];
@@ -124,11 +124,11 @@ public class FeatureExtractor implements IFeatureExtractor {
 		final String hiddenLemmaAndCpostagsStr = UNDERSCORE.join(hiddenLemmaAndCpostags);
 
 		// Get lemmas and postags for target
-		final List<String> actualTokenAndCpostags = Lists.newArrayList(targetTokenIdxs.length);
+		final List<String> actualTokenAndCpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
 		//final List<String> actualLemmas = Lists.newArrayList(targetTokenIdxs.length);
-		final List<String> actualTokens = Lists.newArrayList(targetTokenIdxs.length);
-		final List<String> actualCpostags = Lists.newArrayList(targetTokenIdxs.length);
-		final List<String> actualLemmaAndCpostags = Lists.newArrayList(targetTokenIdxs.length);
+		final List<String> actualTokens = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
+		final List<String> actualCpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
+		final List<String> actualLemmaAndCpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
 		Arrays.sort(targetTokenIdxs);
 		for (int tokenIdx : targetTokenIdxs) {
 			final String form = allLemmaTags[PARSE_TOKEN_ROW][tokenIdx];
@@ -263,7 +263,7 @@ public class FeatureExtractor implements IFeatureExtractor {
 				frameFtr));
 
 		if (headCpostag.equals("V")) {
-			final List<String> subcat = Lists.newArrayList(children.size()); // ordered arc labels of children
+			final List<String> subcat = Lists.newArrayListWithExpectedSize(children.size()); // ordered arc labels of children
 			for (DependencyParse child : children) {
 				final String labelType = child.getLabelType().toUpperCase();
 				if (!labelType.equals("SUB") && !labelType.equals("P") && !labelType.equals("CC")) {
