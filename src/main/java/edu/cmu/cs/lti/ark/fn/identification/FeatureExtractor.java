@@ -53,8 +53,8 @@ public class FeatureExtractor implements IFeatureExtractor {
 													 THashMap<String, THashSet<String>> wnCacheMap,
 													 THashMap<String, String> lemmaCache,
 													 DependencyParse parse) {
-		final IRelations wnRelations = new WNRelations(wnr, wnCacheMap);
-		final ILemmatizer lemmatizer = new CachingWordNetLemmatizer(wnr, lemmaCache);
+		final Relations wnRelations = new WNRelations(wnr, wnCacheMap);
+		final Lemmatizer lemmatizer = new CachingWordNetLemmatizer(wnr, lemmaCache);
 		boolean parseHasLemmas = false;
 		return extractFeatures(frameName, tokenNums, hiddenWord, allLemmaTags, parse, wnRelations, lemmatizer, parseHasLemmas);
 	}
@@ -67,8 +67,8 @@ public class FeatureExtractor implements IFeatureExtractor {
 															   Map<String, Map<String, Set<String>>> revisedRelationsMap,
 															   Map<String, String> mHVLemmas,
 															   DependencyParse parse) {
-		final IRelations wnRelations = new CachedRelations(revisedRelationsMap, relatedWordsForWord);
-		final ILemmatizer lemmatizer = new CachedLemmatizer(mHVLemmas);
+		final Relations wnRelations = new CachedRelations(revisedRelationsMap, relatedWordsForWord);
+		final Lemmatizer lemmatizer = new CachedLemmatizer(mHVLemmas);
 		boolean parseHasLemmas = true;
 		return extractFeatures(frameName, tokenNums, hiddenWord, allLemmaTags, parse, wnRelations, lemmatizer, parseHasLemmas);
 	}
@@ -95,8 +95,8 @@ public class FeatureExtractor implements IFeatureExtractor {
 													 String hiddenLexUnit,
 													 String[][] allLemmaTags,
 													 DependencyParse parse,
-													 IRelations wnRelations,
-													 ILemmatizer lemmatizer,
+													 Relations wnRelations,
+													 Lemmatizer lemmatizer,
 													 boolean parseHasLemmas) {
 		// Get lemmas and postags for prototype
 		// hiddenLexUnit is in format: "form1_pos1 form2_pos2 ... formn_posn"
@@ -278,11 +278,11 @@ public class FeatureExtractor implements IFeatureExtractor {
 		}
 
 		final DependencyParse parent = head.getParent();
-		final String parentPosFtr = "pP:" + ((parent == null) ? "NULL" : parent.getPOS());
+		final String parentPosFtr = "pP:" + ((parent == null) ? "NULL" : parent.getPOS().toUpperCase());
 		featureMap.increment(UNDERSCORE.join(
 				parentPosFtr,
 				frameFtr));
-		final String parentLabelFtr = "pL:" + ((parent == null) ? "NULL" : parent.getLabelType());
+		final String parentLabelFtr = "pL:" + ((parent == null) ? "NULL" : parent.getLabelType().toUpperCase());
 		featureMap.increment(UNDERSCORE.join(
 				parentLabelFtr,
 				frameFtr));
@@ -291,12 +291,12 @@ public class FeatureExtractor implements IFeatureExtractor {
 	}
 
 	/** Finds token relationships */
-	public static interface IRelations {
+	public static interface Relations {
 		public Set<String> getRelations(String actualTokens, String hiddenUnitTokens);
 	}
 
 	/** Finds token relationships using the WordNetRelations object */
-	public static class WNRelations implements IRelations {
+	public static class WNRelations implements Relations {
 		private final WordNetRelations wnr;
 		private final THashMap<String, THashSet<String>> wnCacheMap;
 		private final ReentrantReadWriteLock.WriteLock writeLock;
@@ -332,7 +332,7 @@ public class FeatureExtractor implements IFeatureExtractor {
 	}
 
 	/** Finds relationships without the WordNetRelations object */
-	public static class CachedRelations implements IRelations {
+	public static class CachedRelations implements Relations {
 		private final Map<String, Map<String, Set<String>>> revisedRelationsMap;
 		private final Map<String, Set<String>> relatedWordsForWord;
 
@@ -359,11 +359,11 @@ public class FeatureExtractor implements IFeatureExtractor {
 		}
 	}
 
-	public static interface ILemmatizer {
+	public static interface Lemmatizer {
 		String getLowerCaseLemma(String word, String POS);
 	}
 
-	public static class CachingWordNetLemmatizer implements ILemmatizer {
+	public static class CachingWordNetLemmatizer implements Lemmatizer {
 		private final WordNetRelations wnr;
 		private final THashMap<String, String> lemmaCache;
 		private final ReentrantReadWriteLock.WriteLock writeLock;
@@ -393,7 +393,7 @@ public class FeatureExtractor implements IFeatureExtractor {
 		}
 	}
 
-	public static class CachedLemmatizer implements ILemmatizer {
+	public static class CachedLemmatizer implements Lemmatizer {
 		private final Map<String, String> lemmaCache;
 
 		public CachedLemmatizer(Map<String, String> lemmaCache) {

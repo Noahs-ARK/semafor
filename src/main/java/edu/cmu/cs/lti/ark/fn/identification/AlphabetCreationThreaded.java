@@ -21,35 +21,45 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.identification;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
-import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
-import edu.cmu.cs.lti.ark.util.BasicFileIO;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
-import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.FileHandler;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
+import static java.util.concurrent.Executors.newFixedThreadPool;
+import static org.apache.commons.io.IOUtils.closeQuietly;
+
 public class AlphabetCreationThreaded {
-	private THashMap<String, THashSet<String>> mFrameMap = null;
-	private String mParseFile = null;
-	private String mAlphabetFile = null;
-	private String mFrameElementsFile = null;
-	private Map<String, Set<String>> mRelatedWordsForWord = null;
-	private int mStartIndex = -1;
-	private int mEndIndex = -1;
-	private Logger logger = null;
-	private int mNumThreads = 0;
-	private Map<String, Map<String, Set<String>>> mRevisedRelationsMap;
-	private Map<String, String> mHVLemmas;
+	private static final Logger logger = Logger.getLogger(AlphabetCreationThreaded.class.getCanonicalName());
+
+	private final THashMap<String, THashSet<String>> frameMap;
+	private final String parseFile;
+	private final String alphabetFile;
+	private final String frameElementsFile;
+	private final int startIndex;
+	private final int endIndex;
+	private final int numThreads;
+	private final FeatureExtractor.Relations wnRelations;
+	private final FeatureExtractor.Lemmatizer lemmatizer;
 
 	/**
 	 * Parses commandline args, then creates a new {@link #AlphabetCreationThreaded} with them
@@ -60,11 +70,10 @@ public class AlphabetCreationThreaded {
 	 */
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		final FNModelOptions options = new FNModelOptions(args);
-		final LogManager logManager = LogManager.getLogManager();
-		logManager.reset();
+
+		LogManager.getLogManager().reset();
 		final FileHandler fileHandler = new FileHandler(options.logOutputFile.get(), true);
 		fileHandler.setFormatter(new SimpleFormatter());
-		final Logger logger = Logger.getLogger("CreateEvents");
 		logger.addHandler(fileHandler);
 
 		final int startIndex = options.startIndex.get();
@@ -72,18 +81,20 @@ public class AlphabetCreationThreaded {
 		logger.info("Start:" + startIndex + " end:" + endIndex);
 		final RequiredDataForFrameIdentification r =
 				SerializedObjects.readObject(options.fnIdReqDataFile.get());
+		final FeatureExtractor.Relations wnRelations =
+				new FeatureExtractor.CachedRelations(r.getRevisedRelMap(), r.getRelatedWordsForWord());
+		final FeatureExtractor.Lemmatizer lemmatizer =
+				new FeatureExtractor.CachedLemmatizer(r.getHvLemmaCache());
 		final AlphabetCreationThreaded events =
 				new AlphabetCreationThreaded(options.modelFile.get(),
 						options.trainFrameElementFile.get(),
 						options.trainParseFile.get(),
 						r.getFrameMap(),
-						r.getRelatedWordsForWord(),
+						wnRelations,
+						lemmatizer,
 						startIndex,
 						endIndex,
-						logger,
-						options.numThreads.get(),
-						r.getRevisedRelMap(),
-						r.getHvLemmaCache());
+						options.numThreads.get());
 		events.createEvents();
 	}
 
@@ -94,199 +105,137 @@ public class AlphabetCreationThreaded {
 	 * @param frameElementsFile   path to file containing gold standard frame element
 	 *                            annotations
 	 * @param parseFile           path to file containing dependency parsed sentences (the same
-	 *                            ones that are in frameElementsFile
+ *                            ones that are in frameElementsFile
 	 * @param frameMap            a map from frames to a set of disambiguated predicates
-	 *                            (words along with part of speech tags, but in the style of FrameNet)
-	 * @param relatedWordsForWord map from frame to a set of frame element names
+*                            (words along with part of speech tags, but in the style of FrameNet)
 	 * @param startIndex          the line of the frameElementsFile to start at
 	 * @param endIndex            the line of frameElementsFile to end at
-	 * @param logger              a Logger
 	 * @param numThreads          the number of threads to run
-	 * @param rMap                ?
-	 * @param lemmaCache          map from tokens to their lemmas
 	 */
 	public AlphabetCreationThreaded(String alphabetFile,
 									String frameElementsFile,
 									String parseFile,
 									THashMap<String, THashSet<String>> frameMap,
-									Map<String, Set<String>> relatedWordsForWord,
+									FeatureExtractor.Relations wnRelations,
+									FeatureExtractor.Lemmatizer lemmatizer,
 									int startIndex,
 									int endIndex,
-									Logger logger,
-									int numThreads,
-									Map<String, Map<String, Set<String>>> rMap,
-									Map<String, String> lemmaCache) {
-		mFrameMap = frameMap;
-		mParseFile = parseFile;
-		mFrameElementsFile = frameElementsFile;
-		mAlphabetFile = alphabetFile;
-		mRelatedWordsForWord = relatedWordsForWord;
-		mStartIndex = startIndex;
-		mEndIndex = endIndex;
-		this.logger = logger;
-		mNumThreads = numThreads;
-		mHVLemmas = lemmaCache;
-		mRevisedRelationsMap = rMap;
+									int numThreads) {
+		this.alphabetFile = alphabetFile;
+		this.frameElementsFile = frameElementsFile;
+		this.parseFile = parseFile;
+		this.frameMap = frameMap;
+		this.startIndex = startIndex;
+		this.endIndex = endIndex;
+		this.numThreads = numThreads;
+		this.wnRelations = wnRelations;
+		this.lemmatizer = lemmatizer;
+
 	}
 
-	public void createEvents() {
-		final ThreadPool threadPool = new ThreadPool(mNumThreads);
-		for (int i = 0; i < mNumThreads; i++) {
-			threadPool.runTask(createTask(i));
+	/**
+	 * Splits frameElementLines into numThreads equally-sized batches and creates an alphabet
+	 * file for each one.
+	 *
+	 * @throws IOException
+	 */
+	public void createEvents() throws IOException {
+		final List<String> frameLines =
+				Files.readLines(new File(frameElementsFile), Charsets.UTF_8)
+						.subList(startIndex, endIndex);
+		final List<String> parseLines = Files.readLines(new File(parseFile), Charsets.UTF_8);
+		final int dataCount = endIndex - startIndex;
+		final int batchSize = (int) (Math.ceil((double) dataCount / (double) numThreads));
+
+		final ExecutorService threadPool = newFixedThreadPool(numThreads);
+		for (int i = 0; i < numThreads; i++) {
+			final int threadId = i;
+			final int start = threadId * batchSize;
+			final int end = Math.min(frameLines.size(), start + batchSize);
+			threadPool.execute(new Runnable() {
+				public void run() {
+					logger.info("Thread " + threadId + " : start");
+					processBatch(threadId, frameLines.subList(start, end), parseLines);
+					logger.info("Thread " + threadId + " : end");
+				}
+			});
 		}
-		threadPool.join();
+		threadPool.shutdown();
 	}
 
-	public void processBatch(int i) {
-		logger.info("Thread " + i + ": Creating events....");
-		int dataCount = mEndIndex - mStartIndex;
-		int batchSize = (int) (Math.ceil((double) dataCount / (double) mNumThreads));
-		int start = i * batchSize + mStartIndex;
-		int end = start + batchSize;
-		if (end > mEndIndex) {
-			end = mEndIndex;
+	private void processBatch(int threadId, List<String> frameLines, List<String> parseLines) {
+		final Map<String, Integer> alphabet = new THashMap<String, Integer>();
+		for (int i = 0; i < frameLines.size(); i++) {
+			logger.info("Thread " + threadId + " Processing:" + i + " of " + frameLines.size());
+			processLine(frameLines.get(i), parseLines, alphabet);
+			logger.info("Processed index:" + i + " alphsize:" + alphabet.size());
 		}
-		Map<String, Integer> alphabet = new THashMap<String, Integer>();
-		logger.info("Thread " + i + ": start:" + start + " end:" + end);
-		int count = 0;
 		try {
-			BufferedReader bReader = new BufferedReader(new FileReader(mFrameElementsFile));
-			String line;
-			BufferedReader parseReader = new BufferedReader(new FileReader(mParseFile));
-			String parseLine = parseReader.readLine();
-			int parseOffset = 0;
-			while ((line = bReader.readLine()) != null) {
-				// skip frame elements prior to the specified range
-				if (count < start) {
-					count++;
-					continue;
-				}
-				line = line.trim();
-				logger.info("Thread + " + i + ": Processing:" + count);
-				Pair<String, Integer> pair =
-						processLine(line, count, parseLine, parseOffset, parseReader, alphabet);
-				count++;
-				if (count == end) {
-					break;
-				}
-				parseLine = pair.getFirst();
-				parseOffset = pair.getSecond();
-			}
-			bReader.close();
-			parseReader.close();
-			writeAlphabetFile(alphabet, mAlphabetFile + "_" + i);
-		} catch (Exception e) {
-			System.out.println("Problem in reading fe file. exiting..");
-			System.out.println("Problem in Thread:" + i);
-			System.out.println("Problem count:" + count);
+			writeAlphabetFile(alphabet, alphabetFile + "_" + threadId);
+		} catch (IOException e) {
 			e.printStackTrace();
-			System.exit(0);
+			throw new RuntimeException(e);
 		}
 	}
 
-
-	private void writeAlphabetFile(Map<String, Integer> alphabet, String file) throws IOException {
-		BufferedWriter bWriter = new BufferedWriter(new FileWriter(file));
-		bWriter.write(alphabet.size() + "\n");
-		Set<String> set = alphabet.keySet();
-		for (String key : set) {
-			bWriter.write(key + "\t" + alphabet.get(key) + "\n");
-		}
-		bWriter.close();
-	}
-
-	public Runnable createTask(final int threadId) {
-		return new Runnable() {
-			public void run() {
-				logger.info("Task " + threadId + " : start");
-				processBatch(threadId);
-				logger.info("Task " + threadId + " : end");
-			}
-		};
-	}
-
-	private int[][] getFeatures(String frame, int[] intTokNums, String[][] data,
-								Map<String, Integer> alphabet) {
-		THashSet<String> hiddenUnits = mFrameMap.get(frame);
-		DependencyParse parse = DependencyParse.processFN(data, 0.0);
-		int hSize = hiddenUnits.size();
-		int[][] res = new int[hSize][];
-		int hCount = 0;
+	private void extractFeaturesAndAddToAlphabet(String frame,
+												 int[] targetTokenIdxs,
+												 String[][] allLemmaTags,
+												 Map<String, Integer> alphabet) {
+		final THashSet<String> hiddenUnits = frameMap.get(frame);
+		final DependencyParse parse = DependencyParse.processFN(allLemmaTags, 0.0);
 		for (String unit : hiddenUnits) {
-			IntCounter<String> valMap;
-			valMap = FeatureExtractor.extractFeaturesLessMemory(frame,
-					intTokNums,
+			final IntCounter<String> valMap = FeatureExtractor.extractFeatures(
+					frame,
+					targetTokenIdxs,
 					unit,
-					data,
-					mRelatedWordsForWord,
-					mRevisedRelationsMap,
-					mHVLemmas,
-					parse);
-			Set<String> features = valMap.keySet();
-			ArrayList<Integer> feats = new ArrayList<Integer>();
-			for (String feat : features) {
-				int val = valMap.get(feat);
-				int featIndex;
-				if (alphabet.containsKey(feat)) {
-					featIndex = alphabet.get(feat);
-				} else {
-					featIndex = alphabet.size() + 1;
-					alphabet.put(feat, featIndex);
-				}
-				for (int i = 0; i < val; i++) {
-					feats.add(featIndex);
+					allLemmaTags,
+					parse,
+					wnRelations,
+					lemmatizer,
+					true);
+			for (String feat : valMap.keySet()) {
+				if (!alphabet.containsKey(feat)) {
+					alphabet.put(feat, alphabet.size() + 1);
 				}
 			}
-			int hFeatSize = feats.size();
-			res[hCount] = new int[hFeatSize];
-			for (int i = 0; i < hFeatSize; i++) {
-				res[hCount][i] = feats.get(i);
-			}
-			hCount++;
 		}
-		return res;
 	}
 
-	private Pair<String, Integer> processLine(String line,
-											  int index,
-											  String parseLine,
-											  int parseOffset,
-											  BufferedReader parseReader,
-											  Map<String, Integer> alphabet) {
-		String[] toks = line.split("\t");
-		final List<String> tokens = Arrays.asList(toks).subList(2, toks.length);  // throw out first two fields
-		int sentNum = new Integer(tokens.get(5));
-		while (parseOffset < sentNum) {
-			parseLine = BasicFileIO.getLine(parseReader);
-			parseOffset++;
+	private void processLine(String frameLine, List<String> parseLines, Map<String, Integer> alphabet) {
+		// Parse the frameLine
+		final String[] toks = frameLine.split("\t");
+		// throw out first two fields
+		final List<String> tokens = Arrays.asList(toks).subList(2, toks.length);
+		final String frameName = tokens.get(1);
+		final String[] targetIdxsStr = tokens.get(3).split("_");
+		final int sentNum = Integer.parseInt(tokens.get(5));
+
+		final int[] targetTokenIdxs = new int[targetIdxsStr.length];
+		for (int j = 0; j < targetIdxsStr.length; j++)
+			targetTokenIdxs[j] = Integer.parseInt(targetIdxsStr[j]);
+		Arrays.sort(targetTokenIdxs);
+
+		// Parse the parse line
+		final String parseLine = parseLines.get(sentNum);
+		final String[][] data = AllLemmaTags.readLine(parseLine);
+
+		// extract features for every frame
+		for (String frame : frameMap.keySet()) {
+			extractFeaturesAndAddToAlphabet(frame, targetTokenIdxs, data, alphabet);
 		}
-		String frameName = tokens.get(1);
-		String[] tokNums = tokens.get(3).split("_");
-		int[] intTokNums = new int[tokNums.length];
-		for (int j = 0; j < tokNums.length; j++)
-			intTokNums[j] = new Integer(tokNums[j]);
-		Arrays.sort(intTokNums);
-		StringTokenizer st = new StringTokenizer(parseLine, "\t");
-		int tokensInFirstSent = new Integer(st.nextToken());
-		String[][] data = new String[6][tokensInFirstSent];
-		for (int k = 0; k < 6; k++) {
-			data[k] = new String[tokensInFirstSent];
-			for (int j = 0; j < tokensInFirstSent; j++) {
-				data[k][j] = "" + st.nextToken().trim();
+	}
+
+	private void writeAlphabetFile(Map<String, Integer> alphabet, String filename) throws IOException {
+		final BufferedWriter bWriter = new BufferedWriter(new FileWriter(filename));
+		try {
+			bWriter.write(alphabet.size() + "\n");
+			final Set<String> set = alphabet.keySet();
+			for (String key : set) {
+				bWriter.write(key + "\t" + alphabet.get(key) + "\n");
 			}
+		} finally {
+			closeQuietly(bWriter);
 		}
-		Set<String> set = mFrameMap.keySet();
-		int size = set.size();
-		int[][][] allFeatures = new int[size][][];
-		allFeatures[0] = getFeatures(frameName, intTokNums, data, alphabet);
-		int count = 1;
-		for (String f : set) {
-			if (f.equals(frameName))
-				continue;
-			allFeatures[count] = getFeatures(f, intTokNums, data, alphabet);
-			count++;
-		}
-		logger.info("Processed index:" + index + " alphsize:" + alphabet.size());
-		return new Pair<String, Integer>(parseLine, parseOffset);
 	}
 }

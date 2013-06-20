@@ -24,16 +24,18 @@ package edu.cmu.cs.lti.ark.fn.identification;
 import edu.cmu.cs.lti.ark.util.BasicFileIO;
 import gnu.trove.THashMap;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
+import java.io.*;
 import java.util.Map;
 import java.util.Set;
 
+import static org.apache.commons.io.IOUtils.closeQuietly;
+
+/**
+ * Combines the multiple alphabet files created by AlphabetCreationThreaded into one
+ * alphabet file
+ */
 public class CombineAlphabets {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		String dir = args[0];
 		String outFile = args[1];
 		File f = new File(dir);
@@ -77,22 +79,21 @@ public class CombineAlphabets {
 			System.exit(0);
 		}
 	}
-	
-	
-	private static Map<String, Integer> readAlphabetFile(String file)
-	{
-		Map<String, Integer> alphabet = new THashMap<String, Integer>();
-		BufferedReader bReader = BasicFileIO.openFileToRead(file);
-		alphabet = new THashMap<String,Integer>();
-		int num = new Integer(BasicFileIO.getLine(bReader));
-		for (int i = 0; i < num; i ++) {
-			String line = BasicFileIO.getLine(bReader);
-			line = line.trim();
-			String[] toks = line.split("\t");
-			alphabet.put(toks[0], new Integer(toks[1]));
+
+	public static Map<String, Integer> readAlphabetFile(String file) throws IOException {
+		final Map<String, Integer> alphabet = new THashMap<String, Integer>();
+		final BufferedReader bReader = BasicFileIO.openFileToRead(file);
+		try {
+			int num = Integer.parseInt(bReader.readLine());
+			for (int i = 0; i < num; i ++) {
+				final String line = bReader.readLine().trim();
+				final String[] toks = line.split("\t");
+				alphabet.put(toks[0], Integer.parseInt(toks[1]));
+			}
+			return alphabet;
+		} finally {
+			closeQuietly(bReader);
 		}
-		BasicFileIO.closeFileAlreadyRead(bReader);
-		return alphabet;
 	}
 }
 

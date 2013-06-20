@@ -15,7 +15,7 @@ if [ -e ${log_file} ]; then
 fi
 
 ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8000m -Xmx8000m -XX:ParallelGCThreads=1 \
-  edu.cmu.cs.lti.ark.fn.identification.CreateEventsUnsupported \
+  edu.cmu.cs.lti.ark.fn.identification.ExtractTrainingFeatures \
   train-fefile:${fe_file} \
   train-parsefile:${parsed_file} \
   stopwords-file:${stopwords_file} \

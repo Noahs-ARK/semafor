@@ -21,31 +21,19 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.identification;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.ArrayList;
+import edu.cmu.cs.lti.ark.fn.constants.FNConstants;
+import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
+import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
+import edu.cmu.cs.lti.ark.util.SerializedObjects;
+import riso.numerical.LBFGS;
+
+import java.io.*;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.logging.FileHandler;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
-
-import riso.numerical.LBFGS;
-
-import edu.cmu.cs.lti.ark.fn.constants.FNConstants;
-import edu.cmu.cs.lti.ark.fn.optimization.*;
-import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
-import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
-import edu.cmu.cs.lti.ark.util.SerializedObjects;
-import gnu.trove.THashMap;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectDoubleHashMap;
 
 
 public class TrainBatchModelDerThreaded
@@ -253,6 +241,7 @@ public class TrainBatchModelDerThreaded
 				for(int j = 0; j < exp[i].length; j ++) {
 					double Y = 0.0;
 					if(i==0) {
+						// the correct frame is always the first first file
 						Y = exp[i][j]/sumExp[i];
 					}
 					double YMinusP = Y - (exp[i][j]/totalExp);
