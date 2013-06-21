@@ -37,6 +37,9 @@ import static org.apache.commons.io.IOUtils.closeQuietly;
  * containing feature name -> learned weight for feature.
  */
 public class ConvertAlphabetFile {
+	// parameters whose abs log value are less than or equal to THRESHOLD are discarded
+	private static final double THRESHOLD = 0.01;
+
 	public static void main(String[] args) throws Exception {
 		final String alphabetFile = args[0];
 		final String modelFile = args[1];
@@ -62,9 +65,10 @@ public class ConvertAlphabetFile {
 		modelReader.readLine(); // ignore first line
 		count = 1;
 		while((line=modelReader.readLine()) != null) {
-			final double val = Double.parseDouble(line.trim());
+			final LDouble val = LDouble.convertToLogDomain(Double.parseDouble(line.trim()));
+			if (Math.abs(val.getValue()) <= THRESHOLD) continue;
 			final String feat = featureNameById.get(count);
-			bWriter.write(feat + "\t" + LDouble.convertToLogDomain(val) + "\n");
+			bWriter.write(feat + "\t" + val + "\n");
 			count++;
 		}
 		closeQuietly(modelReader);

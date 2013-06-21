@@ -23,6 +23,9 @@ package edu.cmu.cs.lti.ark.fn.identification;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.common.primitives.Ints;
@@ -36,6 +39,7 @@ import java.io.*;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.FileHandler;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -47,30 +51,44 @@ import static org.apache.commons.io.IOUtils.closeQuietly;
 public class TrainBatchModelDerThreaded {
 	private static final Logger logger = Logger.getLogger(TrainBatchModelDerThreaded.class.getCanonicalName());
 
+	private static final int BATCH_SIZE = 10;
+	private static final boolean CACHE_FEATURES = false;
+	private static final String FEATURE_FILENAME_PREFIX = "feats_";
+	private static final String FEATURE_FILENAME_SUFFIX = ".jobj.gz";
 	private static final FilenameFilter featureFilenameFilter = new FilenameFilter() {
 		public boolean accept(File dir, String name) {
-			return name.startsWith("feats") && name.contains(".jobj");
+			return name.startsWith(FEATURE_FILENAME_PREFIX) && name.endsWith(FEATURE_FILENAME_SUFFIX);
 		}
 	};
 	private static final Comparator<String> featureFilenameComparator = new Comparator<String>() {
-		private final static int SUFFIX_LEN = 8; // ".jobj.gz"
+		private final int PREFIX_LEN = FEATURE_FILENAME_PREFIX.length();
+		private final int SUFFIX_LEN = FEATURE_FILENAME_SUFFIX.length();
 		public int compare(String a, String b) {
-			final int aNum = Integer.parseInt(a.substring(a.lastIndexOf("_") + 1, a.length() - SUFFIX_LEN));
-			final int bNum = Integer.parseInt(b.substring(b.lastIndexOf("_") + 1, b.length() - SUFFIX_LEN));
+			final int aNum = Integer.parseInt(a.substring(PREFIX_LEN, a.length() - SUFFIX_LEN));
+			final int bNum = Integer.parseInt(b.substring(PREFIX_LEN, b.length() - SUFFIX_LEN));
 			return Ints.compare(aNum, bNum);
 		}
 	};
-	private static final int BATCH_SIZE = 10;
 	private final double[] params;
 	private final List<String> eventFiles;
 	private final String modelFile;
-	private int modelSize = 0;
-	private final boolean useRegularization;
+	private final int modelSize;
+	private final boolean useL2Regularization;
 	private final int numThreads;
-	private double lambda = 0.0;
+	private final double lambda;
 	private double[] gradients;
 	private double[][] tGradients;
 	private double[] tValues;
+	// only used if CACHE_FEATURES is true
+	private final LoadingCache<Integer, int[][][]> featuresByTargetIdx =
+			CacheBuilder.newBuilder()
+					.initialCapacity(16000)   // > number of targets in training data
+					.build(new CacheLoader<Integer, int[][][]>() {
+						@Override
+						public int[][][] load(Integer key) throws IOException, ClassNotFoundException {
+							return loadFeaturesForTarget(key);
+						}
+					});
 
 	public static void main(String[] args) throws Exception {
 		final FNModelOptions options = new FNModelOptions(args);
@@ -80,14 +98,17 @@ public class TrainBatchModelDerThreaded {
 		logger.addHandler(fh);
 
 		final String restartFile = options.restartFile.get();
-		TrainBatchModelDerThreaded tbm = new TrainBatchModelDerThreaded(
+		final int numThreads = options.numThreads.present() ?
+									options.numThreads.get() :
+									Runtime.getRuntime().availableProcessors();
+		final TrainBatchModelDerThreaded tbm = new TrainBatchModelDerThreaded(
 				options.alphabetFile.get(),
 				options.eventsFile.get(),
 				options.modelFile.get(),
 				options.reg.get(),
 				options.lambda.get(),
 				restartFile.equals("null") ? Optional.<String>absent() : Optional.of(restartFile),
-				options.numThreads.get());  // Runtime.getRuntime().availableProcessors()); //
+				numThreads);
 		tbm.trainModel();
 	}
 
@@ -101,7 +122,7 @@ public class TrainBatchModelDerThreaded {
 		this.modelSize = getNumFeatures(alphabetFile);
 		this.modelFile = modelFile;
 		this.eventFiles = getEventFiles(new File(eventsDir));
-		this.useRegularization = reg.equals("reg");
+		this.useL2Regularization = reg.equals("reg");
 		this.lambda = lambda / (double) eventFiles.size();
 		this.numThreads = numThreads;
 		this.params = restartFile.isPresent() ? loadModel(restartFile.get()) : getInitialParams();
@@ -130,26 +151,31 @@ public class TrainBatchModelDerThreaded {
 
 	private double getValuesAndGradients() {
 		double value = 0.0;
-		Arrays.fill(gradients, 0.0);
 		for (double[] tGradient : tGradients) Arrays.fill(tGradient, 0.0);
 		Arrays.fill(tValues, 0.0);
 
-		ThreadPool threadPool = new ThreadPool(numThreads);
+		final ThreadPool threadPool = new ThreadPool(numThreads);
 		int task = 0;
 		for (int i = 0; i < eventFiles.size(); i += BATCH_SIZE) {
 			final int taskId = task;
 			final int start = i;
-			final int end = i + BATCH_SIZE;
+			final int end = Math.min(i + BATCH_SIZE, eventFiles.size());
 			threadPool.runTask(new Runnable() {
 				public void run() {
 					logger.info("Task " + taskId + " : start");
-					processBatch(taskId, start, Math.min(end, eventFiles.size()));
+					try {
+						processBatch(taskId, start, end);
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
 					logger.info("Task " + taskId + " : end");
 				}
 			});
 			task++;
 		}
 		threadPool.join();
+		// merge the calculated tValues and gradients together
+		Arrays.fill(gradients, 0.0);
 		for (int i = 0; i < numThreads; i++) {
 			value += tValues[i];
 			for (int j = 0; j < modelSize; j++) {
@@ -160,11 +186,12 @@ public class TrainBatchModelDerThreaded {
 		return value;
 	}
 
-	public void processBatch(int taskId, int start, int end) {
+	public void processBatch(int taskId, int start, int end)
+			throws ExecutionException, IOException, ClassNotFoundException {
 		int threadId = taskId % numThreads;
 		logger.info("Processing batch:" + taskId + " thread ID:" + threadId);
-		for (int index = start; index < end; index++) {
-			int[][][] featureArray = getFeaturesForTarget(index);
+		for (int targetIdx = start; targetIdx < end; targetIdx++) {
+			int[][][] featureArray = getFeaturesForTarget(targetIdx);
 			int featArrLen = featureArray.length;
 			double exp[][] = new double[featArrLen][];
 			double sumExp[] = new double[featArrLen];
@@ -198,23 +225,30 @@ public class TrainBatchModelDerThreaded {
 					}
 				}
 			}
-			if (index % 100 == 0) {
+			if (targetIdx % 100 == 0) {
 				System.out.print(".");
-				logger.info("" + index);
+				logger.info("" + targetIdx);
 			}
 		}
-		if (useRegularization) {
+		if (useL2Regularization) {
 			for (int i = 0; i < params.length; ++i) {
-				double weight = params[i];
+				final double weight = params[i];
 				tValues[threadId] += lambda * (weight * weight);
 				tGradients[threadId][i] += 2 * lambda * weight;
 			}
 		}
 	}
 
-	private int[][][] getFeaturesForTarget(int index) {
-		// TODO(smt): inefficient to load this every time
-		return (int[][][]) SerializedObjects.readSerializedObject(eventFiles.get(index));
+	private int[][][] getFeaturesForTarget(int targetIdx) throws ExecutionException, IOException, ClassNotFoundException {
+		if (CACHE_FEATURES) {
+			return featuresByTargetIdx.get(targetIdx);
+		} else {
+			return loadFeaturesForTarget(targetIdx);
+		}
+	}
+
+	private int[][][] loadFeaturesForTarget(Integer key) throws IOException, ClassNotFoundException {
+		return SerializedObjects.readObject(eventFiles.get(key));
 	}
 
 	private double[] getInitialParams() {
@@ -256,7 +290,9 @@ public class TrainBatchModelDerThreaded {
 	/** Reads the number of features in the model from the first line of alphabetFile */
 	private static int getNumFeatures(String alphabetFile) throws IOException {
 		final String firstLine = Files.readFirstLine(new File(alphabetFile), Charsets.UTF_8);
-		return Integer.parseInt(firstLine.trim()) + 1;
+		final int numFeatures = Integer.parseInt(firstLine.trim()) + 1;
+		logger.info("Number of features: " + numFeatures);
+		return numFeatures;
 	}
 
 	/** Gets the list of all feature files */

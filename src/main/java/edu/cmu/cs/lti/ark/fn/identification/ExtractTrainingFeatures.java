@@ -73,7 +73,7 @@ public class ExtractTrainingFeatures {
 		final FeatureExtractor.Lemmatizer lemmatizer =
 				new FeatureExtractor.CachedLemmatizer(r.getHvLemmaCache());
 		logger.info("Reading alphabet");
-		final Map<String, Integer> alphabet = CombineAlphabets.readAlphabetFile(options.modelFile.get());
+		final Map<String, Integer> alphabet = AlphabetCreationThreaded.readAlphabetFile(options.modelFile.get());
 		logger.info("Done reading alphabet");
 		final ExtractTrainingFeatures events =
 				new ExtractTrainingFeatures(alphabet,

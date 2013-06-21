@@ -39,7 +39,6 @@ import java.util.Set;
 
 import static com.google.common.base.Strings.nullToEmpty;
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.readLine;
-import static edu.cmu.cs.lti.ark.fn.identification.ScanAdverbsAndAdjectives.getCanonicalForm;
 
 /**
  * This class is for finding the best frame for a span of tokens, given
@@ -143,9 +142,6 @@ public class FastFrameIdentifier {
 		return frames;
 	}
 
-	public void setClusterInfo(THashMap<String, THashSet<String>> clusterMap, int K) {
-	}
-
 	private Set<String> getCandidateFrames(int[] tokenIndices, Sentence sentence, SmoothedGraph graph) {
 		final List<Token> sentenceTokens = sentence.getTokens();
 		final Set<String> frames = checkPresenceOfTokensInMap(tokenIndices, sentence);
@@ -177,7 +173,7 @@ public class FastFrameIdentifier {
 	}
 
 	private String convertPostag(String pos) {
-		pos = nullToEmpty(pos);
+		pos = nullToEmpty(pos).toUpperCase();
 		if (pos.startsWith("N")) {
 			pos = "n";
 		} else if (pos.startsWith("V")) {
@@ -224,5 +220,19 @@ public class FastFrameIdentifier {
 		}
 		Arrays.sort(intTokNums);
 		return intTokNums;
+	}
+
+	private static String getCanonicalForm(String word) {
+		int len = word.length();
+		String ans = "";
+		for (int i = 0; i < len; i ++) {
+			char c = word.charAt(i);
+			if (Character.isDigit(c)) {
+				ans += "@";
+			} else {
+				ans += c;
+			}
+		}
+		return ans.toLowerCase();
 	}
 }

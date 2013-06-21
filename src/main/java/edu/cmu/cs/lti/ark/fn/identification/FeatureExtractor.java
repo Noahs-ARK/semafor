@@ -170,8 +170,12 @@ public class FeatureExtractor implements IFeatureExtractor {
 			final String cpostag = getCpostag(postag);
 			final String lemma = parseHasLemmas ? allLemmaTags[PARSE_LEMMA_ROW][tokenIdx]
 					: lemmatizer.getLowerCaseLemma(form, postag);
-			featureMap.increment("sTP:" + form + "_" + cpostag);
-			featureMap.increment("sLP:" + lemma + "_" + cpostag);
+			featureMap.increment(UNDERSCORE.join(
+					"sTP:" + form + "_" + cpostag,
+					frameFtr));
+			featureMap.increment(UNDERSCORE.join(
+					"sLP:" + lemma + "_" + cpostag,
+					frameFtr));
 		}
 
 		featureMap.increment(UNDERSCORE.join(
