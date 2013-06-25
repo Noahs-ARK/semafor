@@ -22,6 +22,9 @@
 package edu.cmu.cs.lti.ark.fn.identification.training;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ConcurrentHashMultiset;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.io.OutputSupplier;
@@ -40,7 +43,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.FileHandler;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -52,6 +54,7 @@ public class AlphabetCreationThreaded {
 	private static final Logger logger = Logger.getLogger(AlphabetCreationThreaded.class.getCanonicalName());
 
 	private static final int BATCH_SIZE = 100;
+	private static final int MINIMUM_FEATURE_COUNT = 2;
 	private static int EXPECTED_NUM_FEATURES = 6000000;
 	public static final String ALPHABET_FILENAME = "alphabet.dat";
 	private final THashMap<String, THashSet<String>> frameMap;
@@ -145,9 +148,7 @@ public class AlphabetCreationThreaded {
 				Files.readLines(new File(frameElementsFile), Charsets.UTF_8)
 						.subList(startIndex, endIndex);
 		final List<String> parseLines = Files.readLines(new File(parseFile), Charsets.UTF_8);
-		final Set<String> alphabet =
-				Sets.newSetFromMap(new ConcurrentHashMap<String, Boolean>(EXPECTED_NUM_FEATURES, .75f, numThreads));
-		//final ExecutorService threadPool = newFixedThreadPool(numThreads);
+		final Multiset<String> alphabet = ConcurrentHashMultiset.create();
 		final ThreadPool threadPool = new ThreadPool(numThreads);
 		int i = 0;
 		for (int start = startIndex; start < endIndex; start += BATCH_SIZE) {
@@ -166,21 +167,26 @@ public class AlphabetCreationThreaded {
 		threadPool.join();
 		final OutputSupplier<OutputStreamWriter> outputSupplier =
 				Files.newWriterSupplier(new File(alphabetDir, ALPHABET_FILENAME), Charsets.UTF_8);
-		writeAlphabet(alphabet, outputSupplier);
+
+		final Set<String> commonFeatures = Sets.filter(alphabet.elementSet(), new Predicate<String>() {
+			@Override public boolean apply(String input) {
+				return alphabet.count(input) >= MINIMUM_FEATURE_COUNT;
+			} });
+		writeAlphabet(commonFeatures, outputSupplier);
 	}
 
-	private void processBatch(int threadId, List<String> frameLines, List<String> parseLines, Set<String> alphabet) {
+	private void processBatch(int threadId, List<String> frameLines, List<String> parseLines, Multiset<String> alphabet) {
 		for (int i = 0; i < frameLines.size(); i++) {
 			processLine(frameLines.get(i), parseLines, alphabet);
 			if (i % 50 == 0) {
 				logger.info("Thread " + threadId + "\n" +
-							"Processed index:" + i + " of " + frameLines.size() + "\n" +
-							"Alphabet size:" + alphabet.size());
+						"Processed index:" + i + " of " + frameLines.size() + "\n" +
+						"Alphabet size:" + alphabet.elementSet().size());
 			}
 		}
 	}
 
-	private void processLine(String frameLine, List<String> parseLines, Set<String> alphabet) {
+	private void processLine(String frameLine, List<String> parseLines, Multiset<String> alphabet) {
 		// Parse the frameLine
 		final String[] toks = frameLine.split("\t");
 		// throw out first two fields
@@ -209,22 +215,6 @@ public class AlphabetCreationThreaded {
 			alphabet.addAll(featuresByFrame.get(frame).keySet());
 		}
 	}
-
-	/**
-	 * Combines the multiple alphabet files created by createLocalAlphabets into one
-	 * alphabet file
-	 */
-//	public static void combineAlphabets(File alphabetDir) throws IOException {
-//		final String[] files = alphabetDir.list(LOCAL_ALPHABET_FILENAME_FILTER);
-//		final Set<String> alphabet = Sets.newHashSet();
-//		for (String file: files) {
-//			final String path = alphabetDir.getAbsolutePath() + "/" + file;
-//			if (logger.isLoggable(Level.INFO)) logger.info("reading path: " + path);
-//			final Map<String, Integer> localAlphabet = readAlphabetFile(path);
-//			alphabet.addAll(localAlphabet.keySet());
-//		}
-//		writeAlphabetFile(alphabet, alphabetDir.getAbsolutePath() + "/" + ALPHABET_FILENAME);
-//	}
 
 	public static Map<String, Integer> readAlphabetFile(String filename) throws IOException {
 		final BufferedReader bReader = new BufferedReader(new FileReader(filename));

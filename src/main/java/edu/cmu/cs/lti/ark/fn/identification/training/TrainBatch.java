@@ -130,7 +130,7 @@ public class TrainBatch {
 		this.eventFiles = getEventFiles(new File(eventsDir));
 		this.useL1Regularization = reg.toLowerCase().equals("l1");
 		this.useL2Regularization = reg.toLowerCase().equals("l2");
-		this.lambda = lambda / (double) eventFiles.size();
+		this.lambda = lambda;
 		this.numThreads = numThreads;
 		this.params = restartFile.isPresent() ? loadModel(restartFile.get()) : new double[modelSize];
 
@@ -206,16 +206,16 @@ public class TrainBatch {
 		double logLikelihood = 0.0;
 		for (int targetIdx : targetIdxs) {
 			logLikelihood +=
-					addLogLikelihoodAndGradientForExample(getFeaturesForTarget(targetIdx), currentParams, tGradients);
+					addLogLossAndGradientForExample(getFeaturesForTarget(targetIdx), currentParams, tGradients);
 			if (targetIdx % 100 == 0) logger.info(String.format("target idx: %d", targetIdx));
 		}
 		return logLikelihood;
 	}
 
 	/** Writes to gradients as a side-effect */
-	private double addLogLikelihoodAndGradientForExample(TIntDoubleHashMap[] featuresByFrame,
-														 double[] currentParams,
-														 double[] gradient) {
+	private double addLogLossAndGradientForExample(TIntDoubleHashMap[] featuresByFrame,
+												   double[] currentParams,
+												   double[] gradient) {
 		int numFrames = featuresByFrame.length;
 		double frameScore[] = new double[numFrames];
 		double expdFrameScore[] = new double[numFrames];

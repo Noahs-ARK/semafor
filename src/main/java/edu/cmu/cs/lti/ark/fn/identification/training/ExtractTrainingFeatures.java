@@ -29,8 +29,6 @@ import edu.cmu.cs.lti.ark.fn.identification.FeatureExtractor;
 import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
-import edu.cmu.cs.lti.ark.util.nlp.CachedLemmatizer;
-import edu.cmu.cs.lti.ark.util.nlp.Lemmatizer;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntDoubleHashMap;
@@ -78,8 +76,6 @@ public class ExtractTrainingFeatures {
 		final int endIndex = options.endIndex.get();
 		logger.info("Start:" + startIndex + " end:" + endIndex);
 		final RequiredDataForFrameIdentification r = SerializedObjects.readObject(options.fnIdReqDataFile.get());
-		final Lemmatizer lemmatizer =
-				new CachedLemmatizer(r.getHvLemmaCache());
 		final FeatureExtractor featureExtractor = new FeatureExtractor();
 		logger.info("Reading alphabet");
 		final Map<String, Integer> alphabet = readAlphabetFile(options.modelFile.get());

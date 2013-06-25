@@ -26,6 +26,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;
 import edu.cmu.cs.lti.ark.util.IFeatureExtractor;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
@@ -35,8 +36,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
-
-import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.*;
 
 /**
  * Extracts features for the frame identification model
@@ -48,7 +47,6 @@ public class FeatureExtractor implements IFeatureExtractor {
 	public Map<String, Map<String, Double>> extractFeaturesByName(Iterable<String> frameNames,
 																  int[] targetTokenIdxs,
 																  Sentence sentence) {
-		// Get lemmas and postags for target
 		final IntCounter<String> baseFeatures = getBaseFeatures(targetTokenIdxs, sentence);
 		final Map<String, Map<String, Double>> results = Maps.newHashMap();
 		// conjoin base features with frame
@@ -68,19 +66,20 @@ public class FeatureExtractor implements IFeatureExtractor {
 
 	private IntCounter<String> getBaseFeatures(int[] targetTokenIdxs,
 											   Sentence sentence) {
-		final String[][] allLemmaTags = sentence.toAllLemmaTagsArray();
-		final DependencyParse parse = DependencyParse.processFN(allLemmaTags, 0.0);
 		Arrays.sort(targetTokenIdxs);
+		// Get lemmas and postags for target
 		final List<String> tokenAndCpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
-		final List<String> tokens = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
+		final List<String> forms = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
 		final List<String> cpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
 		final List<String> lemmaAndCpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
+		final List<Token> tokens = sentence.getTokens();
 		for (int tokenIdx : targetTokenIdxs) {
-			final String form = allLemmaTags[PARSE_TOKEN_ROW][tokenIdx];
-			final String postag = allLemmaTags[PARSE_POS_ROW][tokenIdx].toUpperCase();
+			Token token = tokens.get(tokenIdx);
+			final String form = token.getForm();
+			final String postag = token.getPostag();
 			final String cpostag = getCpostag(postag);
-			final String lemma = allLemmaTags[PARSE_LEMMA_ROW][tokenIdx];
-			tokens.add(form);
+			final String lemma = token.getLemma();
+			forms.add(form);
 			tokenAndCpostags.add(form + "_" + cpostag);
 			cpostags.add(cpostag);
 			lemmaAndCpostags.add(lemma + "_" + cpostag);
@@ -106,6 +105,7 @@ public class FeatureExtractor implements IFeatureExtractor {
 		/*
 		 * syntactic features
 		 */
+		final DependencyParse parse = DependencyParse.processFN(sentence.toAllLemmaTagsArray(), 0.0);
 		final DependencyParse[] sortedNodes = parse.getIndexSortedListOfNodes();
 		final DependencyParse head = DependencyParse.getHeuristicHead(sortedNodes, targetTokenIdxs);
 		final String headCpostag = getCpostag(head.getPOS());
