@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys
-from semafor.formats.read_malt import read_malt
+from semafor.utils.read_malt import read_malt
 
 
 def pos_tag(line):

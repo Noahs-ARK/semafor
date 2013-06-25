@@ -25,7 +25,7 @@ import json
 import os
 import sys
 
-from semafor.formats.malt_to_conll import read_conll
+from semafor.utils.malt_to_conll import read_conll
 from semafor.targetid.target_scanner import build_target_dicts
 
 

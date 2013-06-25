@@ -15,8 +15,8 @@ import sys
 #from nltk import FreqDist
 
 from semafor.scoring.frameparseval import DATE_NAMES
-from semafor.formats.wordnet import get_lemma
-from semafor.formats.malt_to_conll import ConllToken, read_conll
+from semafor.utils.wordnet import get_lemma
+from semafor.utils.malt_to_conll import ConllToken, ConllFields, read_conll
 
 TRAIN_DATA_DIR = "/Users/sam/repo/project/semafor/semafor/training/data/naacl2012"
 GOLD_FILENAME = os.path.join(TRAIN_DATA_DIR, "cv.%s.sentences.json")
@@ -24,8 +24,8 @@ DEP_PARSED_FILENAME = os.path.join(TRAIN_DATA_DIR, "cv.%s.sentences.maltparsed.c
 
 LEFT_ANCHOR_STR = "^^^^"
 RIGHT_ANCHOR_STR = "$$$$"
-LEFT_ANCHOR = ConllToken(**{f: LEFT_ANCHOR_STR for f in ConllToken._fields})
-RIGHT_ANCHOR = ConllToken(**{f: RIGHT_ANCHOR_STR for f in ConllToken._fields})
+LEFT_ANCHOR = ConllToken(**{f: LEFT_ANCHOR_STR for f in ConllFields.all_fields()})
+RIGHT_ANCHOR = ConllToken(**{f: RIGHT_ANCHOR_STR for f in ConllFields.all_fields()})
 
 TOKEN_JOIN = u'|'.join
 INTRATOKEN_JOIN = u':'.join
@@ -34,24 +34,6 @@ INTRATOKEN_JOIN = u':'.join
 #FEATURES = ("prev_lemma", "prev_pos", "lemma", "pos", "next_lemma", "next_pos")
 #Features = namedtuple("Features", FEATURES)
 #DataPoint = namedtuple("DataPoint", ("is_target", "features"))
-
-
-
-def ngrams(words, n):
-    return zip(*[words[i:] for i in range(n)])
-
-
-
-
-
-def get_coarse_pos(pos):
-    pos = pos.upper()
-    if pos == "PRP" or pos == "PRP$" or len(pos) <= 2:
-        cpostag = pos
-    else:
-        cpostag = pos[0:2]
-    return cpostag
-
 
 def get_non_target_token_idxs(gold_sentence):
     non_target_token_idxs = set()

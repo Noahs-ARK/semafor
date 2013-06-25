@@ -8,7 +8,7 @@ from os.path import join
 
 from nltk import ngrams
 import sys
-from semafor.formats.malt_to_conll import read_conll
+from semafor.utils.malt_to_conll import read_conll
 
 from semafor.settings import TRAINING_DATA_DIR
 from semafor.nell.nell import load_noun_types, load_hierarchy

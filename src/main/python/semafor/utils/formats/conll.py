@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 """
-malt_to_conll.py
+conll.py
 
 Converts from MaltParser's output to CoNLL format
 
 Author: Sam Thomson (sthomson@cs.cmu.edu)
 """
-import sys
-from semafor.formats.read_malt import read_malt
-from semafor.formats.wordnet import get_lemma
+import codecs
+import os
+from semafor.settings import TRAINING_DATA_DIR
+from semafor.utils.wordnet import get_lemma
 
 
 # Specification of the CoNLL format
@@ -66,9 +67,9 @@ def blank_to_none(field):
 
 
 class ConllToken(object):
-    def __init__(self, token_id, form, lemma=None, cpostag=None, postag=None,
+    def __init__(self, id, form, lemma=None, cpostag=None, postag=None,
                  feats=None, head=None, deprel=None, phead=None, pdeprel=None):
-        self.id = int(token_id)
+        self.id = int(id)
         self.form = form
         self.lemma = lemma
         self.cpostag = cpostag
@@ -79,10 +80,25 @@ class ConllToken(object):
         self.phead = int(phead) if phead is not None else phead
         self.pdeprel = pdeprel
 
+    def zero_indexed(self):
+        """ Convert indices to zero-based instead of one-based """
+        return ConllToken(
+            self.id - 1,
+            self.form,
+            self.lemma,
+            self.cpostag,
+            self.postag,
+            self.feats,
+            self.head - 1 if self.head is not None else None,
+            self.deprel,
+            self.phead - 1 if self.phead is not None else None,
+            self.pdeprel
+        )
+
     @staticmethod
     def from_line(line):
-        parts = line.split('\t')
-        return ConllToken(token_id=parts[ConllFields.id],
+        parts = line.split(u'\t')
+        return ConllToken(id=parts[ConllFields.id],
                           form=parts[ConllFields.form],
                           lemma=blank_to_none(parts[ConllFields.lemma]),
                           cpostag=blank_to_none(parts[ConllFields.cpostag]),
@@ -124,27 +140,18 @@ def read_conll(lines, lookup_lemmas=False):
         yield result
 
 
-def malt_to_conll(malt_tokens):
-    """Converts one line of MaltParser's output to CoNLL format"""
-    output = []
-    for i, token in enumerate(malt_tokens):
-        conll_token = ConllToken(
-            token_id=i + 1,
-            form=token.form,
-            cpostag=token.postag,
-            postag=token.postag,
-            head=token.head,
-            deprel=token.deprel)
-        output.append(u'\t'.join(field for field in conll_token))
-    output.append(u'')
-    return u'\n'.join(output)
-
-
-def main(lines):
-    for line in lines:
-        conll = malt_to_conll(read_malt(line.decode('utf8')))
-        print conll.encode('utf8')
+def add_lemmas(in_file, out_file):
+    conll_parses = read_conll(in_file, lookup_lemmas=True)
+    for parse in conll_parses:
+        for token in parse:
+            out_file.write(unicode(token) + u"\n")
+        out_file.write(u"\n")
 
 
 if __name__ == "__main__":
-    main(sys.stdin)
+    for split_name in ("train", "dev", "test"):
+        in_filename = os.path.join(TRAINING_DATA_DIR, "naacl2012/cv.%s.sentences.turboparsed.conll") % split_name
+        out_filename = os.path.join(TRAINING_DATA_DIR, "naacl2012/cv.%s.sentences.turboparsed.lemmatized.conll") % split_name
+        with codecs.open(in_filename, encoding="utf8") as in_file, \
+                codecs.open(out_filename, "w", encoding="utf8") as out_file:
+            add_lemmas(in_file, out_file)

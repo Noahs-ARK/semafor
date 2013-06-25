@@ -32,7 +32,7 @@ We observe a couple of differences from SEMAFOR's RoteSegmenter:
 from __future__ import print_function
 import sys, os, codecs, json
 
-from semafor.formats.malt_to_conll import read_conll
+from semafor.utils.malt_to_conll import read_conll
 
 def get_coarse_pos(pos):
     return pos[0]   # this seems to be what was in the whitelist

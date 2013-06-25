@@ -10,7 +10,7 @@ from __future__ import print_function, division
 import os, sys, json, codecs
 from collections import Counter
 
-from semafor.formats.wordnet import get_lemma
+from semafor.utils.wordnet import get_lemma
 
 def build_target_dicts(targetdictFP, unifreqFP, dataFP='../scoring/cv.train.sentences.json'):
     uniFreq = Counter()
