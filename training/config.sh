@@ -3,7 +3,7 @@
 source "$(dirname ${0})/../bin/config.sh"
 
 # choose a name for the model to train
-model_name="mst_frame_id_20130619"
+model_name="mst_frame_id_20130625"
 
 # should set to roughly the number of cores available
 num_threads=8

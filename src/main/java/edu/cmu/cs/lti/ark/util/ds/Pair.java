@@ -39,6 +39,10 @@ public class Pair<T,T2> implements java.io.Serializable {
 		ob2 = o2;
 	}
 
+	public static <U, V> Pair<U, V> of(U u, V v) {
+		return new Pair<U, V>(u, v);
+	}
+
 	public T $1() {
 		return getFirst();
 	}

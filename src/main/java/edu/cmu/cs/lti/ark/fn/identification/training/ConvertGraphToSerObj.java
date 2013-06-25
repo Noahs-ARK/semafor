@@ -19,13 +19,14 @@
  * You should have received a copy of the GNU General Public License along
  * with SEMAFOR 2.0.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package edu.cmu.cs.lti.ark.fn.identification;
+package edu.cmu.cs.lti.ark.fn.identification.training;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
+import edu.cmu.cs.lti.ark.fn.identification.SmoothedGraph;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import gnu.trove.TObjectIntHashMap;
 

@@ -160,10 +160,8 @@ public class ParserDriver {
 				"reg",
 				0.0,
 				frameMap,
-				cMap,
-				relatedWordsForWord,
-				revisedRelationsMap,
-				hvLemmas);
+				cMap
+		);
 		if (useGraph) {
 			SmoothedGraph graph = readObject(graphFilename);
 			System.err.println("Read graph successfully from: " + graphFilename);

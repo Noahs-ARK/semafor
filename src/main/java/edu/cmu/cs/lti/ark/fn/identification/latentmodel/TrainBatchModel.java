@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU General Public License along
  * with SEMAFOR 2.0.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package edu.cmu.cs.lti.ark.fn.identification;
+package edu.cmu.cs.lti.ark.fn.identification.latentmodel;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -37,8 +37,6 @@ import edu.cmu.cs.lti.ark.fn.constants.FNConstants;
 import edu.cmu.cs.lti.ark.fn.optimization.*;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
-import gnu.trove.THashMap;
-import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectDoubleHashMap;
 
 

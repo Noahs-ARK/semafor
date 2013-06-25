@@ -26,7 +26,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
 
-import org.apache.hadoop.io.Writable;
+//import org.apache.hadoop.io.Writable;
 
 /**
  * Log-Double. A class to represent a double value along with a boolean indicating whether 
@@ -35,7 +35,7 @@ import org.apache.hadoop.io.Writable;
  * @author Kevin Gimpel
  *
  */
-public class LDouble implements Serializable, Writable{
+public class LDouble implements Serializable { //, Writable{
 	/**
 	 * 
 	 */

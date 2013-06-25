@@ -67,7 +67,7 @@ public class LemmatizeStuff {
 	 *
 	 * @param stopFile path to a file containing a list of stopwords, one per line
 	 * @param wnFile path to the file containing the wordnet map, as created by
-	 * 				 {@link edu.cmu.cs.lti.ark.fn.identification.RequiredDataCreation}
+	 * 				 {@link edu.cmu.cs.lti.ark.fn.identification.training.RequiredDataCreation}
 	 * @param infile path to a file containing the input sentences
 	 * @param outfile path to file to which to write
 	 */

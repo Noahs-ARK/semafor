@@ -19,17 +19,17 @@
  * You should have received a copy of the GNU General Public License along
  * with SEMAFOR 2.0.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package edu.cmu.cs.lti.ark.fn.identification;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Random;
+package edu.cmu.cs.lti.ark.fn.identification.latentmodel;
 
 import edu.cmu.cs.lti.ark.fn.optimization.LDouble;
 import edu.cmu.cs.lti.ark.fn.optimization.LogFormula;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.util.optimization.SGA;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Random;
 
 
 public class TrainSGAModel extends TrainBatchModel

@@ -16,7 +16,7 @@ echo "Using model file: ${model_file}"
 echo
 
 ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8g -Xmx8g -XX:ParallelGCThreads=1 \
-  edu.cmu.cs.lti.ark.fn.identification.ConvertAlphabetFile \
+  edu.cmu.cs.lti.ark.fn.identification.training.ConvertAlphabetFile \
   ${alphabet_file} \
   ${model_file} \
   ${model_dir}/idmodel.dat

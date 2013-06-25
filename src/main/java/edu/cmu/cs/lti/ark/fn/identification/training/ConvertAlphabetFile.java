@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU General Public License along
  * with SEMAFOR 2.0.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package edu.cmu.cs.lti.ark.fn.identification;
+package edu.cmu.cs.lti.ark.fn.identification.training;
 
 import edu.cmu.cs.lti.ark.fn.optimization.LDouble;
 import gnu.trove.TIntObjectHashMap;
@@ -38,7 +38,7 @@ import static org.apache.commons.io.IOUtils.closeQuietly;
  */
 public class ConvertAlphabetFile {
 	// parameters whose abs log value are less than or equal to THRESHOLD are discarded
-	private static final double THRESHOLD = 0.01;
+	//private static final double THRESHOLD = 0.01;
 
 	public static void main(String[] args) throws Exception {
 		final String alphabetFile = args[0];
@@ -66,7 +66,7 @@ public class ConvertAlphabetFile {
 		count = 1;
 		while((line=modelReader.readLine()) != null) {
 			final LDouble val = LDouble.convertToLogDomain(Double.parseDouble(line.trim()));
-			if (Math.abs(val.getValue()) <= THRESHOLD) continue;
+			//if (Math.abs(val.getValue()) <= THRESHOLD) continue;
 			final String feat = featureNameById.get(count);
 			bWriter.write(feat + "\t" + val + "\n");
 			count++;

@@ -32,10 +32,20 @@
             <artifactId>junit</artifactId>
             <version>4.11</version>
         </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.jblas</groupId>-->
+            <!--<artifactId>jblas</artifactId>-->
+            <!--<version>1.2.3</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>org.apache.hadoop</groupId>-->
+            <!--<artifactId>hadoop-core</artifactId>-->
+            <!--<version>1.1.0</version>-->
+        <!--</dependency>-->
         <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-core</artifactId>
-            <version>1.1.0</version>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.4</version>
         </dependency>
         <dependency>
             <groupId>net.sf.jwordnet</groupId>

@@ -19,42 +19,41 @@
  * You should have received a copy of the GNU General Public License along
  * with SEMAFOR 2.0.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package edu.cmu.cs.lti.ark.fn.identification;
+package edu.cmu.cs.lti.ark.fn.identification.training;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
+import com.google.common.io.OutputSupplier;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
+import edu.cmu.cs.lti.ark.fn.identification.FeatureExtractor;
+import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
+import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
-import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
-import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.logging.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.FileHandler;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
-import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
 public class AlphabetCreationThreaded {
 	private static final Logger logger = Logger.getLogger(AlphabetCreationThreaded.class.getCanonicalName());
 
 	private static final int BATCH_SIZE = 100;
-	private static int EXPECTED_NUM_FEATURES = 3000000;
+	private static int EXPECTED_NUM_FEATURES = 6000000;
 	public static final String ALPHABET_FILENAME = "alphabet.dat";
-	final static FilenameFilter LOCAL_ALPHABET_FILENAME_FILTER = new FilenameFilter() {
-		public boolean accept(File dir, String filename) {
-			return filename.startsWith(ALPHABET_FILENAME + "_");
-		}
-	};
 	private final THashMap<String, THashSet<String>> frameMap;
 	private final String parseFile;
 	private final File alphabetDir;
@@ -62,12 +61,11 @@ public class AlphabetCreationThreaded {
 	private final int startIndex;
 	private final int endIndex;
 	private final int numThreads;
-	private final FeatureExtractor.Relations wnRelations;
-	private final FeatureExtractor.Lemmatizer lemmatizer;
+	private final FeatureExtractor featureExtractor;
 
 	/**
 	 * Parses commandline args, then creates a new {@link #AlphabetCreationThreaded} with them
-	 * and calls {@link #createLocalAlphabets}, then {@link #combineAlphabets}.
+	 * and calls {@link #createAlphabet}
 	 *
 	 * @param args commandline arguments. see {@link #AlphabetCreationThreaded}
 	 *             for details.
@@ -85,10 +83,7 @@ public class AlphabetCreationThreaded {
 		logger.info("Start:" + startIndex + " end:" + endIndex);
 		final RequiredDataForFrameIdentification r =
 				SerializedObjects.readObject(options.fnIdReqDataFile.get());
-		final FeatureExtractor.Relations wnRelations =
-				new FeatureExtractor.CachedRelations(r.getRevisedRelMap(), r.getRelatedWordsForWord());
-		final FeatureExtractor.Lemmatizer lemmatizer =
-				new FeatureExtractor.CachedLemmatizer(r.getHvLemmaCache());
+
 		final int numThreads = options.numThreads.present() ?
 								options.numThreads.get() :
 								Runtime.getRuntime().availableProcessors();
@@ -98,13 +93,12 @@ public class AlphabetCreationThreaded {
 						options.trainFrameElementFile.get(),
 						options.trainParseFile.get(),
 						r.getFrameMap(),
-						wnRelations,
-						lemmatizer,
+						new FeatureExtractor(),
 						startIndex,
 						endIndex,
 						numThreads);
-		events.createLocalAlphabets();
-		events.combineAlphabets(alphabetDir);
+		events.createAlphabet();
+		//combineAlphabets(alphabetDir);
 	}
 
 	/**
@@ -117,6 +111,7 @@ public class AlphabetCreationThreaded {
 *                            ones that are in frameElementsFile
 	 * @param frameMap            a map from frames to a set of disambiguated predicates
 *                            (words along with part of speech tags, but in the style of FrameNet)
+	 * @param featureExtractor    feature extractor
 	 * @param startIndex          the line of the frameElementsFile to start at
 	 * @param endIndex            the line of frameElementsFile to end at
 	 * @param numThreads          the number of threads to run
@@ -125,8 +120,7 @@ public class AlphabetCreationThreaded {
 									String frameElementsFile,
 									String parseFile,
 									THashMap<String, THashSet<String>> frameMap,
-									FeatureExtractor.Relations wnRelations,
-									FeatureExtractor.Lemmatizer lemmatizer,
+									FeatureExtractor featureExtractor,
 									int startIndex,
 									int endIndex,
 									int numThreads) {
@@ -137,8 +131,7 @@ public class AlphabetCreationThreaded {
 		this.startIndex = startIndex;
 		this.endIndex = endIndex;
 		this.numThreads = numThreads;
-		this.wnRelations = wnRelations;
-		this.lemmatizer = lemmatizer;
+		this.featureExtractor = featureExtractor;
 	}
 
 	/**
@@ -147,45 +140,43 @@ public class AlphabetCreationThreaded {
 	 *
 	 * @throws IOException
 	 */
-	public void createLocalAlphabets() throws IOException {
+	public void createAlphabet() throws IOException {
 		final List<String> frameLines =
 				Files.readLines(new File(frameElementsFile), Charsets.UTF_8)
 						.subList(startIndex, endIndex);
 		final List<String> parseLines = Files.readLines(new File(parseFile), Charsets.UTF_8);
-
-		final ExecutorService threadPool = newFixedThreadPool(numThreads);
+		final Set<String> alphabet =
+				Sets.newSetFromMap(new ConcurrentHashMap<String, Boolean>(EXPECTED_NUM_FEATURES, .75f, numThreads));
+		//final ExecutorService threadPool = newFixedThreadPool(numThreads);
+		final ThreadPool threadPool = new ThreadPool(numThreads);
 		int i = 0;
 		for (int start = startIndex; start < endIndex; start += BATCH_SIZE) {
 			final int threadId = i;
 			final List<String> frameLineBatch =
 					frameLines.subList(start, Math.min(frameLines.size(), start + BATCH_SIZE));
-			threadPool.execute(new Runnable() {
+			threadPool.runTask(new Runnable() {
 				public void run() {
 					logger.info("Thread " + threadId + " : start");
-					processBatch(threadId, frameLineBatch, parseLines);
+					processBatch(threadId, frameLineBatch, parseLines, alphabet);
 					logger.info("Thread " + threadId + " : end");
 				}
 			});
 			i++;
 		}
-		threadPool.shutdown();
+		threadPool.join();
+		final OutputSupplier<OutputStreamWriter> outputSupplier =
+				Files.newWriterSupplier(new File(alphabetDir, ALPHABET_FILENAME), Charsets.UTF_8);
+		writeAlphabet(alphabet, outputSupplier);
 	}
 
-	private void processBatch(int threadId, List<String> frameLines, List<String> parseLines) {
-		final Set<String> alphabet = Sets.newHashSet();
+	private void processBatch(int threadId, List<String> frameLines, List<String> parseLines, Set<String> alphabet) {
 		for (int i = 0; i < frameLines.size(); i++) {
 			processLine(frameLines.get(i), parseLines, alphabet);
-			if (i % 10 == 0) {
+			if (i % 50 == 0) {
 				logger.info("Thread " + threadId + "\n" +
 							"Processed index:" + i + " of " + frameLines.size() + "\n" +
 							"Alphabet size:" + alphabet.size());
 			}
-		}
-		try {
-			writeAlphabetFile(alphabet, alphabetDir + "_" + threadId);
-		} catch (IOException e) {
-			e.printStackTrace();
-			throw new RuntimeException(e);
 		}
 	}
 
@@ -194,7 +185,7 @@ public class AlphabetCreationThreaded {
 		final String[] toks = frameLine.split("\t");
 		// throw out first two fields
 		final List<String> tokens = Arrays.asList(toks).subList(2, toks.length);
-		final String frameName = tokens.get(1);
+		//final String frameName = tokens.get(1);
 		final String[] targetIdxsStr = tokens.get(3).split("_");
 		final int sentNum = Integer.parseInt(tokens.get(5));
 
@@ -205,31 +196,17 @@ public class AlphabetCreationThreaded {
 
 		// Parse the parse line
 		final String parseLine = parseLines.get(sentNum);
-		final String[][] data = AllLemmaTags.readLine(parseLine);
+		final Sentence sentence = Sentence.fromAllLemmaTagsArray(AllLemmaTags.readLine(parseLine));
 
 		// extract features for every frame
-		for (String frame : frameMap.keySet()) {
-			extractFeaturesAndAddToAlphabet(frame, targetTokenIdxs, data, alphabet);
-		}
-	}
-
-	private void extractFeaturesAndAddToAlphabet(String frame,
-												 int[] targetTokenIdxs,
-												 String[][] allLemmaTags,
-												 Set<String> alphabet) {
-		final THashSet<String> hiddenUnits = frameMap.get(frame);
-		final DependencyParse parse = DependencyParse.processFN(allLemmaTags, 0.0);
-		for (String unit : hiddenUnits) {
-			final IntCounter<String> valMap = FeatureExtractor.extractFeatures(
-					frame,
+		final Map<String, Map<String, Double>> featuresByFrame =
+				featureExtractor.extractFeaturesByName(
+					frameMap.keySet(),
 					targetTokenIdxs,
-					unit,
-					allLemmaTags,
-					parse,
-					wnRelations,
-					lemmatizer,
-					true);
-			alphabet.addAll(valMap.keySet());
+					sentence
+				);
+		for (String frame : featuresByFrame.keySet()) {
+			alphabet.addAll(featuresByFrame.get(frame).keySet());
 		}
 	}
 
@@ -237,17 +214,17 @@ public class AlphabetCreationThreaded {
 	 * Combines the multiple alphabet files created by createLocalAlphabets into one
 	 * alphabet file
 	 */
-	public static void combineAlphabets(File alphabetDir) throws IOException {
-		final String[] files = alphabetDir.list(LOCAL_ALPHABET_FILENAME_FILTER);
-		final Set<String> alphabet = Sets.newHashSet();
-		for (String file: files) {
-			final String path = alphabetDir.getAbsolutePath() + "/" + file;
-			if (logger.isLoggable(Level.INFO)) logger.info("reading path: " + path);
-			final Map<String, Integer> localAlphabet = readAlphabetFile(path);
-			alphabet.addAll(localAlphabet.keySet());
-		}
-		writeAlphabetFile(alphabet, alphabetDir.getAbsolutePath() + "/" + ALPHABET_FILENAME);
-	}
+//	public static void combineAlphabets(File alphabetDir) throws IOException {
+//		final String[] files = alphabetDir.list(LOCAL_ALPHABET_FILENAME_FILTER);
+//		final Set<String> alphabet = Sets.newHashSet();
+//		for (String file: files) {
+//			final String path = alphabetDir.getAbsolutePath() + "/" + file;
+//			if (logger.isLoggable(Level.INFO)) logger.info("reading path: " + path);
+//			final Map<String, Integer> localAlphabet = readAlphabetFile(path);
+//			alphabet.addAll(localAlphabet.keySet());
+//		}
+//		writeAlphabetFile(alphabet, alphabetDir.getAbsolutePath() + "/" + ALPHABET_FILENAME);
+//	}
 
 	public static Map<String, Integer> readAlphabetFile(String filename) throws IOException {
 		final BufferedReader bReader = new BufferedReader(new FileReader(filename));
@@ -265,7 +242,17 @@ public class AlphabetCreationThreaded {
 		}
 	}
 
-	public static void writeAlphabetFile(Set<String> alphabet, String filename) throws IOException {
-		FileUtils.writeLines(new File(filename), alphabet);
+	private void writeAlphabet(Set<String> alphabet, OutputSupplier<OutputStreamWriter> outputSupplier)
+			throws IOException {
+		final OutputStreamWriter output = outputSupplier.getOutput();
+		try {
+			output.write(String.format("%d\n", alphabet.size()));
+			for (String feature : alphabet) {
+				output.write(feature);
+				output.write("\n");
+			}
+		} finally {
+			closeQuietly(output);
+		}
 	}
 }

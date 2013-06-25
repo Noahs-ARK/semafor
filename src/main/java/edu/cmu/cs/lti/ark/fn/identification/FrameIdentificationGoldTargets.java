@@ -96,10 +96,8 @@ public class FrameIdentificationGoldTargets
 				"reg", 
 				0.0, 
 				frameMap,
-				cMap,
-				relatedWordsForWord,
-				revisedRelationsMap,
-				hvLemmas);
+				cMap
+		);
 		System.out.println("Size of originalSentences list:"+originalIndices.size());
 
 		boolean usegraph = !options.useGraph.get().equals("null");

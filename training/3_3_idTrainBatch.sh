@@ -17,12 +17,12 @@ if [ -e ${log_file} ]; then
 fi
 
 ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8g -Xmx8g -XX:ParallelGCThreads=1 \
-  edu.cmu.cs.lti.ark.fn.identification.TrainBatchModelDerThreaded \
-  alphabetfile:${model_dir}/alphabet_combined.dat \
+  edu.cmu.cs.lti.ark.fn.identification.training.TrainBatch \
+  alphabetfile:${model_dir}/alphabet.dat \
   eventsfile:${model_dir}/events \
   model:${model_dir}/idmodel.dat \
-  regularization:reg \
-  lambda:0.0 \
+  regularization:l1 \
+  lambda:1.0 \
   restartfile:null \
   logoutputfile:${model_dir}/log \
   numthreads:${num_threads}

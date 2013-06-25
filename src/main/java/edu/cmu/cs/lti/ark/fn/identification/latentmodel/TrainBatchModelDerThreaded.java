@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU General Public License along
  * with SEMAFOR 2.0.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package edu.cmu.cs.lti.ark.fn.identification;
+package edu.cmu.cs.lti.ark.fn.identification.latentmodel;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
@@ -139,7 +139,7 @@ public class TrainBatchModelDerThreaded {
 			Arrays.fill(gradients, 0.0);
 			double m_value = getValuesAndGradients();
 			logger.info("Function value:" + m_value);
-			iflag = LBFGS.lbfgs(params, m_value, gradients);
+			iflag = LBFGS.singleStep(params, m_value, gradients);
 			logger.info("Finished iteration:" + iteration);
 			iteration++;
 			if (iteration % FNConstants.save_every_k == 0) {
@@ -198,7 +198,7 @@ public class TrainBatchModelDerThreaded {
 			double totalExp = 0.0;
 			for (int i = 0; i < featArrLen; i++) {
 				exp[i] = new double[featureArray[i].length];
-				sumExp[i] = 0.0;
+				sumExp[i] = 0.0;  // the partition function
 				for (int j = 0; j < exp[i].length; j++) {
 					double weiFeatSum = 0.0;
 					int[] feats = featureArray[i][j];
@@ -232,7 +232,7 @@ public class TrainBatchModelDerThreaded {
 		}
 		if (useL2Regularization) {
 			for (int i = 0; i < params.length; ++i) {
-				final double weight = params[i];
+				final double weight = Math.log(params[i]);
 				tValues[threadId] += lambda * (weight * weight);
 				tGradients[threadId][i] += 2 * lambda * weight;
 			}

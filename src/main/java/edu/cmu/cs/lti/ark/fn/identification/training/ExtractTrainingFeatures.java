@@ -19,27 +19,38 @@
  * You should have received a copy of the GNU General Public License along
  * with SEMAFOR 2.0.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package edu.cmu.cs.lti.ark.fn.identification;
+package edu.cmu.cs.lti.ark.fn.identification.training;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
+import edu.cmu.cs.lti.ark.fn.identification.FeatureExtractor;
+import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
-import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
-import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
+import edu.cmu.cs.lti.ark.util.nlp.CachedLemmatizer;
+import edu.cmu.cs.lti.ark.util.nlp.Lemmatizer;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import gnu.trove.TIntDoubleHashMap;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.FileHandler;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
+import static edu.cmu.cs.lti.ark.fn.identification.training.AlphabetCreationThreaded.readAlphabetFile;
+import static edu.cmu.cs.lti.ark.fn.identification.training.TrainBatch.FEATURE_FILENAME_PREFIX;
+import static edu.cmu.cs.lti.ark.fn.identification.training.TrainBatch.FEATURE_FILENAME_SUFFIX;
+import static edu.cmu.cs.lti.ark.util.SerializedObjects.writeSerializedObject;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 
 public class ExtractTrainingFeatures {
@@ -47,14 +58,13 @@ public class ExtractTrainingFeatures {
 
 	private final THashMap<String, THashSet<String>> frameMap;
 	private final String parseFile;
-	private final String eventDir;
+	private final File eventDir;
 	private final String frameElementsFile;
 	private final Map<String, Integer> alphabet;
 	private final int startIndex;
 	private final int endIndex;
 	private final int numThreads;
-	private final FeatureExtractor.Relations wnRelations;
-	private final FeatureExtractor.Lemmatizer lemmatizer;
+	private final FeatureExtractor featureExtractor;
 
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		final FNModelOptions options = new FNModelOptions(args);
@@ -68,37 +78,34 @@ public class ExtractTrainingFeatures {
 		final int endIndex = options.endIndex.get();
 		logger.info("Start:" + startIndex + " end:" + endIndex);
 		final RequiredDataForFrameIdentification r = SerializedObjects.readObject(options.fnIdReqDataFile.get());
-		final FeatureExtractor.Relations wnRelations =
-				new FeatureExtractor.CachedRelations(r.getRevisedRelMap(), r.getRelatedWordsForWord());
-		final FeatureExtractor.Lemmatizer lemmatizer =
-				new FeatureExtractor.CachedLemmatizer(r.getHvLemmaCache());
+		final Lemmatizer lemmatizer =
+				new CachedLemmatizer(r.getHvLemmaCache());
+		final FeatureExtractor featureExtractor = new FeatureExtractor();
 		logger.info("Reading alphabet");
-		final Map<String, Integer> alphabet = AlphabetCreationThreaded.readAlphabetFile(options.modelFile.get());
+		final Map<String, Integer> alphabet = readAlphabetFile(options.modelFile.get());
 		logger.info("Done reading alphabet");
 		final ExtractTrainingFeatures events =
 				new ExtractTrainingFeatures(alphabet,
-						options.eventsFile.get(),
+						new File(options.eventsFile.get()),
 						options.trainFrameElementFile.get(),
 						options.trainParseFile.get(),
 						r.getFrameMap(),
 						startIndex,
 						endIndex,
 						options.numThreads.get(),
-						wnRelations,
-						lemmatizer);
+						featureExtractor);
 		events.createEvents();
 	}
 
 	public ExtractTrainingFeatures(Map<String, Integer> alphabet,
-								   String eventDir,
+								   File eventDir,
 								   String frameElementsFile,
 								   String parseFile,
 								   THashMap<String, THashSet<String>> frameMap,
 								   int startIndex,
 								   int endIndex,
 								   int numThreads,
-								   FeatureExtractor.Relations wnRelations,
-								   FeatureExtractor.Lemmatizer lemmatizer) {
+								   FeatureExtractor featureExtractor) {
 		this.alphabet = alphabet;
 		this.frameMap = frameMap;
 		this.parseFile = parseFile;
@@ -107,8 +114,7 @@ public class ExtractTrainingFeatures {
 		this.startIndex = startIndex;
 		this.endIndex = endIndex;
 		this.numThreads = numThreads;
-		this.wnRelations = wnRelations;
-		this.lemmatizer = lemmatizer;
+		this.featureExtractor = featureExtractor;
 	}
 
 	public void createEvents() throws IOException {
@@ -123,55 +129,19 @@ public class ExtractTrainingFeatures {
 			final int count = i;
 			threadPool.execute(new Runnable() {
 				public void run() {
-					logger.info("Task " + count + " : start");
-					int[][][] allFeatures = processLine(frameLines.get(count), parseLines);
-					final String file = String.format("%s/feats_%d.jobj.gz", eventDir, count);
-					SerializedObjects.writeSerializedObject(allFeatures, file); // auto-gzips
-					logger.info("Task " + count + " : end" + " alphsize:" + alphabet.size());
+					logger.info(String.format("Task %d : start", count));
+					TIntDoubleHashMap[] allFeatures = processLine(frameLines.get(count), parseLines);
+					final String filename =
+							String.format("%s%6d%s", FEATURE_FILENAME_PREFIX, count, FEATURE_FILENAME_SUFFIX);
+					writeSerializedObject(allFeatures, new File(eventDir, filename).getAbsolutePath()); // auto-gzips
+					logger.info(String.format("Task %d : end alphsize: %d", count, alphabet.size()));
 				}
 			});
 		}
 		threadPool.shutdown();
 	}
 
-	private int[][] getFeatures(String frame, int[] targetTokenIdxs, String[][] allLemmaTags) {
-		final THashSet<String> hiddenUnits = frameMap.get(frame);
-		final DependencyParse parse = DependencyParse.processFN(allLemmaTags, 0.0);
-		final int hSize = hiddenUnits.size();
-		final int[][] results = new int[hSize][];
-		int hCount = 0;
-		for (String unit : hiddenUnits) {
-			final IntCounter<String> valMap = FeatureExtractor.extractFeatures(
-					frame,
-					targetTokenIdxs,
-					unit,
-					allLemmaTags,
-					parse,
-					wnRelations,
-					lemmatizer,
-					true);
-			final List<Integer> feats = new ArrayList<Integer>();
-			for (String feat : valMap.keySet()) {
-				int val = valMap.get(feat);
-				int featIndex;
-				if (alphabet.containsKey(feat)) {
-					featIndex = alphabet.get(feat);
-					for (int i = 0; i < val; i++) {
-						feats.add(featIndex);
-					}
-				}
-			}
-			int hFeatSize = feats.size();
-			results[hCount] = new int[hFeatSize];
-			for (int i = 0; i < hFeatSize; i++) {
-				results[hCount][i] = feats.get(i);
-			}
-			hCount++;
-		}
-		return results;
-	}
-
-	private int[][][] processLine(String frameLine, List<String> parseLines) {
+	private TIntDoubleHashMap[] processLine(String frameLine, List<String> parseLines) {
 		// Parse the frameLine
 		final String[] toks = frameLine.split("\t");
 		// throw out first two fields
@@ -185,17 +155,24 @@ public class ExtractTrainingFeatures {
 		final int sentNum = Integer.parseInt(tokens.get(5));
 
 		// Parse the parse line
-		final String[][] allLemmaTags = AllLemmaTags.readLine(parseLines.get(sentNum));
+
+		final Sentence sentence = Sentence.fromAllLemmaTagsArray(AllLemmaTags.readLine(parseLines.get(sentNum)));
 
 		// extract features for every frame
 		final Set<String> frames = frameMap.keySet();
-		final int[][][] allFeatures = new int[frames.size()][][];
+		final TIntDoubleHashMap[] allFeatures = new TIntDoubleHashMap[frames.size()];
 		// put the correct frame first
-		allFeatures[0] = getFeatures(goldFrame, targetTokenIdxs, allLemmaTags);
+		final Map<String, TIntDoubleHashMap> allFeaturesMap = featureExtractor.extractFeaturesByIndex(
+				frames,
+				targetTokenIdxs,
+				sentence,
+				alphabet
+		);
+		allFeatures[0] = allFeaturesMap.get(goldFrame);
 		int count = 1;
 		for (String wrongFrame : frames) {
 			if (wrongFrame.equals(goldFrame)) continue;
-			allFeatures[count] = getFeatures(wrongFrame, targetTokenIdxs, allLemmaTags);
+			allFeatures[count] = allFeaturesMap.get(wrongFrame);
 			count++;
 		}
 		return allFeatures;

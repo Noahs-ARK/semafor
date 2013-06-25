@@ -19,16 +19,17 @@
  * You should have received a copy of the GNU General Public License along
  * with SEMAFOR 2.0.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package edu.cmu.cs.lti.ark.fn.identification;
+package edu.cmu.cs.lti.ark.fn.identification.training;
 
 import edu.cmu.cs.lti.ark.fn.constants.FNConstants;
+import edu.cmu.cs.lti.ark.fn.identification.latentmodel.LatentFeatureExtractor;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import edu.cmu.cs.lti.ark.util.optimization.*;
 import edu.cmu.cs.lti.ark.util.optimization.LDouble.IdentityElement;
 import gnu.trove.*;
-import org.apache.hadoop.mapred.Reporter;
+//import org.apache.hadoop.mapred.Reporter;
 import riso.numerical.LBFGS;
 
 import java.io.BufferedReader;
@@ -49,16 +50,15 @@ public class LRIdentificationModelSingleNode extends LogModel {
 	protected double mLambda = 1.0;
 	protected String mInitParamFile;
 	protected int mNumExamples;
-	THashMap<String, THashSet<String>> mFrameMap;
+	public THashMap<String, THashSet<String>> mFrameMap;
 	protected TIntObjectHashMap<LogFormula> mLookupChart;
 	private String mModelFile;
-	protected TObjectIntHashMap<String> localA = null;
-	TObjectDoubleHashMap<String> mParamList = null;
+	public TObjectIntHashMap<String> localA = null;
+	public TObjectDoubleHashMap<String> mParamList = null;
 	private String mTrainOrTest = "train";
 
 	/*
 	 * for training
-	 *
 	 */
 	public LRIdentificationModelSingleNode(TObjectDoubleHashMap<String> paramList,
 										   ArrayList<String> frameLines,
@@ -240,8 +240,7 @@ public class LRIdentificationModelSingleNode extends LogModel {
 		LogFormula result = getFormulaObject(LogFormula.Op.PLUS);
 		DependencyParse parse = DependencyParse.processFN(data, 0.0);
 		for (String unit : hiddenUnits) {
-			FeatureExtractor featex = new FeatureExtractor();
-			IntCounter<String> valMap = featex.extractFeatures(frame, intTokNums, unit, data, mWNR, null, null, parse);
+			IntCounter<String> valMap = LatentFeatureExtractor.extractFeatures(frame, intTokNums, unit, data, mWNR, null, null, parse);
 			Set<String> features = valMap.keySet();
 			LogFormula featSum = getFormulaObject(LogFormula.Op.PLUS);
 
@@ -324,14 +323,14 @@ public class LRIdentificationModelSingleNode extends LogModel {
 		}
 	}
 
-	public String getBestFrame(String frameLine, String parseLine, Reporter reporter) {
-		return null;
-	}
-
-
-	protected LogFormula getFormula(String frameLine, String parse, Reporter reporter) {
-		return null;
-	}
+//	public String getBestFrame(String frameLine, String parseLine, Reporter reporter) {
+//		return null;
+//	}
+//
+//
+//	protected LogFormula getFormula(String frameLine, String parse, Reporter reporter) {
+//		return null;
+//	}
 
 	protected LogFormula getRegularizationTerm() {
 		// (* -0.5 lambda (w . w))

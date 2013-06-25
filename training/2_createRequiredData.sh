@@ -8,6 +8,7 @@ echo
 echo "RequiredDataCreation"
 echo
 mkdir -p "${model_dir}"
+
 ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms2g -Xmx2g -XX:ParallelGCThreads=2 \
     edu.cmu.cs.lti.ark.fn.identification.RequiredDataCreation \
       stopwords-file:${stopwords_file} \

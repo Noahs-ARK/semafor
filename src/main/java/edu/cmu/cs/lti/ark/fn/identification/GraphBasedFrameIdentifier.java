@@ -33,7 +33,7 @@ public class GraphBasedFrameIdentifier extends FastFrameIdentifier {
 									 Map<String, Map<String, Set<String>>> revisedRelationsMap,
 									 Map<String, String> hvLemmas,
 									 SmoothedGraph graph) {
-		super(paramList, reg, l, frameMap, hvCorrespondenceMap, relatedWordsForWord, revisedRelationsMap, hvLemmas);
+		super(paramList, reg, l, frameMap, hvCorrespondenceMap);
 		this.graph = graph;
 	}
 

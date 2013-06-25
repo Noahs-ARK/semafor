@@ -26,8 +26,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;
-import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
-import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
+import edu.cmu.cs.lti.ark.fn.identification.training.LRIdentificationModelSingleNode;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectDoubleHashMap;
@@ -51,23 +50,16 @@ public class FastFrameIdentifier {
 	private final LRIdentificationModelSingleNode model;
 	// map from lemmas to frames
 	private THashMap<String, THashSet<String>> mHvCorrespondenceMap;
-	private Map<String, Set<String>> mRelatedWordsForWord;
-	private Map<String, Map<String, Set<String>>> mRevisedRelationsMap;
-	private Map<String, String> mHVLemmas;
+	private final FeatureExtractor featureExtractor;
 
 	public FastFrameIdentifier(TObjectDoubleHashMap<String> paramList,
 							   String reg,
 							   double l,
 							   THashMap<String, THashSet<String>> frameMap,
-							   THashMap<String, THashSet<String>> hvCorrespondenceMap,
-							   Map<String, Set<String>> relatedWordsForWord,
-							   Map<String, Map<String, Set<String>>> revisedRelationsMap,
-							   Map<String, String> hvLemmas) {
+							   THashMap<String, THashSet<String>> hvCorrespondenceMap) {
 		model = new LRIdentificationModelSingleNode(paramList, reg, l, null, frameMap);
 		mHvCorrespondenceMap = hvCorrespondenceMap;
-		mRelatedWordsForWord = relatedWordsForWord;
-		mRevisedRelationsMap = revisedRelationsMap;
-		mHVLemmas = hvLemmas;
+		featureExtractor = new FeatureExtractor();
 	}
 
 	/**
@@ -79,10 +71,16 @@ public class FastFrameIdentifier {
 	 * @return the highest scoring frame
 	 */
 	private String pickBestFrame(Set<String> frames, Sentence sentence, int[] tokenIndices) {
+		final Map<String, Map<String, Double>> featuresByFrame =
+				featureExtractor.extractFeaturesByName(frames,
+						tokenIndices,
+						sentence
+				);
+
 		String result = null;
 		double maxVal = -Double.MIN_VALUE;
 		for (String frame : frames) {
-			double val = getValueForFrame(frame, tokenIndices, sentence);
+			double val = getValueForFrame(featuresByFrame.get(frame));
 			if (val > maxVal) {
 				maxVal = val;
 				result = frame;
@@ -93,40 +91,21 @@ public class FastFrameIdentifier {
 
 	/**
 	 * Applies the log-linear model to frame
-	 *
-	 * @param frame      the frames to score
-	 * @param sentence   the dependency parse of the sentence, needed to extract features
-	 * @param intTokNums the token indexes that the frame spans
 	 * @return the score of the frame
 	 */
-	private double getValueForFrame(String frame, int[] intTokNums, Sentence sentence) {
+	private double getValueForFrame(Map<String, Double> features) {
 		model.m_current = 0;
 		model.m_llcurrent = 0;
-		String[][] parseData = sentence.toAllLemmaTagsArray();
-		THashSet<String> hiddenUnits = model.mFrameMap.get(frame);
-		DependencyParse parse = DependencyParse.processFN(parseData, 0.0);
 		double result = 0.0;
-		for (String unit : hiddenUnits) {
-			IntCounter<String> valMap;
-			valMap = FeatureExtractor.extractFeaturesLessMemory(frame,
-							intTokNums,
-							unit,
-							parseData,
-							mRelatedWordsForWord,
-							mRevisedRelationsMap,
-							mHVLemmas,
-							parse);
-			final Set<String> features = valMap.keySet();
-			double featSum = 0.0;
-			for (String feat : features) {
-				double val = valMap.getT(feat);
-				int ind = model.localA.get(feat);
-				double paramVal = model.V[ind].exponentiate();
-				double prod = val * paramVal;
-				featSum += prod;
-			}
-			result += Math.exp(featSum);
+		double featSum = 0.0;
+		for (String feat : features.keySet()) {
+			double val = features.get(feat);
+			int ind = model.localA.get(feat);
+			double paramVal = model.V[ind].getValue();
+			double prod = val * paramVal;
+			featSum += prod;
 		}
+		result += Math.exp(featSum);
 		return result;
 	}
 
