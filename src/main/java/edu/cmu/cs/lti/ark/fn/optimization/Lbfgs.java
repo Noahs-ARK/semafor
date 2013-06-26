@@ -3,7 +3,6 @@ package edu.cmu.cs.lti.ark.fn.optimization;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.io.OutputSupplier;
-import edu.cmu.cs.lti.ark.fn.constants.FNConstants;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 
 import java.io.File;
@@ -20,9 +19,21 @@ import static org.apache.commons.io.IOUtils.closeQuietly;
  *
  * @author sthomson@cs.cmu.edu
  */
-public class LBFGS {
-	private static final Logger logger = Logger.getLogger(LBFGS.class.getCanonicalName());
+public class Lbfgs {
+	private static final Logger logger = Logger.getLogger(Lbfgs.class.getCanonicalName());
 	static { logger.addHandler(new ConsoleHandler()); }
+	/*
+	 * LBFGS constants
+	 */
+	public static int MAX_ITERATIONS = 2000;
+	// we've converged when || gradient step || / || parameters || <= STOPPING_THRESHOLD
+    public static double STOPPING_THRESHOLD = 1.0e-4;
+	public static double XTOL = calculateMachineEpsilon(); //estimate of machine precision.  ~= 2.220446049250313E-16
+	// number of corrections, between 3 and 7
+    // a higher number means more computation and time, but more accuracy, i guess
+    public static int NUM_CORRECTIONS = 3;
+	public static boolean DEBUG = true;
+	public static int SAVE_EVERY_K = 10;
 
 	public static double[] trainAndSaveModel(double[] startingParams,
 											 Function<double[], Pair<Double, double[]>> valueAndGradientProvider,
@@ -33,7 +44,7 @@ public class LBFGS {
 		int modelSize = currentParams.length;
 		// Output every iteration:
 		// iteration count, number of function evaluations, function value, norm of the gradient, and steplength
-		int[] iprint = new int[] {FNConstants.m_debug ? 1 : -1, 0};
+		int[] iprint = new int[] {DEBUG ? 1 : -1, 0};
 		// lbfgs sets this flag to zero when it has converged
 		final int[] iflag = { 0 };
 		// unused
@@ -48,24 +59,24 @@ public class LBFGS {
 			logger.info("Function value:" + value);
 
 			riso.numerical.LBFGS.lbfgs(modelSize,
-					FNConstants.m_num_corrections,
+					NUM_CORRECTIONS,
 					currentParams,
 					value,
 					gradients,
 					diagco,
 					diag,
 					iprint,
-					FNConstants.m_eps,
-					FNConstants.xtol,
+					STOPPING_THRESHOLD,
+					XTOL,
 					iflag
 			);
 			logger.info("Finished iteration:" + iteration);
 			iteration++;
-			if (iteration % FNConstants.save_every_k == 0) {
+			if (iteration % SAVE_EVERY_K == 0) {
 				final String modelFilename = String.format("%s_%05d", modelFilePrefix, iteration);
 				saveModel(riso.numerical.LBFGS.solution_cache, newWriterSupplier(new File(modelFilename), Charsets.UTF_8));
 			}
-		} while (iteration <= FNConstants.m_max_its && iflag[0] != 0);
+		} while (iteration <= MAX_ITERATIONS && iflag[0] != 0);
 		saveModel(riso.numerical.LBFGS.solution_cache, newWriterSupplier(new File(modelFilePrefix), Charsets.UTF_8));
 		return currentParams;
 	}
@@ -85,4 +96,11 @@ public class LBFGS {
 		}
 	}
 
+	public static double calculateMachineEpsilon() {
+		double machineEpsilon = 1.0;
+		do {
+			machineEpsilon /= 2.0;
+		} while (1.0 + (machineEpsilon / 2.0) != 1.0);
+		return machineEpsilon;
+	}
 }

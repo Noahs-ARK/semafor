@@ -33,7 +33,6 @@ import java.util.Comparator;
 
 import riso.numerical.LBFGS;
 
-import edu.cmu.cs.lti.ark.fn.constants.FNConstants;
 import edu.cmu.cs.lti.ark.fn.optimization.*;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
@@ -407,7 +406,7 @@ public class TrainBatchModel extends LogModel
 		RootLogFormula fullLogLike = new RootLogFormula(this,Type,"lazyroot");
 		double[] diagco = new double[modelSize];
 		int[] iprint = new int[2];
-		iprint[0] = FNConstants.m_debug?1:-1;
+		iprint[0] = Lbfgs.DEBUG ?1:-1;
 		iprint[1] = 0; //output the minimum level of info
 		int[] iflag = new int[1];
 		iflag[0] = 0;
@@ -423,22 +422,22 @@ public class TrainBatchModel extends LogModel
 			getGradientsForOptimizingRoutine(maximize,gradient);
 			getValuesForOptimizingRoutine(m_estimate);
 			LBFGS.lbfgs(modelSize,
-					FNConstants.m_num_corrections, 
+					Lbfgs.NUM_CORRECTIONS,
 					m_estimate, 
 					m_value,
 					gradient, 
 					false, //true if we're providing the diag of cov matrix Hk0 (?)
 					diagco, //the cov matrix
 					iprint, //type of output generated
-					FNConstants.m_eps,
-					FNConstants.xtol, //estimate of machine precision
+					Lbfgs.STOPPING_THRESHOLD,
+					Lbfgs.XTOL, //estimate of machine precision
 					iflag //i don't get what this is about
 			);
 			setValues(m_estimate);
 			iteration++;
 			fullLogLike.changedParamValues();
-			if(iteration%FNConstants.save_every_k==0)
+			if(iteration% Lbfgs.SAVE_EVERY_K ==0)
 				saveModel(modelFile+"_"+iteration);
-		}while (iteration <= FNConstants.m_max_its&&iflag[0] != 0);
+		}while (iteration <= Lbfgs.MAX_ITERATIONS &&iflag[0] != 0);
 	}	
 }

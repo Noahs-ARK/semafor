@@ -30,7 +30,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.common.primitives.Ints;
-import edu.cmu.cs.lti.ark.fn.optimization.LBFGS;
+import edu.cmu.cs.lti.ark.fn.optimization.Lbfgs;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
@@ -147,7 +147,7 @@ public class TrainBatch {
 						return getValuesAndGradientsThreaded(currentParams);
 					}
 				};
-		return LBFGS.trainAndSaveModel(params, valueAndGradientFunction, modelFile);
+		return Lbfgs.trainAndSaveModel(params, valueAndGradientFunction, modelFile);
 	}
 
 	private Pair<Double, double[]> getValuesAndGradientsThreaded(final double[] currentParams) {
@@ -177,8 +177,8 @@ public class TrainBatch {
 			plusEquals(gradients, tGrad);
 		}
 		// LBGFS always minimizes, so objective is -log(likelihood)
-		double negLogLikelihood = -logLikelihood * oneOverN;
-		timesEquals(gradients, -oneOverN);
+		double negLogLikelihood = -logLikelihood; // * oneOverN;
+		timesEquals(gradients, -1.0); //oneOverN);
 		// add the regularization penalty
 		if (useL1Regularization) {
 			double penalty = 0.0;

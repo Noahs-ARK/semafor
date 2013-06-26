@@ -22,23 +22,7 @@
 package edu.cmu.cs.lti.ark.fn.constants;
 
 
-public class FNConstants
-{
-	
-	/*
-	 * LBFGS constants
-	 */
-	public static int m_max_its = 2000;
-    //not sure how this parameter comes into play
-    public static double m_eps = 1.0e-4;
-    public static double xtol = 1.0e-10; //estimate of machine precision.  get this right
-    //number of corrections, between 3 and 7
-    //a higher number means more computation and time, but more accuracy, i guess
-    public static int m_num_corrections = 3; 
-    public static boolean m_debug = true;   
-    public static int save_every_k = 10;
-    
-	
+public class FNConstants {
 	/*
 	 * xpaths
 	 */

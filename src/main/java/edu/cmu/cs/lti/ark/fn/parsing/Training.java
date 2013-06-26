@@ -21,8 +21,8 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import edu.cmu.cs.lti.ark.fn.constants.FNConstants;
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
+import edu.cmu.cs.lti.ark.fn.optimization.Lbfgs;
 import edu.cmu.cs.lti.ark.fn.optimization.SGA;
 import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
 import edu.cmu.cs.lti.ark.util.FileUtil;
@@ -286,7 +286,7 @@ public class Training {
 		int modelSize = W.length;
 		double[] diagco = new double[modelSize];
 		int[] iprint = new int[2];
-		iprint[0] = FNConstants.m_debug?1:-1;
+		iprint[0] = Lbfgs.DEBUG ?1:-1;
 		iprint[1] = 0; //output the minimum level of info
 		int[] iflag = new int[1];
 		iflag[0] = 0;
@@ -300,22 +300,22 @@ public class Training {
 			double m_value = getValuesAndGradients();
 			System.out.println("Function value:"+m_value);
 			LBFGS.lbfgs(modelSize,
-					FNConstants.m_num_corrections, 
+					Lbfgs.NUM_CORRECTIONS,
 					W, 
 					m_value,
 					mGradients, 
 					false, //true if we're providing the diag of cov matrix Hk0 (?)
 					diagco, //the cov matrix
 					iprint, //type of output generated
-					FNConstants.m_eps,
-					FNConstants.xtol, //estimate of machine precision
+					Lbfgs.STOPPING_THRESHOLD,
+					Lbfgs.XTOL, //estimate of machine precision
 					iflag //i don't get what this is about
 			);
 			System.out.println("Finished iteration:"+iteration);
 			iteration++;
-			if (iteration%FNConstants.save_every_k==0)
+			if (iteration% Lbfgs.SAVE_EVERY_K ==0)
 				writeModel(mModelFile+"_"+iteration);
-		} while (iteration <= FNConstants.m_max_its&&iflag[0] != 0);
+		} while (iteration <= Lbfgs.MAX_ITERATIONS &&iflag[0] != 0);
 		writeModel(mModelFile);
 	}	
 	
