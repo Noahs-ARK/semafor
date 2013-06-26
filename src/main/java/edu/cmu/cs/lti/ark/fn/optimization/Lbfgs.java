@@ -26,12 +26,12 @@ public class Lbfgs {
 	 * LBFGS constants
 	 */
 	public static int MAX_ITERATIONS = 2000;
-	// we've converged when || gradient step || / || parameters || <= STOPPING_THRESHOLD
+	// we've converged when || gradient step || <= STOPPING_THRESHOLD * max(|| parameters ||, 1)
     public static double STOPPING_THRESHOLD = 1.0e-4;
 	public static double XTOL = calculateMachineEpsilon(); //estimate of machine precision.  ~= 2.220446049250313E-16
 	// number of corrections, between 3 and 7
-    // a higher number means more computation and time, but more accuracy, i guess
-    public static int NUM_CORRECTIONS = 3;
+    // a higher number means more computation per iteration, but possibly less iterations until convergence
+    public static int NUM_CORRECTIONS = 7;
 	public static boolean DEBUG = true;
 	public static int SAVE_EVERY_K = 10;
 
@@ -51,12 +51,12 @@ public class Lbfgs {
 		final double[] diag = new double[modelSize];
 		final boolean diagco = false;
 		do {
-			logger.info("Starting iteration:" + iteration);
+			//logger.info("Starting iteration:" + iteration);
 			Pair<Double, double[]> valueAndGradient =
 					valueAndGradientProvider.apply(currentParams);
 			double value = valueAndGradient.getFirst();
 			double[] gradients = valueAndGradient.getSecond();
-			logger.info("Function value:" + value);
+			//logger.info("Function value:" + value);
 
 			riso.numerical.LBFGS.lbfgs(modelSize,
 					NUM_CORRECTIONS,
@@ -70,7 +70,7 @@ public class Lbfgs {
 					XTOL,
 					iflag
 			);
-			logger.info("Finished iteration:" + iteration);
+			//logger.info("Finished iteration:" + iteration);
 			iteration++;
 			if (iteration % SAVE_EVERY_K == 0) {
 				final String modelFilename = String.format("%s_%05d", modelFilePrefix, iteration);
