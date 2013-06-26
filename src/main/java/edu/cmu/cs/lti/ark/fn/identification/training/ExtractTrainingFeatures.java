@@ -133,7 +133,7 @@ public class ExtractTrainingFeatures {
 					logger.info(String.format("Task %d : start", count));
 					TIntDoubleHashMap[] allFeatures = processLine(frameLines.get(count), parseLines);
 					final String filename =
-							String.format("%s%6d%s", FEATURE_FILENAME_PREFIX, count, FEATURE_FILENAME_SUFFIX);
+							String.format("%s%06d%s", FEATURE_FILENAME_PREFIX, count, FEATURE_FILENAME_SUFFIX);
 					writeSerializedObject(allFeatures, new File(eventDir, filename).getAbsolutePath()); // auto-gzips
 					logger.info(String.format("Task %d : end alphsize: %d", count, alphabet.size()));
 				}
