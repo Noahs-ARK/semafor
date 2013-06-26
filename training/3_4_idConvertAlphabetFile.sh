@@ -7,9 +7,7 @@ set -e # fail fast
 source "$(dirname ${0})/config.sh"
 
 # gets the last model file created
-# todo: fragile, better to just pad the numbers and "ls | sort -r | tail -1"
-num_model_files=$(ls ${model_dir}/idmodel.dat_* | wc -l | tr -d [[:space:]])
-model_file="${model_dir}/idmodel.dat_${num_model_files}0"
+model_file="$(ls ${model_dir}/idmodel.dat_* | sort -r | head -n1)"
 echo
 echo "Combining alphabet file with learned params for Frame IDing"
 echo "Using model file: ${model_file}"

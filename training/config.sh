@@ -3,6 +3,7 @@
 source "$(dirname ${0})/../bin/config.sh"
 
 # choose a name for the model to train
+#model_name="mst_frame_id_20130625"
 model_name="ancestor_frame_id_20130626"
 
 # should set to roughly the number of cores available
@@ -46,7 +47,7 @@ fe_file_length=`wc -l ${fe_file}`
 fe_file_length=`expr ${fe_file_length% *}`
 
 # path to store the alphabet we create:
-alphabet_file="${model_dir}/alphabet_combined.dat"
+alphabet_file="${model_dir}/alphabet.dat"
 
 SCAN_DIR="${model_dir}/scan"
 
