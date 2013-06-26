@@ -30,7 +30,6 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.common.primitives.Ints;
 import edu.cmu.cs.lti.ark.fn.constants.FNConstants;
-import edu.cmu.cs.lti.ark.fn.optimization.LBFGS;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
@@ -129,7 +128,10 @@ public class TrainBatchModelDerThreaded {
 	}
 
 	public void trainModel() throws Exception {
-		int iflag;  // lbfgs sets this flag to 0 when it's done
+		// minimum verbosity
+		int[] iprint = new int[] {FNConstants.m_debug ? 1 : -1, 0};
+		// lbfgs sets this flag to zero when it has converged
+		int[] iflag = new int[] { 0 };
 		tGradients = new double[numThreads][modelSize];  // gradients for each batch/thread
 		gradients = new double[modelSize];  // gradients of all threads added together
 		tValues = new double[numThreads];
@@ -139,13 +141,24 @@ public class TrainBatchModelDerThreaded {
 			Arrays.fill(gradients, 0.0);
 			double m_value = getValuesAndGradients();
 			logger.info("Function value:" + m_value);
-			iflag = LBFGS.singleStep(params, m_value, gradients);
+			riso.numerical.LBFGS.lbfgs(modelSize,
+					FNConstants.m_num_corrections,
+					params,
+					m_value,
+					gradients,
+					false,
+					new double[modelSize],
+					iprint,
+					FNConstants.m_eps,
+					FNConstants.xtol,
+					iflag
+			);
 			logger.info("Finished iteration:" + iteration);
 			iteration++;
 			if (iteration % FNConstants.save_every_k == 0) {
 				saveModel(params, modelFile + "_" + iteration);
 			}
-		} while (iteration <= FNConstants.m_max_its && iflag != 0);
+		} while (iteration <= FNConstants.m_max_its && iflag[0] != 0);
 		saveModel(params, modelFile);
 	}
 

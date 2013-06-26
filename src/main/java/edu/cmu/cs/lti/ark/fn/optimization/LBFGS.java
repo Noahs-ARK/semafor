@@ -22,52 +22,48 @@ import static org.apache.commons.io.IOUtils.closeQuietly;
 public class LBFGS {
 	private static final Logger logger = Logger.getLogger(LBFGS.class.getCanonicalName());
 
-	public static int singleStep(double[] currentParams, double objectiveValue, double[] gradient)
-			throws riso.numerical.LBFGS.ExceptionWithIflag {
-		// minimum verbosity
-		int[] iprint = new int[] {FNConstants.m_debug ? 1 : -1, 0};
-		// lbfgs sets this flag instead of throwing errors. cool.
-		int[] iflag = new int[] { 0 };
-		int modelSize = currentParams.length;
-		riso.numerical.LBFGS.lbfgs(modelSize,
-				FNConstants.m_num_corrections,
-				currentParams,
-				objectiveValue,
-				gradient,
-				false,
-				new double[modelSize],
-				iprint,
-				FNConstants.m_eps,
-				FNConstants.xtol,
-				iflag
-		);
-		return iflag[0];
-	}
-
 	public static double[] trainAndSaveModel(double[] startingParams,
 											 Function<double[], Pair<Double, double[]>> valueAndGradientProvider,
 											 String modelFilePrefix) throws Exception {
-		double[] currentParams = startingParams.clone();
-		int iflag;  // lbfgs sets this flag to 0 when it's done
 		int iteration = 0;
+		// parameters needed for lbfgs
+		double[] currentParams = startingParams.clone();
+		int modelSize = currentParams.length;
+		// minimum verbosity
+		int[] iprint = new int[] {FNConstants.m_debug ? 1 : -1, 0};
+		// lbfgs sets this flag to zero when it has converged
+		final int[] iflag = { 0 };
+		// unused
+		final double[] diag = new double[modelSize];
+		final boolean diagco = false;
 		do {
 			logger.info("Starting iteration:" + iteration);
 			Pair<Double, double[]> valueAndGradient =
 					valueAndGradientProvider.apply(currentParams);
-			assert valueAndGradient != null;
 			double value = valueAndGradient.getFirst();
 			double[] gradients = valueAndGradient.getSecond();
 			logger.info("Function value:" + value);
-			// updates currentParams as a side-effect
-			iflag = LBFGS.singleStep(currentParams, value, gradients);
+
+			riso.numerical.LBFGS.lbfgs(modelSize,
+					FNConstants.m_num_corrections,
+					currentParams,
+					value,
+					gradients,
+					diagco,
+					diag,
+					iprint,
+					FNConstants.m_eps,
+					FNConstants.xtol,
+					iflag
+			);
 			logger.info("Finished iteration:" + iteration);
 			iteration++;
 			if (iteration % FNConstants.save_every_k == 0) {
 				final String modelFilename = String.format("%s_%05d", modelFilePrefix, iteration);
-				saveModel(currentParams, newWriterSupplier(new File(modelFilename), Charsets.UTF_8));
+				saveModel(riso.numerical.LBFGS.solution_cache, newWriterSupplier(new File(modelFilename), Charsets.UTF_8));
 			}
-		} while (iteration <= FNConstants.m_max_its && iflag != 0);
-		saveModel(currentParams, newWriterSupplier(new File(modelFilePrefix), Charsets.UTF_8));
+		} while (iteration <= FNConstants.m_max_its && iflag[0] != 0);
+		saveModel(riso.numerical.LBFGS.solution_cache, newWriterSupplier(new File(modelFilePrefix), Charsets.UTF_8));
 		return currentParams;
 	}
 
