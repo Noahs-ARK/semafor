@@ -35,18 +35,27 @@ public class AncestorFeatureExtractor extends BasicFeatureExtractor {
 		final Map<String, Map<String, Double>> results = Maps.newHashMap();
 		// conjoin base features with frame and ancestors
 		for (String frame : frameNames) {
+			final String frameFtr = "f:" + frame;
 			final Iterable<String> frameAndAncestors =
 					Iterables.concat(ImmutableSet.of(frame), ancestors.getAncestors(frame));
 			final Map<String, Double> featuresForFrame = Maps.newHashMap();
+			// add every conjunction
 			for (String feature : baseFeatures.keySet()) {
+				featuresForFrame.put(
+						SPACE.join(frameFtr, feature),
+						baseFeatures.get(feature).doubleValue()
+				);
 				for (String ancestor : frameAndAncestors) {
-					final String frameFtr = "f:" + ancestor;
+					final String ancestorFrameFtr = "af:" + ancestor;
 					featuresForFrame.put(
-							SPACE.join(frameFtr, feature),
+							SPACE.join(ancestorFrameFtr, feature),
 							baseFeatures.get(feature).doubleValue()
 					);
 				}
 			}
+			// add homogenous/bias features
+			featuresForFrame.put(frameFtr, 1.0);
+			for (String ancestor : frameAndAncestors) featuresForFrame.put("af:" + ancestor, 1.0);
 			results.put(frame, featuresForFrame);
 		}
 		return results;
