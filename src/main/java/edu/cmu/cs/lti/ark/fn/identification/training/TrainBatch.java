@@ -90,11 +90,11 @@ public class TrainBatch {
 							return loadFeaturesForTarget(key);
 						}
 					});
-	//private final double oneOverModelSize;
+	//private final double oneOverN;
 	final double[] gradients;
 	final double[][] tGradients;
 	final double[] tValues;
-	private final double oneOverModelSize;
+	private final double oneOverN;
 
 	public static void main(String[] args) throws Exception {
 		final FNModelOptions options = new FNModelOptions(args);
@@ -126,9 +126,9 @@ public class TrainBatch {
 					  Optional<String> restartFile,
 					  int numThreads) throws IOException {
 		final int modelSize = getAlphabetSize(alphabetFile);
-		this.oneOverModelSize = 1.0 / modelSize;
 		this.modelFile = modelFile;
 		this.eventFiles = getEventFiles(new File(eventsDir));
+		this.oneOverN = 1.0 / this.eventFiles.size();
 		this.useL1Regularization = reg.toLowerCase().equals("l1");
 		this.useL2Regularization = reg.toLowerCase().equals("l2");
 		this.lambda = lambda;
@@ -177,8 +177,8 @@ public class TrainBatch {
 			plusEquals(gradients, tGrad);
 		}
 		// LBGFS always minimizes, so objective is -log(likelihood)
-		double negLogLikelihood = -logLikelihood * oneOverModelSize;
-		timesEquals(gradients, -oneOverModelSize);
+		double negLogLikelihood = -logLikelihood * oneOverN;
+		timesEquals(gradients, -oneOverN);
 		// add the regularization penalty
 		if (useL1Regularization) {
 			double penalty = 0.0;

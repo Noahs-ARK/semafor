@@ -9,6 +9,7 @@ import edu.cmu.cs.lti.ark.util.ds.Pair;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.logging.ConsoleHandler;
 import java.util.logging.Logger;
 
 import static com.google.common.io.Files.newWriterSupplier;
@@ -21,6 +22,7 @@ import static org.apache.commons.io.IOUtils.closeQuietly;
  */
 public class LBFGS {
 	private static final Logger logger = Logger.getLogger(LBFGS.class.getCanonicalName());
+	static { logger.addHandler(new ConsoleHandler()); }
 
 	public static double[] trainAndSaveModel(double[] startingParams,
 											 Function<double[], Pair<Double, double[]>> valueAndGradientProvider,
@@ -29,7 +31,8 @@ public class LBFGS {
 		// parameters needed for lbfgs
 		double[] currentParams = startingParams.clone();
 		int modelSize = currentParams.length;
-		// minimum verbosity
+		// Output every iteration:
+		// iteration count, number of function evaluations, function value, norm of the gradient, and steplength
 		int[] iprint = new int[] {FNConstants.m_debug ? 1 : -1, 0};
 		// lbfgs sets this flag to zero when it has converged
 		final int[] iflag = { 0 };
