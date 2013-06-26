@@ -27,7 +27,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;
-import edu.cmu.cs.lti.ark.util.IFeatureExtractor;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import gnu.trove.TIntDoubleHashMap;
@@ -40,7 +39,7 @@ import java.util.SortedSet;
 /**
  * Extracts features for the frame identification model
  */
-public class FeatureExtractor implements IFeatureExtractor {
+public class BasicFeatureExtractor {
 	private static final Joiner SPACE = Joiner.on(" ");
 	private static final Joiner UNDERSCORE = Joiner.on("_");
 

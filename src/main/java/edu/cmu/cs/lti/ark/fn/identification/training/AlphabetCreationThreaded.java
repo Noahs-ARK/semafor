@@ -30,7 +30,7 @@ import com.google.common.io.Files;
 import com.google.common.io.OutputSupplier;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
-import edu.cmu.cs.lti.ark.fn.identification.FeatureExtractor;
+import edu.cmu.cs.lti.ark.fn.identification.BasicFeatureExtractor;
 import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
@@ -64,7 +64,7 @@ public class AlphabetCreationThreaded {
 	private final int startIndex;
 	private final int endIndex;
 	private final int numThreads;
-	private final FeatureExtractor featureExtractor;
+	private final BasicFeatureExtractor featureExtractor;
 
 	/**
 	 * Parses commandline args, then creates a new {@link #AlphabetCreationThreaded} with them
@@ -96,7 +96,7 @@ public class AlphabetCreationThreaded {
 						options.trainFrameElementFile.get(),
 						options.trainParseFile.get(),
 						r.getFrameMap(),
-						new FeatureExtractor(),
+						new BasicFeatureExtractor(),
 						startIndex,
 						endIndex,
 						numThreads);
@@ -123,7 +123,7 @@ public class AlphabetCreationThreaded {
 									String frameElementsFile,
 									String parseFile,
 									THashMap<String, THashSet<String>> frameMap,
-									FeatureExtractor featureExtractor,
+									BasicFeatureExtractor featureExtractor,
 									int startIndex,
 									int endIndex,
 									int numThreads) {

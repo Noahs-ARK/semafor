@@ -27,7 +27,6 @@ import com.google.common.collect.Sets;
 import edu.cmu.cs.lti.ark.fn.wordnet.Relations;
 import edu.cmu.cs.lti.ark.fn.wordnet.WNRelations;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
-import edu.cmu.cs.lti.ark.util.IFeatureExtractor;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
 import edu.cmu.cs.lti.ark.util.nlp.CachingWordNetLemmatizer;
 import edu.cmu.cs.lti.ark.util.nlp.Lemmatizer;
@@ -46,7 +45,7 @@ import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 /**
  * Extracts features for the frame identification model
  */
-public class LatentFeatureExtractor implements IFeatureExtractor {
+public class LatentFeatureExtractor {
 	private static final Joiner SPACE = Joiner.on(" ");
 	private static final Joiner UNDERSCORE = Joiner.on("_");
 	private final Relations wnRelations;
