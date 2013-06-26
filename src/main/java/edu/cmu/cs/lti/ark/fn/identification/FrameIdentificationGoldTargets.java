@@ -89,32 +89,33 @@ public class FrameIdentificationGoldTargets
 				FrameIdentificationRelease.parseParamFile(options.idParamFile.get());
 		final IdFeatureExtractor featureExtractor = extractorAndParams.getFirst();
 		final TObjectDoubleHashMap<String> paramList = extractorAndParams.getSecond();
-		FastFrameIdentifier idModel = new FastFrameIdentifier(
-				featureExtractor,
-				paramList,
-				"reg", 
-				0.0, 
-				frameMap,
-				cMap
-		);
 		System.out.println("Size of originalSentences list:"+originalIndices.size());
 
 		boolean usegraph = !options.useGraph.get().equals("null");
 		SmoothedGraph sg = null;
+		FastFrameIdentifier idModel;
 		if (usegraph) {
 			sg = SerializedObjects.readObject(options.useGraph.get());
+			idModel = new GraphBasedFrameIdentifier(
+					featureExtractor,
+					frameMap.keySet(),
+					cMap,
+					paramList,
+					sg);
+		} else {
+			idModel = new FastFrameIdentifier(
+					featureExtractor,
+					paramList,
+					frameMap.keySet(),
+					cMap
+			);
 		}
 		System.out.println("Start Time:"+(new Date()));
 		for(String input: inputForFrameId)
 		{
 			String[] toks = input.split("\t");
 			int sentNum = new Integer(toks[2]);	// offset of the sentence within the loaded data (relative to options.startIndex)
-			String bestFrame;
-			if (sg == null) {
-				bestFrame = idModel.getBestFrame(input,parses.get(sentNum));
-			} else {
-				bestFrame = idModel.getBestFrame(input,parses.get(sentNum), sg);
-			}
+			String bestFrame = idModel.getBestFrame(input, parses.get(sentNum));
 			String tokenRepresentation = getTokenRepresentation(toks[1],parses.get(sentNum));  
 			String[] split = tokenRepresentation.trim().split("\t");
 			String sentCount = originalIndices.get(sentNum);

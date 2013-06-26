@@ -147,11 +147,8 @@ public class ParserDriver {
 		final Map<String, THashMap<String, Set<String>>> wordNetMap = r.getWordNetMap();
 		final THashMap<String,THashSet<String>> frameMap = r.getFrameMap();
 		final THashMap<String,THashSet<String>> cMap = r.getcMap();
-		final Map<String, Map<String, Set<String>>> revisedRelationsMap =
-			r.getRevisedRelMap();
 		wnr.setRelatedWordsForWord(relatedWordsForWord);
 		wnr.setWordNetMap(wordNetMap);
-		final Map<String, String> hvLemmas = r.getHvLemmaCache();
 		final Pair<IdFeatureExtractor,TObjectDoubleHashMap<String>> extractorAndParams =
 				FrameIdentificationRelease.parseParamFile(idParamsFile);
 		final IdFeatureExtractor featureExtractor = extractorAndParams.getFirst();
@@ -165,9 +162,7 @@ public class ParserDriver {
 			System.err.println("Read graph successfully from: " + graphFilename);
 			idModel = new GraphBasedFrameIdentifier(
 					featureExtractor,
-					"reg",
-					0.0,
-					frameMap,
+					frameMap.keySet(),
 					cMap,
 					paramList,
 					graph);
@@ -175,9 +170,7 @@ public class ParserDriver {
 			idModel = new FastFrameIdentifier(
 					featureExtractor,
 					paramList,
-					"reg",
-					0.0,
-					frameMap,
+					frameMap.keySet(),
 					cMap
 			);
 		}

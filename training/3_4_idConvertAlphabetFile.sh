@@ -18,4 +18,4 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8g -Xmx8g -XX:ParallelGCThread
   ${alphabet_file} \
   ${model_file} \
   ${model_dir}/idmodel.dat \
-  ${config.sh}
+  ${id_features}

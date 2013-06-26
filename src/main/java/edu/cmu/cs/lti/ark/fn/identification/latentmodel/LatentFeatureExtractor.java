@@ -25,14 +25,10 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import edu.cmu.cs.lti.ark.fn.wordnet.Relations;
-import edu.cmu.cs.lti.ark.fn.wordnet.WNRelations;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
-import edu.cmu.cs.lti.ark.util.nlp.CachingWordNetLemmatizer;
 import edu.cmu.cs.lti.ark.util.nlp.Lemmatizer;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 
 import java.util.Arrays;
 import java.util.List;
@@ -62,20 +58,6 @@ public class LatentFeatureExtractor {
 											  String[][] allLemmaTags,
 											  DependencyParse parse,
 											  boolean parseHasLemmas) {
-		return extractFeatures(frameName, tokenNums, hiddenWord, allLemmaTags, parse, wnRelations, lemmatizer, parseHasLemmas);
-	}
-
-	public static IntCounter<String> extractFeatures(String frameName,
-													 int[] tokenNums,
-													 String hiddenWord,
-													 String[][] allLemmaTags,
-													 WordNetRelations wnr,
-													 THashMap<String, THashSet<String>> wnCacheMap,
-													 THashMap<String, String> lemmaCache,
-													 DependencyParse parse) {
-		final Relations wnRelations = new WNRelations(wnr, wnCacheMap);
-		final Lemmatizer lemmatizer = new CachingWordNetLemmatizer(wnr, lemmaCache);
-		boolean parseHasLemmas = false;
 		return extractFeatures(frameName, tokenNums, hiddenWord, allLemmaTags, parse, wnRelations, lemmatizer, parseHasLemmas);
 	}
 
@@ -117,7 +99,7 @@ public class LatentFeatureExtractor {
 			final String form = arr[0];
 			final String postag = arr[1].toUpperCase();
 			final String cpostag = getCpostag(postag);
-			final String lemma = lemmatizer.getLowerCaseLemma(form, postag);
+			final String lemma = lemmatizer.getLemma(form, postag);
 			hiddenCpostags.add(cpostag);
 			//hiddenLemmas.add(lemma);
 			hiddenTokens.add(form);
@@ -141,7 +123,7 @@ public class LatentFeatureExtractor {
 			final String postag = allLemmaTags[PARSE_POS_ROW][tokenIdx].toUpperCase();
 			final String cpostag = getCpostag(postag);
 			final String lemma = parseHasLemmas ? allLemmaTags[PARSE_LEMMA_ROW][tokenIdx]
-											: lemmatizer.getLowerCaseLemma(form, postag);
+											: lemmatizer.getLemma(form, postag);
 			actualTokens.add(form);
 			actualTokenAndCpostags.add(form + "_" + cpostag);
 			//actualLemmas.add(lemma);
@@ -175,7 +157,7 @@ public class LatentFeatureExtractor {
 			final String postag = allLemmaTags[PARSE_POS_ROW][tokenIdx].toUpperCase();
 			final String cpostag = getCpostag(postag);
 			final String lemma = parseHasLemmas ? allLemmaTags[PARSE_LEMMA_ROW][tokenIdx]
-					: lemmatizer.getLowerCaseLemma(form, postag);
+					: lemmatizer.getLemma(form, postag);
 			featureMap.increment(UNDERSCORE.join(
 					"sTP:" + form + "_" + cpostag,
 					frameFtr));

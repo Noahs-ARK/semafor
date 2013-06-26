@@ -8,19 +8,19 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
 * @author sthomson@cs.cmu.edu
 */
-public class CachingWordNetLemmatizer implements Lemmatizer {
+public class CachingWordNetLemmatizer extends Lemmatizer {
 	private final WordNetRelations wnr;
 	private final THashMap<String, String> lemmaCache;
 	private final ReentrantReadWriteLock.WriteLock writeLock;
 
-	public CachingWordNetLemmatizer(WordNetRelations wnr, THashMap<String, String> lemmaCache){
+	public CachingWordNetLemmatizer(WordNetRelations wnr){
 		this.wnr = wnr;
-		this.lemmaCache = lemmaCache;
-		writeLock = new ReentrantReadWriteLock().writeLock();
+		this.lemmaCache = new THashMap<String, String>();
+		this.writeLock = new ReentrantReadWriteLock().writeLock();
 	}
 
 	@Override
-	public String getLowerCaseLemma(String word, String POS) {
+	public String getLemma(String word, String POS) {
 		// TODO(smt): use LoadingCache
 		final String pair = word + "_" + POS;
 		writeLock.lock();

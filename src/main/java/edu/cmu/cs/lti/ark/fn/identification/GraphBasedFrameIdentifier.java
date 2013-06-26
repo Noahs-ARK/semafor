@@ -11,7 +11,9 @@ import gnu.trove.TObjectDoubleHashMap;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Set;
 
+import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.readLine;
 import static edu.cmu.cs.lti.ark.util.SerializedObjects.readObject;
 
 /**
@@ -24,13 +26,11 @@ public class GraphBasedFrameIdentifier extends FastFrameIdentifier {
 	final protected SmoothedGraph graph;
 
 	public GraphBasedFrameIdentifier(IdFeatureExtractor featureExtractor,
-									 String reg,
-									 double l,
-									 THashMap<String, THashSet<String>> frameMap,
-									 THashMap<String, THashSet<String>> hvCorrespondenceMap,
-									 TObjectDoubleHashMap<String> paramList,
+									 Set<String> allFrames,
+									 THashMap<String, THashSet<String>> framesByLemma,
+									 TObjectDoubleHashMap<String> params,
 									 SmoothedGraph graph) {
-		super(featureExtractor, paramList, reg, l, frameMap, hvCorrespondenceMap);
+		super(featureExtractor, params, allFrames, framesByLemma);
 		this.graph = graph;
 	}
 
@@ -52,15 +52,25 @@ public class GraphBasedFrameIdentifier extends FastFrameIdentifier {
 		final RequiredDataForFrameIdentification r = readObject(requiredDataFilename);
 		return new GraphBasedFrameIdentifier(
 				featureExtractor,
-				"reg",
-				0.0,
-				r.getFrameMap(),
+				r.getFrameMap().keySet(),
 				r.getcMap(),
 				paramList,
 				graph);
 	}
 
 	public String getBestFrame(Collection<Integer> indices, Sentence sentence) {
-		return getBestFrame(Ints.toArray(indices), sentence, graph);
+		return getBestFrame(Ints.toArray(indices), sentence);
 	}
+
+	@Override
+	public String getBestFrame(String frameLine, String parseLine) {
+		return getBestFrame(parseFrameLine(frameLine), Sentence.fromAllLemmaTagsArray(readLine(parseLine)));
+	}
+
+	@Override
+	public String getBestFrame(int[] tokenIndices, Sentence sentence) {
+		final Set<String> candidateFrames = getCandidateFrames(tokenIndices, sentence, graph);
+		return pickBestFrame(candidateFrames, sentence, tokenIndices);
+	}
+
 }

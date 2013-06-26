@@ -239,4 +239,8 @@ public class Semafor {
 				return input.setLemma(lemma);
 			} }));
 	}
+
+	public GraphBasedFrameIdentifier getIdModel() {
+		return idModel;
+	}
 }
