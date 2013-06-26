@@ -29,7 +29,6 @@ import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
-import gnu.trove.TIntDoubleHashMap;
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,8 +38,8 @@ import java.util.SortedSet;
 /**
  * Extracts features for the frame identification model
  */
-public class BasicFeatureExtractor {
-	private static final Joiner SPACE = Joiner.on(" ");
+public class BasicFeatureExtractor extends IdFeatureExtractor {
+	protected static final Joiner SPACE = Joiner.on(" ");
 	private static final Joiner UNDERSCORE = Joiner.on("_");
 
 	public Map<String, Map<String, Double>> extractFeaturesByName(Iterable<String> frameNames,
@@ -63,8 +62,7 @@ public class BasicFeatureExtractor {
 		return results;
 	}
 
-	private IntCounter<String> getBaseFeatures(int[] targetTokenIdxs,
-											   Sentence sentence) {
+	protected IntCounter<String> getBaseFeatures(int[] targetTokenIdxs, Sentence sentence) {
 		Arrays.sort(targetTokenIdxs);
 		// Get lemmas and postags for target
 		final List<String> tokenAndCpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
@@ -137,36 +135,6 @@ public class BasicFeatureExtractor {
 		final String parentLabel = ((parent == null) ? "NULL" : parent.getLabelType().toUpperCase());
 		featureMap.increment("pL:" + parentLabel);
 		return featureMap;
-	}
-
-	public Map<String, TIntDoubleHashMap> extractFeaturesByIndex(Iterable<String> frames,
-																 int[] targetTokenIdxs,
-																 Sentence sentence,
-																 Map<String, Integer> alphabet) {
-		final Map<String, Map<String, Double>> featuresByFrame = extractFeaturesByName(
-				frames,
-				targetTokenIdxs,
-				sentence
-		);
-		// replace String feature names with feature indexes
-		return convertToIndexes(featuresByFrame, alphabet);
-
-	}
-
-	public static Map<String, TIntDoubleHashMap> convertToIndexes(Map<String, Map<String, Double>> featuresByFrame,
-																  Map<String, Integer> alphabet) {
-		final Map<String, TIntDoubleHashMap> results = Maps.newHashMap();
-		for (String frame : featuresByFrame.keySet()) {
-			final Map<String, Double> features = featuresByFrame.get(frame);
-			final TIntDoubleHashMap featsForFrame = new TIntDoubleHashMap(features.size());
-			for (String feat : features.keySet()) {
-				if (alphabet.containsKey(feat)) {
-					featsForFrame.put(alphabet.get(feat), features.get(feat));
-				}
-			}
-			results.put(frame, featsForFrame);
-		}
-		return results;
 	}
 
 	private static String getCpostag(String postag) {

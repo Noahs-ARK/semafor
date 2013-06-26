@@ -24,6 +24,7 @@ package edu.cmu.cs.lti.ark.fn.identification.training;
 import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ConcurrentHashMultiset;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
@@ -31,6 +32,7 @@ import com.google.common.io.OutputSupplier;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.identification.BasicFeatureExtractor;
+import edu.cmu.cs.lti.ark.fn.identification.IdFeatureExtractor;
 import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
@@ -48,23 +50,22 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
+import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
 public class AlphabetCreationThreaded {
 	private static final Logger logger = Logger.getLogger(AlphabetCreationThreaded.class.getCanonicalName());
 
-	private static final int BATCH_SIZE = 100;
 	private static final int MINIMUM_FEATURE_COUNT = 2;
-	private static int EXPECTED_NUM_FEATURES = 6000000;
 	public static final String ALPHABET_FILENAME = "alphabet.dat";
 	private final THashMap<String, THashSet<String>> frameMap;
 	private final String parseFile;
-	private final File alphabetDir;
 	private final String frameElementsFile;
 	private final int startIndex;
 	private final int endIndex;
 	private final int numThreads;
-	private final BasicFeatureExtractor featureExtractor;
+	private final IdFeatureExtractor featureExtractor;
+	private File alphabetFile;
 
 	/**
 	 * Parses commandline args, then creates a new {@link #AlphabetCreationThreaded} with them
@@ -101,7 +102,6 @@ public class AlphabetCreationThreaded {
 						endIndex,
 						numThreads);
 		events.createAlphabet();
-		//combineAlphabets(alphabetDir);
 	}
 
 	/**
@@ -123,11 +123,11 @@ public class AlphabetCreationThreaded {
 									String frameElementsFile,
 									String parseFile,
 									THashMap<String, THashSet<String>> frameMap,
-									BasicFeatureExtractor featureExtractor,
+									IdFeatureExtractor featureExtractor,
 									int startIndex,
 									int endIndex,
 									int numThreads) {
-		this.alphabetDir = alphabetDir;
+		alphabetFile = new File(alphabetDir, ALPHABET_FILENAME);
 		this.frameElementsFile = frameElementsFile;
 		this.parseFile = parseFile;
 		this.frameMap = frameMap;
@@ -147,14 +147,14 @@ public class AlphabetCreationThreaded {
 		final List<String> frameLines =
 				Files.readLines(new File(frameElementsFile), Charsets.UTF_8)
 						.subList(startIndex, endIndex);
+		final int batchSize = (int) Math.ceil(frameLines.size() / (double) numThreads);
+		final List<List<String>> frameLinesPartition = Lists.partition(frameLines, batchSize);
 		final List<String> parseLines = Files.readLines(new File(parseFile), Charsets.UTF_8);
 		final Multiset<String> alphabet = ConcurrentHashMultiset.create();
 		final ThreadPool threadPool = new ThreadPool(numThreads);
-		int i = 0;
-		for (int start = startIndex; start < endIndex; start += BATCH_SIZE) {
+		for (int i : xrange(numThreads)) {
 			final int threadId = i;
-			final List<String> frameLineBatch =
-					frameLines.subList(start, Math.min(frameLines.size(), start + BATCH_SIZE));
+			final List<String> frameLineBatch = frameLinesPartition.get(i);
 			threadPool.runTask(new Runnable() {
 				public void run() {
 					logger.info("Thread " + threadId + " : start");
@@ -162,17 +162,14 @@ public class AlphabetCreationThreaded {
 					logger.info("Thread " + threadId + " : end");
 				}
 			});
-			i++;
 		}
 		threadPool.join();
-		final OutputSupplier<OutputStreamWriter> outputSupplier =
-				Files.newWriterSupplier(new File(alphabetDir, ALPHABET_FILENAME), Charsets.UTF_8);
 
 		final Set<String> commonFeatures = Sets.filter(alphabet.elementSet(), new Predicate<String>() {
 			@Override public boolean apply(String input) {
 				return alphabet.count(input) >= MINIMUM_FEATURE_COUNT;
 			} });
-		writeAlphabet(commonFeatures, outputSupplier);
+		writeAlphabet(commonFeatures, Files.newWriterSupplier(alphabetFile, Charsets.UTF_8));
 	}
 
 	private void processBatch(int threadId, List<String> frameLines, List<String> parseLines, Multiset<String> alphabet) {
@@ -219,7 +216,8 @@ public class AlphabetCreationThreaded {
 	public static Map<String, Integer> readAlphabetFile(String filename) throws IOException {
 		final BufferedReader bReader = new BufferedReader(new FileReader(filename));
 		try {
-			final Map<String, Integer> alphabet = new THashMap<String, Integer>(EXPECTED_NUM_FEATURES);
+			final int numFeatures = Integer.parseInt(bReader.readLine());
+			final Map<String, Integer> alphabet = new THashMap<String, Integer>(numFeatures);
 			String line;
 			int i = 0;
 			while ((line = bReader.readLine()) != null) {

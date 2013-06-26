@@ -50,7 +50,7 @@ public class FastFrameIdentifier {
 	private final LRIdentificationModelSingleNode model;
 	// map from lemmas to frames
 	private THashMap<String, THashSet<String>> mHvCorrespondenceMap;
-	private final BasicFeatureExtractor featureExtractor;
+	private final IdFeatureExtractor featureExtractor;
 
 	public FastFrameIdentifier(TObjectDoubleHashMap<String> paramList,
 							   String reg,
