@@ -17,6 +17,5 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8g -Xmx8g -XX:ParallelGCThread
   edu.cmu.cs.lti.ark.fn.identification.training.ConvertAlphabetFile \
   ${alphabet_file} \
   ${model_file} \
-  ${model_dir}/idmodel.dat
-
-
+  ${model_dir}/idmodel.dat \
+  ${config.sh}

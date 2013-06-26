@@ -21,60 +21,39 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.identification;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.*;
-
-
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
+import com.google.common.io.Files;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;
-import edu.cmu.cs.lti.ark.fn.evaluation.ParseUtils;
-import edu.cmu.cs.lti.ark.fn.segmentation.MoreRelaxedSegmenter;
-import edu.cmu.cs.lti.ark.fn.segmentation.RoteSegmenter;
-import edu.cmu.cs.lti.ark.fn.segmentation.Segmenter;
-import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
-import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
-import edu.cmu.cs.lti.ark.util.CommandLineOptions;
-import edu.cmu.cs.lti.ark.util.SerializedObjects;
-import edu.cmu.cs.lti.ark.util.optimization.LDouble;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import edu.cmu.cs.lti.ark.util.ds.Pair;
 import gnu.trove.TObjectDoubleHashMap;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
 import static com.google.common.base.Strings.nullToEmpty;
 
 
 public class FrameIdentificationRelease {
-	public static TObjectDoubleHashMap<String> parseParamFile(String paramsFile) {
-		TObjectDoubleHashMap<String> startParamList = new TObjectDoubleHashMap<String>(); 
-		try {
-			BufferedReader fis = new BufferedReader(new FileReader(paramsFile));
-			String pattern;
-			int count = 0;
-			while ((pattern = fis.readLine()) != null)
-			{
-				StringTokenizer st = new StringTokenizer(pattern.trim(),"\t");
-				String paramName = st.nextToken().trim();
-				String rest = st.nextToken().trim();
-				String[] arr = rest.split(",");
-				double value = new Double(arr[0].trim());
-				boolean sign = new Boolean(arr[1].trim());
-				LDouble val = new LDouble(value,sign);
-				startParamList.put(paramName, val.exponentiate());
-				if(count%100000==0)
-					System.out.println("Processed param number:"+count);
-				count++;
-			}
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
+	public static Pair<IdFeatureExtractor, TObjectDoubleHashMap<String>>
+			parseParamFile(String paramsFile) throws IOException {
+		final List<String> lines = Files.readLines(new File(paramsFile), Charsets.UTF_8);
+		TObjectDoubleHashMap<String> model = new TObjectDoubleHashMap<String>(lines.size());
+		int count = 0;
+		final IdFeatureExtractor featureExtractor = new IdFeatureExtractor.Converter().convert(lines.get(0));
+		for (String line : lines.subList(1, lines.size())) {
+			String[] fields = line.split("\t");
+			final String featureName = fields[0].trim();
+			final Double featureValue = Double.parseDouble(fields[1].trim());
+			model.put(featureName, featureValue);
+			count++;
+			if (count % 100000 == 0) System.out.print(count + " ");
 		}
-		return startParamList;
+		return Pair.of(featureExtractor, model);
 	}
 	
 	public static String getTokenRepresentation(String tokNum, String parse) {

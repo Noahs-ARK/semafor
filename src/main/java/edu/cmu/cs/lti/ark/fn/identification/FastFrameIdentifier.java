@@ -52,14 +52,15 @@ public class FastFrameIdentifier {
 	private THashMap<String, THashSet<String>> mHvCorrespondenceMap;
 	private final IdFeatureExtractor featureExtractor;
 
-	public FastFrameIdentifier(TObjectDoubleHashMap<String> paramList,
+	public FastFrameIdentifier(IdFeatureExtractor featureExtractor,
+							   TObjectDoubleHashMap<String> paramList,
 							   String reg,
 							   double l,
 							   THashMap<String, THashSet<String>> frameMap,
 							   THashMap<String, THashSet<String>> hvCorrespondenceMap) {
 		model = new LRIdentificationModelSingleNode(paramList, reg, l, null, frameMap);
 		mHvCorrespondenceMap = hvCorrespondenceMap;
-		featureExtractor = new BasicFeatureExtractor();
+		this.featureExtractor = featureExtractor;
 	}
 
 	/**

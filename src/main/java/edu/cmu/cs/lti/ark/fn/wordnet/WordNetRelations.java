@@ -131,40 +131,49 @@ public class WordNetRelations {
 		targetWord=null;
 	}
 	
-	public String getLemmaForWord(String word, String pos) {
-		word = word.toLowerCase();
-		if(wordLemmaMap.containsKey(word+"_"+pos))
-			return wordLemmaMap.get(word+"_"+pos);
-		POS wnPOS=null;
-		if(pos.startsWith("V"))
-		{
-			wnPOS = POS.VERB;
+	public String getLemmaForWord(String word, String postag) {
+		final String postagUpper = postag.toUpperCase();
+		final POS wnPostag = getWordNetPostag(postagUpper);
+		final String expanded = expandContractions(word, postagUpper);
+		// TODO(smt): use LoadingCache
+		final String wordAndPostag = expanded + "_" + postagUpper;
+		if(wordLemmaMap.containsKey(wordAndPostag)) {
+			return wordLemmaMap.get(wordAndPostag);
 		}
-		else if(pos.startsWith("J"))
-		{
-			wnPOS = POS.ADJECTIVE;
-		}
-		else if(pos.startsWith("R"))
-		{
-			wnPOS = POS.ADVERB;
-		}
-		else
-			wnPOS = POS.NOUN;
-		if(word.equals("'ve"))
-			word="have";
-		else if(word.equals("n't"))
-			word="not";
-		else if(word.equals("'s")&&pos.startsWith("V"))
-			word="is";
-		else if(word.equals("'ll"))
-			word="will";
-		else if(word.equals("'re"))
-			word="are";
-		String lemma=getLemma(word, wnPOS);	
-		wordLemmaMap.put(word+"_"+pos, lemma);
+		final String lemma = getLemma(expanded, wnPostag);
+		wordLemmaMap.put(wordAndPostag, lemma);
 		return lemma;
-	}	
-	
+	}
+
+	private String expandContractions(String word, String postag) {
+		final String wordLower = word.toLowerCase();
+		if(wordLower.equals("'ve")) {
+			return  "have";
+		} else if(wordLower.equals("n't")) {
+			return  "not";
+		} else if(wordLower.equals("'s") && postag.startsWith("V")) {
+			return  "is";
+		} else if(wordLower.equals("'ll")) {
+			return  "will";
+		} else if(wordLower.equals("'re")) {
+			return  "are";
+		} else {
+			return wordLower;
+		}
+	}
+
+	private POS getWordNetPostag(String pos) {
+		if(pos.startsWith("V")) {
+			return POS.VERB;
+		} else if(pos.startsWith("J")) {
+			return POS.ADJECTIVE;
+		} else if(pos.startsWith("R")) {
+			return POS.ADVERB;
+		} else {
+			return POS.NOUN;
+		}
+	}
+
 	public void writeWordNetCache(String serializedFile)
 	{
 		WordnetCache wc = new WordnetCache();

@@ -3,6 +3,7 @@ package edu.cmu.cs.lti.ark.fn.identification;
 import com.google.common.primitives.Ints;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.parsing.Semafor;
+import edu.cmu.cs.lti.ark.util.ds.Pair;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectDoubleHashMap;
@@ -10,8 +11,6 @@ import gnu.trove.TObjectDoubleHashMap;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 
 import static edu.cmu.cs.lti.ark.util.SerializedObjects.readObject;
 
@@ -24,16 +23,14 @@ public class GraphBasedFrameIdentifier extends FastFrameIdentifier {
 	public static final String ID_MODEL_FILE = "idmodel.dat";
 	final protected SmoothedGraph graph;
 
-	public GraphBasedFrameIdentifier(TObjectDoubleHashMap<String> paramList,
+	public GraphBasedFrameIdentifier(IdFeatureExtractor featureExtractor,
 									 String reg,
 									 double l,
 									 THashMap<String, THashSet<String>> frameMap,
 									 THashMap<String, THashSet<String>> hvCorrespondenceMap,
-									 Map<String, Set<String>> relatedWordsForWord,
-									 Map<String, Map<String, Set<String>>> revisedRelationsMap,
-									 Map<String, String> hvLemmas,
+									 TObjectDoubleHashMap<String> paramList,
 									 SmoothedGraph graph) {
-		super(paramList, reg, l, frameMap, hvCorrespondenceMap);
+		super(featureExtractor, paramList, reg, l, frameMap, hvCorrespondenceMap);
 		this.graph = graph;
 	}
 
@@ -43,22 +40,23 @@ public class GraphBasedFrameIdentifier extends FastFrameIdentifier {
 		final String requiredDataFilename = new File(modelDirectory, Semafor.REQUIRED_DATA_FILENAME).getAbsolutePath();
 		System.err.println("Initializing frame identification model...");
 		System.err.println("Reading model parameters...");
-		final TObjectDoubleHashMap<String> paramList =
+		final Pair<IdFeatureExtractor,TObjectDoubleHashMap<String>> extractorAndParams =
 				FrameIdentificationRelease.parseParamFile(idParamsFile);
+		final IdFeatureExtractor featureExtractor = extractorAndParams.getFirst();
+		final TObjectDoubleHashMap<String> paramList =
+				extractorAndParams.getSecond();
 		System.err.println("Done reading model parameters.");
 		System.err.println("Reading graph from: " + graphFilename + "...");
 		final SmoothedGraph graph = readObject(graphFilename);
 		System.err.println("Read graph successfully.");
 		final RequiredDataForFrameIdentification r = readObject(requiredDataFilename);
 		return new GraphBasedFrameIdentifier(
-				paramList,
+				featureExtractor,
 				"reg",
 				0.0,
 				r.getFrameMap(),
 				r.getcMap(),
-				r.getRelatedWordsForWord(),
-				r.getRevisedRelMap(),
-				r.getHvLemmaCache(),
+				paramList,
 				graph);
 	}
 

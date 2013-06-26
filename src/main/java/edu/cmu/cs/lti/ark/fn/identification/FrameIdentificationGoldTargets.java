@@ -24,6 +24,7 @@ package edu.cmu.cs.lti.ark.fn.identification;
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
+import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.optimization.LDouble;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -37,8 +38,7 @@ import java.util.*;
 
 public class FrameIdentificationGoldTargets
 {
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		FNModelOptions options = new FNModelOptions(args);
 		ArrayList<String> parses = new ArrayList<String>();
 		int start = options.startIndex.get();
@@ -78,21 +78,20 @@ public class FrameIdentificationGoldTargets
 		{
 			e.printStackTrace();
 		}		
-		RequiredDataForFrameIdentification r = (RequiredDataForFrameIdentification)SerializedObjects.readSerializedObject(options.fnIdReqDataFile.get());
-		THashSet<String> allRelatedWords = r.getAllRelatedWords();
-		Map<String, Set<String>> relatedWordsForWord = r.getRelatedWordsForWord();
+		RequiredDataForFrameIdentification r = SerializedObjects.readObject(options.fnIdReqDataFile.get());
 		THashMap<String,THashSet<String>> frameMap = r.getFrameMap();
 		THashMap<String,THashSet<String>> cMap = r.getcMap();
-		Map<String, Map<String, Set<String>>> revisedRelationsMap = 
-			r.getRevisedRelMap();
-		
+
 		ArrayList<String> segs = ParsePreparation.readSentencesFromFile(options.testFrameFile.get());
 		ArrayList<String> inputForFrameId = getGoldSeg(segs,start,end);	// Null\tTargetTokenNum(s)\tSentenceOffset
 		ArrayList<String> idResult = new ArrayList<String>();
-		TObjectDoubleHashMap<String> paramList = parseParamFile(options.idParamFile.get());
-		Map<String, String> hvLemmas = r.getHvLemmaCache();
+		final Pair<IdFeatureExtractor,TObjectDoubleHashMap<String>> extractorAndParams =
+				FrameIdentificationRelease.parseParamFile(options.idParamFile.get());
+		final IdFeatureExtractor featureExtractor = extractorAndParams.getFirst();
+		final TObjectDoubleHashMap<String> paramList = extractorAndParams.getSecond();
 		FastFrameIdentifier idModel = new FastFrameIdentifier(
-				paramList, 
+				featureExtractor,
+				paramList,
 				"reg", 
 				0.0, 
 				frameMap,
@@ -103,14 +102,14 @@ public class FrameIdentificationGoldTargets
 		boolean usegraph = !options.useGraph.get().equals("null");
 		SmoothedGraph sg = null;
 		if (usegraph) {
-			sg = (SmoothedGraph)SerializedObjects.readSerializedObject(options.useGraph.get());
+			sg = SerializedObjects.readObject(options.useGraph.get());
 		}
 		System.out.println("Start Time:"+(new Date()));
 		for(String input: inputForFrameId)
 		{
 			String[] toks = input.split("\t");
 			int sentNum = new Integer(toks[2]);	// offset of the sentence within the loaded data (relative to options.startIndex)
-			String bestFrame = null;
+			String bestFrame;
 			if (sg == null) {
 				bestFrame = idModel.getBestFrame(input,parses.get(sentNum));
 			} else {

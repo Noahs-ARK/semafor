@@ -45,6 +45,7 @@ public class ConvertAlphabetFile {
 		final String alphabetFile = args[0];
 		final String modelFile = args[1];
 		final String outFile = args[2];
+		final String featureType = args[3];
 
 		// read in map from feature id -> feature name
 		final BiMap<Integer, String> featureNameById = readAlphabetFile(alphabetFile).inverse();
@@ -53,6 +54,7 @@ public class ConvertAlphabetFile {
 		// write out list of (feature name, feature value) pairs
 		final BufferedWriter output = Files.newWriter(new File(outFile), Charsets.UTF_8);
 		try {
+			output.write(String.format("%s\n", featureType));
 			for (int i : xrange(parameters.length)) {
 				final double val = parameters[i];
 				if (Math.abs(val) <= THRESHOLD) continue;

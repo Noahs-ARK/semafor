@@ -32,6 +32,7 @@ import edu.cmu.cs.lti.ark.fn.segmentation.SegmentationMode;
 import edu.cmu.cs.lti.ark.fn.segmentation.Segmenter;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
+import edu.cmu.cs.lti.ark.util.ds.Pair;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectDoubleHashMap;
@@ -151,30 +152,34 @@ public class ParserDriver {
 		wnr.setRelatedWordsForWord(relatedWordsForWord);
 		wnr.setWordNetMap(wordNetMap);
 		final Map<String, String> hvLemmas = r.getHvLemmaCache();
+		final Pair<IdFeatureExtractor,TObjectDoubleHashMap<String>> extractorAndParams =
+				FrameIdentificationRelease.parseParamFile(idParamsFile);
+		final IdFeatureExtractor featureExtractor = extractorAndParams.getFirst();
 		final TObjectDoubleHashMap<String> paramList =
-			FrameIdentificationRelease.parseParamFile(idParamsFile);
+				extractorAndParams.getSecond();
 
 		System.err.println("Initializing frame identification model...");
-		FastFrameIdentifier idModel = new FastFrameIdentifier(
-				paramList,
-				"reg",
-				0.0,
-				frameMap,
-				cMap
-		);
+		FastFrameIdentifier idModel;
 		if (useGraph) {
 			SmoothedGraph graph = readObject(graphFilename);
 			System.err.println("Read graph successfully from: " + graphFilename);
 			idModel = new GraphBasedFrameIdentifier(
-					paramList,
+					featureExtractor,
 					"reg",
 					0.0,
 					frameMap,
 					cMap,
-					relatedWordsForWord,
-					revisedRelationsMap,
-					hvLemmas,
+					paramList,
 					graph);
+		} else {
+			idModel = new FastFrameIdentifier(
+					featureExtractor,
+					paramList,
+					"reg",
+					0.0,
+					frameMap,
+					cMap
+			);
 		}
 		// initializing argument identification
 		// reading requires and excludes map
