@@ -2,13 +2,17 @@ package edu.cmu.cs.lti.ark.fn.identification;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.List;
 
@@ -41,7 +45,11 @@ public class FrameAncestors {
 		final List<String> lines = CharStreams.readLines(input);
 		for (String line : lines) {
 			final String[] frames = line.split(",", 2);
-			ancestors.putAll(frames[0], Lists.newArrayList(frames[1].split(",")));
+			final List<String> frameAncestors =
+					frames.length > 1 ?
+							Lists.newArrayList(frames[1].split(",")) :
+							ImmutableList.<String>of();
+			ancestors.putAll(frames[0], frameAncestors);
 		}
 		return ancestors;
 	}
