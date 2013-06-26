@@ -52,7 +52,7 @@ import static org.apache.commons.io.IOUtils.closeQuietly;
 public class AlphabetCreationThreaded {
 	private static final Logger logger = Logger.getLogger(AlphabetCreationThreaded.class.getCanonicalName());
 
-	private static final int MINIMUM_FEATURE_COUNT = 2;
+	private static final int MINIMUM_FEATURE_COUNT = 1;
 	public static final String ALPHABET_FILENAME = "alphabet.dat";
 	private final THashMap<String, THashSet<String>> frameMap;
 	private final String parseFile;
