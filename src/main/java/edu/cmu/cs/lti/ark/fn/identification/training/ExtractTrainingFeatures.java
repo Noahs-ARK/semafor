@@ -25,7 +25,7 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
-import edu.cmu.cs.lti.ark.fn.identification.BasicFeatureExtractor;
+import edu.cmu.cs.lti.ark.fn.identification.IdFeatureExtractor;
 import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
@@ -62,7 +62,7 @@ public class ExtractTrainingFeatures {
 	private final int startIndex;
 	private final int endIndex;
 	private final int numThreads;
-	private final BasicFeatureExtractor featureExtractor;
+	private final IdFeatureExtractor featureExtractor;
 
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		final FNModelOptions options = new FNModelOptions(args);
@@ -76,7 +76,12 @@ public class ExtractTrainingFeatures {
 		final int endIndex = options.endIndex.get();
 		logger.info("Start:" + startIndex + " end:" + endIndex);
 		final RequiredDataForFrameIdentification r = SerializedObjects.readObject(options.fnIdReqDataFile.get());
-		final BasicFeatureExtractor featureExtractor = new BasicFeatureExtractor();
+		final String featureExtractorType =
+				options.idFeatureExtractorType.present() ?
+						options.idFeatureExtractorType.get() :
+						"basic";
+		final IdFeatureExtractor featureExtractor =
+				new IdFeatureExtractor.Converter().convert(featureExtractorType);
 		logger.info("Reading alphabet");
 		final Map<String, Integer> alphabet = readAlphabetFile(options.modelFile.get());
 		logger.info("Done reading alphabet");
@@ -101,7 +106,7 @@ public class ExtractTrainingFeatures {
 								   int startIndex,
 								   int endIndex,
 								   int numThreads,
-								   BasicFeatureExtractor featureExtractor) {
+								   IdFeatureExtractor featureExtractor) {
 		this.alphabet = alphabet;
 		this.frameMap = frameMap;
 		this.parseFile = parseFile;

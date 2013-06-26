@@ -21,14 +21,15 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.identification.training;
 
-import edu.cmu.cs.lti.ark.fn.optimization.LDouble;
-import gnu.trove.TIntObjectHashMap;
+import com.google.common.base.Charsets;
+import com.google.common.collect.BiMap;
+import com.google.common.io.Files;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.File;
 
+import static edu.cmu.cs.lti.ark.fn.identification.training.AlphabetCreationThreaded.readAlphabetFile;
+import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
 /**
@@ -37,41 +38,28 @@ import static org.apache.commons.io.IOUtils.closeQuietly;
  * containing feature name -> learned weight for feature.
  */
 public class ConvertAlphabetFile {
-	// parameters whose abs log value are less than or equal to THRESHOLD are discarded
-	//private static final double THRESHOLD = 0.01;
+	// parameters whose abs value are less than or equal to THRESHOLD are discarded
+	private static final double THRESHOLD = 0.001;
 
 	public static void main(String[] args) throws Exception {
 		final String alphabetFile = args[0];
 		final String modelFile = args[1];
 		final String outFile = args[2];
 
-		// read in map from  feature id -> feature name
-		final TIntObjectHashMap<String> featureNameById = new TIntObjectHashMap<String>();
-		final BufferedReader alphabetReader = new BufferedReader(new FileReader(alphabetFile));
-		// first line is the number of features
-		final int numFeatures = Integer.parseInt(alphabetReader.readLine());
-		String line;
-		int count = 1;
-		while((line=alphabetReader.readLine()) != null) {
-			final String[] toks = line.trim().split("\t");
-			featureNameById.put(Integer.parseInt(toks[1]), toks[0]);
-
+		// read in map from feature id -> feature name
+		final BiMap<Integer, String> featureNameById = readAlphabetFile(alphabetFile).inverse();
+		// read in parameter values
+		final double[] parameters = TrainBatch.loadModel(modelFile);
+		// write out list of (feature name, feature value) pairs
+		final BufferedWriter output = Files.newWriter(new File(outFile), Charsets.UTF_8);
+		try {
+			for (int i : xrange(parameters.length)) {
+				final double val = parameters[i];
+				if (Math.abs(val) <= THRESHOLD) continue;
+				output.write(String.format("%s\t%s\n", featureNameById.get(i), val));
+			}
+		} finally {
+			closeQuietly(output);
 		}
-		assert numFeatures == count;
-		closeQuietly(alphabetReader);
-
-		final BufferedWriter bWriter = new BufferedWriter(new FileWriter(outFile));
-		final BufferedReader modelReader = new BufferedReader(new FileReader(modelFile));
-		modelReader.readLine(); // ignore first line
-		count = 1;
-		while((line=modelReader.readLine()) != null) {
-			final LDouble val = LDouble.convertToLogDomain(Double.parseDouble(line.trim()));
-			//if (Math.abs(val.getValue()) <= THRESHOLD) continue;
-			final String feat = featureNameById.get(count);
-			bWriter.write(feat + "\t" + val + "\n");
-			count++;
-		}
-		closeQuietly(modelReader);
-		closeQuietly(bWriter);
-	}	
+	}
 }

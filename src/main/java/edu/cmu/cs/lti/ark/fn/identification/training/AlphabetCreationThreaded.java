@@ -23,15 +23,11 @@ package edu.cmu.cs.lti.ark.fn.identification.training;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ConcurrentHashMultiset;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.google.common.io.Files;
 import com.google.common.io.OutputSupplier;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
-import edu.cmu.cs.lti.ark.fn.identification.BasicFeatureExtractor;
 import edu.cmu.cs.lti.ark.fn.identification.IdFeatureExtractor;
 import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
@@ -92,12 +88,18 @@ public class AlphabetCreationThreaded {
 								options.numThreads.get() :
 								Runtime.getRuntime().availableProcessors();
 		final File alphabetDir = new File(options.modelFile.get());
+		final String featureExtractorType =
+				options.idFeatureExtractorType.present() ?
+						options.idFeatureExtractorType.get() :
+						"basic";
+		final IdFeatureExtractor featureExtractor =
+				new IdFeatureExtractor.Converter().convert(featureExtractorType);
 		final AlphabetCreationThreaded events =
 				new AlphabetCreationThreaded(alphabetDir,
 						options.trainFrameElementFile.get(),
 						options.trainParseFile.get(),
 						r.getFrameMap(),
-						new BasicFeatureExtractor(),
+						featureExtractor,
 						startIndex,
 						endIndex,
 						numThreads);
@@ -131,10 +133,10 @@ public class AlphabetCreationThreaded {
 		this.frameElementsFile = frameElementsFile;
 		this.parseFile = parseFile;
 		this.frameMap = frameMap;
+		this.featureExtractor = featureExtractor;
 		this.startIndex = startIndex;
 		this.endIndex = endIndex;
 		this.numThreads = numThreads;
-		this.featureExtractor = featureExtractor;
 	}
 
 	/**
@@ -213,11 +215,11 @@ public class AlphabetCreationThreaded {
 		}
 	}
 
-	public static Map<String, Integer> readAlphabetFile(String filename) throws IOException {
+	public static BiMap<String, Integer> readAlphabetFile(String filename) throws IOException {
 		final BufferedReader bReader = new BufferedReader(new FileReader(filename));
 		try {
 			final int numFeatures = Integer.parseInt(bReader.readLine());
-			final Map<String, Integer> alphabet = new THashMap<String, Integer>(numFeatures);
+			final BiMap<String, Integer> alphabet = HashBiMap.create(numFeatures);
 			String line;
 			int i = 0;
 			while ((line = bReader.readLine()) != null) {

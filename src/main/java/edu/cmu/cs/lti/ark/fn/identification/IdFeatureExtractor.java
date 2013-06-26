@@ -21,7 +21,7 @@ public abstract class IdFeatureExtractor {
 			"ancestor", new Supplier<IdFeatureExtractor>() {
 				@Override public IdFeatureExtractor get() { return AncestorFeatureExtractor.load(); }
 			});
-	public static class FeatureExtractorConverter implements IStringConverter<IdFeatureExtractor> {
+	public static class Converter implements IStringConverter<IdFeatureExtractor> {
 		@Override public IdFeatureExtractor convert(String value) {
 			return featureExtractorMap.get(value.trim().toLowerCase()).get();
 		}

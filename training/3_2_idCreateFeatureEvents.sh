@@ -23,6 +23,7 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8000m -Xmx8000m -XX:ParallelGC
   fnidreqdatafile:${fn_id_req_data_file} \
   logoutputfile:${model_dir}/log \
   model:${model_dir}/alphabet.dat \
+  id-feature-extractor-type:${id_features} \
   eventsfile:${model_dir}/events \
   startindex:0 \
   endindex:${fe_file_length} \

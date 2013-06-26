@@ -24,6 +24,7 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms6g -Xmx6g -XX:ParallelGCThread
   fnidreqdatafile:${fn_id_req_data_file} \
   logoutputfile:${log_file} \
   model:${model_dir} \
+  id-feature-extractor-type:${id_features} \
   eventsfile:${event_dir} \
   startindex:0 \
   endindex:${fe_file_length} \

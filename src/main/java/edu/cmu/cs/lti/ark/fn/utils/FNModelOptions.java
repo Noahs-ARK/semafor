@@ -92,7 +92,8 @@ public final class FNModelOptions extends CommandLineOptions {
 	public NewFilePathOption logOutputFile = new NewFilePathOption("logoutputfile");
 	public StringOption printFNIDConfidence = new StringOption("printfnidconfidence");
 	public IntOption numThreads = new IntOption("numthreads");
-	
+
+	public StringOption idFeatureExtractorType = new StringOption("id-feature-extractor-type");
 	public StringOption eventsFile = new StringOption("eventsfile");
 	public StringOption spansFile = new StringOption("spansfile");
 	public StringOption lexiconDir = new StringOption("lexicondir");

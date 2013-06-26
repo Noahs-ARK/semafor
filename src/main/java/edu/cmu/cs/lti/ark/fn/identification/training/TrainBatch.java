@@ -302,7 +302,7 @@ public class TrainBatch {
 	 *
 	 * @param modelFile the filename to read from
 	 */
-	private double[] loadModel(String modelFile) throws IOException {
+	public static double[] loadModel(String modelFile) throws IOException {
 		final List<String> lines = Files.readLines(new File(modelFile), Charsets.UTF_8);
 		final double[] params = new double[lines.size()];
 		for (int i : xrange(lines.size())) {
