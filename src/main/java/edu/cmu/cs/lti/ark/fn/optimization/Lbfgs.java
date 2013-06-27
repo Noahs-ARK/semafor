@@ -4,6 +4,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.io.OutputSupplier;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
+import riso.numerical.LBFGS;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +27,7 @@ public class Lbfgs {
 	 * LBFGS constants
 	 */
 	public static int MAX_ITERATIONS = 2000;
-	// we've converged when || gradient step || <= STOPPING_THRESHOLD * max(|| parameters ||, 1)
+	// we've converged when ||gradient step|| <= STOPPING_THRESHOLD * max(||parameters||, 1)
     public static double STOPPING_THRESHOLD = 1.0e-4;
 	public static double XTOL = calculateMachineEpsilon(); //estimate of machine precision.  ~= 2.220446049250313E-16
 	// number of corrections, between 3 and 7
@@ -51,26 +52,29 @@ public class Lbfgs {
 		final double[] diag = new double[modelSize];
 		final boolean diagco = false;
 		do {
-			//logger.info("Starting iteration:" + iteration);
 			Pair<Double, double[]> valueAndGradient =
 					valueAndGradientProvider.apply(currentParams);
 			double value = valueAndGradient.getFirst();
 			double[] gradients = valueAndGradient.getSecond();
-			//logger.info("Function value:" + value);
-
-			riso.numerical.LBFGS.lbfgs(modelSize,
-					NUM_CORRECTIONS,
-					currentParams,
-					value,
-					gradients,
-					diagco,
-					diag,
-					iprint,
-					STOPPING_THRESHOLD,
-					XTOL,
-					iflag
-			);
-			//logger.info("Finished iteration:" + iteration);
+			try {
+				riso.numerical.LBFGS.lbfgs(modelSize,
+						NUM_CORRECTIONS,
+						currentParams,
+						value,
+						gradients,
+						diagco,
+						diag,
+						iprint,
+						STOPPING_THRESHOLD,
+						XTOL,
+						iflag
+				);
+			} catch (LBFGS.ExceptionWithIflag e) {
+				// these exceptions happen sometimes even though the training was successful
+				// TODO: separate out the ok exceptions from the bad exceptions
+				e.printStackTrace();
+				assert iflag[0] != 0;
+			}
 			iteration++;
 			if (iteration % SAVE_EVERY_K == 0) {
 				final String modelFilename = String.format("%s_%05d", modelFilePrefix, iteration);

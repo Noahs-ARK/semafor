@@ -90,7 +90,6 @@ public class TrainBatch {
 							return loadFeaturesForTarget(key);
 						}
 					});
-	//private final double oneOverN;
 	final double[] gradients;
 	final double[][] tGradients;
 	final double[] tValues;
