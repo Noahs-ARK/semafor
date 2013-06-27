@@ -24,9 +24,6 @@ package edu.cmu.cs.lti.ark.fn.identification.training;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.common.primitives.Ints;
@@ -49,13 +46,13 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 import static com.aliasi.util.Math.sum;
+import static edu.cmu.cs.lti.ark.fn.identification.training.ExtractTrainingFeatures.FeaturesAndCost;
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 
 
 public class TrainBatch {
 	private static final Logger logger = Logger.getLogger(TrainBatch.class.getCanonicalName());
 
-	private static final boolean CACHE_FEATURES = false;
 	public static final String FEATURE_FILENAME_PREFIX = "feats_";
 	public static final String FEATURE_FILENAME_SUFFIX = ".jobj.gz";
 	private static final FilenameFilter featureFilenameFilter = new FilenameFilter() {
@@ -79,20 +76,10 @@ public class TrainBatch {
 	private final boolean useL2Regularization;
 	private final int numThreads;
 	private final double lambda;
-	// cached map from feature idx to value for each frame for each training example
-	// only used if CACHE_FEATURES is true
-	private final LoadingCache<Integer, TIntDoubleHashMap[]> featuresByTargetIdx =
-			CacheBuilder.newBuilder()
-					.initialCapacity(16000)   // > number of targets in training data
-					.build(new CacheLoader<Integer, TIntDoubleHashMap[]>() {
-						@Override
-						public TIntDoubleHashMap[] load(Integer key) throws IOException, ClassNotFoundException {
-							return loadFeaturesForTarget(key);
-						}
-					});
 	final double[] gradients;
 	final double[][] tGradients;
 	final double[] tValues;
+	private final boolean usePartialCreditCosts;
 	private final double oneOverN;
 
 	public static void main(String[] args) throws Exception {
@@ -113,7 +100,8 @@ public class TrainBatch {
 				options.reg.get(),
 				options.lambda.get(),
 				restartFile.equals("null") ? Optional.<String>absent() : Optional.of(restartFile),
-				numThreads);
+				numThreads,
+				options.usePartialCredit.get());
 		tbm.trainModel();
 	}
 
@@ -123,7 +111,9 @@ public class TrainBatch {
 					  String reg,
 					  double lambda,
 					  Optional<String> restartFile,
-					  int numThreads) throws IOException {
+					  int numThreads,
+					  boolean usePartialCreditCosts) throws IOException {
+		this.usePartialCreditCosts = usePartialCreditCosts;
 		final int modelSize = getAlphabetSize(alphabetFile);
 		this.modelFile = modelFile;
 		this.eventFiles = getEventFiles(new File(eventsDir));
@@ -213,28 +203,30 @@ public class TrainBatch {
 	}
 
 	/** Writes to gradients as a side-effect */
-	private double addLogLossAndGradientForExample(TIntDoubleHashMap[] featuresByFrame,
+	private double addLogLossAndGradientForExample(FeaturesAndCost[] featuresByFrame,
 												   double[] currentParams,
 												   double[] gradient) {
 		int numFrames = featuresByFrame.length;
 		double frameScore[] = new double[numFrames];
 		double expdFrameScore[] = new double[numFrames];
 		for (int frameIdx = 0; frameIdx < numFrames; frameIdx++) {
-			final TIntDoubleHashMap frameFeatures = featuresByFrame[frameIdx];
+			final TIntDoubleHashMap frameFeatures = featuresByFrame[frameIdx].features;
 			frameScore[frameIdx] = dotProduct(currentParams, frameFeatures);
+			if (usePartialCreditCosts) {
+				frameScore[frameIdx] += featuresByFrame[frameIdx].cost;
+			}
 			expdFrameScore[frameIdx] = Math.exp(frameScore[frameIdx]);
 		}
 		final double logPartitionFn = Math.log(sum(expdFrameScore));
 
-		//final double[] gradient = new double[modelSize];
 		// the correct frame is always first
 		final int correctFrameIdx = 0;
-		plusEquals(gradient, featuresByFrame[correctFrameIdx]);
+		plusEquals(gradient, featuresByFrame[correctFrameIdx].features);
 		for (int frameIdx = 0; frameIdx < numFrames; frameIdx++) {
-			// estimate of P(y | x) under the current parameters
+			// estimate of P(y | x) * cost(y, y*) under the current parameters
 			double prob = Math.exp(frameScore[frameIdx] - logPartitionFn);
-			for (int featIdx : featuresByFrame[frameIdx].keys()) {
-				gradient[featIdx] -= prob * featuresByFrame[frameIdx].get(featIdx);
+			for (int featIdx : featuresByFrame[frameIdx].features.keys()) {
+				gradient[featIdx] -= prob * featuresByFrame[frameIdx].features.get(featIdx);
 			}
 		}
 		return frameScore[correctFrameIdx] - logPartitionFn;
@@ -285,16 +277,8 @@ public class TrainBatch {
 	 * @param targetIdx the target to get features for
 	 * @return map from feature index to feature value (for each frame)
 	 */
-	private TIntDoubleHashMap[] getFeaturesForTarget(int targetIdx) throws Exception {
-		if (CACHE_FEATURES) {
-			return featuresByTargetIdx.get(targetIdx);
-		} else {
-			return loadFeaturesForTarget(targetIdx);
-		}
-	}
-
-	private TIntDoubleHashMap[] loadFeaturesForTarget(Integer key) throws IOException, ClassNotFoundException {
-		return SerializedObjects.readObject(eventFiles.get(key));
+	private FeaturesAndCost[] getFeaturesForTarget(int targetIdx) throws Exception {
+		return SerializedObjects.readObject(eventFiles.get(targetIdx));
 	}
 
 	/**

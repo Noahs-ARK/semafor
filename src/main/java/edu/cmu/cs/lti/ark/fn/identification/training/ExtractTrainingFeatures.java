@@ -25,6 +25,7 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
+import edu.cmu.cs.lti.ark.fn.identification.FrameCosts;
 import edu.cmu.cs.lti.ark.fn.identification.IdFeatureExtractor;
 import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
@@ -59,6 +60,7 @@ public class ExtractTrainingFeatures {
 	private final File eventDir;
 	private final String frameElementsFile;
 	private final Map<String, Integer> alphabet;
+	private final FrameCosts costs;
 	private final int startIndex;
 	private final int endIndex;
 	private final int numThreads;
@@ -91,6 +93,7 @@ public class ExtractTrainingFeatures {
 						options.trainFrameElementFile.get(),
 						options.trainParseFile.get(),
 						r.getFrameMap(),
+						FrameCosts.load(),
 						startIndex,
 						endIndex,
 						options.numThreads.get(),
@@ -98,12 +101,22 @@ public class ExtractTrainingFeatures {
 		events.createEvents();
 	}
 
+	public static class FeaturesAndCost {
+		public final TIntDoubleHashMap features;
+		public final float cost;
+
+		public FeaturesAndCost(TIntDoubleHashMap features, float cost) {
+			this.features = features;
+			this.cost = cost;
+		}
+	}
+
 	public ExtractTrainingFeatures(Map<String, Integer> alphabet,
 								   File eventDir,
 								   String frameElementsFile,
 								   String parseFile,
 								   THashMap<String, THashSet<String>> frameMap,
-								   int startIndex,
+								   FrameCosts costs, int startIndex,
 								   int endIndex,
 								   int numThreads,
 								   IdFeatureExtractor featureExtractor) {
@@ -112,6 +125,7 @@ public class ExtractTrainingFeatures {
 		this.parseFile = parseFile;
 		this.frameElementsFile = frameElementsFile;
 		this.eventDir = eventDir;
+		this.costs = costs;
 		this.startIndex = startIndex;
 		this.endIndex = endIndex;
 		this.numThreads = numThreads;
@@ -131,7 +145,7 @@ public class ExtractTrainingFeatures {
 			threadPool.execute(new Runnable() {
 				public void run() {
 					logger.info(String.format("Task %d : start", count));
-					TIntDoubleHashMap[] allFeatures = processLine(frameLines.get(count), parseLines);
+					FeaturesAndCost[] allFeatures = processLine(frameLines.get(count), parseLines);
 					final String filename =
 							String.format("%s%06d%s", FEATURE_FILENAME_PREFIX, count, FEATURE_FILENAME_SUFFIX);
 					writeSerializedObject(allFeatures, new File(eventDir, filename).getAbsolutePath()); // auto-gzips
@@ -142,7 +156,7 @@ public class ExtractTrainingFeatures {
 		threadPool.shutdown();
 	}
 
-	private TIntDoubleHashMap[] processLine(String frameLine, List<String> parseLines) {
+	private FeaturesAndCost[] processLine(String frameLine, List<String> parseLines) {
 		// Parse the frameLine
 		final String[] toks = frameLine.split("\t");
 		// throw out first two fields
@@ -161,19 +175,19 @@ public class ExtractTrainingFeatures {
 
 		// extract features for every frame
 		final Set<String> frames = frameMap.keySet();
-		final TIntDoubleHashMap[] allFeatures = new TIntDoubleHashMap[frames.size()];
-		// put the correct frame first
+		final FeaturesAndCost[] allFeatures = new FeaturesAndCost[frames.size()];
 		final Map<String, TIntDoubleHashMap> allFeaturesMap = featureExtractor.extractFeaturesByIndex(
 				frames,
 				targetTokenIdxs,
 				sentence,
 				alphabet
 		);
-		allFeatures[0] = allFeaturesMap.get(goldFrame);
+		// put the correct frame first
+		allFeatures[0] = new FeaturesAndCost(allFeaturesMap.get(goldFrame), 0f);
 		int count = 1;
-		for (String wrongFrame : frames) {
-			if (wrongFrame.equals(goldFrame)) continue;
-			allFeatures[count] = allFeaturesMap.get(wrongFrame);
+		for (String frame : frames) {
+			if (frame.equals(goldFrame)) continue;
+			allFeatures[count] = new FeaturesAndCost(allFeaturesMap.get(frame), costs.getCost(goldFrame, frame));
 			count++;
 		}
 		return allFeatures;

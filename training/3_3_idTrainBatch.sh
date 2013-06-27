@@ -25,4 +25,5 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8g -Xmx8g -XX:ParallelGCThread
   lambda:1.0 \
   restartfile:null \
   logoutputfile:${model_dir}/log \
-  numthreads:${num_threads}
+  numthreads:${num_threads} \
+  use-partial-credit:true
