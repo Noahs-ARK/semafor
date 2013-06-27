@@ -101,16 +101,6 @@ public class ExtractTrainingFeatures {
 		events.createEvents();
 	}
 
-	public static class FeaturesAndCost {
-		public final TIntDoubleHashMap features;
-		public final float cost;
-
-		public FeaturesAndCost(TIntDoubleHashMap features, float cost) {
-			this.features = features;
-			this.cost = cost;
-		}
-	}
-
 	public ExtractTrainingFeatures(Map<String, Integer> alphabet,
 								   File eventDir,
 								   String frameElementsFile,

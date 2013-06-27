@@ -175,7 +175,7 @@ public class AlphabetCreationThreaded {
 	}
 
 	private void processBatch(int threadId, List<String> frameLines, List<String> parseLines, Multiset<String> alphabet) {
-		for (int i = 0; i < frameLines.size(); i++) {
+		for (int i = 0; i < frameLines.size() && !Thread.currentThread().isInterrupted(); i++) {
 			processLine(frameLines.get(i), parseLines, alphabet);
 			if (i % 50 == 0) {
 				logger.info("Thread " + threadId + "\n" +

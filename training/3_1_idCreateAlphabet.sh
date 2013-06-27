@@ -20,12 +20,10 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms6g -Xmx6g -XX:ParallelGCThread
   edu.cmu.cs.lti.ark.fn.identification.training.AlphabetCreationThreaded \
   train-fefile:${fe_file} \
   train-parsefile:${parsed_file} \
-  wordnet-configfile:${wordnet_config_file} \
   fnidreqdatafile:${fn_id_req_data_file} \
   logoutputfile:${log_file} \
   model:${model_dir} \
   id-feature-extractor-type:${id_features} \
-  eventsfile:${event_dir} \
   startindex:0 \
   endindex:${fe_file_length} \
   numthreads:${num_threads}

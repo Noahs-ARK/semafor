@@ -46,7 +46,7 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 import static com.aliasi.util.Math.sum;
-import static edu.cmu.cs.lti.ark.fn.identification.training.ExtractTrainingFeatures.FeaturesAndCost;
+
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 
 
@@ -195,6 +195,7 @@ public class TrainBatch {
 		Arrays.fill(tGradients, 0.0);
 		double logLikelihood = 0.0;
 		for (int targetIdx : targetIdxs) {
+			if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
 			logLikelihood +=
 					addLogLossAndGradientForExample(getFeaturesForTarget(targetIdx), currentParams, tGradients);
 			if (targetIdx % 100 == 0) logger.info(String.format("target idx: %d", targetIdx));
