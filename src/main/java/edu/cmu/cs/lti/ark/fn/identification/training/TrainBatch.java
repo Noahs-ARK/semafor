@@ -214,6 +214,7 @@ public class TrainBatch {
 			final TIntDoubleHashMap frameFeatures = featuresByFrame[frameIdx].features;
 			frameScore[frameIdx] = dotProduct(currentParams, frameFeatures);
 			if (usePartialCreditCosts) {
+				// softmax-margin
 				frameScore[frameIdx] += featuresByFrame[frameIdx].cost;
 			}
 			expdFrameScore[frameIdx] = Math.exp(frameScore[frameIdx]);
