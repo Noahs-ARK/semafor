@@ -32,7 +32,7 @@ public class Lbfgs {
 	public static double XTOL = calculateMachineEpsilon(); //estimate of machine precision.  ~= 2.220446049250313E-16
 	// number of corrections, between 3 and 7
     // a higher number means more computation per iteration, but possibly less iterations until convergence
-    public static int NUM_CORRECTIONS = 7;
+    public static int NUM_CORRECTIONS = 6;
 	public static boolean DEBUG = true;
 	public static int SAVE_EVERY_K = 10;
 
@@ -57,6 +57,7 @@ public class Lbfgs {
 			double value = valueAndGradient.getFirst();
 			double[] gradients = valueAndGradient.getSecond();
 			try {
+				final long startTime = System.currentTimeMillis();
 				riso.numerical.LBFGS.lbfgs(modelSize,
 						NUM_CORRECTIONS,
 						currentParams,
@@ -69,11 +70,13 @@ public class Lbfgs {
 						XTOL,
 						iflag
 				);
+				final long endTime = System.currentTimeMillis();
+				logger.info(String.format("Finished LBFGS step. Took %s seconds.", (endTime - startTime) / 1000.0));
 			} catch (LBFGS.ExceptionWithIflag e) {
 				// these exceptions happen sometimes even though the training was successful
 				// TODO: separate out the ok exceptions from the bad exceptions
 				e.printStackTrace();
-				assert iflag[0] != 0;
+				break;
 			}
 			iteration++;
 			if (iteration % SAVE_EVERY_K == 0) {
