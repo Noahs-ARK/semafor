@@ -37,12 +37,12 @@ public class Senna {
 	}
 
 	public static Senna load() throws IOException {
-		return fromFiles(CharStreams.newReaderSupplier(DEFAULT_WORDS_SUPPLIER, Charsets.UTF_8),
+		return load(CharStreams.newReaderSupplier(DEFAULT_WORDS_SUPPLIER, Charsets.UTF_8),
 				CharStreams.newReaderSupplier(DEFAULT_VECTORS_SUPPLIER, Charsets.UTF_8));
 	}
 
-	public static Senna fromFiles(InputSupplier<InputStreamReader> wordsInput,
-								  InputSupplier<InputStreamReader> vectorsInput) throws IOException {
+	public static Senna load(InputSupplier<InputStreamReader> wordsInput,
+							 InputSupplier<InputStreamReader> vectorsInput) throws IOException {
 		return new Senna(readFiles(wordsInput, vectorsInput));
 	}
 

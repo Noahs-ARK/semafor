@@ -69,6 +69,8 @@ public class TrainBatch {
 			return Ints.compare(aNum, bNum);
 		}
 	};
+	private static float DEFAULT_COST_MULTIPLE = 5f;
+
 	private final double[] params;
 	private final List<String> eventFiles;
 	private final String modelFile;
@@ -80,6 +82,7 @@ public class TrainBatch {
 	final double[][] tGradients;
 	final double[] tValues;
 	private final boolean usePartialCreditCosts;
+	private float costMultiple;
 	private final double oneOverN;
 
 	public static void main(String[] args) throws Exception {
@@ -101,7 +104,8 @@ public class TrainBatch {
 				options.lambda.get(),
 				restartFile.equals("null") ? Optional.<String>absent() : Optional.of(restartFile),
 				numThreads,
-				options.usePartialCredit.get());
+				options.usePartialCredit.get(),
+				options.costMultiple.present() ? (float) options.costMultiple.get() : DEFAULT_COST_MULTIPLE);
 		tbm.trainModel();
 	}
 
@@ -112,9 +116,10 @@ public class TrainBatch {
 					  double lambda,
 					  Optional<String> restartFile,
 					  int numThreads,
-					  boolean usePartialCreditCosts) throws IOException {
-		this.usePartialCreditCosts = usePartialCreditCosts;
-		final int modelSize = getAlphabetSize(alphabetFile);
+					  boolean usePartialCreditCosts,
+					  float costMultiple) throws IOException {
+		final int modelSize = AlphabetCreationThreaded.getAlphabetSize(alphabetFile);
+		logger.info(String.format("Number of features: %d", modelSize));
 		this.modelFile = modelFile;
 		this.eventFiles = getEventFiles(new File(eventsDir));
 		this.oneOverN = 1.0 / this.eventFiles.size();
@@ -122,6 +127,8 @@ public class TrainBatch {
 		this.useL2Regularization = reg.toLowerCase().equals("l2");
 		this.lambda = lambda;
 		this.numThreads = numThreads;
+		this.usePartialCreditCosts = usePartialCreditCosts;
+		this.costMultiple = costMultiple;
 		this.params = restartFile.isPresent() ? loadModel(restartFile.get()) : new double[modelSize];
 
 		gradients = new double[modelSize];
@@ -215,7 +222,7 @@ public class TrainBatch {
 			frameScore[frameIdx] = dotProduct(currentParams, frameFeatures);
 			if (usePartialCreditCosts) {
 				// softmax-margin
-				frameScore[frameIdx] += featuresByFrame[frameIdx].cost;
+				frameScore[frameIdx] += costMultiple * featuresByFrame[frameIdx].cost;
 			}
 			expdFrameScore[frameIdx] = Math.exp(frameScore[frameIdx]);
 		}
@@ -295,14 +302,6 @@ public class TrainBatch {
 			params[i] = Double.parseDouble(lines.get(i).trim());
 		}
 		return params;
-	}
-
-	/** Reads the number of features in the model from the first line of alphabetFile */
-	private static int getAlphabetSize(String alphabetFile) throws IOException {
-		final String firstLine = Files.readFirstLine(new File(alphabetFile), Charsets.UTF_8);
-		final int numFeatures = Integer.parseInt(firstLine.trim()) + 1;
-		logger.info(String.format("Number of features: %d", numFeatures));
-		return numFeatures;
 	}
 
 	/** Gets the list of all feature files */

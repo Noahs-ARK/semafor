@@ -40,7 +40,6 @@ import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.FileHandler;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -166,12 +165,7 @@ public class AlphabetCreationThreaded {
 			});
 		}
 		threadPool.join();
-
-		final Set<String> commonFeatures = Sets.filter(alphabet.elementSet(), new Predicate<String>() {
-			@Override public boolean apply(String input) {
-				return alphabet.count(input) >= MINIMUM_FEATURE_COUNT;
-			} });
-		writeAlphabet(commonFeatures, Files.newWriterSupplier(alphabetFile, Charsets.UTF_8));
+		writeAlphabet(alphabet, Files.newWriterSupplier(alphabetFile, Charsets.UTF_8));
 	}
 
 	private void processBatch(int threadId, List<String> frameLines, List<String> parseLines, Multiset<String> alphabet) {
@@ -223,7 +217,8 @@ public class AlphabetCreationThreaded {
 			String line;
 			int i = 0;
 			while ((line = bReader.readLine()) != null) {
-				alphabet.put(line.trim(), i);
+				final String[] fields = line.trim().split("\t");
+				alphabet.put(fields[0], i);
 				i++;
 			}
 			return alphabet;
@@ -232,14 +227,24 @@ public class AlphabetCreationThreaded {
 		}
 	}
 
-	private void writeAlphabet(Set<String> alphabet, OutputSupplier<OutputStreamWriter> outputSupplier)
+	/** Reads the number of features in the model from the first line of alphabetFile */
+	public static int getAlphabetSize(String alphabetFile) throws IOException {
+		final String firstLine = Files.readFirstLine(new File(alphabetFile), Charsets.UTF_8);
+		return Integer.parseInt(firstLine.trim());
+	}
+
+	private void writeAlphabet(final Multiset<String> alphabet, OutputSupplier<OutputStreamWriter> outputSupplier)
 			throws IOException {
+		final Predicate<String> isCommon = new Predicate<String>() {
+			public boolean apply(String input) { return alphabet.count(input) >= MINIMUM_FEATURE_COUNT; } };
+		// requires a pass through to get the number of features worth keeping
+		final int numFeatures = Sets.filter(alphabet.elementSet(), isCommon).size();
 		final OutputStreamWriter output = outputSupplier.getOutput();
 		try {
-			output.write(String.format("%d\n", alphabet.size()));
-			for (String feature : alphabet) {
-				output.write(feature);
-				output.write("\n");
+			output.write(String.format("%d\n", numFeatures));
+			for (String feature : alphabet.elementSet()) {
+				if (!isCommon.apply(feature)) continue;
+				output.write(String.format("%s\t%d\n", feature, alphabet.count(feature)));
 			}
 		} finally {
 			closeQuietly(output);

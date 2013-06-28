@@ -31,7 +31,7 @@ import edu.cmu.cs.lti.ark.util.CommandLineOptions;
  */
 public final class FNModelOptions extends CommandLineOptions {
 	public static final double TOL = 0.00000001;
-	
+
 	public FNModelOptions(String[] args) {
 		this(args, false);
 	}
@@ -93,6 +93,7 @@ public final class FNModelOptions extends CommandLineOptions {
 	public StringOption printFNIDConfidence = new StringOption("printfnidconfidence");
 	public IntOption numThreads = new IntOption("numthreads");
 	public BoolOption usePartialCredit = new BoolOption("use-partial-credit");
+	public DoubleOption costMultiple = new DoubleOption("cost-multiple");
 
 	public StringOption idFeatureExtractorType = new StringOption("id-feature-extractor-type");
 	public StringOption eventsFile = new StringOption("eventsfile");
