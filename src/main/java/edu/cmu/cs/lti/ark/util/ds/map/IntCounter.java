@@ -21,19 +21,10 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.util.ds.map;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.google.common.collect.Maps;
+import gnu.trove.*;
 
-import gnu.trove.THashSet;
-import gnu.trove.TObjectDoubleHashMap;
-import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntIterator;
-import gnu.trove.TObjectIntProcedure;
+import java.util.*;
 
 /**
  * Simple integer counter: stores integer values for keys; lookup on nonexistent keys returns 0.
@@ -133,7 +124,17 @@ public class IntCounter<T> extends AbstractCounter<T, Integer> implements java.i
 		set(key, newValue);
 		return newValue;
 	}
-	
+
+	public Map<T, Integer> asMap() {
+		final Map<T, Integer> copy = Maps.newHashMapWithExpectedSize(size());
+		final TObjectIntIterator<T> iter = getIterator();
+		while (iter.hasNext()) {
+			iter.advance();
+			copy.put(iter.key(), iter.value());
+		}
+		return copy;
+	}
+
 	/**
 	 * Iterates through the given list of keys, incrementing each by 1.
 	 * @param keys
@@ -552,7 +553,7 @@ public class IntCounter<T> extends AbstractCounter<T, Integer> implements java.i
 
 	@Override
 	public Set<java.util.Map.Entry<T, Integer>> entrySet() {
-		throw new UnsupportedOperationException("IntCounter.entrySet() unsupported");
+		return asMap().entrySet();
 	}
 
 	@Override

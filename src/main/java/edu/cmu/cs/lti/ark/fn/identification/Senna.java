@@ -1,6 +1,7 @@
 package edu.cmu.cs.lti.ark.fn.identification;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import com.google.common.io.CharStreams;
 import com.google.common.io.InputSupplier;
@@ -17,6 +18,7 @@ import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
  * @author sthomson@cs.cmu.edu
  */
 public class Senna {
+	public static final int SENNA_VECTOR_DIM = 50;
 	public static final String DEFAULT_SENNA_WORDS_FILE = "senna/words.lst";
 	public static final String DEFAULT_SENNA_VECTORS_FILE = "senna/embeddings.txt";
 	private static InputSupplier<InputStream> DEFAULT_WORDS_SUPPLIER = new InputSupplier<InputStream>() {
@@ -27,9 +29,6 @@ public class Senna {
 		@Override public InputStream getInput() throws IOException {
 			return getClass().getClassLoader().getResourceAsStream(DEFAULT_SENNA_VECTORS_FILE);
 		} };
-	private static final int SENNA_VECTOR_DIM = 50;
-	public static final double[] DEFAULT_VECTOR = new double[SENNA_VECTOR_DIM];
-	private static int EXPECTED_NUM_WORDS = 130000;
 
 	private final Map<String, double[]> embeddings;
 
@@ -48,8 +47,8 @@ public class Senna {
 	}
 
 	private static Map<String, double[]> readFiles(InputSupplier<InputStreamReader> wordsInput,
-														  InputSupplier<InputStreamReader> vectorsInput) throws IOException {
-		final Map<String, double[]> embeddings = Maps.newHashMapWithExpectedSize(EXPECTED_NUM_WORDS);
+												   InputSupplier<InputStreamReader> vectorsInput) throws IOException {
+		final Map<String, double[]> embeddings = Maps.newHashMapWithExpectedSize(130000);
 		final List<String> words = CharStreams.readLines(wordsInput);
 		final List<String> vectorLines = CharStreams.readLines(vectorsInput);
 		for (int i : xrange(words.size())) {
@@ -63,9 +62,8 @@ public class Senna {
 		return embeddings;
 	}
 
-	public double[] getEmbedding(String word) {
+	public Optional<double[]> getEmbedding(String word) {
 		final String lower = word.toLowerCase();
-		if (!embeddings.containsKey(lower)) return DEFAULT_VECTOR;
-		return embeddings.get(lower);
+		return Optional.fromNullable(embeddings.get(lower));
 	}
 }

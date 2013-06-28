@@ -25,7 +25,6 @@ import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
-import edu.cmu.cs.lti.ark.util.optimization.LDouble;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectDoubleHashMap;
@@ -33,7 +32,10 @@ import gnu.trove.TObjectDoubleHashMap;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.StringTokenizer;
 
 
 public class FrameIdentificationGoldTargets
@@ -126,35 +128,8 @@ public class FrameIdentificationGoldTargets
 		String feFile = options.frameElementsOutputFile.get();
 		ParsePreparation.writeSentencesToFile(feFile, idResult);
 		
-	}	
-	
-	public static TObjectDoubleHashMap<String> parseParamFile(String paramsFile)
-	{
-		TObjectDoubleHashMap<String> startParamList = new TObjectDoubleHashMap<String>(); 
-		try {
-			BufferedReader fis = new BufferedReader(new FileReader(paramsFile));
-			String pattern = null;
-			int count = 0;
-			while ((pattern = fis.readLine()) != null)
-			{
-				StringTokenizer st = new StringTokenizer(pattern.trim(),"\t");
-				String paramName = st.nextToken().trim();
-				String rest = st.nextToken().trim();
-				String[] arr = rest.split(",");
-				double value = new Double(arr[0].trim());
-				boolean sign = new Boolean(arr[1].trim());
-				LDouble val = new LDouble(value,sign);
-				startParamList.put(paramName, val.exponentiate());
-				if(count%100000==0)
-					System.out.println("Processed param number:"+count);
-				count++;
-			}
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}
-		return startParamList;
 	}
-	
+
 	public static ArrayList<String> getGoldSeg(ArrayList<String> segs,int start, int end)
 	{
 		ArrayList<String> result = new ArrayList<String>();

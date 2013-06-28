@@ -7,6 +7,7 @@ import com.google.common.collect.Maps;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import gnu.trove.TIntDoubleHashMap;
 
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -16,11 +17,20 @@ public abstract class IdFeatureExtractor {
 	// Command line option converters
 	private static Map<String, Supplier<IdFeatureExtractor>> featureExtractorMap = ImmutableMap.of(
 			"basic", new Supplier<IdFeatureExtractor>() {
-				@Override public IdFeatureExtractor get() { return new BasicFeatureExtractor(); }
+				public IdFeatureExtractor get() { return new BasicFeatureExtractor(); }
 			} ,
 			"ancestor", new Supplier<IdFeatureExtractor>() {
-				@Override public IdFeatureExtractor get() { return AncestorFeatureExtractor.load(); }
-			});
+				public IdFeatureExtractor get() {
+					try {
+						return AncestorFeatureExtractor.load();
+					} catch (IOException e) { throw new RuntimeException(e); }
+				} },
+			"senna", new Supplier<IdFeatureExtractor>() {
+				public IdFeatureExtractor get() {
+					try {
+						return SennaFeatureExtractor.load();
+					} catch (IOException e) { throw new RuntimeException(e); }
+				} } );
 	public static class Converter implements IStringConverter<IdFeatureExtractor> {
 		@Override public IdFeatureExtractor convert(String value) {
 			return featureExtractorMap.get(value.trim().toLowerCase()).get();

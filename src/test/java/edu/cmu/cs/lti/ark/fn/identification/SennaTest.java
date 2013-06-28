@@ -1,11 +1,13 @@
 package edu.cmu.cs.lti.ark.fn.identification;
 
+import com.google.common.base.Optional;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertFalse;
 
 /**
  * @author sthomson@cs.cmu.edu
@@ -38,13 +40,13 @@ public class SennaTest {
 
 	@Test
 	public void testGetEmbedding() {
-		final double[] textEmbedding = SENNA.getEmbedding("text");
-		assertArrayEquals(EXPECTED_TEXT_EMBEDDING, textEmbedding, .00001);
+		final Optional<double[]> textEmbedding = SENNA.getEmbedding("text");
+		assertArrayEquals(EXPECTED_TEXT_EMBEDDING, textEmbedding.get(), .00001);
 	}
 
 	@Test
-	public void testGetEmbeddingForFakeWordReturnsDefault() {
-		final double[] textEmbedding = SENNA.getEmbedding("fake word");
-		assertArrayEquals(Senna.DEFAULT_VECTOR, textEmbedding, .00001);
+	public void testGetEmbeddingForFakeWordReturnsAbsent() {
+		final Optional<double[]> textEmbedding = SENNA.getEmbedding("fake word");
+		assertFalse(textEmbedding.isPresent());
 	}
 }

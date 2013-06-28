@@ -21,22 +21,10 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.util.ds.map;
 
-import edu.cmu.cs.lti.ark.util.ds.map.AbstractCounter;
-import edu.cmu.cs.lti.ark.util.ds.map.FactoryDefaultMap;
-import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectDoubleHashMap;
-import gnu.trove.TObjectDoubleIterator;
-import gnu.trove.TObjectDoubleProcedure;
-import gnu.trove.TObjectHashingStrategy;
-import gnu.trove.TObjectIntIterator;
+import com.google.common.collect.Maps;
+import gnu.trove.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Simple double counter: stores integer values for keys; lookup on nonexistent keys returns 0.0. 
@@ -490,8 +478,19 @@ public class Counter<T> extends AbstractCounter<T,Double> implements java.io.Ser
 
 	@Override
 	public Set<java.util.Map.Entry<T, Double>> entrySet() {
-		throw new UnsupportedOperationException("Counter.entrySet() unsupported");
+		return asMap().entrySet();
 	}
+
+	public Map<T, Double> asMap() {
+		final Map<T, Double> copy = Maps.newHashMapWithExpectedSize(size());
+		final TObjectDoubleIterator<T> iter = getIterator();
+		while (iter.hasNext()) {
+			iter.advance();
+			copy.put(iter.key(), iter.value());
+		}
+		return copy;
+	}
+
 
 	@Override
 	public boolean isEmpty() {

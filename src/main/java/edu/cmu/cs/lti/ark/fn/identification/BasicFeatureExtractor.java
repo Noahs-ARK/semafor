@@ -45,48 +45,29 @@ public class BasicFeatureExtractor extends IdFeatureExtractor {
 	public Map<String, Map<String, Double>> extractFeaturesByName(Iterable<String> frameNames,
 																  int[] targetTokenIdxs,
 																  Sentence sentence) {
-		final IntCounter<String> baseFeatures = getBaseFeatures(targetTokenIdxs, sentence);
+		final Map<String, Double> baseFeatures = getBaseFeatures(targetTokenIdxs, sentence);
 		final Map<String, Map<String, Double>> results = Maps.newHashMap();
 		// conjoin base features with frame
 		for (String frame : frameNames) {
-			final String frameFtr = "f:" + frame;
-			final Map<String, Double> featuresForFrame = Maps.newHashMap();
-			for (String feature : baseFeatures.keySet()) {
-				featuresForFrame.put(
-						SPACE.join(frameFtr, feature),
-						baseFeatures.get(feature).doubleValue()
-				);
-			}
-			results.put(frame, featuresForFrame);
+			results.put(frame, conjoin("f:" + frame, baseFeatures));
 		}
 		return results;
 	}
 
-	protected IntCounter<String> getBaseFeatures(int[] targetTokenIdxs, Sentence sentence) {
+	protected <V extends Number> Map<String, V> conjoin(String name, Map<String, V> oldFeatures) {
+		final Map<String, V> conjoinedFeatures = Maps.newHashMap();
+		for (String feature : oldFeatures.keySet()) {
+			conjoinedFeatures.put(SPACE.join(name, feature), oldFeatures.get(feature));
+		}
+		return conjoinedFeatures;
+	}
+
+	protected Map<String, Double> getBaseFeatures(int[] targetTokenIdxs, Sentence sentence) {
 		Arrays.sort(targetTokenIdxs);
 		// Get lemmas and postags for target
-		final List<String> tokenAndCpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
-		final List<String> forms = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
-		final List<String> cpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
-		final List<String> lemmaAndCpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
-		final List<Token> tokens = sentence.getTokens();
-		for (int tokenIdx : targetTokenIdxs) {
-			Token token = tokens.get(tokenIdx);
-			final String form = token.getForm();
-			final String postag = token.getPostag();
-			final String cpostag = getCpostag(postag);
-			final String lemma = token.getLemma();
-			forms.add(form);
-			tokenAndCpostags.add(form + "_" + cpostag);
-			cpostags.add(cpostag);
-			lemmaAndCpostags.add(lemma + "_" + cpostag);
-		}
-		final String cpostagsStr = UNDERSCORE.join(cpostags);
-		final String lemmaAndCpostagsStr = UNDERSCORE.join(lemmaAndCpostags);
-
-		final IntCounter<String> featureMap = new IntCounter<String>();
-		featureMap.increment("aP:" + cpostagsStr);
-		featureMap.increment("aLP:" + lemmaAndCpostagsStr);
+		final IntCounter<String> featureMap = getTargetWordFeatures(targetTokenIdxs, sentence);
+		// add homogenous/bias feature
+		featureMap.increment("bias");
 
 //		// add a feature for each word in the sentence
 //		for (int tokenIdx : xrange(allLemmaTags[0].length)) {
@@ -103,8 +84,31 @@ public class BasicFeatureExtractor extends IdFeatureExtractor {
 		 * syntactic features
 		 */
 		final DependencyParse parse = DependencyParse.processFN(sentence.toAllLemmaTagsArray(), 0.0);
-		final DependencyParse[] sortedNodes = parse.getIndexSortedListOfNodes();
-		final DependencyParse head = DependencyParse.getHeuristicHead(sortedNodes, targetTokenIdxs);
+		final IntCounter<String> syntacticFeatures = getSyntacticFeatures(targetTokenIdxs, parse);
+		return featureMap.addAll(syntacticFeatures).scaleBy(1.0);
+	}
+
+	protected IntCounter<String> getTargetWordFeatures(int[] targetTokenIdxs, Sentence sentence) {
+		final List<String> tokenAndCpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
+		final List<String> cpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
+		final List<String> lemmaAndCpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
+		final List<Token> tokens = sentence.getTokens();
+		for (int tokenIdx : targetTokenIdxs) {
+			Token token = tokens.get(tokenIdx);
+			final String cpostag = getCpostag(token.getPostag());
+			tokenAndCpostags.add(token.getForm() + "_" + cpostag);
+			cpostags.add(cpostag);
+			lemmaAndCpostags.add(token.getLemma() + "_" + cpostag);
+		}
+		final IntCounter<String> featureMap = new IntCounter<String>();
+		featureMap.increment("aP:" + UNDERSCORE.join(cpostags));
+		featureMap.increment("aTP:" + UNDERSCORE.join(tokenAndCpostags));
+		featureMap.increment("aLP:" + UNDERSCORE.join(lemmaAndCpostags));
+		return featureMap;
+	}
+
+	protected IntCounter<String> getSyntacticFeatures(int[] targetTokenIdxs, DependencyParse parse) {
+		final DependencyParse head = DependencyParse.getHeuristicHead(parse.getIndexSortedListOfNodes(), targetTokenIdxs);
 		final String headCpostag = getCpostag(head.getPOS());
 
 		final List<DependencyParse> children = head.getChildren();
@@ -113,6 +117,7 @@ public class BasicFeatureExtractor extends IdFeatureExtractor {
 		for (DependencyParse child : children) {
 			depLabels.add(child.getLabelType().toUpperCase());
 		}
+		final IntCounter<String> featureMap = new IntCounter<String>();
 		featureMap.increment("d:" + UNDERSCORE.join(depLabels));
 
 		if (headCpostag.equals("V")) {
@@ -126,18 +131,40 @@ public class BasicFeatureExtractor extends IdFeatureExtractor {
 			}
 			featureMap.increment("sC:" + UNDERSCORE.join(subcat));
 		}
+		final IntCounter<String> parentFeatures = getParentFeatures(head.getParent());
+		return featureMap.addAll(parentFeatures);
+	}
 
-		final DependencyParse parent = head.getParent();
-		final String parentPos = ((parent == null) ? "NULL" : parent.getPOS().toUpperCase());
-		featureMap.increment("pP:" + parentPos);
-		final String parentLemma = ((parent == null) ? "NULL" : parent.getLemma());
-		featureMap.increment("pPL:" + parentPos + "_" + parentLemma);
-		final String parentLabel = ((parent == null) ? "NULL" : parent.getLabelType().toUpperCase());
-		featureMap.increment("pL:" + parentLabel);
+	protected IntCounter<String> getParentFeatures(DependencyParse parent) {
+		IntCounter<String> featureMap = new IntCounter<String>();
+		if (parent == null) {
+			featureMap.increment("pP:NULL");
+			featureMap.increment("pPL:NULL");
+			featureMap.increment("pLab:NULL");
+
+//			featureMap.increment("gpP:NULL");
+//			featureMap.increment("gpPL:NULL");
+//			featureMap.increment("gpLab:NULL");
+		} else {
+			final String parentPostag = parent.getPOS().toUpperCase();
+			featureMap.increment("pP:" + parentPostag);
+			featureMap.increment("pLP:" + parent.getLemma() + "_" + parentPostag);
+			featureMap.increment("pLab:" + parent.getLabelType().toUpperCase());
+			// if parent is a preposition, go up one more level
+			if (parentPostag.startsWith("I")) {
+				final DependencyParse gp = parent.getParent();
+				if (gp != null) {
+					final String gpPostag = gp.getPOS().toUpperCase();
+					featureMap.increment("gpP:" + gpPostag);
+					featureMap.increment("gpLP:" + gp.getLemma() + "_" + parentPostag);
+					featureMap.increment("gpLab:" + gp.getLabelType().toUpperCase());
+				}
+			}
+		}
 		return featureMap;
 	}
 
-	private static String getCpostag(String postag) {
+	protected static String getCpostag(String postag) {
 		return postag.substring(0, 1).toUpperCase();
 	}
 }
