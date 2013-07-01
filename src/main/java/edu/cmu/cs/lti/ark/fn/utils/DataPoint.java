@@ -97,7 +97,7 @@ public class DataPoint {
 		// tokens are separated by tabs
 		// tokens[0]: frame name
 		// tokens[1]: lexical unit
-		// tokens[2]: token nums, separated by "_"
+		// tokens[2]: target token indexes (0-based), separated by "_"
 		// tokens[3]: target word(s), separated by " "
 		// tokens[4]: sentence number
 		final String[] tokens = frameLine.split("\t");
