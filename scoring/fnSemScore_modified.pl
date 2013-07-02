@@ -54,14 +54,14 @@ my $MISSING_LABEL = 2;
 my $LINK_WEIGHT = 0.8;
 
 # directory where cache is created
-my $CACHEDIR = "/scratch/tmp";
+my $CACHEDIR = "/tmp";
 
 my $CMDOPTIONS;
 
 MAIN:{
     
     #################################################################
-    # PROCES OPTIONS
+    # PROCESS OPTIONS
 
     getopts("c:d:ehlnstv") || &usage();
     if (defined $opt_c) {
