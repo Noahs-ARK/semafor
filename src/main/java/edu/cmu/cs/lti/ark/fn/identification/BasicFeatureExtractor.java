@@ -164,7 +164,7 @@ public class BasicFeatureExtractor extends IdFeatureExtractor {
 		return featureMap;
 	}
 
-	protected static String getCpostag(String postag) {
+	public static String getCpostag(String postag) {
 		return postag.substring(0, 1).toUpperCase();
 	}
 }
