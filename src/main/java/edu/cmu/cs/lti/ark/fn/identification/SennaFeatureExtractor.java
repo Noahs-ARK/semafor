@@ -16,18 +16,17 @@ import static edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse.getHeuristicHead
 /**
  * @author sthomson@cs.cmu.edu
  */
-public class SennaFeatureExtractor extends AncestorFeatureExtractor {
+public class SennaFeatureExtractor extends BasicFeatureExtractor {
 	public static final String[] FIVE_WORD_WINDOW_NAMES = {"2BTH", "1BTH", "TH", "1ATH", "2ATH"};
 
 	private final Senna senna;
 
-	public SennaFeatureExtractor(Senna senna, FrameAncestors ancestors) {
-		super(ancestors);
+	public SennaFeatureExtractor(Senna senna) {
 		this.senna = senna;
 	}
 
 	public static SennaFeatureExtractor load() throws IOException {
-		return new SennaFeatureExtractor(Senna.load(), FrameAncestors.load());
+		return new SennaFeatureExtractor(Senna.load());
 	}
 
 	@Override
