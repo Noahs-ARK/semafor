@@ -16,7 +16,11 @@ if [ -e ${log_file} ]; then
     rm "${log_file}"
 fi
 
-${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8g -Xmx8g -XX:ParallelGCThreads=1 \
+${JAVA_HOME_BIN}/java \
+    -classpath ${classpath} \
+    -Xms1g \
+    -Xmx8g \
+    -XX:ParallelGCThreads=${gc_threads} \
   edu.cmu.cs.lti.ark.fn.identification.training.TrainBatch \
   alphabetfile:${model_dir}/alphabet.dat \
   eventsfile:${model_dir}/events \
