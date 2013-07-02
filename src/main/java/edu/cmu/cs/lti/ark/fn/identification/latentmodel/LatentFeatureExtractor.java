@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.SortedSet;
 
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.*;
+import static edu.cmu.cs.lti.ark.fn.identification.BasicFeatureExtractor.getCpostag;
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 
 /**
@@ -52,19 +53,6 @@ public class LatentFeatureExtractor {
 		this.lemmatizer = lemmatizer;
 	}
 
-	public IntCounter<String> extractFeatures(String frameName,
-											  int[] tokenNums,
-											  String hiddenWord,
-											  String[][] allLemmaTags,
-											  DependencyParse parse,
-											  boolean parseHasLemmas) {
-		return extractFeatures(frameName, tokenNums, hiddenWord, allLemmaTags, parse, wnRelations, lemmatizer, parseHasLemmas);
-	}
-
-	private static String getCpostag(String postag) {
-		return postag.substring(0, 1).toUpperCase();
-	}
-
 	/**
 	 * Extract features for a (frame, target, hidden l.u.) tuple
 	 *
@@ -73,25 +61,20 @@ public class LatentFeatureExtractor {
 	 * @param hiddenLexUnit the latent l.u.
 	 * @param allLemmaTags the sentence in AllLemmaTags format
 	 * @param parse the dependency parse for the sentence
-	 * @param wnRelations a way to look up all the WordNet relations between target and the latent l.u.
-	 * @param lemmatizer a way to look up lemmas for (token, postag) pairs
 	 * @param parseHasLemmas whether or not allLemma already includes lemmas for each token
 	 * @return a map from feature name -> count
 	 */
-	public static IntCounter<String> extractFeatures(String frameName,
-													 int[] targetTokenIdxs,
-													 String hiddenLexUnit,
-													 String[][] allLemmaTags,
-													 DependencyParse parse,
-													 Relations wnRelations,
-													 Lemmatizer lemmatizer,
-													 boolean parseHasLemmas) {
+	public IntCounter<String> extractFeatures(String frameName,
+											  int[] targetTokenIdxs,
+											  String hiddenLexUnit,
+											  String[][] allLemmaTags,
+											  DependencyParse parse,
+											  boolean parseHasLemmas) {
 		// Get lemmas and postags for prototype
 		// hiddenLexUnit is in format: "form1_pos1 form2_pos2 ... formn_posn"
 		final String[] hiddenTokenAndPos = hiddenLexUnit.split(" ");
 		final List<String> hiddenTokenAndCpostags = Lists.newArrayListWithExpectedSize(hiddenTokenAndPos.length);
 		final List<String> hiddenTokens = Lists.newArrayListWithExpectedSize(hiddenTokenAndPos.length);
-		//final List<String> hiddenLemmas = Lists.newArrayList(hiddenTokenAndPos.length);
 		final List<String> hiddenCpostags = Lists.newArrayListWithExpectedSize(hiddenTokenAndPos.length);
 		final List<String> hiddenLemmaAndCpostags = Lists.newArrayListWithExpectedSize(hiddenTokenAndPos.length);
 		for (String hiddenTok : hiddenTokenAndPos) {
@@ -101,19 +84,16 @@ public class LatentFeatureExtractor {
 			final String cpostag = getCpostag(postag);
 			final String lemma = lemmatizer.getLemma(form, postag);
 			hiddenCpostags.add(cpostag);
-			//hiddenLemmas.add(lemma);
 			hiddenTokens.add(form);
 			hiddenTokenAndCpostags.add(form + "_" + cpostag);
 			hiddenLemmaAndCpostags.add(lemma + "_" + cpostag);
 		}
 		final String hiddenTokenAndCpostagsStr = UNDERSCORE.join(hiddenTokenAndCpostags);
-		//final String hiddenLemmasStr = UNDERSCORE.join(hiddenLemmas);
 		final String hiddenCpostagsStr = UNDERSCORE.join(hiddenCpostags);
 		final String hiddenLemmaAndCpostagsStr = UNDERSCORE.join(hiddenLemmaAndCpostags);
 
 		// Get lemmas and postags for target
 		final List<String> actualTokenAndCpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
-		//final List<String> actualLemmas = Lists.newArrayList(targetTokenIdxs.length);
 		final List<String> actualTokens = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
 		final List<String> actualCpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
 		final List<String> actualLemmaAndCpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
@@ -126,12 +106,10 @@ public class LatentFeatureExtractor {
 											: lemmatizer.getLemma(form, postag);
 			actualTokens.add(form);
 			actualTokenAndCpostags.add(form + "_" + cpostag);
-			//actualLemmas.add(lemma);
 			actualCpostags.add(cpostag);
 			actualLemmaAndCpostags.add(lemma + "_" + cpostag);
 		}
 		final String actualTokenAndCpostagsStr = UNDERSCORE.join(actualTokenAndCpostags);
-		//final String actualLemmasStr = UNDERSCORE.join(actualLemmas);
 		final String actualCpostagsStr = UNDERSCORE.join(actualCpostags);
 		final String actualLemmaAndCpostagsStr = UNDERSCORE.join(actualLemmaAndCpostags);
 
@@ -147,7 +125,6 @@ public class LatentFeatureExtractor {
 		final String actualCpostagsFtr = "aP:" + actualCpostagsStr;
 		final String actualLemmaAndCpostagsFtr = "aLP:" + actualLemmaAndCpostagsStr;
 		final String hiddenTokenAndCpostagsFtr = "hT:" + hiddenTokenAndCpostagsStr;
-		//final String hiddenLemmasFtr = "hL:" + hiddenLemmasStr;
 		final String hiddenCpostagsFtr = "hP:" + hiddenCpostagsStr;
 		final String hiddenLemmaAndCpostagsFtr = "hLP:" + hiddenLemmaAndCpostagsStr;
 
@@ -169,9 +146,6 @@ public class LatentFeatureExtractor {
 		featureMap.increment(UNDERSCORE.join(
 				hiddenTokenAndCpostagsFtr,
 				frameFtr));
-//		featureMap.increment(UNDERSCORE.join(
-//				hiddenLemmasFtr,
-//				frameFtr));
 		featureMap.increment(UNDERSCORE.join(
 				hiddenLemmaAndCpostagsFtr,
 				frameFtr));
@@ -281,5 +255,4 @@ public class LatentFeatureExtractor {
 
 		return featureMap;
 	}
-
 }

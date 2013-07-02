@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 
+import static com.google.common.base.Strings.nullToEmpty;
+
 /**
  * Extracts features for the frame identification model
  */
@@ -69,23 +71,26 @@ public class BasicFeatureExtractor extends IdFeatureExtractor {
 		// add homogenous/bias feature
 		featureMap.increment("bias");
 
-//		// add a feature for each word in the sentence
-//		for (int tokenIdx : xrange(allLemmaTags[0].length)) {
-//			final String form = allLemmaTags[PARSE_TOKEN_ROW][tokenIdx];
-//			final String postag = allLemmaTags[PARSE_POS_ROW][tokenIdx].toUpperCase();
-//			final String cpostag = getCpostag(postag);
-//			final String lemma = parseHasLemmas ? allLemmaTags[PARSE_LEMMA_ROW][tokenIdx]
-//					: lemmatizer.getLowerCaseLemma(form, postag);
-//			featureMap.increment("sTP:" + form + "_" + cpostag);
-//			featureMap.increment("sLP:" + lemma + "_" + cpostag);
-//		}
-
 		/*
 		 * syntactic features
 		 */
 		final DependencyParse parse = DependencyParse.processFN(sentence.toAllLemmaTagsArray(), 0.0);
 		final IntCounter<String> syntacticFeatures = getSyntacticFeatures(targetTokenIdxs, parse);
 		return featureMap.addAll(syntacticFeatures).scaleBy(1.0);
+	}
+
+	protected IntCounter<String> getSentenceContextFeatures(int[] targetTokenIdxs, Sentence sentence) {
+		// add a feature for each word in the sentence
+		final IntCounter<String> featureMap = new IntCounter<String>();
+		for (Token token : sentence.getTokens()) {
+			final String form = token.getForm();
+			final String postag = nullToEmpty(token.getPostag()).toUpperCase();
+			final String cpostag = getCpostag(postag);
+			final String lemma = token.getLemma();
+			featureMap.increment("sTP:" + form + "_" + cpostag);
+			featureMap.increment("sLP:" + lemma + "_" + cpostag);
+		}
+		return featureMap;
 	}
 
 	protected IntCounter<String> getTargetWordFeatures(int[] targetTokenIdxs, Sentence sentence) {
@@ -141,24 +146,19 @@ public class BasicFeatureExtractor extends IdFeatureExtractor {
 			featureMap.increment("pP:NULL");
 			featureMap.increment("pPL:NULL");
 			featureMap.increment("pLab:NULL");
-
-//			featureMap.increment("gpP:NULL");
-//			featureMap.increment("gpPL:NULL");
-//			featureMap.increment("gpLab:NULL");
 		} else {
 			final String parentPostag = parent.getPOS().toUpperCase();
-			featureMap.increment("pP:" + parentPostag);
-			featureMap.increment("pLP:" + parent.getLemma() + "_" + parentPostag);
-			featureMap.increment("pLab:" + parent.getLabelType().toUpperCase());
-			// if parent is a preposition, go up one more level
-			if (parentPostag.startsWith("I")) {
+			// if parent is a preposition, collapse the dependency, Stanford-style
+			if (parentPostag.startsWith("I") && parent.getParent() != null) {
 				final DependencyParse gp = parent.getParent();
-				if (gp != null) {
-					final String gpPostag = gp.getPOS().toUpperCase();
-					featureMap.increment("gpP:" + gpPostag);
-					featureMap.increment("gpLP:" + gp.getLemma() + "_" + parentPostag);
-					featureMap.increment("gpLab:" + gp.getLabelType().toUpperCase());
-				}
+				final String gpPostag = gp.getPOS().toUpperCase();
+				featureMap.increment("pP:" + gpPostag);
+				featureMap.increment("pLP:" + gp.getLemma() + "_" + gpPostag);
+				featureMap.increment("pLab:" + gp.getLabelType().toUpperCase() + "_" + parent.getLemma());
+			} else {
+				featureMap.increment("pP:" + parentPostag);
+				featureMap.increment("pLP:" + parent.getLemma() + "_" + parentPostag);
+				featureMap.increment("pLab:" + parent.getLabelType().toUpperCase());
 			}
 		}
 		return featureMap;
