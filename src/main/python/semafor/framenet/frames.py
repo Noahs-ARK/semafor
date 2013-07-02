@@ -11,7 +11,7 @@ import pandas as pd
 
 from semafor.settings import FRAMES_FILENAME, FRAME_RELATIONS_FILENAME
 
-INF = float('inf')
+INF = pd.np.infty
 
 
 class RelationTypes(object):
@@ -78,6 +78,7 @@ class Frame(object):
 class FrameHierarchy(object):
     """ Represents the FrameNet hierarchy """
     PARTIAL_CREDIT_PER_HOP = .8
+    MAX_DISTANCE = 9
 
     def __init__(self, graph):
         self._full_graph = graph
@@ -130,9 +131,16 @@ class FrameHierarchy(object):
                                        columns=frame_names)
         return self._distances
 
-    def cost(self, a, b):
+    def _get_all_costs(self, partial_credit_per_hop=PARTIAL_CREDIT_PER_HOP, max_distance=MAX_DISTANCE):
+        d = self._get_all_distances()
+        distances = d.where(d <= max_distance).fillna(INF)
+        return 1 - (partial_credit_per_hop ** distances)
+
+    def cost(self, a, b, partial_credit_per_hop=PARTIAL_CREDIT_PER_HOP, max_distance=MAX_DISTANCE):
         num_hops = self._get_all_distances().get(a.name, {}).get(b.name, INF)
-        return 1 - (FrameHierarchy.PARTIAL_CREDIT_PER_HOP ** num_hops)
+        if num_hops > max_distance:
+            num_hops = INF
+        return 1 - (partial_credit_per_hop ** num_hops)
 
     @staticmethod
     def load(frames_filename=FRAMES_FILENAME,
@@ -194,6 +202,5 @@ if "__main__" == __name__:
     # cache all pairwise frame costs
     frame_cost_cache_filename = sys.argv[1]
     hierarchy = load_hierarchy()
-    distances = hierarchy._get_all_distances()
-    costs = 1 - (FrameHierarchy.PARTIAL_CREDIT_PER_HOP ** distances)
+    costs = hierarchy._get_all_costs()
     costs.to_csv(frame_cost_cache_filename)
