@@ -51,40 +51,41 @@ public class Lbfgs {
 		// unused
 		final double[] diag = new double[modelSize];
 		final boolean diagco = false;
-		do {
-			Pair<Double, double[]> valueAndGradient =
-					valueAndGradientProvider.apply(currentParams);
-			double value = valueAndGradient.getFirst();
-			double[] gradients = valueAndGradient.getSecond();
-			try {
-				final long startTime = System.currentTimeMillis();
-				riso.numerical.LBFGS.lbfgs(modelSize,
-						NUM_CORRECTIONS,
-						currentParams,
-						value,
-						gradients,
-						diagco,
-						diag,
-						iprint,
-						STOPPING_THRESHOLD,
-						XTOL,
-						iflag
-				);
-				final long endTime = System.currentTimeMillis();
-				logger.info(String.format("Finished LBFGS step. Took %s seconds.", (endTime - startTime) / 1000.0));
-			} catch (LBFGS.ExceptionWithIflag e) {
-				// these exceptions happen sometimes even though the training was successful
-				// TODO: separate out the ok exceptions from the bad exceptions
-				e.printStackTrace();
-				break;
-			}
-			iteration++;
-			if (iteration % SAVE_EVERY_K == 0) {
-				final String modelFilename = String.format("%s_%05d", modelFilePrefix, iteration);
-				saveModel(riso.numerical.LBFGS.solution_cache, newWriterSupplier(new File(modelFilename), Charsets.UTF_8));
-			}
-		} while (iteration <= MAX_ITERATIONS && iflag[0] != 0);
-		saveModel(riso.numerical.LBFGS.solution_cache, newWriterSupplier(new File(modelFilePrefix), Charsets.UTF_8));
+		try {
+			do {
+				Pair<Double, double[]> valueAndGradient =
+						valueAndGradientProvider.apply(currentParams);
+				double value = valueAndGradient.getFirst();
+				double[] gradients = valueAndGradient.getSecond();
+					final long startTime = System.currentTimeMillis();
+					riso.numerical.LBFGS.lbfgs(modelSize,
+							NUM_CORRECTIONS,
+							currentParams,
+							value,
+							gradients,
+							diagco,
+							diag,
+							iprint,
+							STOPPING_THRESHOLD,
+							XTOL,
+							iflag
+					);
+					final long endTime = System.currentTimeMillis();
+					logger.info(String.format("Finished LBFGS step. Took %s seconds.", (endTime - startTime) / 1000.0));
+				iteration++;
+				if (iteration % SAVE_EVERY_K == 0) {
+					final String modelFilename = String.format("%s_%05d", modelFilePrefix, iteration);
+					saveModel(riso.numerical.LBFGS.solution_cache, newWriterSupplier(new File(modelFilename), Charsets.UTF_8));
+				}
+			} while (iteration <= MAX_ITERATIONS && iflag[0] != 0);
+		} catch (LBFGS.ExceptionWithIflag e) {
+			// these exceptions happen sometimes even though the training was successful
+			// we still want to save the most recent model
+			// TODO: separate out the ok exceptions from the bad exceptions
+			e.printStackTrace();
+		}
+		final String modelFilename = String.format("%s_%05d", modelFilePrefix, iteration);
+		saveModel(riso.numerical.LBFGS.solution_cache, newWriterSupplier(new File(modelFilename), Charsets.UTF_8));
 		return currentParams;
 	}
 
