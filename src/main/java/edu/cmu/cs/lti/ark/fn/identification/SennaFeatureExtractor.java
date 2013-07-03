@@ -30,7 +30,7 @@ public class SennaFeatureExtractor extends BasicFeatureExtractor {
 	}
 
 	@Override
-	protected Map<String, Double> getBaseFeatures(int[] targetTokenIdxs, Sentence sentence) {
+	public Map<String, Double> getBaseFeatures(int[] targetTokenIdxs, Sentence sentence) {
 		final Map<String, Double> features = Maps.newHashMap();
 		features.putAll(super.getBaseFeatures(targetTokenIdxs, sentence));
 		final DependencyParse parse = DependencyParse.processFN(sentence.toAllLemmaTagsArray(), 0.0);

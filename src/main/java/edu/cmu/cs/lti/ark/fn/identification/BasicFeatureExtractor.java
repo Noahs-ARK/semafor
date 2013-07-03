@@ -64,7 +64,7 @@ public class BasicFeatureExtractor extends IdFeatureExtractor {
 		return conjoinedFeatures;
 	}
 
-	protected Map<String, Double> getBaseFeatures(int[] targetTokenIdxs, Sentence sentence) {
+	public Map<String, Double> getBaseFeatures(int[] targetTokenIdxs, Sentence sentence) {
 		Arrays.sort(targetTokenIdxs);
 		// Get lemmas and postags for target
 		final IntCounter<String> featureMap = getTargetWordFeatures(targetTokenIdxs, sentence);
