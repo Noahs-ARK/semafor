@@ -22,6 +22,8 @@
 package edu.cmu.cs.lti.ark.util.ds;
 
 
+import com.google.common.base.Objects;
+
 /**
  * Stores two objects.
  * @param <T>
@@ -60,10 +62,9 @@ public class Pair<T,T2> implements java.io.Serializable {
 	
 	@Override
 	public boolean equals(Object that) {
-		Pair<T,T2> p2 = (Pair<T,T2>)that;
-		if ((ob1==null) != (p2.ob1==null)) return false;
-		if ((ob2==null) != (p2.ob2==null)) return false;
-		return ((ob1==null && p2.ob1==null) || ob1.equals(p2.ob1)) && ((ob2==null && p2.ob2==null) || ob2.equals(p2.ob2));
+		if (that == null || !(that instanceof Pair)) return false;
+		Pair thatPair = (Pair) that;
+		return Objects.equal(getFirst(), thatPair.getFirst()) && Objects.equal(getSecond(), thatPair.getSecond());
 	}
 	
 	@Override
