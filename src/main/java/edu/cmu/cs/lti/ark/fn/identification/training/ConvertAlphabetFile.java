@@ -38,14 +38,15 @@ import static org.apache.commons.io.IOUtils.closeQuietly;
  * containing feature name -> learned weight for feature.
  */
 public class ConvertAlphabetFile {
-	// parameters whose abs value are less than or equal to THRESHOLD are discarded
-	private static final double THRESHOLD = 0.001;
+	// parameters whose abs value are less than or equal to threshold are discarded
+	private static final double DEFAULT_THRESHOLD = 0.001;
 
 	public static void main(String[] args) throws Exception {
 		final String alphabetFile = args[0];
 		final String modelFile = args[1];
 		final String outFile = args[2];
 		final String featureType = args[3];
+		final double threshold = args.length >= 5 ? Double.parseDouble(args[4].trim()) : DEFAULT_THRESHOLD;
 
 		// read in map from feature id -> feature name
 		final BiMap<Integer, String> featureNameById = readAlphabetFile(alphabetFile).inverse();
@@ -57,7 +58,7 @@ public class ConvertAlphabetFile {
 			output.write(String.format("%s\n", featureType));
 			for (int i : xrange(parameters.length)) {
 				final double val = parameters[i];
-				if (Math.abs(val) <= THRESHOLD) continue;
+				if (Math.abs(val) <= threshold) continue;
 				output.write(String.format("%s\t%s\n", featureNameById.get(i), val));
 			}
 		} finally {

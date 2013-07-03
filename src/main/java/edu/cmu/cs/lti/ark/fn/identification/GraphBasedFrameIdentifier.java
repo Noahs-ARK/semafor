@@ -43,7 +43,7 @@ public class GraphBasedFrameIdentifier extends FastFrameIdentifier {
 		final Pair<IdFeatureExtractor,TObjectDoubleHashMap<String>> extractorAndParams =
 				FrameIdentificationRelease.parseParamFile(idParamsFile);
 		final IdFeatureExtractor featureExtractor = extractorAndParams.getFirst();
-		final TObjectDoubleHashMap<String> paramList =
+		final TObjectDoubleHashMap<String> params =
 				extractorAndParams.getSecond();
 		System.err.println("Done reading model parameters.");
 		System.err.println("Reading graph from: " + graphFilename + "...");
@@ -54,7 +54,7 @@ public class GraphBasedFrameIdentifier extends FastFrameIdentifier {
 				featureExtractor,
 				r.getFrameMap().keySet(),
 				r.getcMap(),
-				paramList,
+				params,
 				graph);
 	}
 
