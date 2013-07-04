@@ -30,7 +30,7 @@ echo ${arg_model}
 
 id_model="${MODEL_DIR}/idmodel.dat"
 
-parser_conf=${training_dir}/scan/parser.conf.unlabeled
+parser_conf=${SCAN_DIR}/parser.conf.unlabeled
 
 temp="$(mktemp -d --tmpdir=${training_dir} temp_arg_`date +%s`_XXX)"
 echo "temp directory: $temp"

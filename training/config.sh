@@ -2,6 +2,9 @@
 
 source "$(dirname ${0})/../bin/config.sh"
 
+
+
+
 # choose a name for the model to train
 #model_name="mst_frame_id_20130625"
 #model_name="ancestor_frame_id_20130626"
@@ -9,36 +12,19 @@ model_name="ancestor_frame_id_partial_credit_20130627"
 
 # should set to roughly the number of cores available
 num_threads=8
-
 gc_threads=2
 
 classpath=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-03.jar"
 # the directory that contains framenet.frame.element.map and framenet.original.map
 datadir="${SEMAFOR_HOME}/training/data"
-# the directory that contains all the lexical unit xmls for FrameNet 1.5
-# you can also add your own xmls to this directory
-# for format information, take a look at the lu/ directory under the FrameNet release
-luxmldir="${datadir}/framenet15/lu"
 
 # the directory the resulting model will end up in
 model_dir="${datadir}/${model_name}"
 
 id_features="ancestor"
 
-# config files
-wordnet_config_file="${SEMAFOR_HOME}/dict/file_properties.xml"
-stopwords_file="${SEMAFOR_HOME}/dict/stopwords.txt"
+old_model_dir="${MALT_MODEL_DIR}"
 
-old_model_dir="${MST_MODEL_DIR}"
-
-framenet_map_file="${datadir}/framenet.original.map"
-fe_dict_file="${datadir}/framenet.frame.element.map"
-all_related_words_file="${model_dir}/allrelatedwords.ser"
-hv_correspondence_file="${model_dir}/hvmap.ser"
-wn_related_words_for_words_file="${model_dir}/wnallrelwords.ser"
-wn_map_file="${model_dir}/wnMap.ser"
-revised_map_file="${model_dir}/revisedrelmap.ser"
-lemma_cache_file="${model_dir}/hvlemmas.ser"
 fn_id_req_data_file="${model_dir}/reqData.jobj"
 
 

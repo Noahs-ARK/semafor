@@ -18,8 +18,6 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8000m -Xmx8000m -XX:ParallelGC
   edu.cmu.cs.lti.ark.fn.identification.training.ExtractTrainingFeatures \
   train-fefile:${fe_file} \
   train-parsefile:${parsed_file} \
-  stopwords-file:${stopwords_file} \
-  wordnet-configfile:${wordnet_config_file} \
   fnidreqdatafile:${fn_id_req_data_file} \
   logoutputfile:${model_dir}/log \
   model:${model_dir}/alphabet.dat \

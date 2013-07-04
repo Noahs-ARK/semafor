@@ -20,14 +20,15 @@
  * with SEMAFOR 2.0.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.utils;
-import java.io.FileInputStream;
-import java.io.PrintStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.Scanner;
 import edu.cmu.cs.lti.ark.fn.parsing.CustomOptions;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.net.URISyntaxException;
+import java.util.Scanner;
 
 public class LemmatizeStuff {
 	public static String infilename = "semeval.fulldev.sentences.all.tags";
@@ -78,8 +79,24 @@ public class LemmatizeStuff {
 		outfilename = outfile;
 		wnr = new WordNetRelations(stopWordsFile, wnConfigFile);
 		run();
-	}	
-	
+	}
+
+	/**
+	 * Reads sentences from infile, in the format
+	 * n   word_1    ...   word_n    ...{other_stuff}...
+	 * and writes them with their lemmatized versions appended to outfile in the format
+	 * n   word_1    ...   word_n    ...{other_stuff}...   lemma_1   ...   lemma_n
+	 *
+	 * @param infile path to a file containing the input sentences
+	 * @param outfile path to file to which to write
+	 */
+	public static void lemmatize(String infile, String outfile) throws URISyntaxException {
+		infilename = infile;
+		outfilename = outfile;
+		wnr = new WordNetRelations();
+		run();
+	}
+
 	private static void run() {
 		Scanner sc = null;
 		PrintStream ps = null;

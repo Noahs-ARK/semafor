@@ -30,4 +30,5 @@ ${JAVA_HOME_BIN}/java \
   restartfile:null \
   logoutputfile:${model_dir}/log \
   numthreads:${num_threads} \
-  use-partial-credit:true
+  use-partial-credit:true \
+  cost-multiple:5
