@@ -19,8 +19,6 @@ do
           ${training_dir}/cv.${prefix}.sentences.tokenized \
           ${training_dir}/cv.${prefix}.sentences.turboparsed.conll \
           ${tmp_parse_file} \
-          ${stopwords_file} \
-          ${wordnet_config_file} \
           ${training_dir}/cv.${prefix}.sentences.all.lemma.tags
     rm "${tmp_parse_file}"
 done
