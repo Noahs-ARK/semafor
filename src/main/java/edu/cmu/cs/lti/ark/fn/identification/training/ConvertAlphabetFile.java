@@ -49,7 +49,7 @@ public class ConvertAlphabetFile {
 		final double threshold = args.length >= 5 ? Double.parseDouble(args[4].trim()) : DEFAULT_THRESHOLD;
 
 		// read in map from feature id -> feature name
-		final BiMap<Integer, String> featureNameById = readAlphabetFile(alphabetFile).inverse();
+		final BiMap<Integer, String> featureNameById = readAlphabetFile(new File(alphabetFile)).inverse();
 		// read in parameter values
 		final double[] parameters = TrainBatch.loadModel(modelFile);
 		// write out list of (feature name, feature value) pairs

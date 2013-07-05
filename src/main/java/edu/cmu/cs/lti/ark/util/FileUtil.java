@@ -20,9 +20,25 @@
  * with SEMAFOR 2.0.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.util;
+import com.google.common.base.Charsets;
+import com.google.common.io.CharStreams;
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
+import com.google.common.io.LineProcessor;
+
 import java.util.*;
 import java.io.*;
 public class FileUtil {
+	public static final LineProcessor<Integer> LINE_COUNTER = new LineProcessor<Integer>() {
+		int lineCount = 0;
+		@Override public boolean processLine(String line) throws IOException {
+			lineCount++;
+			return true;
+		}
+		@Override public Integer getResult() {
+			return lineCount;
+		} };
+
 	public static Scanner openInFile(String filename){
 		Scanner localsc=null;
 		try
@@ -99,5 +115,13 @@ public class FileUtil {
 				return name.matches(regex);
 			}
 		});
+	}
+
+	public static int countLines(String filename) throws IOException {
+		return countLines(Files.newReaderSupplier(new File(filename), Charsets.UTF_8));
+	}
+
+	public static int countLines(InputSupplier<InputStreamReader> inputSupplier) throws IOException {
+		return CharStreams.readLines(inputSupplier, LINE_COUNTER);
 	}
 }

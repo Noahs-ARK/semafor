@@ -16,8 +16,8 @@ import static edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse.getHeuristicHead
 /**
  * @author sthomson@cs.cmu.edu
  */
-public class SennaFeatureExtractor extends BasicFeatureExtractor {
-	public static final String[] FIVE_WORD_WINDOW_NAMES = {"2BTH", "1BTH", "TH", "1ATH", "2ATH"};
+public class SennaFeatureExtractor extends IdFeatureExtractor {
+	public static final String[] FIVE_WORD_WINDOW_NAMES = {"[-2]", "[-1]", "[0]", "[1]", "[2]"};
 
 	private final Senna senna;
 
@@ -33,6 +33,7 @@ public class SennaFeatureExtractor extends BasicFeatureExtractor {
 	public Map<String, Double> getBaseFeatures(int[] targetTokenIdxs, Sentence sentence) {
 		final Map<String, Double> features = Maps.newHashMap();
 		features.putAll(super.getBaseFeatures(targetTokenIdxs, sentence));
+
 		final DependencyParse parse = DependencyParse.processFN(sentence.toAllLemmaTagsArray(), 0.0);
 		final int headIdx = getHeuristicHead(parse.getIndexSortedListOfNodes(), targetTokenIdxs).getIndex() - 1;
 		final List<Token> tokens = sentence.getTokens();

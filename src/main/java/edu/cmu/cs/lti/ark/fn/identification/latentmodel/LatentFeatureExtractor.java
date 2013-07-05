@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.SortedSet;
 
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.*;
-import static edu.cmu.cs.lti.ark.fn.identification.BasicFeatureExtractor.getCpostag;
+import static edu.cmu.cs.lti.ark.fn.identification.IdFeatureExtractor.getCpostag;
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 
 /**

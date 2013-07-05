@@ -91,6 +91,7 @@ public final class FNModelOptions extends CommandLineOptions {
 	public NewFilePathOption frameElementsOutputFile = new NewFilePathOption("frameelementsoutputfile");
 	public NewFilePathOption logOutputFile = new NewFilePathOption("logoutputfile");
 	public StringOption printFNIDConfidence = new StringOption("printfnidconfidence");
+	public IntOption minimumCount = new IntOption("minimum-count");
 	public IntOption numThreads = new IntOption("numthreads");
 	public BoolOption usePartialCredit = new BoolOption("use-partial-credit");
 	public DoubleOption costMultiple = new DoubleOption("cost-multiple");

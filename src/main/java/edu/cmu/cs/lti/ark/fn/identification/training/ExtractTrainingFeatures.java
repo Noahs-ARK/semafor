@@ -85,7 +85,7 @@ public class ExtractTrainingFeatures {
 		final IdFeatureExtractor featureExtractor =
 				new IdFeatureExtractor.Converter().convert(featureExtractorType);
 		logger.info("Reading alphabet");
-		final Map<String, Integer> alphabet = readAlphabetFile(options.modelFile.get());
+		final Map<String, Integer> alphabet = readAlphabetFile(new File(options.modelFile.get()));
 		logger.info("Done reading alphabet");
 		final ExtractTrainingFeatures events =
 				new ExtractTrainingFeatures(alphabet,
@@ -139,7 +139,7 @@ public class ExtractTrainingFeatures {
 					final String filename =
 							String.format("%s%06d%s", FEATURE_FILENAME_PREFIX, count, FEATURE_FILENAME_SUFFIX);
 					writeSerializedObject(allFeatures, new File(eventDir, filename).getAbsolutePath()); // auto-gzips
-					logger.info(String.format("Task %d : end alphsize: %d", count, alphabet.size()));
+					logger.info(String.format("Task %d : end", count));
 				}
 			});
 		}

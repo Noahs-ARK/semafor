@@ -1,6 +1,6 @@
 package edu.cmu.cs.lti.ark.fn.segmentation;
 
-import com.beust.jcommander.internal.Sets;
+import com.google.common.collect.Sets;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;

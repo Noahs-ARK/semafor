@@ -41,7 +41,7 @@ import java.util.StringTokenizer;
  * @author Nathan Schneider (nschneid)
  * @since 2009-04-07
  * @see CandidateFrameElementFilters
- * @see edu.cmu.cs.lti.ark.fn.identification.BasicFeatureExtractor
+ * @see edu.cmu.cs.lti.ark.fn.identification.IdFeatureExtractor
  */
 public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<FeatureExtractor.ArgumentCandidate> {
 	public class ArgumentCandidate {
