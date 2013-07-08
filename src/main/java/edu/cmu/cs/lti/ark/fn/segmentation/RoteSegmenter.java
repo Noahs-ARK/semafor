@@ -197,7 +197,6 @@ public class RoteSegmenter implements Segmenter {
 	private List<String> trimPrepositions(List<String> candidateTokens, final String[][] pData) {
 		final DependencyParse mParse = DependencyParse.processFN(pData, 0.0);
 		final DependencyParse[] mNodeList = mParse.getIndexSortedListOfNodes();
-		mParse.processSentence();
 		final Iterable<String> goodTokens = Iterables.filter(candidateTokens, new Predicate<String>() {
 			@Override public boolean apply(@Nullable String input) {
 				return shouldIncludeToken(input, pData, mNodeList);
@@ -222,14 +221,9 @@ public class RoteSegmenter implements Segmenter {
 	/**
 	 * @param sentenceIdxs the last tsv field is the index of the sentence in `parses`
 	 * @param parseLines a list of AllLemmaTags-formatted sentences
-	 * @param allRelatedWords ignored. we already have a field with this info
 	 * @return a list of predicted targets, one line per sentence
 	 */
 	@Override
-	public List<String> getSegmentations(List<String> sentenceIdxs, List<String> parseLines, Set<String> allRelatedWords) {
-		return getSegmentations(sentenceIdxs, parseLines);
-	}
-
 	public List<String> getSegmentations(List<String> sentenceIdxs, List<String> parseLines) {
 		final ImmutableList.Builder<String> result = ImmutableList.builder();
 		for(String tokenNum: sentenceIdxs) {

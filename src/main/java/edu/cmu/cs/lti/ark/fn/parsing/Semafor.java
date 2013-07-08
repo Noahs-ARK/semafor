@@ -200,7 +200,7 @@ public class Semafor {
 		final List<String> allLemmaTagsSentences =
 				ImmutableList.of(AllLemmaTags.makeLine(sentence.toAllLemmaTagsArray()));
 		final List<String> tokenNumStrs = transform(range(allLemmaTagsSentences.size()).asList(), toStringFunction());
-		return segmenter.getSegmentations(tokenNumStrs, allLemmaTagsSentences, allRelatedWords);
+		return segmenter.getSegmentations(tokenNumStrs, allLemmaTagsSentences);
 	}
 
 	public List<String> predictFrames(Sentence sentence, List<String> segments) throws IOException {
