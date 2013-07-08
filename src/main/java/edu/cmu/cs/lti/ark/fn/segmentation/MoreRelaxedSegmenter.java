@@ -27,11 +27,13 @@ import java.util.*;
 
 public class MoreRelaxedSegmenter implements Segmenter {
 	public static final int MAX_LEN = 4;
-	
+
+	protected final Set<String> allRelatedWords;
 	private DependencyParse[] mNodeList = null;
 	private DependencyParse mParse = null;
 
-	public MoreRelaxedSegmenter() {
+	public MoreRelaxedSegmenter(Set<String> allRelatedWords) {
+		this.allRelatedWords = allRelatedWords;
 		mNodeList = null;
 		mParse =  null;
 	}	
@@ -333,10 +335,7 @@ public class MoreRelaxedSegmenter implements Segmenter {
 	}
 
 	@Override
-	public List<String> getSegmentations(List<String> tokenNums,
-										 List<String> parses,
-										 Set<String> allRelatedWords)
-	{
+	public List<String> getSegmentations(List<String> tokenNums, List<String> parses) {
 		ArrayList<String> result = new ArrayList<String>();
 		for(String tokenNum: tokenNums)
 		{
@@ -364,7 +363,7 @@ public class MoreRelaxedSegmenter implements Segmenter {
 			mParse.processSentence();
 			if(!tokNums.trim().equals(""))
 				tokNums=trimPrepositions(tokNums, data);
-			String line1 = getTestLine(gold,tokNums,data).trim()+"\t"+sentNum;
+			String line1 = getTestLine(gold, tokNums).trim()+"\t"+sentNum;
 			line1=line1.trim();
 			// System.out.println(line1+"\n"+mParse.getSentence()+"\n");
 			result.add(line1.trim());
@@ -372,7 +371,7 @@ public class MoreRelaxedSegmenter implements Segmenter {
 		return result;
 	}
 	
-	public String getTestLine(String goldTokens, String actualTokens, String[][] data)
+	public String getTestLine(String goldTokens, String actualTokens)
 	{
 		String result = "";
 		ArrayList<String> goldList = new ArrayList<String>();

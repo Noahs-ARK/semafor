@@ -290,8 +290,8 @@ public class ParserDriver {
 			segments = getGoldSegmentationBatch(segLines, tokenNums);
 		} else {
 			final Segmenter segmenter =
-					segmentationMode.equals(STRICT) ? new RoteSegmenter(allRelatedWords) : new MoreRelaxedSegmenter();
-			segments = segmenter.getSegmentations(tokenNumStrs, allLemmaTagsSentences, allRelatedWords);
+					segmentationMode.equals(STRICT) ? new RoteSegmenter(allRelatedWords) : new MoreRelaxedSegmenter(allRelatedWords);
+			segments = segmenter.getSegmentations(tokenNumStrs, allLemmaTagsSentences);
 		}
 		return segments;
 	}
