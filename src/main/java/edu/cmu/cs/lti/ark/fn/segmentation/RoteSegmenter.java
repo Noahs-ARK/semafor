@@ -64,11 +64,11 @@ public class RoteSegmenter implements Segmenter {
 	private static final ImmutableSet<String> TEMPORAL_PREPS = ImmutableSet.of("after", "before");
 	private static final ImmutableSet<String> DIR_PREPS = ImmutableSet.of("into", "through", "to");
 	private static final ImmutableSet<String> FORBIDDEN_POS_PREFIXES = ImmutableSet.of("PR", "CC", "IN", "TO");
+	private static final ImmutableSet<String> DIRECT_OBJECT_LABELS = ImmutableSet.of("OBJ", "DOBJ");  // accommodates MST labels and Stanford labels
 
 	public static final Predicate<DependencyParse> isObject = new Predicate<DependencyParse>() {
-		@Override
-		public boolean apply(@Nullable DependencyParse parse) {
-			return parse != null && parse.getLabelType().equals("OBJ");
+		@Override public boolean apply(@Nullable DependencyParse parse) {
+			return parse != null && DIRECT_OBJECT_LABELS.contains(parse.getLabelType().toUpperCase());
 		}
 	};
 
@@ -227,6 +227,10 @@ public class RoteSegmenter implements Segmenter {
 	 */
 	@Override
 	public List<String> getSegmentations(List<String> sentenceIdxs, List<String> parseLines, Set<String> allRelatedWords) {
+		return getSegmentations(sentenceIdxs, parseLines);
+	}
+
+	public List<String> getSegmentations(List<String> sentenceIdxs, List<String> parseLines) {
 		final ImmutableList.Builder<String> result = ImmutableList.builder();
 		for(String tokenNum: sentenceIdxs) {
 			final List<String> tokens = copyOf(tokenNum.trim().split("\t"));
