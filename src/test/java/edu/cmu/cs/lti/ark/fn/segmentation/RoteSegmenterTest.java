@@ -11,6 +11,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Set;
 
+import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
@@ -38,10 +39,13 @@ public class RoteSegmenterTest {
 			allRelatedWords.add(token.getLemma() + "_" + token.getCpostag());
 		}
 		final RoteSegmenter segmenter = new RoteSegmenter(allRelatedWords);
-		final List<String> segmentation = segmenter.getSegmentation(sentence);
+		final List<List<Integer>> segmentation = segmenter.getSegmentation(sentence);
 		// should exclude "the", "and", "with", "of".
-		final String[] expectedTargets = {"0", "1", "2", "4", "7", "8", "9", "10", "12", "13", "16", "18", "19", "20", "22", "23"};
-		assertArrayEquals(expectedTargets, segmentation.toArray());
+		final Integer[] expectedTargets = {0, 1, 2, 4, 7, 8, 9, 10, 12, 13, 16, 18, 19, 20, 22, 23};
+		for (int i : xrange(expectedTargets.length)) {
+			Integer[] expectedTarget = {expectedTargets[i]};
+			assertArrayEquals(expectedTarget, segmentation.get(i).toArray());
+		}
 	}
 
 	@Test
@@ -54,8 +58,9 @@ public class RoteSegmenterTest {
 		final Sentence sentence = SentenceCodec.ConllCodec.decode(conll);
 		Set<String> allRelatedWords = ImmutableSet.of("have_VBP");
 		final RoteSegmenter segmenter = new RoteSegmenter(allRelatedWords);
-		final List<String> segmentation = segmenter.getSegmentation(sentence);
+		final List<List<Integer>> segmentation = segmenter.getSegmentation(sentence);
 		assertEquals(1, segmentation.size());
-		assertEquals("1", segmentation.get(0));
+		final Integer[] expected = {1};
+		assertArrayEquals(expected, segmentation.get(0).toArray());
 	}
 }

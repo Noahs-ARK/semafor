@@ -78,11 +78,11 @@ public class RoteSegmenter implements Segmenter {
 		this.allRelatedWords = allRelatedWords;
 	}
 
-	public List<String> getSegmentation(Sentence sentence) {
+	public List<List<Integer>> getSegmentation(Sentence sentence) {
 		final int numTokens = sentence.getTokens().size();
 		// start indices that we haven't used yet
 		final Set<Integer> remainingStartIndices = Sets.newHashSet(xrange(numTokens));
-		final ImmutableList.Builder<String> allNgramIndices = ImmutableList.builder();  // results
+		final ImmutableList.Builder<List<Integer>> allNgramIndices = ImmutableList.builder();  // results
 
 		final List<String> lemmas = getLemmasAndCoursePos(sentence);
 
@@ -91,17 +91,16 @@ public class RoteSegmenter implements Segmenter {
 			for(int start : xrange(numTokens - n + 1)) {
 				if(!remainingStartIndices.contains(start)) continue;
 				final int end = start + n;
-				final Set<Integer> ngramIndices = range(start, end);
+				final List<Integer> ngramIndices = ImmutableList.copyOf(xrange(start, end));
 				final String ngramLemmas = Joiner.on(" ").join(lemmas.subList(start, end));
 				if(allRelatedWords.contains(ngramLemmas)) {
 					// found a good ngram, add it to results, and remove it from startIndices so we don't overlap later
-					allNgramIndices.add(Joiner.on("_").join(ngramIndices));
+					allNgramIndices.add(ngramIndices);
 					remainingStartIndices.removeAll(ngramIndices);
 				}
 			}
 		}
-		final ImmutableList<String> ngramIndices = allNgramIndices.build();
-		return trimPrepositions(ngramIndices, sentence.toAllLemmaTagsArray());
+		return trimPrepositions(allNgramIndices.build(), sentence.toAllLemmaTagsArray());
 	}
 
 	private List<String> getLemmasAndCoursePos(Sentence sentence) {
@@ -118,16 +117,16 @@ public class RoteSegmenter implements Segmenter {
 	/**
 	 * Helper method for trimPrepositions. Determines whether an ngram should be kept or discarded
 	 * based on hand-built rules
-	 * @param idxStr "_" joined indices of the ngram tokens in pData
+	 *
+	 * @param idxs "_" joined indices of the ngram tokens in pData
 	 * @param pData a 2d array containing the token, lemma, pos tag, and NE for each token
 	 * @return
 	 */
-	private boolean shouldIncludeToken(final String idxStr, final String[][] pData, DependencyParse[] mNodeList) {
+	private boolean shouldIncludeToken(final List<Integer> idxs, final String[][] pData, DependencyParse[] mNodeList) {
 		final int numTokens = pData[PARSE_TOKEN_ROW].length;
 		// always include ngrams, n > 1
-		if(idxStr.contains("_")) return true;
-
-		final int idx = Integer.parseInt(idxStr);
+		if (idxs.size() > 1) return true;
+		final int idx = idxs.get(0);
 		// look up the word in pData
 		final String token = pData[PARSE_TOKEN_ROW][idx].toLowerCase().trim();
 		final String pos = pData[PARSE_POS_ROW][idx].trim();
@@ -190,30 +189,25 @@ public class RoteSegmenter implements Segmenter {
 	/**
 	 * Removes prepositions from the given sentence
 	 *
+	 *
 	 * @param candidateTokens a row of token indices
 	 * @param pData an array of parse data. each column is a word. relevant rows are:  0: token, 1: pos, 5: lemma
 	 * @return
 	 */
-	private List<String> trimPrepositions(List<String> candidateTokens, final String[][] pData) {
+	private List<List<Integer>> trimPrepositions(List<List<Integer>> candidateTokens, final String[][] pData) {
 		final DependencyParse mParse = DependencyParse.processFN(pData, 0.0);
 		final DependencyParse[] mNodeList = mParse.getIndexSortedListOfNodes();
-		final Iterable<String> goodTokens = Iterables.filter(candidateTokens, new Predicate<String>() {
-			@Override public boolean apply(@Nullable String input) {
+		final Iterable<List<Integer>> goodTokens = Iterables.filter(candidateTokens, new Predicate<List<Integer>>() {
+			@Override public boolean apply(@Nullable List<Integer> input) {
 				return shouldIncludeToken(input, pData, mNodeList);
-			}
-		});
+			} });
 		return copyOf(goodTokens);
 	}
 
-	private String getTestLine(List<String> goldTokens, List<String> actualTokens) {
+	private String getTestLine(List<List<Integer>> tokenIdxs) {
 		final ImmutableList.Builder<String> result = ImmutableList.builder();
-		for(String goldToken : goldTokens) {
-			result.add(goldToken + GOLD_TARGET_SUFFIX);
-		}
-		for(String actualToken : actualTokens) {
-			if (!goldTokens.contains(actualToken)) {
-				result.add(actualToken + GOLD_TARGET_SUFFIX);
-			}
+		for(List<Integer> idxs : tokenIdxs) {
+			result.add(Joiner.on("_").join(idxs) + GOLD_TARGET_SUFFIX);
 		}
 		return Joiner.on("\t").join(result.build());
 	}
@@ -226,15 +220,12 @@ public class RoteSegmenter implements Segmenter {
 	@Override
 	public List<String> getSegmentations(List<String> sentenceIdxs, List<String> parseLines) {
 		final ImmutableList.Builder<String> result = ImmutableList.builder();
-		for(String tokenNum: sentenceIdxs) {
-			final List<String> tokens = copyOf(tokenNum.trim().split("\t"));
-
-			// the last tsv field is the index of the sentence in `parses`
-			final int sentNum = Integer.parseInt(tokens.get(tokens.size() - 1));
+		for(String sentenceIdxStr: sentenceIdxs) {
+			final int sentNum = Integer.parseInt(sentenceIdxStr);
 			final String parse = parseLines.get(sentNum);
 			final Sentence sentence = Sentence.fromAllLemmaTagsArray(AllLemmaTags.readLine(parse));
-			final List<String> ngramIndices = getSegmentation(sentence);
-			result.add(getTestLine(tokens.subList(0, tokens.size() - 1), ngramIndices) + "\t" + sentNum);
+			final List<List<Integer>> ngramIndices = getSegmentation(sentence);
+			result.add(getTestLine(ngramIndices) + "\t" + sentNum);
 		}
 		return result.build();
 	}
