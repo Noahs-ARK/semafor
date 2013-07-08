@@ -33,7 +33,6 @@ import edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationJson;
 import edu.cmu.cs.lti.ark.fn.identification.GraphBasedFrameIdentifier;
 import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.fn.segmentation.RoteSegmenter;
-import edu.cmu.cs.lti.ark.fn.segmentation.SegmentationMode;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import gnu.trove.THashMap;
@@ -47,9 +46,11 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.base.Charsets.UTF_8;
+import static com.google.common.base.Functions.toStringFunction;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Lists.transform;
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec.ConllCodec;
+import static edu.cmu.cs.lti.ark.util.IntRanges.range;
 import static edu.cmu.cs.lti.ark.util.SerializedObjects.readObject;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
@@ -65,12 +66,13 @@ public class Semafor {
 	protected final Set<String> allRelatedWords;
 	protected final WordNetRelations wordNetRelations;
 	protected final FEDict frameElementsForFrame;
+
 	protected final RoteSegmenter segmenter;
+
 	protected final GraphBasedFrameIdentifier idModel;
 	protected final Decoding decoder;
 	private final String eventsFilename;
 	private final String spansFilename;
-
 	/**
 	 *  required flags:
 	 *  model-dir
@@ -197,7 +199,8 @@ public class Semafor {
 	public List<String> predictTargets(Sentence sentence) throws IOException {
 		final List<String> allLemmaTagsSentences =
 				ImmutableList.of(AllLemmaTags.makeLine(sentence.toAllLemmaTagsArray()));
-		return ParserDriver.getSegments(allRelatedWords, SegmentationMode.STRICT, null, allLemmaTagsSentences);
+		final List<String> tokenNumStrs = transform(range(allLemmaTagsSentences.size()).asList(), toStringFunction());
+		return segmenter.getSegmentations(tokenNumStrs, allLemmaTagsSentences, allRelatedWords);
 	}
 
 	public List<String> predictFrames(Sentence sentence, List<String> segments) throws IOException {
