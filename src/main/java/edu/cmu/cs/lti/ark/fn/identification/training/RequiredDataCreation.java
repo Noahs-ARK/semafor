@@ -21,6 +21,7 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.identification.training;
 
+import com.google.common.collect.ImmutableMap;
 import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
@@ -38,19 +39,19 @@ import java.io.IOException;
 import java.util.*;
 
 public class RequiredDataCreation {
-	public static final THashMap<String, String> conversionMap = new THashMap<String, String>();
-	static {
-		conversionMap.put("NUM", "CD");
-		conversionMap.put("N", "NN");
-		conversionMap.put("A", "JJ");
-		conversionMap.put("ADV", "RB");
-		conversionMap.put("PREP", "IN");
-		conversionMap.put("C", "CC");
-		conversionMap.put("V", "VB");
-		conversionMap.put("INTJ", "UH");
-		conversionMap.put("ART", "DET");
-		conversionMap.put("SCON", "IN");
-	}
+	// map from FrameNet postags to PTB postags
+	public static final Map<String, String> conversionMap =
+		new ImmutableMap.Builder<String, String>().
+			put("NUM", "CD").
+			put("N", "NN").
+			put("A", "JJ").
+			put("ADV", "RB").
+			put("PREP", "IN").
+			put("C", "CC").
+			put("V", "VB").
+			put("INTJ", "UH").
+			put("ART", "DET").
+			put("SCON", "IN").build();
 
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		FNModelOptions options = new FNModelOptions(args);
@@ -84,16 +85,13 @@ public class RequiredDataCreation {
 			THashSet<String> hus = frameMap.get(frame);
 			for (String hUnit : hus) {
 				String[] hiddenToks = hUnit.split(" ");
-				String hiddenUnitTokens = "";
 				String hiddenUnitLemmas = "";
 				for (String hiddenTok : hiddenToks) {
 					String[] arr = hiddenTok.split("_");
-					hiddenUnitTokens += arr[0] + " ";
 					String lowerCaseLemma = wnr.getLemmaForWord(arr[0], arr[1]).toLowerCase();
 					lemmaMap.put(arr[0] + "_" + arr[1], lowerCaseLemma);
 					hiddenUnitLemmas += wnr.getLemmaForWord(arr[0], arr[1]).toLowerCase() + " ";
 				}
-				hiddenUnitTokens = hiddenUnitTokens.trim();
 				hiddenUnitLemmas = hiddenUnitLemmas.trim();
 				System.out.println("Processed:" + hiddenUnitLemmas);
 			}
@@ -142,7 +140,6 @@ public class RequiredDataCreation {
 		SerializedObjects.writeSerializedObject(revisedMap, revisedRelFile);
 		return revisedMap;
 	}
-
 
 	public static Pair<Map<String, Set<String>>, Map<String, THashMap<String, Set<String>>>>
 	buildHVWordNetCache(FNModelOptions options) throws IOException, ClassNotFoundException {
