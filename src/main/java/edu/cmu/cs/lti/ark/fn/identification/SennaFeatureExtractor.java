@@ -16,7 +16,7 @@ import static edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse.getHeuristicHead
 /**
  * @author sthomson@cs.cmu.edu
  */
-public class SennaFeatureExtractor extends IdFeatureExtractor {
+public class SennaFeatureExtractor {
 	public static final String[] FIVE_WORD_WINDOW_NAMES = {"[-2]", "[-1]", "[0]", "[1]", "[2]"};
 
 	private final Senna senna;
@@ -29,10 +29,8 @@ public class SennaFeatureExtractor extends IdFeatureExtractor {
 		return new SennaFeatureExtractor(Senna.load());
 	}
 
-	@Override
-	public Map<String, Double> getBaseFeatures(int[] targetTokenIdxs, Sentence sentence) {
+	public Map<String, Double> getSennaFeatures(int[] targetTokenIdxs, Sentence sentence) {
 		final Map<String, Double> features = Maps.newHashMap();
-		features.putAll(super.getBaseFeatures(targetTokenIdxs, sentence));
 
 		final DependencyParse parse = DependencyParse.processFN(sentence.toAllLemmaTagsArray(), 0.0);
 		final int headIdx = getHeuristicHead(parse.getIndexSortedListOfNodes(), targetTokenIdxs).getIndex() - 1;
@@ -41,13 +39,14 @@ public class SennaFeatureExtractor extends IdFeatureExtractor {
 		for (int i : xrange(FIVE_WORD_WINDOW_NAMES.length)) {
 			final int idx = headIdx - 2 + i;
 			if (idx >= 0 && idx < sentence.size()) {
-				features.putAll(conjoin(FIVE_WORD_WINDOW_NAMES[i], getSennaFeaturesForWord(tokens.get(idx).getForm())));
+				final Map<String, Double> sennaFeaturesForWord = getSennaFeaturesForWord(tokens.get(idx).getForm());
+				features.putAll(FrameFeatureExtractor.conjoin(FIVE_WORD_WINDOW_NAMES[i], sennaFeaturesForWord));
 			}
 		}
 		return features;
 	}
 
-	private Map<String, Double> getSennaFeaturesForWord(String word) {
+	public Map<String, Double> getSennaFeaturesForWord(String word) {
 		final Map<String, Double> features = Maps.newHashMap();
 		final Optional<double[]> oEmbedding = senna.getEmbedding(word);
 		if (oEmbedding.isPresent()) {

@@ -1,7 +1,7 @@
 package edu.cmu.cs.lti.ark.fn.identification;
 
-import com.beust.jcommander.IStringConverter;
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.google.common.base.Strings.nullToEmpty;
+import static edu.cmu.cs.lti.ark.fn.identification.FrameFeatureExtractor.AncestorFrameFeatureExtractor;
+import static edu.cmu.cs.lti.ark.fn.identification.FrameFeatureExtractor.BasicFrameFeatureExtractor;
 
 /**
  * Extracts features for the frame identification model
@@ -24,72 +26,84 @@ import static com.google.common.base.Strings.nullToEmpty;
  * @author sthomson@cs.cmu.edu
  */
 public class IdFeatureExtractor {
-	protected static final Joiner SPACE = Joiner.on(" ");
 	protected static final Joiner UNDERSCORE = Joiner.on("_");
-	// Command line option converters
-	private static Map<String, Supplier<IdFeatureExtractor>> featureExtractorMap = ImmutableMap.of(
-			"basic", new Supplier<IdFeatureExtractor>() {
-				public IdFeatureExtractor get() { return new IdFeatureExtractor(); }
-			} ,
-			"ancestor", new Supplier<IdFeatureExtractor>() {
-				public IdFeatureExtractor get() {
-					try {
-						return AncestorFeatureExtractor.load();
-					} catch (IOException e) { throw new RuntimeException(e); }
-				} },
-			"senna", new Supplier<IdFeatureExtractor>() {
-				public IdFeatureExtractor get() {
-					try {
-						return SennaFeatureExtractor.load();
-					} catch (IOException e) { throw new RuntimeException(e); }
-				} } );
 
-	public static <V extends Number> Map<String, V> conjoin(String name, Map<String, V> oldFeatures) {
-		final Map<String, V> conjoinedFeatures = Maps.newHashMap();
-		for (String feature : oldFeatures.keySet()) {
-			conjoinedFeatures.put(SPACE.join(name, feature), oldFeatures.get(feature));
+	private final boolean useSentenceContextFeatures;
+	private final FrameFeatureExtractor frameFeatureExtractor;
+	private final Optional<SennaFeatureExtractor> sennaFeatureExtractor;
+
+	public IdFeatureExtractor(boolean useSentenceContextFeatures, boolean useAncestors, boolean useSenna) {
+		this.useSentenceContextFeatures = useSentenceContextFeatures;
+		try {
+			sennaFeatureExtractor = useSenna ? Optional.of(SennaFeatureExtractor.load()) : Optional.<SennaFeatureExtractor>absent();
+			frameFeatureExtractor = useAncestors ? AncestorFrameFeatureExtractor.load() : new BasicFrameFeatureExtractor();
+		} catch (IOException e) { throw new RuntimeException(e); }
+	}
+
+	public static IdFeatureExtractor fromName(String name) {
+		final Map<String, Supplier<IdFeatureExtractor>> featureExtractorMap = ImmutableMap.of(
+				"basic", new Supplier<IdFeatureExtractor>() {
+					public IdFeatureExtractor get() { return new IdFeatureExtractor(false, false, false); }
+				} ,
+				"ancestor", new Supplier<IdFeatureExtractor>() {
+					public IdFeatureExtractor get() { return new IdFeatureExtractor(false, true, false); }
+				},
+				"senna", new Supplier<IdFeatureExtractor>() {
+					public IdFeatureExtractor get() { return new IdFeatureExtractor(false, false, true); }
+				} );
+		return featureExtractorMap.get(name.trim().toLowerCase()).get();
+	}
+
+	public Map<String, Double> getBaseFeatures(int[] targetTokenIdxs, Sentence sentence) {
+		Arrays.sort(targetTokenIdxs);
+		final Map<String, Double> results = Maps.newHashMap();
+		// Get lemmas and postags for target
+		results.putAll(getTargetWordFeatures(targetTokenIdxs, sentence));
+		if (useSentenceContextFeatures) {
+			results.putAll(getSentenceContextFeatures(sentence));
 		}
-		return conjoinedFeatures;
-	}
-
-	public static String getCpostag(String postag) {
-		return postag.substring(0, 1).toUpperCase();
-	}
-
-	protected IntCounter<String> getSentenceContextFeatures(int[] targetTokenIdxs, Sentence sentence) {
-		// add a feature for each word in the sentence
-		final IntCounter<String> featureMap = new IntCounter<String>();
-		for (Token token : sentence.getTokens()) {
-			final String form = token.getForm();
-			final String postag = nullToEmpty(token.getPostag()).toUpperCase();
-			final String cpostag = getCpostag(postag);
-			final String lemma = token.getLemma();
-			featureMap.increment("sTP:" + form + "_" + cpostag);
-			featureMap.increment("sLP:" + lemma + "_" + cpostag);
+		// syntactic features
+		results.putAll(getSyntacticFeatures(targetTokenIdxs, sentence));
+		if (sennaFeatureExtractor.isPresent()) {
+			results.putAll(sennaFeatureExtractor.get().getSennaFeatures(targetTokenIdxs, sentence));
 		}
-		return featureMap;
+		// add homogenous/bias feature
+		results.put("bias", 1.0);
+		return results;
 	}
 
-	protected IntCounter<String> getTargetWordFeatures(int[] targetTokenIdxs, Sentence sentence) {
+	protected Map<String, Double> getTargetWordFeatures(int[] targetTokenIdxs, Sentence sentence) {
 		final List<String> tokenAndCpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
 		final List<String> cpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
 		final List<String> lemmaAndCpostags = Lists.newArrayListWithExpectedSize(targetTokenIdxs.length);
 		final List<Token> tokens = sentence.getTokens();
 		for (int tokenIdx : targetTokenIdxs) {
 			Token token = tokens.get(tokenIdx);
-			final String cpostag = getCpostag(token.getPostag());
-			tokenAndCpostags.add(token.getForm() + "_" + cpostag);
+			final String cpostag = getCpostag(nullToEmpty(token.getPostag()).toUpperCase());
 			cpostags.add(cpostag);
+			tokenAndCpostags.add(token.getForm() + "_" + cpostag);
 			lemmaAndCpostags.add(token.getLemma() + "_" + cpostag);
 		}
 		final IntCounter<String> featureMap = new IntCounter<String>();
 		featureMap.increment("aP:" + UNDERSCORE.join(cpostags));
 		featureMap.increment("aTP:" + UNDERSCORE.join(tokenAndCpostags));
 		featureMap.increment("aLP:" + UNDERSCORE.join(lemmaAndCpostags));
-		return featureMap;
+		return featureMap.scaleBy(1.0);
 	}
 
-	protected IntCounter<String> getSyntacticFeatures(int[] targetTokenIdxs, DependencyParse parse) {
+	protected Map<String, Double> getSentenceContextFeatures(Sentence sentence) {
+		// add a feature for each word in the sentence
+		final IntCounter<String> featureMap = new IntCounter<String>();
+		for (Token token : sentence.getTokens()) {
+			final String cpostag = getCpostag(nullToEmpty(token.getPostag()).toUpperCase());
+			featureMap.increment("sTP:" + token.getForm() + "_" + cpostag);
+			featureMap.increment("sLP:" + token.getLemma() + "_" + cpostag);
+		}
+		return featureMap.scaleBy(1.0);
+	}
+
+	protected Map<String, Double> getSyntacticFeatures(int[] targetTokenIdxs, Sentence sentence) {
+		final DependencyParse parse = DependencyParse.processFN(sentence.toAllLemmaTagsArray(), 0.0);
 		final DependencyParse head = DependencyParse.getHeuristicHead(parse.getIndexSortedListOfNodes(), targetTokenIdxs);
 		final String headCpostag = getCpostag(head.getPOS());
 
@@ -114,7 +128,7 @@ public class IdFeatureExtractor {
 			featureMap.increment("sC:" + UNDERSCORE.join(subcat));
 		}
 		final IntCounter<String> parentFeatures = getParentFeatures(head.getParent());
-		return featureMap.addAll(parentFeatures);
+		return featureMap.addAll(parentFeatures).scaleBy(1.0);
 	}
 
 	protected IntCounter<String> getParentFeatures(DependencyParse parent) {
@@ -144,14 +158,7 @@ public class IdFeatureExtractor {
 	public Map<String, Map<String, Double>> extractFeaturesByName(Iterable<String> frameNames,
 																  int[] targetTokenIdxs,
 																  Sentence sentence) {
-		final Map<String, Double> baseFeatures = getBaseFeatures(targetTokenIdxs, sentence);
-		return conjoinAll(frameNames, baseFeatures);
-	}
-
-	public static class Converter implements IStringConverter<IdFeatureExtractor> {
-		@Override public IdFeatureExtractor convert(String value) {
-			return featureExtractorMap.get(value.trim().toLowerCase()).get();
-		}
+		return frameFeatureExtractor.conjoinAll(frameNames, getBaseFeatures(targetTokenIdxs, sentence));
 	}
 
 	public Map<String, TIntDoubleHashMap> extractFeaturesByIndex(Iterable<String> frames,
@@ -161,37 +168,8 @@ public class IdFeatureExtractor {
 		return convertToIndexes(extractFeaturesByName(frames, targetTokenIdxs, sentence), alphabet);
 	}
 
-	public Map<String, Double> getBaseFeatures(int[] targetTokenIdxs, Sentence sentence) {
-		Arrays.sort(targetTokenIdxs);
-		// Get lemmas and postags for target
-		final IntCounter<String> featureMap = getTargetWordFeatures(targetTokenIdxs, sentence);
-		// add homogenous/bias feature
-		featureMap.increment("bias");
-
-		/*
-		 * syntactic features
-		 */
-		final DependencyParse parse = DependencyParse.processFN(sentence.toAllLemmaTagsArray(), 0.0);
-		final IntCounter<String> syntacticFeatures = getSyntacticFeatures(targetTokenIdxs, parse);
-		return featureMap.addAll(syntacticFeatures).scaleBy(1.0);
-	}
-
-	public <V extends Number> Map<String, Map<String, V>>
-			conjoinAll(Iterable<String> frameNames, Map<String, V> baseFeatures) {
-		final Map<String, Map<String, V>> results = Maps.newHashMap();
-		// conjoin base features with frame
-		for (String frame : frameNames) {
-			results.put(frame, conjoin("f:" + frame, baseFeatures));
-		}
-		return results;
-	}
-
 	public Set<String> getConjoinedFeatureNames(Iterable<String> frameNames, String feature) {
-		Set<String> results = Sets.newHashSet();
-		for (String frame : frameNames) {
-			results.add(SPACE.join("f:" + frame, feature));
-		}
-		return results;
+		return frameFeatureExtractor.getAllConjoinedFeatureNames(frameNames, feature);
 	}
 
 	/** Replaces feature names with feature indexes */
@@ -211,4 +189,7 @@ public class IdFeatureExtractor {
 		return results;
 	}
 
+	public static String getCpostag(String postag) {
+		return postag.substring(0, 1).toUpperCase();
+	}
 }

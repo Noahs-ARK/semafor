@@ -93,8 +93,7 @@ public class AlphabetCreationThreaded {
 				options.idFeatureExtractorType.present() ?
 						options.idFeatureExtractorType.get() :
 						"basic";
-		final IdFeatureExtractor featureExtractor =
-				new IdFeatureExtractor.Converter().convert(featureExtractorType);
+		final IdFeatureExtractor featureExtractor = IdFeatureExtractor.fromName(featureExtractorType);
 		final AlphabetCreationThreaded events =
 				new AlphabetCreationThreaded(
 						options.trainFrameElementFile.get(),

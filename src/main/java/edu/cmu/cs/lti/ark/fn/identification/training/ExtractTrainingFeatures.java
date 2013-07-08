@@ -82,8 +82,7 @@ public class ExtractTrainingFeatures {
 				options.idFeatureExtractorType.present() ?
 						options.idFeatureExtractorType.get() :
 						"basic";
-		final IdFeatureExtractor featureExtractor =
-				new IdFeatureExtractor.Converter().convert(featureExtractorType);
+		final IdFeatureExtractor featureExtractor = IdFeatureExtractor.fromName(featureExtractorType);
 		logger.info("Reading alphabet");
 		final Map<String, Integer> alphabet = readAlphabetFile(new File(options.modelFile.get()));
 		logger.info("Done reading alphabet");

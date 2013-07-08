@@ -26,7 +26,6 @@ import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author sthomson@cs.cmu.edu
@@ -52,7 +51,7 @@ public class SennaFeatureExtractorTest {
 	public void testGetBaseFeatures() throws Exception {
 		final Sentence sentence = getSentenceFixtures().get(0);
 		// extract features for "kitchen"
-		final Map<String,Double> baseFeatures = sennaFeatureExtractor.getBaseFeatures(new int[]{1}, sentence);
+		final Map<String,Double> baseFeatures = sennaFeatureExtractor.getSennaFeatures(new int[]{1}, sentence);
 		// should not contain senna features for word two before target head (index is out of bounds)
 		assertFalse(any(baseFeatures.keySet(), new Predicate<String>() {
 			public boolean apply(String input) {
@@ -65,10 +64,9 @@ public class SennaFeatureExtractorTest {
 				public boolean apply(String input) { return input.startsWith(FIVE_WORD_WINDOW_NAMES[i]); } });
 			assertEquals(Senna.SENNA_VECTOR_DIM, featuresForWord.size());
 		}
-		// should contain non-senna features also
+		// should not contain non-senna features
 		final Map<String, Double> nonSennaFeatures = Maps.filterKeys(baseFeatures, new Predicate<String>() {
 			public boolean apply(String input) { return !input.contains("senna"); } });
-		assertTrue(nonSennaFeatures.size() > 1);
-		System.out.println(nonSennaFeatures);
+		assertEquals(0, nonSennaFeatures.size());
 	}
 }

@@ -44,7 +44,7 @@ public class FrameIdentificationRelease {
 		final List<String> lines = Files.readLines(new File(paramsFile), Charsets.UTF_8);
 		TObjectDoubleHashMap<String> model = new TObjectDoubleHashMap<String>(lines.size());
 		int count = 0;
-		final IdFeatureExtractor featureExtractor = new IdFeatureExtractor.Converter().convert(lines.get(0));
+		final IdFeatureExtractor featureExtractor = IdFeatureExtractor.fromName(lines.get(0));
 		for (String line : lines.subList(1, lines.size())) {
 			String[] fields = line.split("\t");
 			final String featureName = fields[0].trim();
