@@ -25,6 +25,8 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
+import com.google.common.io.OutputSupplier;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec;
@@ -92,15 +94,18 @@ public class Semafor {
 		// Set up socket server
 		final ServerSocket serverSocket = new ServerSocket(port);
 		System.err.println("Listening on port: " + port);
-		Socket clientSocket;
-		while(true) {
+		while (true) {
 			try {
-				clientSocket = serverSocket.accept();
-				final PrintWriter out =
-						new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream(), UTF_8), true);
-				final BufferedReader in =
-						new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), UTF_8));
-				server.runParser(in, out);
+				final Socket clientSocket = serverSocket.accept();
+				final InputSupplier<InputStreamReader> inputSupplier = new InputSupplier<InputStreamReader>() {
+					@Override public InputStreamReader getInput() throws IOException {
+						return new InputStreamReader(clientSocket.getInputStream(), UTF_8);
+					} };
+				final OutputSupplier<OutputStreamWriter> outputSupplier = new OutputSupplier<OutputStreamWriter>() {
+					@Override public OutputStreamWriter getOutput() throws IOException {
+						return new OutputStreamWriter(clientSocket.getOutputStream(), UTF_8);
+					} };
+				server.runParser(inputSupplier, outputSupplier);
 			} catch (Exception e) {
 				e.printStackTrace(System.err);
 			}
@@ -171,18 +176,19 @@ public class Semafor {
 		this.spansFilename = spansFilename;
 	}
 
-	public void runParser(Readable input, PrintWriter output) throws Exception {
-		final SentenceCodec.SentenceIterator sentences = ConllCodec.readInput(input);
+	public void runParser(InputSupplier<? extends Readable> input, OutputSupplier<? extends Writer> outputSupplier)
+			throws Exception {
+		final SentenceCodec.SentenceIterator sentences = ConllCodec.readInput(input.getInput());
 		try {
-			while (sentences.hasNext()) {
-				final SemaforParseResult result = parseSentence(sentences.next());
-				output.println(result.toJson());
-				output.flush();
-			}
-		} finally {
-			closeQuietly(sentences);
-			closeQuietly(output);
-		}
+			final PrintWriter output = new PrintWriter(outputSupplier.getOutput());
+			try {
+				while (sentences.hasNext()) {
+					final SemaforParseResult result = parseSentence(sentences.next());
+					output.println(result.toJson());
+					output.flush();
+				}
+			} finally { closeQuietly(output); }
+		} finally { closeQuietly(sentences); }
 	}
 
 	public SemaforParseResult parseSentence(Sentence unLemmatizedSentence) throws Exception {

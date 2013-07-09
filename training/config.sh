@@ -14,7 +14,7 @@ model_name="ancestor_frame_id_partial_credit_20130627"
 num_threads=8
 gc_threads=2
 
-classpath=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-03.jar"
+classpath="${CLASSPATH}"
 # the directory that contains framenet.frame.element.map and framenet.original.map
 datadir="${SEMAFOR_HOME}/training/data"
 

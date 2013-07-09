@@ -69,9 +69,6 @@ TEST_PARSED_FILE="${TEMP_DIR}/conll"
 ALL_LEMMA_TAGS_FILE="${TEMP_DIR}/all.lemma.tags"
 FRAME_ELEMENTS_OUTPUT_FILE="${TEMP_DIR}/fes"
 
-CLASSPATH=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-03.jar"
-echo CLASSPATH="${CLASSPATH}"
-
 bash ${MY_DIR}/runMalt.sh ${INPUT_FILE} ${TEMP_DIR}
 
 

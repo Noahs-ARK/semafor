@@ -22,7 +22,7 @@
 set -e # fail fast
 
 
-MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"  > /dev/null && pwd )"
+MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null && pwd )"
 source "${MY_DIR}/config.sh"
 
 if [ $# -lt 2 -o $# -gt 2 ]; then
@@ -50,13 +50,11 @@ OUTPUT_DIR="${2}"
 POS_TAGGED="${OUTPUT_DIR}/pos.tagged"
 TEST_PARSED_FILE="${OUTPUT_DIR}/conll"
 
-CLASSPATH=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-03.jar"
-
 bash ${MY_DIR}/tokenizeAndPosTag.sh ${INPUT_FILE} ${OUTPUT_DIR}
 
 
 echo "**********************************************************************"
-echo "Running MaltParser...."
+echo "Converting postagged input to conll."
 # convert to conll so Malt can read it
 time ${JAVA_HOME_BIN}/java -classpath ${CLASSPATH} \
     edu.cmu.cs.lti.ark.fn.data.prep.formats.ConvertFormat \
@@ -64,6 +62,11 @@ time ${JAVA_HOME_BIN}/java -classpath ${CLASSPATH} \
     --inputFormat pos \
     --output ${POS_TAGGED}.conll \
     --outputFormat conll
+echo "Done converting postagged input to conll."
+echo "**********************************************************************"
+
+echo "**********************************************************************"
+echo "Running MaltParser...."
 pushd ${SEMAFOR_HOME}/scripts/maltparser-1.7.2
 time java -Xmx2g -jar maltparser-1.7.2.jar -w ${MALT_MODEL_DIR} -c engmalt.linear-1.7 -i ${POS_TAGGED}.conll -o ${TEST_PARSED_FILE}
 echo "Finished rrunning MaltParser."
