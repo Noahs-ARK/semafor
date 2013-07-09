@@ -4,5 +4,5 @@ import java.util.List;
 
 
 public interface Segmenter {
-	List<String> getSegmentations(List<String> tokenNums, List<String> parses);
+	List<String> getSegmentations(List<String> sentenceIdxs, List<String> parses);
 }

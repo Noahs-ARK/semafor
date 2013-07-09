@@ -2,21 +2,25 @@
       "frames": [
         {
 	  "annotationSets": [
-              {"score": 10.2, 
+              {"score": 10.2,
           "frameElements": [
             {
-              "start": 10,
-              "end": 11,
-              "name": "Relatives",
-              "text": "family"
+                "name": "Relatives",
+                "spans": [{
+                  "start": 10,
+                  "end": 11,
+                  "text": "family"
+                }]
             }
           ]
           }],
           "target": {
-            "start": 10,
-            "end": 11,
-            "name": "Kinship",
-            "text": "family"
+              "name": "Kinship",
+              "spans": [{
+                "start": 10,
+                "end": 11,
+                "text": "family"
+              }]
           }
         },
         {
@@ -24,18 +28,22 @@
               {"score": 10.2,
           "frameElements": [
             {
-              "start": 12,
-              "end": 13,
+                "name": "Vehicle",
+                "spans": [{
+                  "start": 12,
+                  "end": 13,
+                  "text": "vehicles"
+                }]
+            }
+          ]
+	  }],
+          "target": {
               "name": "Vehicle",
-              "text": "vehicles"
-            }
-          ]
-	  }],
-          "target": {
-            "start": 12,
-            "end": 13,
-            "name": "Vehicle",
-            "text": "vehicles"
+              "spans": [{
+                "start": 12,
+                "end": 13,
+                "text": "vehicles"
+              }]
           }
         },
         {
@@ -43,24 +51,30 @@
               {"score": 10.2,
           "frameElements": [
             {
-              "start": 7,
-              "end": 13,
-              "name": "Group",
-              "text": "of the Stryker family of vehicles"
+                "name": "Group",
+                "spans": [{
+                  "start": 7,
+                  "end": 13,
+                  "text": "of the Stryker family of vehicles"
+                }]
             },
             {
-              "start": 6,
-              "end": 7,
-              "name": "Member",
-              "text": "member"
+                "name": "Member",
+                "spans": [{
+                  "start": 6,
+                  "end": 7,
+                  "text": "member"
+                }]
             }
           ]
 	  }],
           "target": {
-            "start": 6,
-            "end": 7,
-            "name": "Membership",
-            "text": "member"
+              "name": "Membership",
+              "spans": [{
+                "start": 6,
+                "end": 7,
+                "text": "member"
+              }]
           }
         },
         {
@@ -68,24 +82,30 @@
               {"score": 10.2,
           "frameElements": [
             {
-              "start": 6,
-              "end": 7,
-              "name": "Entity",
-              "text": "member"
+                "name": "Entity",
+                "spans": [{
+                  "start": 6,
+                  "end": 7,
+                  "text": "member"
+                }]
             },
             {
-              "start": 5,
-              "end": 6,
+                "name": "Age",
+                "spans": [{
+                  "start": 5,
+                  "end": 6,
+                  "text": "newest"
+                }]
+            }
+          ]
+	  }],
+          "target": {
               "name": "Age",
-              "text": "newest"
-            }
-          ]
-	  }],
-          "target": {
-            "start": 5,
-            "end": 6,
-            "name": "Age",
-            "text": "newest"
+              "spans": [{
+                "start": 5,
+                "end": 6,
+                "text": "newest"
+              }]
           }
         },
         {
@@ -93,18 +113,22 @@
               {"score": 10.2,
           "frameElements": [
             {
-              "start": 1,
-              "end": 2,
-              "name": "Person",
-              "text": "Soldiers"
+                "name": "Person",
+                "spans": [{
+                  "start": 1,
+                  "end": 2,
+                  "text": "Soldiers"
+                }]
             }
           ]
 	  }],
           "target": {
-            "start": 1,
-            "end": 2,
-            "name": "People_by_vocation",
-            "text": "Soldiers"
+              "name": "People_by_vocation",
+              "spans": [{
+                "start": 1,
+                "end": 2,
+                "text": "Soldiers"
+              }]
           }
         }
       ],

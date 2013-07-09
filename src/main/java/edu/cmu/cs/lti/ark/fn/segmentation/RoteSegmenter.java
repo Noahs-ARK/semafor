@@ -219,14 +219,14 @@ public class RoteSegmenter implements Segmenter {
 	}
 
 	/**
-	 * @param tokenNums the last tsv field is the index of the sentence in `parses`
+	 * @param sentenceIdxs the last tsv field is the index of the sentence in `parses`
 	 * @param parseLines a list of AllLemmaTags-formatted sentences
 	 * @return a list of predicted targets, one line per sentence
 	 */
 	@Override
-	public List<String> getSegmentations(List<String> tokenNums, List<String> parseLines) {
+	public List<String> getSegmentations(List<String> sentenceIdxs, List<String> parseLines) {
 		final ImmutableList.Builder<String> result = ImmutableList.builder();
-		for(String tokenNum: tokenNums) {
+		for(String tokenNum: sentenceIdxs) {
 			final List<String> tokens = copyOf(tokenNum.trim().split("\t"));
 
 			// the last tsv field is the index of the sentence in `parses`

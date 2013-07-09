@@ -1436,10 +1436,10 @@ sub ParseProcessFrRelXML {
     }
 
     if (-e $cacheFile) {
-	print "Retrieving SP information from cache.\n" if $DEBUG;
+        print "Retrieving SP information from cache.\n" if $DEBUG;
 
-	my ($frSPL, $frSPC, $feSPL, $feSPC) = @{retrieve($cacheFile)};
-	return($frSPL, $frSPC, $feSPL, $feSPC);
+        my ($frSPL, $frSPC, $feSPL, $feSPC) = @{retrieve($cacheFile)};
+        return($frSPL, $frSPC, $feSPL, $feSPC);
     }
 
     my ($frConnL, $feConnL) = &ParseFrRelationsXML($frRelFile);

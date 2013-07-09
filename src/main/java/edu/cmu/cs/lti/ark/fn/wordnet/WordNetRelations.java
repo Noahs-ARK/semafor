@@ -21,23 +21,16 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.wordnet;
 
-import java.io.*;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetAPI.RelationType;
-
-import net.didion.jwnl.data.POS;
-
-
+import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import net.didion.jwnl.data.POS;
+
+import java.io.*;
+import java.net.URISyntaxException;
+import java.util.*;
+import java.util.regex.Pattern;
 
 public class WordNetRelations {
 	public static final String DEFAULT_FILE_PROPERTIES_FILE = "file_properties.xml";
@@ -138,8 +131,8 @@ public class WordNetRelations {
 		targetWord=null;
 	}
 	
-	public String getLemmaForWord(String word, String pos)
-	{
+	public String getLemmaForWord(String word, String pos) {
+		word = word.toLowerCase();
 		if(wordLemmaMap.containsKey(word+"_"+pos))
 			return wordLemmaMap.get(word+"_"+pos);
 		POS wnPOS=null;

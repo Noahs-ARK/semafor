@@ -3,7 +3,6 @@ package edu.cmu.cs.lti.ark.fn.data.prep.formats;
 import com.google.common.base.Joiner;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Lists;
-import edu.cmu.cs.lti.ark.util.IntRanges;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -76,8 +75,13 @@ public abstract class SentenceCodec {
 		ArrayList<Token> tokens = Lists.newArrayList();
 		final String[] tokenStrs = sentenceStr.split(tokenDelimiter);
 		for(int i : xrange(tokenStrs.length)) {
-			//indexed starting at 1!
-			tokens.add(decodeToken(tokenStrs[i]).withIndex(i+1));
+			try {
+				final Token token = decodeToken(tokenStrs[i]);
+				//indexed starting at 1!
+				tokens.add(token.withIndex(i + 1));
+			} catch (IllegalArgumentException e) {
+				throw new IllegalArgumentException(tokenStrs[i], e);
+			}
 		}
 		return new Sentence(tokens);
 	}
