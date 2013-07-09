@@ -8,7 +8,7 @@ model_name="turbo_20130609"
 # should set to roughly the number of cores available
 num_threads=8
 
-classpath=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-03.jar"
+classpath="${CLASSPATH}"
 # the directory that contains framenet.frame.element.map and framenet.original.map
 datadir="${SEMAFOR_HOME}/training/data"
 # the directory that contains all the lexical unit xmls for FrameNet 1.5

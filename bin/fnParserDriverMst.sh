@@ -21,7 +21,7 @@
 
 set -e # fail fast
 
-MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null && pwd )"
 source "${MY_DIR}/config.sh"
 
 if [ $# -lt 1 -o $# -gt 2 ]; then

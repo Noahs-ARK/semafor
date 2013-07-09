@@ -20,7 +20,7 @@
 
 set -e # fail fast
 
-MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null && pwd )"
 source "${MY_DIR}/config.sh"
 
 cd ${MST_PARSER_HOME}

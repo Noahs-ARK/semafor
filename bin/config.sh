@@ -9,6 +9,7 @@ BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." > /dev/null && pwd )"
 # where you decompressed SEMAFOR.
 SEMAFOR_HOME="${BASE_DIR}/semafor"
 
+CLASSPATH=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-04.jar"
 # Temporary folder location:
 # Change the path to a custom temp directory if you want to control where Semafor puts its
 # temp files. Will use system default if not specified.
@@ -84,3 +85,4 @@ echo "GOLD_TARGET_FILE=${GOLD_TARGET_FILE}"
 echo "AUTO_TARGET_ID_MODE=${AUTO_TARGET_ID_MODE}"
 echo "USE_GRAPH_FILE=${USE_GRAPH_FILE}"
 echo "DECODING_TYPE=${DECODING_TYPE}"
+echo "CLASSPATH=${CLASSPATH}"

@@ -22,7 +22,7 @@
 set -e # fail fast
 
 
-MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null && pwd )"
 source "${MY_DIR}/config.sh"
 
 if [ $# -lt 2 -o $# -gt 3 ]; then
@@ -68,9 +68,6 @@ POS_TAGGED="${TEMP_DIR}/pos.tagged"
 TEST_PARSED_FILE="${TEMP_DIR}/conll"
 ALL_LEMMA_TAGS_FILE="${TEMP_DIR}/all.lemma.tags"
 FRAME_ELEMENTS_OUTPUT_FILE="${TEMP_DIR}/fes"
-
-CLASSPATH=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-03.jar"
-echo CLASSPATH="${CLASSPATH}"
 
 bash ${MY_DIR}/runMalt.sh ${INPUT_FILE} ${TEMP_DIR}
 
