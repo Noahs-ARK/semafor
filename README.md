@@ -87,14 +87,9 @@ Underneath the root folder, there are the following files and folders:
       Java libraries required for this project, as detailed below
     </dd>
 
-  <dt>scoring/</dt>
-    <dd>
-      Executables for evaluating the performance of SEMAFOR
-    </dd>
-
   <dt>scripts/</dt>
     <dd>
-      Executables required for preprocessing raw text
+      Executables required for preprocessing raw text and evaluating the performance of SEMAFOR
     </dd>
 
   <dt>src/</dt>
