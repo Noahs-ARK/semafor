@@ -217,10 +217,6 @@ public class Semafor {
 
 	public SemaforParseResult predictArguments(Sentence sentence, List<String> idResult) throws Exception {
 		final List<String> argResult = predictArgumentLines(sentence, idResult, 1);
-		System.out.println("argResult:");
-		for (String line : argResult) {
-			System.out.println(line);
-		}
 		return getSemaforParseResult(sentence, argResult);
 	}
 

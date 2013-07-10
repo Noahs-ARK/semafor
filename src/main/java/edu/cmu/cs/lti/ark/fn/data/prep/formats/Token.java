@@ -25,7 +25,7 @@ public class Token {
 	private final @Nullable String feats;
 	private final @Nullable Integer head;
 	private final @Nullable String deprel;
-	private final @Nullable String phead;
+	private final @Nullable Integer phead;
 	private final @Nullable String pdeprel;
 
 	private static final String MISSING_INDICATOR = "_";
@@ -82,7 +82,7 @@ public class Token {
 				 @Nullable String feats,
 				 @Nullable Integer head,
 				 @Nullable String deprel,
-				 @Nullable String phead,
+				 @Nullable Integer phead,
 				 @Nullable String pdeprel) {
 		this.id = id;
 		this.form = form;
@@ -181,7 +181,7 @@ public class Token {
 	}
 
 	@Nullable
-	public String getPhead() {
+	public Integer getPhead() {
 		return phead;
 	}
 
@@ -232,14 +232,14 @@ public class Token {
 		checkArgument(fields.length == 10, "ConllToken must have 10 \"\\t\"-separated fields");
 		return new Token(
 				parseConllField(fields[0], parseInt),  // id
-				parseConllField(fields[1], parseStr),  // form
+				fields[1],  // form
 				parseConllField(fields[2], parseStr),  // lemma
 				parseConllField(fields[3], parseStr),  // cpostag
 				parseConllField(fields[4], parseStr),  // postag
 				parseConllField(fields[5], parseStr),  // feats
 				parseConllField(fields[6], parseInt),  // head
 				parseConllField(fields[7], parseStr),  // deprel
-				parseConllField(fields[8], parseStr),  // phead
+				parseConllField(fields[8], parseInt),  // phead
 				parseConllField(fields[9], parseStr)); // pdeprel
 	}
 
