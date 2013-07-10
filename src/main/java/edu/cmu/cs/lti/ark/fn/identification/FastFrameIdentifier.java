@@ -72,6 +72,7 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode {
 		mReg = reg;
 		mLambda = l;
 		mFrameMap = frameMap;
+		if (mFrameMap.containsKey("Test35")) mFrameMap.remove("Test35");
 		totalNumberOfParams = paramList.size();
 		initializeParameters();
 		mLookupChart = new TIntObjectHashMap<LogFormula>();
@@ -111,8 +112,9 @@ public class FastFrameIdentifier extends LRIdentificationModelSingleNode {
 	private double getValueForFrame(String frame, int[] intTokNums, Sentence sentence) {
 		m_current = 0;
 		m_llcurrent = 0;
-		String[][] parseData = sentence.toAllLemmaTagsArray();
+		if (!mFrameMap.containsKey(frame)) return Double.NEGATIVE_INFINITY;
 		THashSet<String> hiddenUnits = mFrameMap.get(frame);
+		String[][] parseData = sentence.toAllLemmaTagsArray();
 		DependencyParse parse = DependencyParse.processFN(parseData, 0.0);
 		double result = 0.0;
 		for (String unit : hiddenUnits) {
