@@ -21,9 +21,12 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.segmentation;
 
+import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 
 import java.util.*;
+
+import static edu.cmu.cs.lti.ark.fn.segmentation.RoteSegmenter.getTestLine;
 
 public class MoreRelaxedSegmenter implements Segmenter {
 	public static final int MAX_LEN = 4;
@@ -38,9 +41,7 @@ public class MoreRelaxedSegmenter implements Segmenter {
 		mParse =  null;
 	}	
 
-	public String getHighRecallSegmentation(String parse, 
-												   Set<String> allRelatedWords)
-	{				
+	public List<String> getHighRecallSegmentation(String parse, Set<String> allRelatedWords) {
 		StringTokenizer st = new StringTokenizer(parse,"\t");
 		int tokensInFirstSent = new Integer(st.nextToken());
 		String[][] data = new String[6][tokensInFirstSent];
@@ -57,7 +58,7 @@ public class MoreRelaxedSegmenter implements Segmenter {
 		{
 			startInds.add(""+i);
 		}
-		String tokNums="";
+		List<String> tokNums = Lists.newArrayList();
 		for(int i = MAX_LEN; i >= 1; i--)
 		{
 			for(int j = 0; j <= (data[0].length-i); j ++)
@@ -85,20 +86,19 @@ public class MoreRelaxedSegmenter implements Segmenter {
 							startInds.remove(ind);
 						}
 						tokRep=tokRep.trim().replaceAll(" ", "_");
-						tokNums+=tokRep+"\t";
+						tokNums.add(tokRep);
 					}
 				} else {
 					String pos = data[1][j];
 					String word = data[0][j];
 					if (!pos.equals("NNP") && !containsPunc(word)) {
-						tokNums+=j + "\t";
+						tokNums.add(j + "");
 						ind = "" + j;
 						startInds.remove(ind);
 					} 
 				}
 			}			
 		}
-		tokNums=tokNums.trim();
 		return tokNums;
 	}	
 	
@@ -108,7 +108,7 @@ public class MoreRelaxedSegmenter implements Segmenter {
 		return !(Character.isLetter(first) && Character.isLetter(last));
 	}
 	
-	public String trimPrepositions(String tokNum, String[][] pData)
+	public List<String> trimPrepositions(List<String> tokNums, String[][] pData)
 	{
 		String[] forbiddenWords1 = {"of course", "in particular", "as", "for", "so", "with","a","an","the","it","i"};
 		String[] precedingWordsOf = {"only", "member", "one", "most", "many", "some", "few", "part",
@@ -119,19 +119,17 @@ public class MoreRelaxedSegmenter implements Segmenter {
 		Arrays.sort(forbiddenWords1);
 		Arrays.sort(precedingWordsOf);
 		Arrays.sort(followingWordsOf);
-			
-		String[] candToks = tokNum.trim().split("\t");
-		
-		String result = "";
-		for(String candTok: candToks)
+
+		List<String> result = Lists.newArrayList();
+		for(String candTok: tokNums)
 		{
 			if(candTok.contains("_"))
 			{
-				result+=candTok+"\t";
+				result.add(candTok);
 				continue;
 			}
-			int start = new Integer(candTok);
-			int end = new Integer(candTok);
+			int start = Integer.parseInt(candTok);
+			int end = Integer.parseInt(candTok);
 			/*
 			 *forbidden words
 			 */
@@ -208,7 +206,7 @@ public class MoreRelaxedSegmenter implements Segmenter {
 				}
 				if(Arrays.binarySearch(precedingWordsOf, precedingWord)>=0)
 				{
-					result+=candTok+"\t";
+					result.add(candTok);
 					continue;
 				}
 				String followingWord = null;
@@ -228,19 +226,19 @@ public class MoreRelaxedSegmenter implements Segmenter {
 				}
 				if(Arrays.binarySearch(followingWordsOf, followingWord)>=0)
 				{
-					result+=candTok+"\t";
+					result.add(candTok);
 					continue;
 				}
 				
 				if(precedingPOS.startsWith("JJ") || precedingPOS.startsWith("CD"))
 				{
-					result+=candTok+"\t";
+					result.add(candTok);
 					continue;
 				}
 					
 				if(followingPOS.startsWith("CD"))
 				{
-					result+=candTok+"\t";
+					result.add(candTok);
 					continue;
 				}
 				
@@ -251,19 +249,19 @@ public class MoreRelaxedSegmenter implements Segmenter {
 						followingPOS = pData[1][start+2];
 						if(followingPOS.startsWith("CD"))
 						{
-							result+=candTok+"\t";
+							result.add(candTok);
 							continue;
 						}
 					}
 				}
 				if(followingNE.startsWith("GPE")||followingNE.startsWith("LOCATION"))
 				{
-					result+=candTok+"\t";
+					result.add(candTok);
 					continue;
 				}
 				if(precedingNE.startsWith("CARDINAL"))
 				{
-					result+=candTok+"\t";
+					result.add(candTok);
 					continue;
 				}
 				
@@ -281,7 +279,7 @@ public class MoreRelaxedSegmenter implements Segmenter {
 				}
 				else
 				{
-					result+=candTok+"\t";
+					result.add(candTok);
 					continue;
 				}
 			}
@@ -310,7 +308,7 @@ public class MoreRelaxedSegmenter implements Segmenter {
 					}
 					if(found)
 					{
-						result+=candTok+"\t";
+						result.add(candTok);
 						continue;
 					}
 					else
@@ -329,79 +327,32 @@ public class MoreRelaxedSegmenter implements Segmenter {
 					continue;
 				}
 			}		
-			result+=candTok+"\t";
+			result.add(candTok);
 		}
-		return result.trim();
+		return result;
 	}
 
 	@Override
-	public List<String> getSegmentations(List<String> sentenceIdxs, List<String> parses) {
+	public List<String> getSegmentations(Iterable<Integer> sentenceIdxs, List<String> parses) {
 		ArrayList<String> result = new ArrayList<String>();
-		for(String tokenNum: sentenceIdxs)
-		{
-			String[] toks = tokenNum.split("\t");
-			String gold = "";
-			for(int i = 0; i < toks.length-1; i ++)
-				gold+=toks[i]+"\t";
-			gold=gold.trim();
-			int sentNum = new Integer(toks[toks.length-1]);
-			String parse = parses.get(sentNum);
-			String tokNums = getHighRecallSegmentation(parse, allRelatedWords);
+		for(int sentenceIdx: sentenceIdxs) {
+			String parse = parses.get(sentenceIdx);
+			List<String> tokNums = getHighRecallSegmentation(parse, allRelatedWords);
 			StringTokenizer st = new StringTokenizer(parse.trim(),"\t");
 			int tokensInFirstSent = new Integer(st.nextToken());
 			String[][] data = new String[6][tokensInFirstSent];
-			for(int k = 0; k < 6; k ++)
-			{
+			for(int k = 0; k < 6; k ++) {
 				data[k]=new String[tokensInFirstSent];
-				for(int j = 0; j < tokensInFirstSent; j ++)
-				{
+				for(int j = 0; j < tokensInFirstSent; j ++) {
 					data[k][j]=""+st.nextToken().trim();
 				}
 			}
 			mParse = DependencyParse.processFN(data, 0.0);
 			mNodeList = mParse.getIndexSortedListOfNodes();
 			mParse.processSentence();
-			if(!tokNums.trim().equals(""))
-				tokNums=trimPrepositions(tokNums, data);
-			String line1 = getTestLine(gold, tokNums).trim()+"\t"+sentNum;
-			line1=line1.trim();
-			// System.out.println(line1+"\n"+mParse.getSentence()+"\n");
-			result.add(line1.trim());
+			final List<String> withoutPreps = trimPrepositions(tokNums, data);
+			result.add(getTestLine(withoutPreps) + "\t" + sentenceIdx);
 		}		
 		return result;
-	}
-	
-	public String getTestLine(String goldTokens, String actualTokens)
-	{
-		String result = "";
-		ArrayList<String> goldList = new ArrayList<String>();
-		StringTokenizer st = new StringTokenizer(goldTokens.trim(),"\t");
-		while(st.hasMoreTokens())
-		{
-			goldList.add(st.nextToken());
-		}
-		ArrayList<String> actList = new ArrayList<String>();
-		st = new StringTokenizer(actualTokens.trim(),"\t");
-		while(st.hasMoreTokens())
-		{
-			actList.add(st.nextToken());
-		}		
-		
-		int goldSize = goldList.size();
-		for(int i = 0; i < goldSize; i ++)
-		{
-			result+=goldList.get(i).trim()+"#true"+"\t";
-		}	
-		result=result.trim()+"\t";
-		int actSize = actList.size();
-		for(int i = 0; i < actSize; i ++)
-		{
-			String tokNum = actList.get(i).trim();
-			if(!goldList.contains(tokNum))
-			{
-				result+=tokNum+"#true"+"\t";
-			}
-		}
-		return result.trim();
 	}
 }

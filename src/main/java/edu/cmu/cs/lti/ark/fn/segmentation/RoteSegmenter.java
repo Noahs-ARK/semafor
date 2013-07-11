@@ -205,15 +205,10 @@ public class RoteSegmenter implements Segmenter {
 		return copyOf(goodTokens);
 	}
 
-	private String getTestLine(List<String> goldTokens, List<String> actualTokens) {
+	static String getTestLine(List<String> actualTokens) {
 		final ImmutableList.Builder<String> result = ImmutableList.builder();
-		for(String goldToken : goldTokens) {
-			result.add(goldToken + GOLD_TARGET_SUFFIX);
-		}
 		for(String actualToken : actualTokens) {
-			if (!goldTokens.contains(actualToken)) {
-				result.add(actualToken + GOLD_TARGET_SUFFIX);
-			}
+			result.add(actualToken + GOLD_TARGET_SUFFIX);
 		}
 		return Joiner.on("\t").join(result.build());
 	}
@@ -224,17 +219,14 @@ public class RoteSegmenter implements Segmenter {
 	 * @return a list of predicted targets, one line per sentence
 	 */
 	@Override
-	public List<String> getSegmentations(List<String> sentenceIdxs, List<String> parseLines) {
+	public List<String> getSegmentations(Iterable<Integer> sentenceIdxs, List<String> parseLines) {
 		final ImmutableList.Builder<String> result = ImmutableList.builder();
-		for(String tokenNum: sentenceIdxs) {
-			final List<String> tokens = copyOf(tokenNum.trim().split("\t"));
-
+		for(int sentenceIdx: sentenceIdxs) {
 			// the last tsv field is the index of the sentence in `parses`
-			final int sentNum = Integer.parseInt(tokens.get(tokens.size() - 1));
-			final String parse = parseLines.get(sentNum);
+			final String parse = parseLines.get(sentenceIdx);
 			final Sentence sentence = Sentence.fromAllLemmaTagsArray(AllLemmaTags.readLine(parse));
 			final List<String> ngramIndices = getSegmentation(sentence);
-			result.add(getTestLine(tokens.subList(0, tokens.size() - 1), ngramIndices) + "\t" + sentNum);
+			result.add(getTestLine(ngramIndices) + "\t" + sentenceIdx);
 		}
 		return result.build();
 	}
