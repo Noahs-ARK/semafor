@@ -63,59 +63,6 @@ public class FileUtil {
 		}
 		return localps;
 	}
-	public static FileInputStream openInputStream(String infilename){
-		FileInputStream fis=null;
-		try {
-			fis =(new FileInputStream(infilename));
-			
-		} catch (IOException ioe) {
-			// TODO: NO! stop swallowing exceptions
-			System.out.println(ioe.getMessage());
-		}
-		return fis;
-	}
-	
-	public static String[] listContents(File dir) {
-		return listContents(dir,null);
-	}
-	
-	/**
-	 * List files and directories within a given directory.
-	 * Does not recurse on subdirectories.
-	 * @param dir Containing directory
-	 * @param regex Regular expression to match against the file/directory name, 
-	 * or {@code null} to match all contents.
-	 * @return Names of matching contents
-	 */
-	public static String[] listContents(File dir, final String regex) {
-		assert dir.isDirectory();
-		return dir.list(new FilenameFilter() {
-			public boolean accept(File dir, String name) {
-				return name.matches(regex);
-			}
-		});
-	}
-	
-	public static File[] listFiles(File dir) {
-		return listFiles(dir,null);
-	}
-	
-	/**
-	 * List files (but not directories) within a given directory. 
-	 * Does not recurse on subdirectories.
-	 * @param dir Containing directory
-	 * @param regex Regular expression to match against the file name, 
-	 * or {@code null} to match all files.
-	 * @return Matching files
-	 */
-	public static File[] listFiles(File dir, final String regex) {
-		assert dir.isDirectory();
-		return dir.listFiles(new FilenameFilter() {
-			public boolean accept(File dir, String name) {
-				return name.matches(regex);
-			}
-		});
-	}
 
 	public static int countLines(String filename) throws IOException {
 		return countLines(Files.newReaderSupplier(new File(filename), Charsets.UTF_8));
