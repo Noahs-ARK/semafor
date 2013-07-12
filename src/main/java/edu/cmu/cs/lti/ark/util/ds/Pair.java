@@ -32,7 +32,7 @@ import com.google.common.base.Objects;
 public class Pair<T,T2> implements java.io.Serializable {
 	private static final long serialVersionUID = 5036185774790301596L;
 	
-	private T ob1; // declare an object of type T
+	private T ob1;
 	private T2 ob2;
 	
 	
@@ -45,18 +45,11 @@ public class Pair<T,T2> implements java.io.Serializable {
 		return new Pair<U, V>(u, v);
 	}
 
-	public T $1() {
-		return getFirst();
-	}
 	public T getFirst() {
 		return ob1;
 	}
 
-	public T2 $2() {
-		return getSecond();
-	}
-	public T2 getSecond()
-	{
+	public T2 getSecond() {
 		return ob2;
 	}
 	
@@ -69,13 +62,7 @@ public class Pair<T,T2> implements java.io.Serializable {
 	
 	@Override
 	public int hashCode() {
-		if (ob1==null && ob2==null)
-			return 0;
-		if (ob1==null)
-			return ob2.hashCode() % 1499153;
-		if (ob2==null)
-			return ob1.hashCode() % 1499153;
-		return (ob1.hashCode() + ob2.hashCode()) % 1499153;
+		return Objects.hashCode(ob1, ob2);
 	}
 	
 	@Override
@@ -85,6 +72,8 @@ public class Pair<T,T2> implements java.io.Serializable {
 	
 	@Override
 	public String toString() {
-		return "<" + ((ob1==null) ? "null" : ob1.toString()) + ", " + ((ob2==null) ? "null" : ob2.toString()) + ">";
+		return Objects.toStringHelper(this)
+				.add("first", ob1)
+				.add("second", ob2).toString();
 	}
 }

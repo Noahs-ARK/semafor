@@ -21,6 +21,7 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
@@ -36,6 +37,7 @@ import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.fn.segmentation.RoteSegmenter;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
+import edu.cmu.cs.lti.ark.util.ds.Pair;
 import gnu.trove.THashMap;
 
 import java.io.*;
@@ -50,6 +52,8 @@ import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Lists.transform;
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec.ConllCodec;
+import static edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationJson.processPredictionLine;
+import static edu.cmu.cs.lti.ark.fn.identification.FrameIdentificationRelease.getTokenRepresentation;
 import static edu.cmu.cs.lti.ark.util.SerializedObjects.readObject;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
@@ -62,12 +66,14 @@ public class Semafor {
 	private static final String EVENTS_FILENAME = "events.bin";
 	private static final String SPANS_FILENAME = "spans";
 
+	private static final Joiner TAB = Joiner.on("\t");
+
 	protected final Set<String> allRelatedWords;
 	protected final WordNetRelations wordNetRelations;
+
 	protected final FEDict frameElementsForFrame;
 
 	protected final RoteSegmenter segmenter;
-
 	protected final GraphBasedFrameIdentifier idModel;
 	protected final Decoding decoder;
 	private final String eventsFilename;
@@ -123,12 +129,11 @@ public class Semafor {
 		spansFile.deleteOnExit();
 		final String spansFilename = spansFile.getAbsolutePath();
 
-
 		// unpack required data
 		final RequiredDataForFrameIdentification r = readObject(requiredDataFilename);
 		final Set<String> allRelatedWords = r.getAllRelatedWords();
 
-		/* Initializing WordNet config file */
+		/* Initializing WordNet */
 		final WordNetRelations wordNetRelations = new WordNetRelations();
 		final Map<String, Set<String>> relatedWordsForWord = r.getRelatedWordsForWord();
 		final Map<String, THashMap<String, Set<String>>> wordNetMap = r.getWordNetMap();
@@ -193,28 +198,52 @@ public class Semafor {
 		// look up lemmas
 		final Sentence sentence = addLemmas(unLemmatizedSentence);
 		// find targets
-		final List<String> segments = predictTargets(sentence);
+		final List<List<Integer>> segments = predictTargets(sentence);
 		// frame identification
-		final List<String> idResult = predictFrames(sentence, segments);
+		final List<Pair<List<Integer>, String>> idResult = predictFrames(sentence, segments);
 		// argument identification
 		return predictArguments(sentence, idResult);
 	}
 
-	public List<String> predictTargets(Sentence sentence) throws IOException {
-		final List<String> allLemmaTagsSentences =
-				ImmutableList.of(AllLemmaTags.makeLine(sentence.toAllLemmaTagsArray()));
-		return segmenter.getSegmentations(allLemmaTagsSentences);
+	public List<List<Integer>> predictTargets(Sentence sentence) {
+		return segmenter.getSegmentation(sentence);
 	}
 
-	public List<String> predictFrames(Sentence sentence, List<String> segments) throws IOException {
-		final List<String> allLemmaTagsSentences =
-				ImmutableList.of(AllLemmaTags.makeLine(sentence.toAllLemmaTagsArray()));
-		return ParserDriver.identifyFrames(idModel, allLemmaTagsSentences, segments);
+	private List<Pair<List<Integer>, String>> predictFrames(Sentence sentence, List<List<Integer>> targets) {
+		final List<Pair<List<Integer>, String>> idResult = Lists.newArrayList();
+		for (List<Integer> targetTokenIdxs : targets) {
+			final String frame = idModel.getBestFrame(targetTokenIdxs, sentence);
+			idResult.add(Pair.of(targetTokenIdxs, frame));
+		}
+		return idResult;
 	}
 
-	public SemaforParseResult predictArguments(Sentence sentence, List<String> idResult) throws Exception {
-		final List<String> argResult = predictArgumentLines(sentence, idResult, 1);
+	public SemaforParseResult predictArguments(Sentence sentence, List<Pair<List<Integer>, String>> idResults)
+			throws Exception {
+		final List<String> idResultLines = getArgumentIdInput(sentence, idResults);
+		final List<String> argResult = predictArgumentLines(sentence, idResultLines, 1);
 		return getSemaforParseResult(sentence, argResult);
+	}
+
+	/**
+	 * Convert to the weird format that {@link #predictArgumentLines} expects.
+	 * @param sentence the input sentence
+	 * @param idResults a list of (target, frame) pairs
+	 * @return a list of strings in the format that {@link #predictArgumentLines} expects.
+	 */
+	private List<String> getArgumentIdInput(Sentence sentence, List<Pair<List<Integer>, String>> idResults) {
+		final List<String> idResultLines = Lists.newArrayList();
+		final String parseLine = AllLemmaTags.makeLine(sentence.toAllLemmaTagsArray());
+		for (Pair<List<Integer>, String> targetAndFrame : idResults) {
+			final List<Integer> targetTokenIdxs = targetAndFrame.getFirst();
+			final String frame = targetAndFrame.getSecond();
+			final String tokenIdxsStr = Joiner.on("_").join(targetTokenIdxs);
+			final Pair<String, String> tokenRepresentation = getTokenRepresentation(tokenIdxsStr, parseLine);
+			final String lexicalUnit = tokenRepresentation.getFirst();
+			final String tokenStrs = tokenRepresentation.getSecond();
+			idResultLines.add(TAB.join(0, 1.0, 1, frame, lexicalUnit, tokenIdxsStr, tokenStrs, 0));
+		}
+		return idResultLines;
 	}
 
 	public List<String> predictArgumentLines(Sentence sentence, List<String> idResult, int kBest) throws Exception {
@@ -225,8 +254,7 @@ public class Semafor {
 	}
 
 	public SemaforParseResult getSemaforParseResult(Sentence sentence, List<String> results) {
-		final List<RankedScoredRoleAssignment> roleAssignments =
-				copyOf(transform(results, PrepareFullAnnotationJson.processPredictionLine));
+		final List<RankedScoredRoleAssignment> roleAssignments = copyOf(transform(results, processPredictionLine));
 		List<String> tokens = Lists.newArrayListWithExpectedSize(sentence.size());
 		for(Token token : sentence.getTokens()) {
 			tokens.add(token.getForm());

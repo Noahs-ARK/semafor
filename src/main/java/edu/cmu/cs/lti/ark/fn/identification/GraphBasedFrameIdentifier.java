@@ -1,6 +1,5 @@
 package edu.cmu.cs.lti.ark.fn.identification;
 
-import com.google.common.primitives.Ints;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.parsing.Semafor;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
@@ -10,10 +9,8 @@ import gnu.trove.TObjectDoubleHashMap;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Set;
 
-import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.readLine;
 import static edu.cmu.cs.lti.ark.util.SerializedObjects.readObject;
 
 /**
@@ -58,19 +55,9 @@ public class GraphBasedFrameIdentifier extends FastFrameIdentifier {
 				graph);
 	}
 
-	public String getBestFrame(Collection<Integer> indices, Sentence sentence) {
-		return getBestFrame(Ints.toArray(indices), sentence);
-	}
-
-	@Override
-	public String getBestFrame(String frameLine, String parseLine) {
-		return getBestFrame(parseFrameLine(frameLine), Sentence.fromAllLemmaTagsArray(readLine(parseLine)));
-	}
-
 	@Override
 	public String getBestFrame(int[] tokenIndices, Sentence sentence) {
 		final Set<String> candidateFrames = getCandidateFrames(tokenIndices, sentence, graph);
 		return pickBestFrame(candidateFrames, sentence, tokenIndices);
 	}
-
 }

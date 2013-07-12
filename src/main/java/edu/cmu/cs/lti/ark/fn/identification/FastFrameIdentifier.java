@@ -25,16 +25,14 @@ package edu.cmu.cs.lti.ark.fn.identification;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.primitives.Ints;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectDoubleHashMap;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.base.Strings.nullToEmpty;
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.readLine;
@@ -160,9 +158,12 @@ public class FastFrameIdentifier {
 		return pos;
 	}
 
-	/* non-graph versions */
 	public String getBestFrame(String frameLine, String parseLine) {
 		return getBestFrame(parseFrameLine(frameLine), Sentence.fromAllLemmaTagsArray(readLine(parseLine)));
+	}
+
+	public String getBestFrame(Collection<Integer> indices, Sentence sentence) {
+		return getBestFrame(Ints.toArray(indices), sentence);
 	}
 
 	public String getBestFrame(int[] tokenIndices, Sentence sentence) {

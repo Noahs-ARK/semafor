@@ -51,7 +51,7 @@ public abstract class Segmenter {
 		return copyOf(goodTokens);
 	}
 
-	private static String getTestLine(List<List<Integer>> tokenIdxs) {
+	public static String getTestLine(List<List<Integer>> tokenIdxs) {
 		final ImmutableList.Builder<String> result = ImmutableList.builder();
 		for (List<Integer> idxs : tokenIdxs) {
 			result.add(Joiner.on("_").join(idxs) + GOLD_TARGET_SUFFIX);

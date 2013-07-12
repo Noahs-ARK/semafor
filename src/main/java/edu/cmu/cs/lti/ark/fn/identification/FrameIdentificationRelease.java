@@ -56,7 +56,7 @@ public class FrameIdentificationRelease {
 		return Pair.of(featureExtractor, model);
 	}
 	
-	public static String getTokenRepresentation(String tokNum, String parse) {
+	public static Pair<String, String> getTokenRepresentation(String tokNum, String parse) {
 		String[] tokNums = tokNum.split("_");
 		List<Integer> indices = Lists.newArrayList();
 		for (String tokNum1 : tokNums) {
@@ -65,13 +65,13 @@ public class FrameIdentificationRelease {
 		return getTokenRepresentation(indices, Sentence.fromAllLemmaTagsArray(AllLemmaTags.readLine(parse)));
 	}
 
-	public static String getTokenRepresentation(List<Integer> indices, Sentence sentence) {
+	public static Pair<String, String> getTokenRepresentation(List<Integer> indices, Sentence sentence) {
 		final List<Token> tokens = sentence.getTokens();
 		List<String> actualTokens = Lists.newArrayList();
 		for (int i : indices) {
 			actualTokens.add(tokens.get(i).getForm());
 		}
-		return getFirstTokenAndCpos(indices, sentence) + "\t" + Joiner.on(" ").join(actualTokens);
+		return Pair.of(getFirstTokenAndCpos(indices, sentence), Joiner.on(" ").join(actualTokens));
 	}
 
 	public static String getFirstTokenAndCpos(List<Integer> indices, Sentence sentence) {

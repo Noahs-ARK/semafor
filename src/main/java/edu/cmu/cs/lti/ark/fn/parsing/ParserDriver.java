@@ -255,13 +255,15 @@ public class ParserDriver {
 		for(String input: inputForFrameId) {
 			final String[] tokens = input.split("\t");
 			// offset of the sentence within the loaded data (relative to options.startIndex)
-			int sentNum = Integer.parseInt(tokens[2]);
+			final String tokenIdxsStr = tokens[1];
+			final int sentNum = Integer.parseInt(tokens[2]);
 			final String parseLine = allLemmaTagsSentences.get(sentNum);
-			final String bestFrame = idModel.getBestFrame(input, parseLine);
-			final String tokenRepresentation = getTokenRepresentation(tokens[1], parseLine);
-			final String[] split = tokenRepresentation.trim().split("\t");
+			final String frame = idModel.getBestFrame(input, parseLine);
+			final Pair<String, String> tokenRepresentation = getTokenRepresentation(tokenIdxsStr, parseLine);
+			final String lexicalUnit = tokenRepresentation.getFirst();
+			final String tokenStrs = tokenRepresentation.getSecond();
 			// rank(=0) \t score(=1.0) \t numTargets+numFes(=1) \t bestFrame \t targetTokenNum(s) \t sentenceOffset
-			idResult.add(TAB.join(0, 1.0, 1, bestFrame, split[0], tokens[1], split[1], sentNum));
+			idResult.add(TAB.join(0, 1.0, 1, frame, lexicalUnit, tokenIdxsStr, tokenStrs, sentNum));
 		}
 		return idResult;
 	}

@@ -56,7 +56,7 @@ public class RoteSegmenterTest {
 				"3\tmoney\tmoney\tNN\tNN\t_\t2\tdobj\t_\t_\n" +
 				"4\t.\t.\t.\t.\t_\t2\tpunct\t_\t_";
 		final Sentence sentence = SentenceCodec.ConllCodec.decode(conll);
-		Set<String> allRelatedWords = ImmutableSet.of("have_VBP");
+		Set<String> allRelatedWords = ImmutableSet.of("have_V");
 		final RoteSegmenter segmenter = new RoteSegmenter(allRelatedWords);
 		final List<List<Integer>> segmentation = segmenter.getSegmentation(sentence);
 		assertEquals(1, segmentation.size());

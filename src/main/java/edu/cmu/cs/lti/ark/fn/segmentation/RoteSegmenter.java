@@ -36,6 +36,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Set;
 
+import static com.google.common.base.Strings.nullToEmpty;
 import static com.google.common.collect.Iterables.any;
 import static com.google.common.primitives.Ints.min;
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.*;
@@ -106,11 +107,10 @@ public class RoteSegmenter extends Segmenter {
 
 	private List<String> getLemmasAndCoursePos(Sentence sentence) {
 		return Lists.transform(sentence.getTokens(), new Function<Token, String>() {
-			@Nullable
-			@Override
-			public String apply(@Nullable Token token) {
+			@Override public String apply(@Nullable Token token) {
 				assert token != null;
-				return token.getLemma() + "_" + token.getCpostag();
+				final String postag = nullToEmpty(token.getPostag());
+				return token.getLemma() + "_" + postag.substring(0, min(1, postag.length()));
 			}
 		});
 	}
