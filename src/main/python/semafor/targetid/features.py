@@ -7,7 +7,6 @@ Extracts features for each unigram
 from __future__ import print_function, division
 from csv import DictWriter
 import codecs
-#from collections import namedtuple
 from itertools import chain
 import json
 import os

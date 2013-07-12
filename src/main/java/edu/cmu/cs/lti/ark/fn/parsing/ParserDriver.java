@@ -45,8 +45,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.google.common.base.Functions.toStringFunction;
-import static com.google.common.collect.Lists.transform;
 import static edu.cmu.cs.lti.ark.fn.evaluation.ParseUtils.GOLD_TARGET_SUFFIX;
 import static edu.cmu.cs.lti.ark.fn.evaluation.ParseUtils.getRightInputForFrameIdentification;
 import static edu.cmu.cs.lti.ark.fn.identification.FrameIdentificationRelease.getTokenRepresentation;
@@ -274,7 +272,6 @@ public class ParserDriver {
 											List<String> allLemmaTagsSentences) throws IOException {
 		final int size = allLemmaTagsSentences.size();
 		final List<Integer> sentenceIdxs = range(size).asList();
-		final List<String> sentenceIdxStrs = transform(sentenceIdxs, toStringFunction());
 		List<String> segments;
 		if (segmentationMode.equals(GOLD)) {
 			final ArrayList<String> segLines = Lists.newArrayList();
@@ -287,7 +284,7 @@ public class ParserDriver {
 		} else {
 			final Segmenter segmenter =
 					segmentationMode.equals(STRICT) ? new RoteSegmenter(allRelatedWords) : new MoreRelaxedSegmenter(allRelatedWords);
-			segments = segmenter.getSegmentations(sentenceIdxStrs, allLemmaTagsSentences);
+			segments = segmenter.getSegmentations(sentenceIdxs, allLemmaTagsSentences);
 		}
 		return segments;
 	}

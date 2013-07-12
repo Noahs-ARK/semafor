@@ -120,9 +120,8 @@ public class RoteSegmenter implements Segmenter {
 	 *
 	 * @param idxs "_" joined indices of the ngram tokens in pData
 	 * @param pData a 2d array containing the token, lemma, pos tag, and NE for each token
-	 * @return
 	 */
-	private boolean shouldIncludeToken(final List<Integer> idxs, final String[][] pData, DependencyParse[] mNodeList) {
+	public static boolean shouldIncludeToken(final List<Integer> idxs, final String[][] pData, DependencyParse[] mNodeList) {
 		final int numTokens = pData[PARSE_TOKEN_ROW].length;
 		// always include ngrams, n > 1
 		if (idxs.size() > 1) return true;
@@ -189,12 +188,10 @@ public class RoteSegmenter implements Segmenter {
 	/**
 	 * Removes prepositions from the given sentence
 	 *
-	 *
 	 * @param candidateTokens a row of token indices
 	 * @param pData an array of parse data. each column is a word. relevant rows are:  0: token, 1: pos, 5: lemma
-	 * @return
 	 */
-	private List<List<Integer>> trimPrepositions(List<List<Integer>> candidateTokens, final String[][] pData) {
+	public static List<List<Integer>> trimPrepositions(List<List<Integer>> candidateTokens, final String[][] pData) {
 		final DependencyParse mParse = DependencyParse.processFN(pData, 0.0);
 		final DependencyParse[] mNodeList = mParse.getIndexSortedListOfNodes();
 		final Iterable<List<Integer>> goodTokens = Iterables.filter(candidateTokens, new Predicate<List<Integer>>() {
@@ -204,9 +201,9 @@ public class RoteSegmenter implements Segmenter {
 		return copyOf(goodTokens);
 	}
 
-	private String getTestLine(List<List<Integer>> tokenIdxs) {
+	public static String getTestLine(List<List<Integer>> tokenIdxs) {
 		final ImmutableList.Builder<String> result = ImmutableList.builder();
-		for(List<Integer> idxs : tokenIdxs) {
+		for (List<Integer> idxs : tokenIdxs) {
 			result.add(Joiner.on("_").join(idxs) + GOLD_TARGET_SUFFIX);
 		}
 		return Joiner.on("\t").join(result.build());
@@ -218,14 +215,14 @@ public class RoteSegmenter implements Segmenter {
 	 * @return a list of predicted targets, one line per sentence
 	 */
 	@Override
-	public List<String> getSegmentations(List<String> sentenceIdxs, List<String> parseLines) {
+	public List<String> getSegmentations(Iterable<Integer> sentenceIdxs, List<String> parseLines) {
 		final ImmutableList.Builder<String> result = ImmutableList.builder();
-		for(String sentenceIdxStr: sentenceIdxs) {
-			final int sentNum = Integer.parseInt(sentenceIdxStr);
-			final String parse = parseLines.get(sentNum);
+		for(int sentenceIdx: sentenceIdxs) {
+			// the last tsv field is the index of the sentence in `parses`
+			final String parse = parseLines.get(sentenceIdx);
 			final Sentence sentence = Sentence.fromAllLemmaTagsArray(AllLemmaTags.readLine(parse));
 			final List<List<Integer>> ngramIndices = getSegmentation(sentence);
-			result.add(getTestLine(ngramIndices) + "\t" + sentNum);
+			result.add(getTestLine(ngramIndices) + "\t" + sentenceIdx);
 		}
 		return result.build();
 	}
