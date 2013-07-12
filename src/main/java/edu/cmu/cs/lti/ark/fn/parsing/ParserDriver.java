@@ -378,7 +378,7 @@ public class ParserDriver {
 		for(int i = 0; i < sentLen; i++){
 			final String word = toks[i + 1].toLowerCase();
 			final String pos = toks[sentLen + i + 1];
-			lemmas.add(wnr.getLemmaForWord(word, pos));
+			lemmas.add(wnr.getLemma(word, pos));
 		}
 		return TAB.join(line, TAB.join(lemmas));
 	}

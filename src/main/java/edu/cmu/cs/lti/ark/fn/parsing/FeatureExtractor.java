@@ -115,13 +115,13 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 		DependencyParse targetHeadNode = DependencyParse.getHeuristicHead(nodes, targetTokenNums);
 		DependencyParse targetFirstNode = nodes[targetTokenNums[0] + 1];
 		// String targetPOS = targetFirstNode.getPOS();
-		// String targetLemma = wnr.getLemmaForWord(target, targetPOS);
+		// String targetLemma = wnr.getLemma(target, targetPOS);
 		String targetLemma = targetFirstNode.getLemma();
 
 		// StringTokenizer st = new StringTokenizer(target);
 		// while(st.hasMoreTokens())
 		// String word = st.nextToken().trim();
-		// lemma+=mWnr.getLemmaForWord(word, pos)+" ";
+		// lemma+=mWnr.getLemma(word, pos)+" ";
 		// mFeatureMap.put("l_"+lemma+"_"+mFrameAndRoleName, 1.0);
 
 		String lemma = "";

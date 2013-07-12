@@ -21,7 +21,6 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
@@ -75,6 +74,7 @@ public class Semafor {
 	protected final Decoding decoder;
 	private final String eventsFilename;
 	private final String spansFilename;
+
 	/**
 	 *  required flags:
 	 *  model-dir
@@ -242,14 +242,6 @@ public class Semafor {
 	}
 
 	public Sentence addLemmas(Sentence sentence) {
-		return new Sentence(Lists.transform(sentence.getTokens(), new Function<Token, Token>() {
-			@Override public Token apply(Token input) {
-				final String lemma = wordNetRelations.getLemmaForWord(input.getForm(), input.getPostag());
-				return input.setLemma(lemma);
-			} }));
-	}
-
-	public GraphBasedFrameIdentifier getIdModel() {
-		return idModel;
+		return wordNetRelations.addLemmas(sentence);
 	}
 }

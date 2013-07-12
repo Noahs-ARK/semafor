@@ -9,7 +9,7 @@ import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;
 * @author sthomson@cs.cmu.edu
 */
 public abstract class Lemmatizer {
-	public abstract String getLemma(String word, String POS);
+	public abstract String getLemma(String word, String postag);
 
 	public Sentence addLemmas(Sentence sentence) {
 		return new Sentence(Lists.transform(sentence.getTokens(), new Function<Token, Token>() {

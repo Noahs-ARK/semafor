@@ -88,9 +88,9 @@ public class RequiredDataCreation {
 				String hiddenUnitLemmas = "";
 				for (String hiddenTok : hiddenToks) {
 					String[] arr = hiddenTok.split("_");
-					String lowerCaseLemma = wnr.getLemmaForWord(arr[0], arr[1]).toLowerCase();
-					lemmaMap.put(arr[0] + "_" + arr[1], lowerCaseLemma);
-					hiddenUnitLemmas += wnr.getLemmaForWord(arr[0], arr[1]).toLowerCase() + " ";
+					String lemma = wnr.getLemma(arr[0], arr[1]);
+					lemmaMap.put(arr[0] + "_" + arr[1], lemma);
+					hiddenUnitLemmas += wnr.getLemma(arr[0], arr[1]) + " ";
 				}
 				hiddenUnitLemmas = hiddenUnitLemmas.trim();
 				System.out.println("Processed:" + hiddenUnitLemmas);
@@ -191,7 +191,7 @@ public class RequiredDataCreation {
 				for (String hiddenTok : hiddenToks) {
 					String[] arr = hiddenTok.split("_");
 					hiddenUnitTokens += arr[0] + " ";
-					hiddenUnitLemmas += wnr.getLemmaForWord(arr[0], arr[1]).toLowerCase() + " ";
+					hiddenUnitLemmas += wnr.getLemma(arr[0], arr[1]) + " ";
 				}
 				hiddenUnitTokens = hiddenUnitTokens.trim();
 				hiddenUnitLemmas = hiddenUnitLemmas.trim();
@@ -250,7 +250,7 @@ public class RequiredDataCreation {
 					continue;
 				int lastIndex = name.lastIndexOf(".");
 				String word = name.substring(0, lastIndex).toLowerCase();
-				String lemma = wnr.getLemmaForWord(word, conversionMap.get(pos));
+				String lemma = wnr.getLemma(word, conversionMap.get(pos));
 				result.add(lemma + "_" + conversionMap.get(pos).substring(0, 1));
 				count++;
 			}
@@ -279,7 +279,7 @@ public class RequiredDataCreation {
 					String w = toks[0];
 					String p = toks[1];
 					String cP = toks[1].substring(0, 1);
-					String l = mWNR.getLemmaForWord(w.toLowerCase(), p);
+					String l = mWNR.getLemma(w.toLowerCase(), p);
 					if (p.startsWith("N") ||/*p.startsWith("JJ")||*/p.startsWith("V")) {
 						THashMap<String, Set<String>> rlMap = mWNR.getAllRelationsMap(l);
 						Set<String> rl = getSelectedRelatedWords(rlMap);
@@ -297,13 +297,10 @@ public class RequiredDataCreation {
 						String w = toks[0];
 						String p = toks[1];
 						String cP = toks[1].substring(0, 1);
-						String l = mWNR.getLemmaForWord(w.toLowerCase(), p);
+						String l = mWNR.getLemma(w.toLowerCase(), p);
 						lTok += l + "_" + cP + " ";
 					}
 					lTok = lTok.trim();
-					//Set<String> rl = mWNR.getAllRelatedWords(lTok);
-					//rl = getRevisedSet(rl);
-					//result.addAll(rl);
 					result.add(lTok);
 					if (lTok.equals("there be")) {
 						result.add("there_E 's_P");

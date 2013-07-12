@@ -21,19 +21,15 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.identification;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.StringTokenizer;
-
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
 
 public class LinDekNeighbors {
 
@@ -61,7 +57,6 @@ public class LinDekNeighbors {
 		String stopfile = "lrdata/stopwords.txt";
 		String wnConfigFile = "file_properties.xml";
 		WordNetRelations wnr = new WordNetRelations(stopfile, wnConfigFile);
-		System.out.println(wnr.getLemmaForWord("worse", "J"));
 		if (true)
 			System.exit(-1);
 		String lindekdirectory = "/home/dipanjan/work/fall2010/SSL/FNData";
@@ -108,7 +103,7 @@ public class LinDekNeighbors {
 					unit = unit.substring(1, unit.length()-1).toLowerCase();
 				} else {
 					String lc = unit.toLowerCase();
-					lc = wnr.getLemmaForWord(lc, "V");
+					lc = wnr.getLemma(lc, "V");
 					unit = lc;
 				}
 				outline += unit + ".v\t" + value +"\t";
@@ -126,7 +121,7 @@ public class LinDekNeighbors {
 				firstLine = firstLine.substring(1, firstLine.length()-1).toLowerCase();
 			} else {
 				String lc = firstLine.toLowerCase();
-				firstLine = wnr.getLemmaForWord(lc, "V");
+				firstLine = wnr.getLemma(lc, "V");
 			}
 			bWriter.write(firstLine + ".v\t" + outline + "\n");
 			line = bReader.readLine();
@@ -186,7 +181,7 @@ public class LinDekNeighbors {
 					unit = unit.substring(1, unit.length()-1).toLowerCase();
 				} else {
 					String lc = unit.toLowerCase();
-					lc = wnr.getLemmaForWord(lc, "N");
+					lc = wnr.getLemma(lc, "N");
 					unit = lc;
 				}
 				outline += unit + ".n\t" + value +"\t";
@@ -204,7 +199,7 @@ public class LinDekNeighbors {
 				firstLine = firstLine.substring(1, firstLine.length()-1).toLowerCase();
 			} else {
 				String lc = firstLine.toLowerCase();
-				firstLine = wnr.getLemmaForWord(lc, "N");
+				firstLine = wnr.getLemma(lc, "N");
 			}
 			bWriter.write(firstLine + ".n\t" + outline + "\n");
 			line = bReader.readLine();

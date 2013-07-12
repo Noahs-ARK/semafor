@@ -56,7 +56,6 @@ public class LemmatizeStuff {
 			outfilename = options.get(OUT_FILE);
 		}
 		wnr = new WordNetRelations();
-		//wnr = new WordNetRelations(stopWordsFile, wnConfigFile);
 		run();
 	}
 
@@ -112,7 +111,7 @@ public class LemmatizeStuff {
 			String[] toks = line.trim().split("\\s");
 			int sentLen = Integer.parseInt(toks[0]);
 			for(int i = 0; i < sentLen; i++) {
-				String lemma = wnr.getLemmaForWord(toks[i+1].toLowerCase(), toks[i+1+sentLen]);
+				String lemma = wnr.getLemma(toks[i + 1].toLowerCase(), toks[i + 1 + sentLen]);
 				ps.print(lemma + "\t");
 			}
 			ps.println();

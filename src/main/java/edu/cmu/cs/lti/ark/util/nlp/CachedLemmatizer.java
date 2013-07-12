@@ -1,5 +1,7 @@
 package edu.cmu.cs.lti.ark.util.nlp;
 
+import com.google.common.base.Optional;
+
 import java.util.Map;
 
 /**
@@ -12,7 +14,8 @@ public class CachedLemmatizer extends Lemmatizer {
 		this.lemmaCache = lemmaCache;
 	}
 
-	public String getLemma(String word, String POS) {
-		return lemmaCache.get(word + "_" + POS);
+	public String getLemma(String word, String postag) {
+		final Optional<String> oLemma = Optional.fromNullable(lemmaCache.get(word + "_" + postag));
+		return oLemma.isPresent() ? oLemma.get() : word;
 	}
 }

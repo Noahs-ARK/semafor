@@ -21,33 +21,84 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.wordnet;
 
+import com.google.common.base.Charsets;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.io.CharStreams;
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
+import com.google.common.io.Resources;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetAPI.RelationType;
-import edu.cmu.cs.lti.ark.util.SerializedObjects;
+import edu.cmu.cs.lti.ark.util.ds.Pair;
+import edu.cmu.cs.lti.ark.util.nlp.Lemmatizer;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import net.didion.jwnl.data.POS;
 
 import java.io.*;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
-public class WordNetRelations {
+public class WordNetRelations extends Lemmatizer {
 	public static final String DEFAULT_FILE_PROPERTIES_FILE = "file_properties.xml";
 	public static final String DEFAULT_STOPWORDS_FILE = "stopwords.txt";
-
+	private static final int LEMMA_CACHE_SIZE = 100000;
 	public static final String NO_RELATION = "no-relation";
-	private static Pattern puncPattern = Pattern.compile("\\p{Punct}");
-	private static final int NUM_THRESH = 4;
+	private static Pattern PUNCTUATION_PATTERN = Pattern.compile("\\p{Punct}");
+	private static final int NUM_THRESHOLD = 4;
 	
 	private String sourceWord = null;
 	private String targetWord = null;
-	
 	private WordNetAPI mWN = null;
-	
 	//contains all the relations for a word
-	private Map<String, THashMap<String, Set<String>>> wordNetMap = new THashMap<String, THashMap<String, Set<String>>>(1000);
-	
+	private Map<String, THashMap<String, Set<String>>> wordNetMap =
+			new THashMap<String, THashMap<String, Set<String>>>(1000);
+	//for one word, contains the list of ALL related words
+	private Map<String, Set<String>> relatedWordsForWord = new THashMap<String,Set<String>>();
+	//mapping a pair of words to a set of relations
+	private Map<String, Set<String>> wordPairMap = new THashMap<String, Set<String>>();
+	private Set<String> stopwords = null;
+	public THashMap<String, Set<String>> workingRelationSet = null;
+	public Set<String> workingRelatedWords = null;
+	public Set<String> workingLSRelations = null;
+	private final LoadingCache<Pair<String, POS>, String> lemmaCache =
+			CacheBuilder.newBuilder()
+					.maximumSize(LEMMA_CACHE_SIZE)
+					.build(new CacheLoader<Pair<String, POS>, String>() {
+						@Override public String load(Pair<String, POS> lemmaAndPostag) throws Exception {
+							final String lemma = lemmaAndPostag.getFirst();
+							final POS postag = lemmaAndPostag.getSecond();
+							return WordNetAPI.getLemma(lemma, postag).toLowerCase();
+						}
+					});
+
+	/**
+	 * Initialize a new WordNetRelations with the default file_properties and stopwords files
+	 */
+	public WordNetRelations() throws URISyntaxException {
+		final ClassLoader classLoader = getClass().getClassLoader();
+		final InputStream filePropertiesFile = classLoader.getResourceAsStream(DEFAULT_FILE_PROPERTIES_FILE);
+		final InputSupplier<InputStreamReader> stopwordsFile =
+				Resources.newReaderSupplier(classLoader.getResource(DEFAULT_STOPWORDS_FILE), Charsets.UTF_8);
+		try {
+			stopwords = ImmutableSet.copyOf(CharStreams.readLines(stopwordsFile));
+			mWN = WordNetAPI.getInstance(filePropertiesFile);
+		} catch (Exception e) { throw new RuntimeException(e); }
+	}
+
+	public WordNetRelations(String stopWordFile, String configFile) {
+		try {
+			final InputSupplier<InputStreamReader> stopwordSupplier =
+					Files.newReaderSupplier(new File(stopWordFile), Charsets.UTF_8);
+			stopwords = ImmutableSet.copyOf(CharStreams.readLines(stopwordSupplier));
+			mWN = WordNetAPI.getInstance(new FileInputStream(configFile));
+		} catch (Exception e) { throw new RuntimeException(e); }
+	}
+
 	public Map<String, THashMap<String, Set<String>>> getWordNetMap() {
 		return wordNetMap;
 	}
@@ -56,9 +107,6 @@ public class WordNetRelations {
 		this.wordNetMap = wordNetMap;
 	}
 
-	//for one word, contains the list of ALL related words
-	private Map<String, Set<String>> relatedWordsForWord = new THashMap<String,Set<String>>();
-	
 	public Map<String, Set<String>> getRelatedWordsForWord() {
 		return relatedWordsForWord;
 	}
@@ -67,163 +115,60 @@ public class WordNetRelations {
 		this.relatedWordsForWord = relatedWordsForWord;
 	}
 
-	//mapping a pair of words to a set of relations
-	private Map<String, Set<String>> wordPairMap = new THashMap<String, Set<String>>(); 
-		
-	private Set<String> stopwords = null;
-	
-	public THashMap<String, Set<String>> workingRelationSet = null;
-	
-	public Set<String> workingRelatedWords = null;
-	
-	public Set<String> workingLSRelations = null;
-		
-	//mapping a word to its lemma 
-	public Map<String,String> wordLemmaMap = new THashMap<String, String>();
-
-	/**
-	 * Initialize a new WordNetRelations with the default file_properties and stopwords files
-	 */
-	public WordNetRelations() throws URISyntaxException {
-		final ClassLoader classLoader = getClass().getClassLoader();
-		final InputStream filePropertiesFile = classLoader.getResourceAsStream(DEFAULT_FILE_PROPERTIES_FILE);
-		final InputStream stopwordsFile = classLoader.getResourceAsStream(DEFAULT_STOPWORDS_FILE);
-		initializeStopWords(stopwordsFile);
-		initializeWordNet(filePropertiesFile);
-	}
-
-	public WordNetRelations(String stopWordFile, String configFile) {
-		try {
-			initializeStopWords(new FileInputStream(stopWordFile));
-			initializeWordNet(new FileInputStream(configFile));
-		} catch (FileNotFoundException e) {
-			throw new RuntimeException(e); // TODO: add FileNotFoundException to signature
-		}
-	}
-	
-	public WordNetRelations(String serializedFile)
-	{
-		WordnetCache wc = (WordnetCache)SerializedObjects.readSerializedObject(serializedFile);
-		relatedWordsForWord = wc.getRelatedWordsForWordMap();
-		wordNetMap = wc.getWordnetMap();
-		wordPairMap = wc.getWordPairMap();
-		wordLemmaMap = wc.getWordLemmaMap();
-	}
-	
-	public void setCache(String serializedFile)
-	{
-		WordnetCache wc = (WordnetCache)SerializedObjects.readSerializedObject(serializedFile);
-		relatedWordsForWord = wc.getRelatedWordsForWordMap();
-		wordNetMap = wc.getWordnetMap();
-		wordPairMap = wc.getWordPairMap();
-		wordLemmaMap = wc.getWordLemmaMap();
-	}
-	
-	
-	public void clearWordNetCache()
-	{
-		relatedWordsForWord.clear();
-		wordNetMap.clear();
-		wordPairMap.clear();
-		wordLemmaMap.clear();
-		mWN.nullInstance();
-		sourceWord=null;
-		targetWord=null;
-	}
-	
-	public String getLemmaForWord(String word, String postag) {
-		final String postagUpper = postag.toUpperCase();
-		final POS wnPostag = getWordNetPostag(postagUpper);
-		final String expanded = expandContractions(word, postagUpper);
-		// TODO(smt): use LoadingCache
-		final String wordAndPostag = expanded + "_" + postagUpper;
-		if(wordLemmaMap.containsKey(wordAndPostag)) {
-			return wordLemmaMap.get(wordAndPostag);
-		}
-		final String lemma = getLemma(expanded, wnPostag);
-		wordLemmaMap.put(wordAndPostag, lemma);
-		return lemma;
+	public String getLemma(String word, String postag) {
+		final POS wnPostag = getWordNetPostag(postag);
+		final String expanded = expandContractions(word, postag);
+		return lemmaCache.getUnchecked(Pair.of(expanded, wnPostag));
 	}
 
 	private String expandContractions(String word, String postag) {
 		final String wordLower = word.toLowerCase();
 		if(wordLower.equals("'ve")) {
-			return  "have";
+			return "have";
 		} else if(wordLower.equals("n't")) {
-			return  "not";
-		} else if(wordLower.equals("'s") && postag.startsWith("V")) {
-			return  "is";
+			return "not";
+		} else if(wordLower.equals("'s") && postag.toUpperCase().startsWith("V")) {
+			return "is";
 		} else if(wordLower.equals("'ll")) {
-			return  "will";
+			return "will";
 		} else if(wordLower.equals("'re")) {
-			return  "are";
+			return "are";
 		} else {
 			return wordLower;
 		}
 	}
 
-	private POS getWordNetPostag(String pos) {
-		if(pos.startsWith("V")) {
+	private POS getWordNetPostag(String postag) {
+		final String postagUpper = postag.toUpperCase();
+		if(postagUpper.startsWith("V")) {
 			return POS.VERB;
-		} else if(pos.startsWith("J")) {
+		} else if(postagUpper.startsWith("J")) {
 			return POS.ADJECTIVE;
-		} else if(pos.startsWith("R")) {
+		} else if(postagUpper.startsWith("R")) {
 			return POS.ADVERB;
 		} else {
 			return POS.NOUN;
 		}
 	}
 
-	public void writeWordNetCache(String serializedFile)
-	{
-		WordnetCache wc = new WordnetCache();
-		wc.setRelatedWordsForWordMap(relatedWordsForWord);
-		wc.setWordnetMap(wordNetMap);
-		wc.setWordPairMap(wordPairMap);
-		wc.setWordLemmaMap(wordLemmaMap);
-		
-		SerializedObjects.writeSerializedObject(wc, serializedFile);
-	}	
-	
-	private void initializeStopWords(InputStream stopFile) {
-		stopwords = new THashSet<String>();
-		try {
-			BufferedReader bReader = new BufferedReader(new InputStreamReader(stopFile));
-			String line;
-			while((line=bReader.readLine())!=null) {
-				stopwords.add(line.trim());
-			}
-		} catch (Exception e) {
-			// TODO: WHY!?
-			System.err.println("Problem initializing stopword file");
-			e.printStackTrace();
-		}
-	}	
-	
 	public THashMap<String, Set<String>> getAllRelationsMap(String sWord) {
 		/*
 		 * when sWord = sourceWord
 		 */
-		if(sWord.equals(sourceWord))
-		{
+		if(sWord.equals(sourceWord)) {
 			return workingRelationSet;
 		}
-		
 		sourceWord = sWord;
-		
 		/*
 		 * when sourceWord is contained in the memory 
 		 */
-		if(relatedWordsForWord.containsKey(sourceWord))
-		{
+		if(relatedWordsForWord.containsKey(sourceWord)) {
 			workingRelationSet = wordNetMap.get(sourceWord);
 			workingRelatedWords = relatedWordsForWord.get(sourceWord);
-		}
-		/*
-		 * when sourceWord is not contained in memory
-		 */
-		else
-		{
+		} else {
+			/*
+			 * when sourceWord is not contained in memory
+			 */
 			updateMapWithNewSourceWord();
 		}
 		targetWord=null;
@@ -231,131 +176,75 @@ public class WordNetRelations {
 		
 		return workingRelationSet;
 	}
-	
-	public Set<String> getAllRelatedWords(String sWord)
-	{
-		/*
-		 * when sWord = sourceWord
-		 */
-		if(sWord.equals(sourceWord))
-		{
-			return workingRelatedWords;
-		}
-		
-		sourceWord = sWord;
-		
-		/*
-		 * when sourceWord is contained in the memory 
-		 */
-		if(relatedWordsForWord.containsKey(sourceWord))
-		{
-			workingRelationSet = wordNetMap.get(sourceWord);
-			workingRelatedWords = relatedWordsForWord.get(sourceWord);
-		}
-		/*
-		 * when sourceWord is not contained in memory
-		 */
-		else
-		{
-			updateMapWithNewSourceWord();
-		}
-		targetWord=null;
-		workingLSRelations=null;
-		
-		return workingRelatedWords;
-	}
-	
-	public void updateMapWithNewSourceWord()
-	{
-		Map<RelationType, Set<String>> rel = null;
-		Set<String> relatedWords = null;
-		//if punctuation
-		if(stopwords.contains(sourceWord.toLowerCase()) || puncPattern.matcher(sourceWord.toLowerCase()).matches())
-		{
+
+	public void updateMapWithNewSourceWord() {
+		final Map<RelationType, Set<String>> rel;
+		final Set<String> relatedWords;
+		if(stopwords.contains(sourceWord.toLowerCase())
+				|| PUNCTUATION_PATTERN.matcher(sourceWord.toLowerCase()).matches()) {
 			rel  = mWN.fillStopWord(sourceWord);
 			relatedWords = mWN.getRelatedWord();
-		}
-		else if(isMoreThanThresh())
-		{
+		} else if(isMoreThanThresh()) {
 			rel  = mWN.fillStopWord(sourceWord);
 			relatedWords = mWN.getRelatedWord();
-		}
-		else
-		{
+		} else {
 			rel = mWN.getAllRelatedWords(sourceWord);
 			relatedWords = mWN.getRelatedWord();
 		}
 		workingRelationSet = collapseFinerRelations(rel);
 		workingRelatedWords = refineRelatedWords(relatedWords);
-		wordNetMap.put(sourceWord,workingRelationSet);
-		relatedWordsForWord.put(sourceWord,workingRelatedWords);
+		wordNetMap.put(sourceWord, workingRelationSet);
+		relatedWordsForWord.put(sourceWord, workingRelatedWords);
 	}
 	
-	public boolean isMoreThanThresh()
-	{
-		String[] arr = sourceWord.trim().split(" ");
-		if(arr.length>NUM_THRESH)
-			return true;
-		else
-			return false;
+	public boolean isMoreThanThresh() {
+		return sourceWord.trim().split(" ").length > NUM_THRESHOLD;
 	}
 	
-	public Set<String> getRelations(String sWord, String tWord)
-	{
-		
+	public Set<String> getRelations(String sWord, String tWord) {
 		/*
 		 * when sWord = sourceWord and tWord = targetWord
 		 */
-		if(sWord.equals(sourceWord)&&tWord.equals(targetWord))
-		{
+		if(sWord.equals(sourceWord)&&tWord.equals(targetWord)) {
 			return workingLSRelations;
 		}
-		
 		/*
 		 * when the pair is contained in the map
 		 * it is assumed that the source word's whole wordnet map is present in the memory
 		 */
-		String pair = sWord+"-"+tWord;
-		Set<String> relations = wordPairMap.get(pair);
-		if(relations!=null)
-		{
-			sourceWord = new String(sWord);
-			targetWord = new String(tWord);
+		final String pair = sWord+"-"+tWord;
+		final Set<String> relations = wordPairMap.get(pair);
+		if(relations != null) {
+			sourceWord = sWord;
+			targetWord = tWord;
 			workingRelationSet = wordNetMap.get(sourceWord);
 			workingRelatedWords = relatedWordsForWord.get(sourceWord);
 			workingLSRelations = relations;
 			return relations;
 		}
-				
 		/*
 		 * when sWord is the present sourceWord, workingRelatedWords & wordkingRelationSet need not be updated
 		 */
-		targetWord = new String(tWord);
-		if(sWord.equals(sourceWord))
-		{
-			Set<String> pairRelations = getRelationWN();
+		targetWord = tWord;
+		if(sWord.equals(sourceWord)) {
+			final Set<String> pairRelations = getRelationWN();
 			workingLSRelations = pairRelations;
 			wordPairMap.put(pair, pairRelations);
 			return pairRelations;
-		}	
-		
-		
-		sourceWord=new String(sWord);
+		}
+		sourceWord = sWord;
 		/*
 		 * when sourceWord is contained in the memory; workingLSRelations, workingRelatedWords & workingRelationSet
 		 * have to be updated
 		 */
-		if(relatedWordsForWord.containsKey(sourceWord))
-		{
+		if(relatedWordsForWord.containsKey(sourceWord)) {
 			workingRelationSet = wordNetMap.get(sourceWord);
 			workingRelatedWords = relatedWordsForWord.get(sourceWord);
-		}
-		/*
-		 * when sourceWord is not contained in the memory; workingLSRelations, workingRelatedWords & workingRelationSet
-		 * have to be updated
-		 */
-		else
-		{
+		} else {
+			/*
+			 * when sourceWord is not contained in the memory; workingLSRelations, workingRelatedWords & workingRelationSet
+			 * have to be updated
+			 */
 			updateMapWithNewSourceWord();
 		}	
 		THashSet<String> set = getRelationWN();
@@ -364,87 +253,19 @@ public class WordNetRelations {
 		
 		return set;	
 	}
-	
-	
-	public THashSet<String> getAllPossibleRelationSubset(String sWord)
-	{
-		//putting stuff into the map
-		getAllRelatedWords(sWord);
-		
-		THashSet<String> result =  new THashSet<String>();
-		result.add(new String(NO_RELATION));
-		
-		/*
-		 * workingRelatedWords contains all the related words
-		 */
-		Iterator<String> itr = workingRelatedWords.iterator();		
-		while(itr.hasNext())
-		{
-			Set<String> relations = getRelations(sWord,itr.next());
-			String[] array = new String[relations.size()];
-			relations.toArray(array);
-			Arrays.sort(array);
-			String concat = "";
-			for(String rel: array)
-			{
-				concat+=rel+":";
-			}
-			if(!result.contains(concat))
-			{
-				result.add(concat);
-			}
-		}
-		
-		return result;
-	}
-	
-	public THashMap<Set<String>,Set<String>> getAllPossibleRelationSubset2(String sWord)
-	{
-		//putting stuff into the map
-		getAllRelatedWords(sWord);
-		
-		THashMap<Set<String>,Set<String>> result =  new THashMap<Set<String>,Set<String>>();
-		Set<String> set = new THashSet<String>();
-		set.add(new String(NO_RELATION));
-		result.put(set,null);
-		
-		/*
-		 * workingRelatedWords contains all the related words
-		 */
-		Iterator<String> itr = workingRelatedWords.iterator();		
-		while(itr.hasNext())
-		{
-			String itrWord = itr.next();
-			Set<String> relations = getRelations(sWord,itrWord);
-			if(!result.contains(relations))
-			{
-				Set<String> wordSet = new THashSet<String>();
-				wordSet.add(itrWord);
-				result.put(relations,wordSet);
-			}
-			else
-			{
-				Set<String> wordSet = result.get(relations);
-				wordSet.add(itrWord);
-			}
-		}		
-		return result;
-	}
-	
-	private Set<String> refineRelatedWords(Set<String> relatedWords)
-	{
-		if(sourceWord==null)
-		{
+
+	private Set<String> refineRelatedWords(Set<String> relatedWords) {
+		if(sourceWord == null) {
 			System.out.println("Problem. Source Word Null. Exiting");
 			System.exit(0);
 		}
-		if(sourceWord.charAt(0)>='0'&&sourceWord.charAt(0)<='9')
+		if(sourceWord.charAt(0) >= '0' && sourceWord.charAt(0) <= '9') {
 			relatedWords.add(sourceWord);
+		}
 		return relatedWords;
 	}
 	
-	private THashMap<String, Set<String>> collapseFinerRelations(Map<RelationType, Set<String>> rel)
-	{
+	private THashMap<String, Set<String>> collapseFinerRelations(Map<RelationType, Set<String>> rel) {
 		THashMap<String,Set<String>> result = new THashMap<String,Set<String>>();
 		THashSet<String> identity = new THashSet<String>();
 		THashSet<String> synonym = new THashSet<String>();
@@ -472,15 +293,14 @@ public class WordNetRelations {
 		entailedBy.addAll(rel.get(RelationType.entlby));
 		seeAlso.addAll(rel.get(RelationType.alsoc));
 		causalRelation.addAll(rel.get(RelationType.cause));
-		if(sourceWord==null)
-		{
+		if(sourceWord==null) {
 			System.out.println("Problem. Source Word Null. Exiting");
 			System.exit(0);
 		}
-		if(sourceWord.charAt(0)>='0'&&sourceWord.charAt(0)<='9')
+		if(sourceWord.charAt(0)>='0'&&sourceWord.charAt(0)<='9') {
 			sameNumber.add(sourceWord);
-		
-		
+		}
+
 		result.put("identity",identity);
 		result.put("synonym",synonym);
 		result.put("antonym",antonym);
@@ -497,66 +317,18 @@ public class WordNetRelations {
 		
 		return result;
 	}
-	
-	
-	private THashSet<String> getRelationWN()
-	{
+
+	private THashSet<String> getRelationWN() {
 		THashSet<String> result = new THashSet<String>();
-		if(!workingRelatedWords.contains(targetWord))
-		{
+		if(!workingRelatedWords.contains(targetWord)) {
 			result.add(NO_RELATION);
 			return result;
 		}
-		Set<String> keys  = workingRelationSet.keySet();
-		Iterator<String> keyIterator = keys.iterator();
-		while(keyIterator.hasNext())
-		{
-			String key = keyIterator.next();
-			Set<String> words = workingRelationSet.get(key);
-			if(words.contains(targetWord))
+		for (String key : workingRelationSet.keySet()) {
+			if (workingRelationSet.get(key).contains(targetWord)) {
 				result.add(key);
-		}			
-		
+			}
+		}
 		return result;
 	}
-	
-	public static String[] getLexSemRelationList()
-	{
-		ArrayList<String> list = new ArrayList<String>();
-		list.add("identity");
-		list.add("synonym");
-		list.add("antonym");
-		list.add("hypernym");
-		list.add("hyponym");
-		list.add("derived-form");
-		list.add("morph");
-		list.add("verb-group");
-		list.add("entailment");
-		list.add("entailed-by");
-		list.add("see-also");
-		list.add("causal-relation");
-		list.add("same-number");
-		list.add(NO_RELATION);	
-		
-		String[] rels = new String[list.size()];
-		return list.toArray(rels);
-	}
-	
-	
-	
-	private void initializeWordNet(InputStream configFile) {
-		try {
-			mWN = WordNetAPI.getInstance(configFile);
-		} catch (Exception e) {
-			System.out.println("Could not initialize wordnet. Exiting.");
-			e.printStackTrace();
-			System.exit(0);
-		}	
-	}
-	
-	public String getLemma(String word, POS pos)
-	{
-		return WordNetAPI.getLemma(word, pos);
-	}
-	
 }
