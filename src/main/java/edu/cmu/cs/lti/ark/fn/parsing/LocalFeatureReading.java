@@ -21,6 +21,7 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
@@ -31,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation.readSentencesFromFile;
+import static edu.cmu.cs.lti.ark.fn.utils.BitOps.readALine;
 import static java.lang.Integer.parseInt;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
@@ -40,8 +41,7 @@ public class LocalFeatureReading {
 	private String spansFilename;
 	private ArrayList<FrameFeatures> frameFeaturesList;
 	private List<String> frameLines;
-	private int count;
-	
+
 	public LocalFeatureReading(String eventsFilename, String spansFilename, List<String> frameLines) {
 		this.eventsFilename = eventsFilename;
 		this.spansFilename = spansFilename;
@@ -49,13 +49,14 @@ public class LocalFeatureReading {
 		frameFeaturesList = Lists.newArrayList();
 	}
 
-	public LocalFeatureReading(String eventsFile, String spanFile, String frameFile) {
-		this(eventsFile, spanFile, readSentencesFromFile(frameFile));
+	public LocalFeatureReading(String eventsFile, String spanFile, String frameFile) throws IOException {
+		this(eventsFile, spanFile, Files.readLines(new File(frameFile), Charsets.UTF_8));
 	}
 
-	public void readLocalFeatures() throws IOException {
+	public ArrayList<FrameFeatures> readLocalFeatures() throws IOException {
 		readSpansFile(spansFilename);
 		readLocalEventsFile(Files.newInputStreamSupplier(new File(eventsFilename)));
+		return frameFeaturesList;
 	}
 	
 	private void readLocalEventsFile(InputSupplier<? extends InputStream> eventsInputSupplier) throws IOException {
@@ -105,17 +106,16 @@ public class LocalFeatureReading {
 			SpanAndCorrespondingFeatures gold = new SpanAndCorrespondingFeatures();
 			gold.span = new int[2];
 			gold.features = new int[spans[0].features.length];
-			gold.span[0]=spans[0].span[0];
-			gold.span[1]=spans[0].span[1];
+			gold.span[0] = spans[0].span[0];
+			gold.span[1] = spans[0].span[1];
 			System.arraycopy(spans[0].features, 0, gold.features, 0, gold.features.length);
 			SpanAndCorrespondingFeatures.sort(spans);
 			int ind = SpanAndCorrespondingFeatures.search(spans, gold);
 			f.fGoldSpans.add(ind);
-			if(currentFEIndex==f.fElements.size()-1) {
+			if(currentFEIndex == f.fElements.size() - 1) {
 				currentFrameFeaturesIndex++;
 				currentFEIndex = 0;
-			}
-			else {
+			} else {
 				currentFEIndex++;
 			}
 			temp = new ArrayList<int[]>();
@@ -123,55 +123,7 @@ public class LocalFeatureReading {
 		}
 	}
 
-	public int[] readALine(InputStream fis) {
-		ArrayList<Integer> temp = new ArrayList<Integer>();
-		int[] ret;
-		int n = readAnInt(fis);
-		boolean printnum=false;
-		int printcount=0;
-		while (n != -1) {
-			temp.add(n);
-			n = readAnInt(fis);
-			count++;
-		if(count%10000000==0){
-				System.out.println(count);
-				printnum=true;
-		}
-		if(printnum){
-				System.out.println("num:"+n);
-				printcount++;
-				if(printcount>100){
-					printcount=0;
-					printnum=false;
-				}
-			}
-			
-		}
-		ret = new int[temp.size()];
-		for (int i = 0; i < temp.size(); i++) {
-			ret[i] = temp.get(i);
-		}
-		return ret;
-	}
-	
-	public static int readAnInt(InputStream fis) {
-		byte[] b = new byte[4];
-		try {
-			fis.read(b);
-		} catch (IOException ioe) {
-			System.out.println(ioe.getMessage());
-			return -1;
-		}
-		int ret = 0;
-		ret += ((int) b[0] & 0xff) << 24;
-		ret += ((int) b[1] & 0xff) << 16;
-		ret += ((int) b[2] & 0xff) << 8;
-		ret += ((int) b[3] & 0xff);
-		return ret;
-	}
-	
-	private void addIntSpanArray(ArrayList<SpanAndCorrespondingFeatures[]> list, int[][] arr)
-	{
+	private void addIntSpanArray(ArrayList<SpanAndCorrespondingFeatures[]> list, int[][] arr) {
 		int len=arr.length;
 		SpanAndCorrespondingFeatures[] stringSpans = new SpanAndCorrespondingFeatures[len];
 		for(int i = 0; i < len; i ++) {
@@ -229,7 +181,7 @@ public class LocalFeatureReading {
 		System.out.println("Spans List Size:" + spansList.size());
 		for(i = 0; i < feLines.size(); i ++) {
 			String[] toks = feLines.get(i).split("\t");
-			int sentNum = Integer.parseInt(toks[toks.length-1]);
+			int sentNum = Integer.parseInt(toks[toks.length - 1]);
 			ArrayList<Integer> list = frameIndexMap.get(sentNum);
 			if(list==null) {
 				list = new ArrayList<Integer>();
@@ -292,13 +244,7 @@ public class LocalFeatureReading {
 				if(line.equals("")) continue;
 				lines.add(line);
 			}
-		} finally {
-			closeQuietly(bReader);
-		}
-		return lines;
-	}
-
-	public ArrayList<FrameFeatures> getMFrameFeaturesList() {
-		return frameFeaturesList;
+			return lines;
+		} finally { closeQuietly(bReader); }
 	}
 }

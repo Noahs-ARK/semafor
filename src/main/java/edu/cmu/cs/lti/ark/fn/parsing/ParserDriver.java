@@ -301,8 +301,8 @@ public class ParserDriver {
 												  int kBestOutput) throws IOException {
 		CreateAlphabet.run(false, allLemmaTagsSentences, idResult, wnr);
 		final LocalFeatureReading lfr = new LocalFeatureReading(eventsFilename, spansFilename, idResult);
-		lfr.readLocalFeatures();
-		decoding.setData(lfr.getMFrameFeaturesList(), idResult);
+		final ArrayList<FrameFeatures> frameFeaturesList = lfr.readLocalFeatures();
+		decoding.setData(frameFeaturesList, idResult);
 		return decoding.decodeAll(count, kBestOutput);
 	}
 
