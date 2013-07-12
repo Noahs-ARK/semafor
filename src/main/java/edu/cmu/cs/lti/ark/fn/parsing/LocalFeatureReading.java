@@ -61,7 +61,7 @@ public class LocalFeatureReading {
 	}
 	
 	
-	public void readLocalFeatures() throws Exception {
+	public void readLocalFeatures() throws IOException {
 		readSpansFile();
 		readLocalEventsFile();
 	}

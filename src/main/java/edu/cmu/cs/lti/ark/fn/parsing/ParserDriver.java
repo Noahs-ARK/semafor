@@ -298,7 +298,7 @@ public class ParserDriver {
 												  int count,
 												  List<String> idResult,
 												  List<String> allLemmaTagsSentences,
-												  int kBestOutput) throws Exception {
+												  int kBestOutput) throws IOException {
 		CreateAlphabet.run(false, allLemmaTagsSentences, idResult, wnr);
 		final LocalFeatureReading lfr = new LocalFeatureReading(eventsFilename, spansFilename, idResult);
 		lfr.readLocalFeatures();

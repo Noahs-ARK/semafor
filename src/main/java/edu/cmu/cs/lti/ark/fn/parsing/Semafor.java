@@ -93,7 +93,8 @@ public class Semafor {
 		runSocketServer(modelDirectory, tempDirectory, port);
 	}
 
-	public static void runSocketServer(String modelDirectory, File tempDirectory, int port) throws Exception {
+	public static void runSocketServer(String modelDirectory, File tempDirectory, int port)
+			throws URISyntaxException, IOException, ClassNotFoundException {
 		final Semafor server = getSemaforInstance(modelDirectory, tempDirectory);
 		// Set up socket server
 		final ServerSocket serverSocket = new ServerSocket(port);
@@ -180,7 +181,7 @@ public class Semafor {
 	}
 
 	public void runParser(InputSupplier<? extends Readable> input, OutputSupplier<? extends Writer> outputSupplier)
-			throws Exception {
+			throws IOException {
 		final SentenceCodec.SentenceIterator sentences = ConllCodec.readInput(input.getInput());
 		try {
 			final PrintWriter output = new PrintWriter(outputSupplier.getOutput());
@@ -194,7 +195,7 @@ public class Semafor {
 		} finally { closeQuietly(sentences); }
 	}
 
-	public SemaforParseResult parseSentence(Sentence unLemmatizedSentence) throws Exception {
+	public SemaforParseResult parseSentence(Sentence unLemmatizedSentence) throws IOException {
 		// look up lemmas
 		final Sentence sentence = addLemmas(unLemmatizedSentence);
 		// find targets
@@ -219,7 +220,7 @@ public class Semafor {
 	}
 
 	public SemaforParseResult predictArguments(Sentence sentence, List<Pair<List<Integer>, String>> idResults)
-			throws Exception {
+			throws IOException {
 		final List<String> idResultLines = getArgumentIdInput(sentence, idResults);
 		final List<String> argResult = predictArgumentLines(sentence, idResultLines, 1);
 		return getSemaforParseResult(sentence, argResult);
@@ -246,7 +247,7 @@ public class Semafor {
 		return idResultLines;
 	}
 
-	public List<String> predictArgumentLines(Sentence sentence, List<String> idResult, int kBest) throws Exception {
+	public List<String> predictArgumentLines(Sentence sentence, List<String> idResult, int kBest) throws IOException {
 		final List<String> allLemmaTagsSentences =
 				ImmutableList.of(AllLemmaTags.makeLine(sentence.toAllLemmaTagsArray()));
 		return ParserDriver.identifyArguments(wordNetRelations, eventsFilename, spansFilename, decoder, 0, idResult,
