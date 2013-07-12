@@ -284,7 +284,7 @@ public class ParserDriver {
 		} else {
 			final Segmenter segmenter =
 					segmentationMode.equals(STRICT) ? new RoteSegmenter(allRelatedWords) : new MoreRelaxedSegmenter(allRelatedWords);
-			segments = segmenter.getSegmentations(sentenceIdxs, allLemmaTagsSentences);
+			segments = segmenter.getSegmentations(allLemmaTagsSentences);
 		}
 		return segments;
 	}

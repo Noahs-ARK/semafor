@@ -22,13 +22,13 @@
 package edu.cmu.cs.lti.ark.fn.segmentation;
 
 import com.google.common.collect.Lists;
-import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class MoreRelaxedSegmenter implements Segmenter {
+public class MoreRelaxedSegmenter extends Segmenter {
 	public static final int MAX_LEN = 4;
 
 	protected final Set<String> allRelatedWords;
@@ -37,7 +37,8 @@ public class MoreRelaxedSegmenter implements Segmenter {
 		this.allRelatedWords = allRelatedWords;
 	}
 
-	private List<List<Integer>> getHighRecallSegmentation(String[][] data, Set<String> allRelatedWords) {
+	public List<List<Integer>> getSegmentation(Sentence sentence) {
+		String[][] data = sentence.toAllLemmaTagsArray();
 		ArrayList<String> startInds = new ArrayList<String>();
 		for(int i = 0; i < data[0].length; i ++) {
 			startInds.add(""+i);
@@ -75,26 +76,12 @@ public class MoreRelaxedSegmenter implements Segmenter {
 				}
 			}			
 		}
-		return tokNums;
+		return trimPrepositions(tokNums, data);
 	}	
 	
 	private boolean containsPunctuation(String word) {
 		char first = word.toLowerCase().charAt(0);
 		char last = word.toLowerCase().charAt(word.length()-1);
 		return !(Character.isLetter(first) && Character.isLetter(last));
-	}
-
-	@Override
-	public List<String> getSegmentations(Iterable<Integer> sentenceIdxs, List<String> parses) {
-		ArrayList<String> result = new ArrayList<String>();
-		for(int sentenceIdx: sentenceIdxs) {
-			String parse = parses.get(sentenceIdx);
-			final String[][] allLemmaTags = AllLemmaTags.readLine(parse);
-			List<List<Integer>> tokNums = getHighRecallSegmentation(allLemmaTags, allRelatedWords);
-			final List<List<Integer>> withoutPreps =
-					RoteSegmenter.trimPrepositions(tokNums, allLemmaTags);
-			result.add(RoteSegmenter.getTestLine(withoutPreps) + "\t" + sentenceIdx);
-		}		
-		return result;
 	}
 }
