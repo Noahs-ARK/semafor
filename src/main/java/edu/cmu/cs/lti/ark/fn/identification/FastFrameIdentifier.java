@@ -23,6 +23,7 @@ package edu.cmu.cs.lti.ark.fn.identification;
 
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
@@ -97,22 +98,20 @@ public class FastFrameIdentifier {
 		return featSum;
 	}
 
-	protected Set<String> checkPresenceOfTokensInMap(int[] intTokNums, Sentence sentence) {
+	protected Optional<THashSet<String>> checkPresenceOfTokensInMap(int[] intTokNums, Sentence sentence) {
 		final List<Token> tokens = sentence.getTokens();
 		final List<String> lemmatizedTokens = Lists.newArrayList();
 		for (int tokNum : intTokNums) {
 			lemmatizedTokens.add(tokens.get(tokNum).getLemma());
 		}
 		final String lemmas = Joiner.on(" ").join(lemmatizedTokens);
-		Set<String> frames = framesByLemma.get(lemmas);
-		if (frames == null) System.err.println("Not found in hvCorrespondenceMap:\t" + lemmas);
-		return frames;
+		return Optional.fromNullable(framesByLemma.get(lemmas));
 	}
 
 	protected Set<String> getCandidateFrames(int[] tokenIndices, Sentence sentence, SmoothedGraph graph) {
 		final List<Token> sentenceTokens = sentence.getTokens();
-		final Set<String> frames = checkPresenceOfTokensInMap(tokenIndices, sentence);
-		if (frames != null) return frames;
+		final Optional<THashSet<String>> frames = checkPresenceOfTokensInMap(tokenIndices, sentence);
+		if (frames.isPresent()) return frames.get();
 
 		final List<Token> frameTokens = Lists.newArrayList();
 		final List<String> lowerCaseForms = Lists.newArrayList();
@@ -136,26 +135,25 @@ public class FastFrameIdentifier {
 			final String coarseToken = getCanonicalForm(lemma);
 			if (coarseMap.containsKey(coarseToken)) return coarseMap.get(coarseToken);
 		}
-		//return model.mFrameMap.keySet();
 		return allFrames;
 	}
 
-	private String convertPostag(String pos) {
-		pos = nullToEmpty(pos).toUpperCase();
-		if (pos.startsWith("N")) {
-			pos = "n";
-		} else if (pos.startsWith("V")) {
-			pos = "v";
-		} else if (pos.startsWith("J")) {
-			pos = "a";
-		} else if (pos.startsWith("RB")) {
-			pos = "adv";
-		} else if (pos.startsWith("I") || pos.startsWith("TO")) {
-			pos = "prep";
+	/* convert from PTB postags to FrameNet postags */
+	private String convertPostag(String postag) {
+		final String postagUpper = nullToEmpty(postag).toUpperCase();
+		if (postagUpper.startsWith("N")) {
+			return  "n";
+		} else if (postagUpper.startsWith("V")) {
+			return  "v";
+		} else if (postagUpper.startsWith("J")) {
+			return "a";
+		} else if (postagUpper.startsWith("RB")) {
+			return "adv";
+		} else if (postagUpper.startsWith("I") || postagUpper.startsWith("TO")) {
+			return "prep";
 		} else {
-			pos = null;
+			return null;
 		}
-		return pos;
 	}
 
 	public String getBestFrame(String frameLine, String parseLine) {
@@ -167,8 +165,9 @@ public class FastFrameIdentifier {
 	}
 
 	public String getBestFrame(int[] tokenIndices, Sentence sentence) {
-		Set<String> frames = checkPresenceOfTokensInMap(tokenIndices, sentence);
-		if (frames == null) frames = allFrames; // lemmas aren't in the map. fall back to all frames
+		final Optional<THashSet<String>> oFrames = checkPresenceOfTokensInMap(tokenIndices, sentence);
+		// fall back to all frames if lemmas aren't in the map.
+		final Set<String> frames = oFrames.isPresent() ? oFrames.get() : allFrames;
 		return pickBestFrame(frames, sentence, tokenIndices);
 	}
 
