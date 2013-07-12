@@ -302,8 +302,7 @@ public class ParserDriver {
 		CreateAlphabet.run(false, allLemmaTagsSentences, idResult, wnr);
 		final LocalFeatureReading lfr = new LocalFeatureReading(eventsFilename, spansFilename, idResult);
 		final ArrayList<FrameFeatures> frameFeaturesList = lfr.readLocalFeatures();
-		decoding.setData(frameFeaturesList, idResult);
-		return decoding.decodeAll(count, kBestOutput);
+		return decoding.decodeAll(frameFeaturesList, idResult, count, kBestOutput);
 	}
 
 	private static ArrayList<String> getGoldSegmentationBatch(List<String> segLines, List<Integer> sentenceIdxs) {
@@ -347,11 +346,12 @@ public class ParserDriver {
 										String modelFilename,
 										String alphabetFilename,
 										String requiresMapFile,
-										String excludesMapFile) {
+										String excludesMapFile) throws IOException, ClassNotFoundException {
 		// beam search vs. exact decoding
 		final boolean isBeam = decodingType.equals("beam");
-		final Decoding decoding = isBeam ? new Decoding() : new JointDecoding(true);
-		decoding.init(modelFilename, alphabetFilename);
+		final Decoding decoding = isBeam ?
+				Decoding.fromFile(modelFilename, alphabetFilename)
+				: JointDecoding.fromFile(modelFilename, alphabetFilename, false, true);
 		if (!isBeam) ((JointDecoding)decoding).setMaps(requiresMapFile, excludesMapFile);
 		return decoding;
 	}

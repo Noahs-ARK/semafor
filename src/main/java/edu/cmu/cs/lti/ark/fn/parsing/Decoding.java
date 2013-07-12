@@ -50,12 +50,7 @@ public class Decoding {
 	private static final LDouble LOG_ONE = new LDouble(0.0);
 	private static final Joiner TAB_JOINER = Joiner.on("\t");
 
-	protected int numLocalFeatures;
 	protected double[] modelWeights;
-	private String mLocalAlphabetFile;
-	private String mLocalModelFile;
-	protected List<FrameFeatures> mFrameList;
-	protected List<String> mFrameLines;
 
 	/** 0-indexed. Both ends inclusive. Null span is represented as [-1,-1]. */
 	public static class Span implements Comparable<Span> {
@@ -133,42 +128,26 @@ public class Decoding {
 	/** A sorted list of spans and their log score for a particular role */
 	public static class CandidatesForRole extends TreeSet<Scored<Span>> { }
 
-
-	public void init(String modelFile,
-					 String alphabetFile,
-					 List<FrameFeatures> list,
-					 List<String> frameLines) {
-		mFrameList = list;
-		mFrameLines = frameLines;
-		init(modelFile, alphabetFile);
+	public Decoding(double[] modelWeights) {
+		this.modelWeights = modelWeights;
 	}
 
-	public void init(String modelFile, String alphabetFile) {
-		mLocalModelFile = modelFile;
-		mLocalAlphabetFile = alphabetFile;
-		readModel();
+	public static Decoding fromFile(String modelFile, String alphabetFile) {
+		return new Decoding(readModel(modelFile, alphabetFile));
 	}
-	
-	public void setData(List<FrameFeatures> list, List<String> frameLines) {
-		mFrameList = list;
-		mFrameLines = frameLines;
-	}
-	
-	public void readModel() {	
-		Scanner localsc = FileUtil.openInFile(mLocalAlphabetFile);
+
+	protected static double[] readModel(String modelFile, String alphabetFile) {
+		final Scanner localsc = FileUtil.openInFile(alphabetFile);
+		final int numLocalFeatures;
 		try {
 			numLocalFeatures = localsc.nextInt() + 1;
 		} finally {
 			localsc.close();
 		}
-		modelWeights = readModel(mLocalModelFile, numLocalFeatures);
-	}
-
-	public double[] readModel(String modelFile, int numFeatures) {
-		Scanner scanner = FileUtil.openInFile(modelFile);
-		double [] modelWeights = new double[numFeatures];
+		final Scanner scanner = FileUtil.openInFile(modelFile);
+		final double [] modelWeights = new double[numLocalFeatures];
 		try {
-			for (int i = 0; i < numFeatures; i++) {
+			for (int i = 0; i < numLocalFeatures; i++) {
 				modelWeights[i] = Double.parseDouble(scanner.nextLine());
 			}
 		} finally {
@@ -176,12 +155,12 @@ public class Decoding {
 		}
 		return modelWeights;
 	}
-	
-	public ArrayList<String> decodeAll(int offset, int kBestOutput) {
+
+	public ArrayList<String> decodeAll(List<FrameFeatures> frameFeaturesList, List<String> frameLines, int offset, int kBestOutput) {
 		final ArrayList<String> results = new ArrayList<String>();
-		for(int i = 0; i < mFrameList.size(); i++) {
-			final FrameFeatures frameFeatures = mFrameList.get(i);
-			final String initialDecisionLine = getInitialDecisionLine(mFrameLines.get(i), offset);
+		for(int i = 0; i < frameFeaturesList.size(); i++) {
+			final FrameFeatures frameFeatures = frameFeaturesList.get(i);
+			final String initialDecisionLine = getInitialDecisionLine(frameLines.get(i), offset);
 			final List<Scored<RoleAssignments>> predictions = getPredictions(frameFeatures, kBestOutput);
 			final List<String> predictionLines = Lists.newArrayList();
 			for(int j = 0; j < predictions.size(); j++) {

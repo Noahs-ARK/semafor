@@ -22,35 +22,34 @@
 
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import edu.cmu.cs.lti.ark.util.FileUtil;
+import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import gnu.trove.THashMap;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * AD^3
  */
 public class JointDecoding extends Decoding {
-
-	private boolean mIgnoreNullSpansWhileJointDecoding;
 	private DDDecoding jd = null;
 	private double[] w2 = null;
-	private double secondModelWeight = 0.0;
-	public static final String ILP_DECODING = "ilp";
-	public static final String DD_DECODING = "dd";
-	public static final String FILE_DECODING_ADMM = "file_admm";
-	public static final String FILE_DECODING_LP = "file_lp";
-	public static final String FILE_DECODING_ILP = "file_ilp";
-	public static final String FILE_DECODING_ADMMILP = "file_admmilp";
-	
-	private int mNumThreads = 1;
-	protected String mFactorFile = null;
+	private boolean ignoreNullSpansWhileJointDecoding;
 
-	public JointDecoding(boolean exact) {
-		jd = new DDDecoding(exact);
-		mIgnoreNullSpansWhileJointDecoding = false;
+	public JointDecoding(double[] modelWeights, DDDecoding jd, double[] w2, boolean ignoreNullSpansWhileJointDecoding) {
+		super(modelWeights);
+		this.jd = jd;
+		this.w2 = w2;
+		this.ignoreNullSpansWhileJointDecoding = ignoreNullSpansWhileJointDecoding;
+	}
+
+	public static JointDecoding fromFile(String modelFile, String alphabetFile, boolean ignoreNullSpansWhileJointDecoding, boolean exact) {
+		return new JointDecoding(readModel(modelFile, alphabetFile), new DDDecoding(exact), null, ignoreNullSpansWhileJointDecoding);
 	}
 
 	@Override
@@ -60,95 +59,24 @@ public class JointDecoding extends Decoding {
 		}
 	}
 
-	public void init(String modelFile,
-	                 String alphabetFile,
-	                 ArrayList<FrameFeatures> list,
-	                 ArrayList<String> frameLines)
-	{
-		super.init(modelFile, alphabetFile, list, frameLines);
-		mIgnoreNullSpansWhileJointDecoding = false;
+	public String getNonOverlappingDecision(FrameFeatures mFF, String frameLine, int offset, boolean returnScores) {
+		return getNonOverlappingDecision(mFF, frameLine, offset, modelWeights, false, null, returnScores);
 	}
 
-	public void setFactorsFile(String factorsFile) {
-		mFactorFile = factorsFile;
-		jd.setFactorFile(mFactorFile);
-	}
-	
-	public void init(String modelFile,
-	                 String alphabetFile,
-	                 ArrayList<FrameFeatures> list,
-	                 ArrayList<String> frameLines,
-	                 boolean ignoreNullSpansWhileJointDecoding,
-	                 int numThreads)
-	{
-		super.init(modelFile, alphabetFile, list, frameLines);
-		mIgnoreNullSpansWhileJointDecoding = ignoreNullSpansWhileJointDecoding;
-		mNumThreads = numThreads;
-	}	
-
-	public void init(String modelFile, String alphabetFile) {
-		super.init(modelFile, alphabetFile);
-		mIgnoreNullSpansWhileJointDecoding = false;
-	}
-
-	public void setSecondModel(String secondModelFile, double weight) {
-		System.out.println("Setting second model from: " + secondModelFile);
-		w2 = new double[numLocalFeatures];
-		Scanner paramsc = FileUtil.openInFile(secondModelFile);
-		for (int i = 0; i < numLocalFeatures; i++) {
-			double val = Double.parseDouble(paramsc.nextLine());
-			w2[i] = val;
-		}
-		paramsc.close();
-		secondModelWeight = weight;
-		System.out.println("Interpolation weight: " + secondModelWeight);
-	}
-
-	public String getNonOverlappingDecision(FrameFeatures mFF, 
-			String frameLine, 
-			int offset,
-			boolean costAugmented,
-			FrameFeatures goldFF) {
-		return getNonOverlappingDecision(
-				mFF, 
-				frameLine, 
-				offset,
-				modelWeights,
-				costAugmented,
-				goldFF,
-				false);
-	}
-
-	public String getNonOverlappingDecision(FrameFeatures mFF, 
-			String frameLine, 
-			int offset, 
-			boolean returnScores) {
-		return getNonOverlappingDecision(
-				mFF, 
-				frameLine, 
-				offset,
-				modelWeights,
-				false,
-				null,
-				returnScores);
-	}
-
-	public ArrayList<String> decodeAll(int offset, int kBestOutput) {
-		int size = mFrameList.size();
-		ArrayList<String> result = new ArrayList<String>();
-		for(int i = 0; i < size; i ++)
-		{
+	public ArrayList<String> decodeAll(List<FrameFeatures> frameFeaturesList, List<String> frameLines, int offset, int kBestOutput) {
+		int size = frameFeaturesList.size();
+		ArrayList<String> result = Lists.newArrayList();
+		for(int i = 0; i < size; i ++) {
 			System.out.println("Decoding index:"+i);
-			String decisionLine = decode(i, offset, false);
+			String decisionLine = decode(frameFeaturesList, frameLines, i, offset, false);
 			result.add(decisionLine);
 		}
 		return result;
 	}
 
-	public String decode(int index, int offset, boolean returnScores)
-	{
-		FrameFeatures f = mFrameList.get(index);
-		return getNonOverlappingDecision(f, mFrameLines.get(index), offset, returnScores);
+	public String decode(List<FrameFeatures> frameFeaturesList, List<String> frameLines, int index, int offset, boolean returnScores) {
+		FrameFeatures f = frameFeaturesList.get(index);
+		return getNonOverlappingDecision(f, frameLines.get(index), offset, returnScores);
 	}
 
 	public Pair<Map<String, String>, Double> 
@@ -171,7 +99,8 @@ public class JointDecoding extends Decoding {
 					int[] feats = featureArray[j].features;
 					double weightFeatSum = getWeightSum(feats, w);
 					if (w2 != null) {
-						weightFeatSum = (1.0 - secondModelWeight) * weightFeatSum + 
+						double secondModelWeight = 0.0;
+						weightFeatSum = (1.0 - secondModelWeight) * weightFeatSum +
 						(secondModelWeight) * getWeightSum(feats, w2);
 					}
 					arr[j] = new Pair<int[], Double>(featureArray[j].span, weightFeatSum);
@@ -181,8 +110,8 @@ public class JointDecoding extends Decoding {
 					}
 				}			
 				// null span is the best span
-				if (outcome.equals("-1_-1")) {
-					if (!mIgnoreNullSpansWhileJointDecoding) {
+				if ("-1_-1".equals(outcome)) {
+					if (!ignoreNullSpansWhileJointDecoding) {
 						vs.put(frameElements.get(i), arr);
 					}
 				} else {
@@ -201,34 +130,11 @@ public class JointDecoding extends Decoding {
 					retMap.put(fe, feMap.get(fe).getFirst());
 				}
 				score /= (double) keys.size();
-			}			
-			Pair<Map<String, String>, Double> ret = 
-				new Pair<Map<String, String>, Double>(retMap, score);
-			return ret;
+			}
+		return Pair.of(retMap, score);
 	}
 
-	public Pair<Map<String, String>, Double> getNonOverlappingDecision(FrameFeatures mFF, 
-			String frameLine, 
-			int offset, double[] w,
-			boolean returnMap,
-			boolean costAugmented,
-			FrameFeatures goldFF,
-			boolean returnScores) {
-		Map<String, String> feMap = new THashMap<String, String>();
-		if(mFF.fElements.size()==0) {
-			Pair<Map<String, String>, Double> p = new Pair<Map<String, String>, Double>(feMap, -1.0);
-			return p;
-		}
-		if(mFF.fElements.size()==0) {
-			Pair<Map<String, String>, Double> p = new Pair<Map<String, String>, Double>(feMap, -1.0);
-			return p;
-		}
-		// vs is the set of FEs on which joint decoding has to be done
-		Pair<Map<String, String>, Double> pair = getDecodedMap(mFF, w, costAugmented, goldFF);
-		return pair;
-	}
-
-	public String getNonOverlappingDecision(FrameFeatures mFF, 
+	public String getNonOverlappingDecision(FrameFeatures mFF,
 			String frameLine, 
 			int offset, double[] w,
 			boolean costAugmented,
@@ -257,8 +163,7 @@ public class JointDecoding extends Decoding {
 			count++;
 			String[] ocToks = outcome.split("_");
 			String modToks;
-			if(ocToks[0].equals(ocToks[1]))
-			{
+			if(ocToks[0].equals(ocToks[1])) {
 				modToks=ocToks[0];
 			}
 			else
@@ -275,11 +180,9 @@ public class JointDecoding extends Decoding {
 		return decisionLine;
 	}
 
-	public void setMaps(String requiresMap, String excludesMap) {
-		Map<String, Set<Pair<String, String>>> exclusionMap = 
-			(Map<String, Set<Pair<String, String>>>) SerializedObjects.readSerializedObject(excludesMap);
-		Map<String, Set<Pair<String, String>>> requiresMapObj = 
-			(Map<String, Set<Pair<String, String>>>) SerializedObjects.readSerializedObject(requiresMap);
+	public void setMaps(String requiresMap, String excludesMap) throws IOException, ClassNotFoundException {
+		Map<String, Set<Pair<String, String>>> exclusionMap = SerializedObjects.readObject(excludesMap);
+		Map<String, Set<Pair<String, String>>> requiresMapObj = SerializedObjects.readObject(requiresMap);
 		jd.setMaps(exclusionMap, requiresMapObj);
 	}
 }

@@ -149,8 +149,7 @@ public class Semafor {
 		CreateAlphabet.setDataFileNames(alphabetFilename, frameElementMapFilename, eventsFilename, spansFilename);
 		final FEDict frameElementsForFrame = new FEDict(frameElementMapFilename);
 
-		final Decoding decoder = new Decoding();
-		decoder.init(argModelFilename, alphabetFilename);
+		final Decoding decoder = Decoding.fromFile(argModelFilename, alphabetFilename);
 
 		return new Semafor(allRelatedWords,
 				wordNetRelations,
