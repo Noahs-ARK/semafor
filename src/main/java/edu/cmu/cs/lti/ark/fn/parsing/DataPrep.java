@@ -89,12 +89,6 @@ public class DataPrep {
 	public static boolean genAlpha = true;
 
 	public static boolean useOracleSpans = false;
-	
-	public DataPrep() throws IOException {
-		new FileOutputStream(new File(FEFileName.spanfilename), false).close(); // clobber file. this is gross
-		tagLines = readLines(new FileInputStream(FEFileName.tagFilename));
-		load(tagLines, null, null);
-	}
 
 	public DataPrep(List<String> tagLines,
 					List<String> frameElementLines,
@@ -103,14 +97,7 @@ public class DataPrep {
 		load(tagLines, frameElementLines, lwnr);
 	}
 
-	/**
-	 * Finds a set of candidate spans based on a dependency parse
-	 *
-	 * @param dataPoint
-	 * @param useOracleSpans
-	 * @param kBestParses
-	 * @return
-	 */
+	/** Finds a set of candidate spans based on a dependency parse */
 	public static ArrayList<int[]> findSpans(DataPointWithFrameElements dataPoint,
 											 boolean useOracleSpans,
 											 int kBestParses) {

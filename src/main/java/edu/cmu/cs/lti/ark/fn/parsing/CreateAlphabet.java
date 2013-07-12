@@ -35,10 +35,6 @@ import java.util.List;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
 public class CreateAlphabet {
-
-	/**
-	 * @param args
-	 */
 	public static void main(String[] args) throws IOException {
 		FEFileName.feFilename = args[0];
 		FEFileName.tagFilename =  args[1];

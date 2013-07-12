@@ -22,8 +22,8 @@
 package edu.cmu.cs.lti.ark.fn.parsing;
 
 import com.google.common.collect.Lists;
-import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
-import edu.cmu.cs.lti.ark.util.FileUtil;
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import gnu.trove.TIntObjectHashMap;
 
 import java.io.*;
@@ -31,51 +31,41 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation.readSentencesFromFile;
 import static java.lang.Integer.parseInt;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
 public class LocalFeatureReading {
-	private String mEventsFile;
-	private String mSpansFile;
-	private String mFrameFile;
-	private ArrayList<FrameFeatures> mFrameFeaturesList;
-	private List<String> mFrameLines;
+	private String eventsFilename;
+	private String spansFilename;
+	private ArrayList<FrameFeatures> frameFeaturesList;
+	private List<String> frameLines;
 	private int count;
 	
-	public LocalFeatureReading(String eventsFile, String spanFile, String frameFile) {
-		mEventsFile=eventsFile;
-		mSpansFile=spanFile;
-		mFrameFile=frameFile;
-		mFrameLines=ParsePreparation.readSentencesFromFile(mFrameFile);
-		mFrameFeaturesList = new ArrayList<FrameFeatures>();
-	}	
-	
-	public LocalFeatureReading(String eventsFile, 
-							   String spanFile, 
-							   List<String> frameLines) {
-		mEventsFile=eventsFile;
-		mSpansFile=spanFile;
-		mFrameFile=null;
-		mFrameLines=frameLines;
-		mFrameFeaturesList = new ArrayList<FrameFeatures>();
-	}
-	
-	
-	public void readLocalFeatures() throws IOException {
-		readSpansFile();
-		readLocalEventsFile();
-	}
-	
-	public void readLocalEventsFile() {
-		BufferedInputStream bis = new BufferedInputStream( FileUtil.openInputStream(mEventsFile));
-		try {
-			readLocalEventsFile(bis);
-		} finally {
-			closeQuietly(bis);
-		}
+	public LocalFeatureReading(String eventsFilename, String spansFilename, List<String> frameLines) {
+		this.eventsFilename = eventsFilename;
+		this.spansFilename = spansFilename;
+		this.frameLines = frameLines;
+		frameFeaturesList = Lists.newArrayList();
 	}
 
-	private void readLocalEventsFile(BufferedInputStream bis) {
+	public LocalFeatureReading(String eventsFile, String spanFile, String frameFile) {
+		this(eventsFile, spanFile, readSentencesFromFile(frameFile));
+	}
+
+	public void readLocalFeatures() throws IOException {
+		readSpansFile(spansFilename);
+		readLocalEventsFile(Files.newInputStreamSupplier(new File(eventsFilename)));
+	}
+	
+	private void readLocalEventsFile(InputSupplier<? extends InputStream> eventsInputSupplier) throws IOException {
+		final InputStream input = eventsInputSupplier.getInput();
+		try {
+			readLocalEventsFile(input);
+		} finally { closeQuietly(input); }
+	}
+
+	private void readLocalEventsFile(InputStream bis) {
 		int currentFrameFeaturesIndex = 0;
 		int currentFEIndex = 0;
 		int[] line = readALine(bis);
@@ -87,16 +77,15 @@ public class LocalFeatureReading {
 					temp.add(line);
 					line = readALine(bis);
 				}
-			}
-			else {
+			} else {
 				skip = false;
 			}
 			int size = temp.size();
-			FrameFeatures f = mFrameFeaturesList.get(currentFrameFeaturesIndex);
+			FrameFeatures f = frameFeaturesList.get(currentFrameFeaturesIndex);
 			if(f.fElements.size()==0) {
 				System.out.println(f.frameName + ". No frame elements for the frame.");
 				currentFrameFeaturesIndex++;
-				if(currentFrameFeaturesIndex==mFrameFeaturesList.size()) {
+				if(currentFrameFeaturesIndex== frameFeaturesList.size()) {
 					break;
 				}
 				currentFEIndex = 0;
@@ -118,7 +107,7 @@ public class LocalFeatureReading {
 			gold.features = new int[spans[0].features.length];
 			gold.span[0]=spans[0].span[0];
 			gold.span[1]=spans[0].span[1];
-			for(int k = 0; k < gold.features.length; k ++) gold.features[k]=spans[0].features[k];
+			System.arraycopy(spans[0].features, 0, gold.features, 0, gold.features.length);
 			SpanAndCorrespondingFeatures.sort(spans);
 			int ind = SpanAndCorrespondingFeatures.search(spans, gold);
 			f.fGoldSpans.add(ind);
@@ -185,8 +174,7 @@ public class LocalFeatureReading {
 	{
 		int len=arr.length;
 		SpanAndCorrespondingFeatures[] stringSpans = new SpanAndCorrespondingFeatures[len];
-		for(int i = 0; i < len; i ++)
-		{
+		for(int i = 0; i < len; i ++) {
 			stringSpans[i] = new SpanAndCorrespondingFeatures();
 			stringSpans[i].span = new int[2];
 			stringSpans[i].span[0] = arr[i][0];
@@ -195,12 +183,12 @@ public class LocalFeatureReading {
 		list.add(stringSpans);
 	}
 	
-	public void readSpansFile() throws IOException {
-		TIntObjectHashMap<ArrayList<Integer>> frameIndexMap = new TIntObjectHashMap<ArrayList<Integer>>();
-		for(int i = 0; i < mFrameLines.size(); i ++) {
+	public void readSpansFile(String mSpansFile) throws IOException {
+		final TIntObjectHashMap<ArrayList<Integer>> frameIndexMap = new TIntObjectHashMap<ArrayList<Integer>>();
+		for(int i = 0; i < frameLines.size(); i ++) {
 			frameIndexMap.put(i, new ArrayList<Integer>());
 		}
-		List<String> lines = readLines(mSpansFile);
+		final List<String> lines = readLines(mSpansFile);
 		int i;
 		int lineSize = lines.size();
 		ArrayList<String> feLines = Lists.newArrayList();
@@ -210,7 +198,7 @@ public class LocalFeatureReading {
 			String feLine = lines.get(0);
 			feLines.add(feLine);
 			i = 1;
-			System.out.println("LineSize:" + lineSize);
+			//System.out.println("LineSize:" + lineSize);
 			while(i < lineSize) {
 				String[] toks = lines.get(i).split("\t");
 				if(toks.length==6) {
@@ -238,10 +226,10 @@ public class LocalFeatureReading {
 		spans.toArray(spansArr);
 		addIntSpanArray(spansList, spansArr);	
 		System.out.println("FE Lines Size:"+feLines.size());
-		System.out.println("Spans List Size:"+spansList.size());
+		System.out.println("Spans List Size:" + spansList.size());
 		for(i = 0; i < feLines.size(); i ++) {
 			String[] toks = feLines.get(i).split("\t");
-			int sentNum = new Integer(toks[toks.length-1]);
+			int sentNum = Integer.parseInt(toks[toks.length-1]);
 			ArrayList<Integer> list = frameIndexMap.get(sentNum);
 			if(list==null) {
 				list = new ArrayList<Integer>();
@@ -259,9 +247,9 @@ public class LocalFeatureReading {
 			}
 		}	
 		System.out.println("Frame index map size:"+frameIndexMap.size());
-		mFrameFeaturesList = new ArrayList<FrameFeatures>();
-		for(i = 0; i < mFrameLines.size(); i ++) {
-			String[] toks = mFrameLines.get(i).split("\t");
+		frameFeaturesList = new ArrayList<FrameFeatures>();
+		for(i = 0; i < frameLines.size(); i ++) {
+			String[] toks = frameLines.get(i).split("\t");
 			// throw away the first two fields (rank and score)
 			// hack around the fact that parsing this goddamn file format is hardcoded in like 20 different places
 			List<String> tokens = Arrays.asList(toks).subList(2, toks.length);
@@ -276,12 +264,8 @@ public class LocalFeatureReading {
 				String[] aFLToks = assocFeLine.split("\t");
 				int aStart = parseInt(aFLToks[3]);
 				int aEnd = parseInt(aFLToks[4]);
-				if(start==aStart&&end==aEnd) {
-
-				}
-				else {
-					System.out.println("Problem with frameline:"+mFrameLines.get(i));
-					System.exit(0);
+				if (start != aStart || end != aEnd) {
+					throw new RuntimeException("Problem with frameline:" + frameLines.get(i));
 				}
 			}
 			FrameFeatures f = new FrameFeatures(frame, start, end);
@@ -291,20 +275,17 @@ public class LocalFeatureReading {
 				f.fElements.add(feLine1Toks[1]);
 				f.fElementSpansAndFeatures.add(spansList.get(feLineNum1));
 			}
-			mFrameFeaturesList.add(f);
+			frameFeaturesList.add(f);
 		}	
 		System.out.println("Checked all frame lines.");
 	}
 
-	/**
-	* Read lines from a file ignoring empty lines
-	* @param spansFile
-	*/
-	private List<String> readLines(String spansFile) throws IOException {
-		ArrayList<String> lines = new ArrayList<String>();
+	/** Read lines from a file ignoring empty lines */
+	private List<String> readLines(String filename) throws IOException {
+		ArrayList<String> lines = Lists.newArrayList();
 		BufferedReader bReader = null;
 		try {
-			bReader = new BufferedReader(new FileReader(spansFile));
+			bReader = new BufferedReader(new FileReader(filename));
 			String line;
 			while((line = bReader.readLine()) != null) {
 				line = line.trim();
@@ -318,6 +299,6 @@ public class LocalFeatureReading {
 	}
 
 	public ArrayList<FrameFeatures> getMFrameFeaturesList() {
-		return mFrameFeaturesList;
+		return frameFeaturesList;
 	}
 }
