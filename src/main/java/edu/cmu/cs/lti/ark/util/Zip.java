@@ -21,11 +21,11 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.util;
 
+import edu.cmu.cs.lti.ark.util.ds.Pair;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
-
-import edu.cmu.cs.lti.ark.util.ds.Pair;
 
 /**
  * Allows for parallel iteration over two {@link Collection}s or two {@link Iterator}s of equal size, 
@@ -163,8 +163,8 @@ public class Zip {
 	
 	/** Test this class with a size-2 zip */
 	public static void main(String[] args) {
-		Collection<String> names = Arrays.asList(new String[]{"Joe","Shirley","Doug","Rita"});
-		Collection<Integer> nums = Arrays.asList(new Integer[]{10,15,42,-8});
+		Collection<String> names = Arrays.asList("Joe","Shirley","Doug","Rita");
+		Collection<Integer> nums = Arrays.asList(10,15,42,-8);
 		
 		for (Pair<String,Integer> pair : Zip.zip2(names,nums)) {
 			String s = pair.getFirst();
@@ -173,8 +173,8 @@ public class Zip {
 		}
 		
 		Zip.Zip2<String,Integer> z;
-		names = Arrays.asList(new String[]{"Joe","Shirley","Doug"});
-		nums = Arrays.asList(new Integer[]{10,15,42,-8});
+		names = Arrays.asList("Joe","Shirley","Doug");
+		nums = Arrays.asList(10,15,42,-8);
 		try {
 			z = Zip.zip2(names,nums);
 		}
@@ -193,8 +193,8 @@ public class Zip {
 		
 		// With limits
 		
-		names = Arrays.asList(new String[]{"Joe","Shirley","Doug","Rita"});
-		nums = Arrays.asList(new Integer[]{10,15,42,-8});
+		names = Arrays.asList("Joe","Shirley","Doug","Rita");
+		nums = Arrays.asList(10, 15, 42, -8);
 		
 		for (Pair<String,Integer> pair : Zip.zip2(names,nums,3)) {
 			String s = pair.getFirst();
@@ -203,8 +203,8 @@ public class Zip {
 			System.out.println(s + ":" + i);
 		}
 		
-		names = Arrays.asList(new String[]{"Joe","Shirley","Doug"});
-		nums = Arrays.asList(new Integer[]{10,15,42,-8});
+		names = Arrays.asList("Joe","Shirley","Doug");
+		nums = Arrays.asList(10,15,42,-8);
 		try {
 			z = Zip.zip2(names,nums,3);
 		}

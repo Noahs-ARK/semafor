@@ -26,10 +26,11 @@ import edu.cmu.cs.lti.ark.fn.optimization.LogFormula;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.util.optimization.SGA;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Random;
+
+import static edu.cmu.cs.lti.ark.fn.parsing.Training.getRandArray;
 
 
 public class TrainSGAModel extends TrainBatchModel
@@ -76,7 +77,7 @@ public class TrainSGAModel extends TrainBatchModel
 		getValuesForOptimizingRoutine(m_estimate);
 		while(totalUpdates<maxUpdates)
 		{
-			int[] arr = getRandArray(batchSize, sizeOfData);
+			int[] arr = getRandArray(batchSize, sizeOfData, rand);
 			double[] sumDers = new double[modelSize];
 			Arrays.fill(sumDers, 0.0);
 			this.resetAllGradients();
@@ -102,30 +103,4 @@ public class TrainSGAModel extends TrainBatchModel
 			}
 		}
 	}
-	
-	public int[] getRandArray(int batchSize, int sizeOfData)
-	{
-		int count = 0;
-		ArrayList<Integer> list = new ArrayList<Integer>();
-		while(count<batchSize)
-		{
-			int next = rand.nextInt(sizeOfData);
-			if(list.contains(new Integer(next)))
-			{
-				continue;
-			}
-			else
-			{
-				list.add(next);
-				count++;
-			}
-		}
-		int[] arr = new int[batchSize];
-		for(int i = 0; i < arr.length; i ++)
-		{
-			arr[i] = list.get(i);
-		}
-		return arr;
-	}
-	
 }

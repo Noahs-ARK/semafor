@@ -21,21 +21,15 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.identification.latentmodel;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FilenameFilter;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Random;
-import java.util.Scanner;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.util.FileUtil;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import edu.cmu.cs.lti.ark.util.optimization.SGA;
+
+import java.io.*;
+import java.util.*;
+
+import static edu.cmu.cs.lti.ark.fn.parsing.Training.getRandArray;
 
 
 public class TrainSGAModelDer
@@ -66,9 +60,9 @@ public class TrainSGAModelDer
 				o1=o1.substring(0,o1.length()-5);
 				o2=o2.substring(0,o2.length()-5);
 				int lastIndex = o1.lastIndexOf("_");
-				int i1 = new Integer(o1.substring(lastIndex+1));
+				int i1 = Integer.parseInt(o1.substring(lastIndex+1));
 				lastIndex = o2.lastIndexOf("_");
-				int i2 = new Integer(o2.substring(lastIndex+1));
+				int i2 = Integer.parseInt(o2.substring(lastIndex+1));
 				if(i1<i2)
 					return -1;
 				else if(i1==i2)
@@ -233,7 +227,7 @@ public class TrainSGAModelDer
 		System.out.println("Max updates:"+maxUpdates);
 		while(totalUpdates<maxUpdates)
 		{
-			int[] arr = getRandArray(batchsize, sizeOfData);
+			int[] arr = getRandArray(batchsize, sizeOfData, rand);
 			double[] sumDers = new double[W.length];
 			Arrays.fill(sumDers, 0.0);
 			for(int j = 0; j < arr.length; j ++)
@@ -254,31 +248,6 @@ public class TrainSGAModelDer
 				countDataEncountered=0;
 			}
 		}		
-	}
-	
-	public int[] getRandArray(int batchSize, int sizeOfData)
-	{
-		int count = 0;
-		ArrayList<Integer> list = new ArrayList<Integer>();
-		while(count<batchSize)
-		{
-			int next = rand.nextInt(sizeOfData);
-			if(list.contains(new Integer(next)))
-			{
-				continue;
-			}
-			else
-			{
-				list.add(next);
-				count++;
-			}
-		}
-		int[] arr = new int[batchSize];
-		for(int i = 0; i < arr.length; i ++)
-		{
-			arr[i] = list.get(i);
-		}
-		return arr;
 	}
 	
 	public void writeModel(String modelFile) {

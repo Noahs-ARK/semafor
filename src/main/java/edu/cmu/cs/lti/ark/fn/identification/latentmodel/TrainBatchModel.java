@@ -79,7 +79,7 @@ public class TrainBatchModel extends LogModel
 			BufferedReader bReader = new BufferedReader(new FileReader(alphabetFile));
 			String line = bReader.readLine().trim();
 			line=line.trim();
-			modelSize = (new Integer(line))+1;
+			modelSize = (Integer.parseInt(line))+1;
 			bReader.close();
 		}
 		catch(Exception e)
@@ -100,9 +100,9 @@ public class TrainBatchModel extends LogModel
 				o1=o1.substring(0,o1.length()-5);
 				o2=o2.substring(0,o2.length()-5);
 				int lastIndex = o1.lastIndexOf("_");
-				int i1 = new Integer(o1.substring(lastIndex+1));
+				int i1 = Integer.parseInt(o1.substring(lastIndex+1));
 				lastIndex = o2.lastIndexOf("_");
-				int i2 = new Integer(o2.substring(lastIndex+1));
+				int i2 = Integer.parseInt(o2.substring(lastIndex+1));
 				if(i1<i2)
 					return -1;
 				else if(i1==i2)

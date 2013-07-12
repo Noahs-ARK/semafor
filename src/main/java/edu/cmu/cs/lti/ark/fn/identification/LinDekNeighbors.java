@@ -384,12 +384,12 @@ public class LinDekNeighbors {
 			new TObjectIntHashMap<String>();
 		for (String string: adjectives) {
 			String[] toks = string.trim().split("\t");
-			adjMap.put(toks[0], new Integer(toks[1]));
+			adjMap.put(toks[0], Integer.parseInt(toks[1]));
 		}
 		for (String string: adverbs) {
 			String[] toks = string.trim().split("\t");
 			try {
-				advMap.put(toks[0], new Integer(toks[1]));
+				advMap.put(toks[0], Integer.parseInt(toks[1]));
 			} catch (Exception e) {
 				System.out.println(string + "\n\n");
 				e.printStackTrace();
@@ -413,7 +413,7 @@ public class LinDekNeighbors {
 			while ((line = bReader.readLine()) != null) {
 				line = line.trim();
 				String[] toks = line.split("\t");
-				int numTokens = new Integer(toks[0]);
+				int numTokens = Integer.parseInt(toks[0]);
 				for (int i = 0; i < numTokens; i++) {
 					String pos = toks[1 + numTokens + i];
 					if (pos.startsWith("J")) {

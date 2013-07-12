@@ -185,7 +185,7 @@ public class Training {
 		double[] sumDers = new double[W.length];
 		while(totalUpdates<maxUpdates)
 		{
-			int[] arr = getRandArray(batchsize, sizeOfData);
+			int[] arr = getRandArray(batchsize, sizeOfData, rand);
 			Arrays.fill(sumDers, 0.0);
 			for(int j = 0; j < arr.length; j ++)
 			{
@@ -320,19 +320,12 @@ public class Training {
 	}	
 	
 	
-	public int[] getRandArray(int batchSize, int sizeOfData)
-	{
+	public static int[] getRandArray(int batchSize, int sizeOfData, Random rand) {
 		int count = 0;
 		ArrayList<Integer> list = new ArrayList<Integer>();
-		while(count<batchSize)
-		{
-			int next = rand.nextInt(sizeOfData);
-			if(list.contains(new Integer(next)))
-			{
-				continue;
-			}
-			else
-			{
+		while(count<batchSize) {
+			Integer next = rand.nextInt(sizeOfData);
+			if (!list.contains(next)) {
 				list.add(next);
 				count++;
 			}

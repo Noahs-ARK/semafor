@@ -163,8 +163,8 @@ public class LocalFeatureReading {
 				}
 				else if(toks.length==2) {
 					int[] intSpan = new int[2];
-					intSpan[0] = new Integer(toks[0]);
-					intSpan[1] = new Integer(toks[1]);
+					intSpan[0] = Integer.parseInt(toks[0]);
+					intSpan[1] = Integer.parseInt(toks[1]);
 					spans.add(intSpan);
 				}
 				else {

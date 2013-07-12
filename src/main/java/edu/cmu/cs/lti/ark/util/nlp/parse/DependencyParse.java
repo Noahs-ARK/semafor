@@ -22,7 +22,6 @@
 package edu.cmu.cs.lti.ark.util.nlp.parse;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.util.Interner;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
@@ -292,7 +291,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 			dp.setPOS(parseData[1][j]);
 			dp.setNE(parseData[4][j]);
 			dp.setIndex(j+1);
-			int parentIndex = new Integer(parseData[3][j]);
+			int parentIndex = Integer.parseInt(parseData[3][j]);
 			dp.setParentIndex(parentIndex);
 			dp.setLabelType(parseData[2][j]);
 			dp.setHeadWord(parseData[0][j]);

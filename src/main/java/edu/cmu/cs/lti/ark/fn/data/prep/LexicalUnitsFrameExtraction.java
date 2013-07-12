@@ -45,7 +45,7 @@ public class LexicalUnitsFrameExtraction
 	public static String getTokens(String sentence, String[] nums)
 	{
 		StringTokenizer st = new StringTokenizer(sentence,"\t");
-		int tokensInFirstSent = new Integer(st.nextToken());
+		int tokensInFirstSent = Integer.parseInt(st.nextToken());
 		String[][] data = new String[5][tokensInFirstSent];
 		for(int k = 0; k < 5; k ++)
 		{
@@ -58,7 +58,7 @@ public class LexicalUnitsFrameExtraction
 		int[] intNums = new int[nums.length];
 		for(int i = 0; i < nums.length; i ++)
 		{
-			intNums[i] = new Integer(nums[i]);
+			intNums[i] = Integer.parseInt(nums[i]);
 		}
 		String result="";
 		Arrays.sort(intNums);
@@ -308,8 +308,8 @@ public class LexicalUnitsFrameExtraction
 						Element feNode = feNodes[j];
 						if (!feNode.hasAttribute("start"))	// e.g., null instantiations
 							continue;
-						int start = new Integer(feNode.getAttribute("start"));
-						int end = new Integer(feNode.getAttribute("end"));
+						int start = Integer.parseInt(feNode.getAttribute("start"));
+						int end = Integer.parseInt(feNode.getAttribute("end"));
 						String feName = feNode.getAttribute("name");
 						feInfo.add(new Pair<String,Pair<Integer,Integer>>(feName, new Pair<Integer,Integer>(start, end)));
 					}
@@ -375,7 +375,7 @@ public class LexicalUnitsFrameExtraction
 				{
 					continue;
 				}
-				int start = new Integer(((Element)gChild).getAttribute("start"));
+				int start = Integer.parseInt(((Element)gChild).getAttribute("start"));
 				starts.add(start);
 			}
 		}
@@ -404,7 +404,7 @@ public class LexicalUnitsFrameExtraction
 				{
 					continue;
 				}
-				int end = new Integer(((Element)gChild).getAttribute("end"));
+				int end = Integer.parseInt(((Element)gChild).getAttribute("end"));
 				ends.add(end);
 			}
 		}

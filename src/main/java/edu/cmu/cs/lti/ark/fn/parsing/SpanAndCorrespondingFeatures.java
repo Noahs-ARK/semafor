@@ -61,8 +61,8 @@ public class SpanAndCorrespondingFeatures implements Serializable, Comparator<Sp
 		String[] toks = span.split("_");
 		SpanAndCorrespondingFeatures scf = new SpanAndCorrespondingFeatures();
 		scf.span=new int[2];
-		scf.span[0]=new Integer(toks[0]);
-		scf.span[1]=new Integer(toks[1]);
+		scf.span[0]=Integer.parseInt(toks[0]);
+		scf.span[1]=Integer.parseInt(toks[1]);
 		return search(arr,scf);
 	}
 }

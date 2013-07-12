@@ -137,7 +137,7 @@ public class DataPoint {
 		// A subset of the code in processFrameLine()
 		String[] toks = frameLine.split("\t");
 		String frameName = (String)Interner.globalIntern(toks[0]);
-		int sentNum = new Integer(toks[4]);
+		int sentNum = Integer.parseInt(toks[4]);
 		return new Pair<String,Integer>(frameName, sentNum);
 	}
 	
@@ -159,7 +159,7 @@ public class DataPoint {
 
 	public static DependencyParse[] buildParsesForLine(String parseLine) {
 		StringTokenizer st = new StringTokenizer(parseLine, "\t");
-		int numWords = new Integer(st.nextToken());	// number of word tokens in the sentence
+		int numWords = Integer.parseInt(st.nextToken());	// number of word tokens in the sentence
 		String[] parts = new String[6];
 		
 		String nextToken = st.nextToken().trim();

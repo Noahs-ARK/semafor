@@ -150,7 +150,7 @@ public class OneLineDataCreation {
 				posTagSequence += st.nextToken().trim() + "\t";
 				st.nextToken();
 				st.nextToken();
-				int parent = new Integer(st.nextToken().trim());
+				int parent = Integer.parseInt(st.nextToken().trim());
 				if(parent != 0) {
 					parent += offset;
 				}
@@ -162,7 +162,7 @@ public class OneLineDataCreation {
 		result += posTagSequence + labelTagSequence + parentTagSequence + neLine;
 		result = result.trim();
 		StringTokenizer st = new StringTokenizer(result, "\t");
-		int tokensInFirstSent = new Integer(st.nextToken());
+		int tokensInFirstSent = Integer.parseInt(st.nextToken());
 		String[] first = new String[5];
 		for(int i = 0; i < 5; i ++) {
 			first[i] = "";

@@ -44,7 +44,7 @@ public class CreateAlphabet {
 
 		boolean genAlpha = Boolean.parseBoolean(args[5]);
 		if(genAlpha) System.out.println("Generating alphabet too...");
-		FEFileName.KBestParse = new Integer(args[6]);
+		FEFileName.KBestParse = Integer.parseInt(args[6]);
 		FEFileName.KBestParseDirectory = args[7];
 		FEFileName.feDictFilename = args[9];
 

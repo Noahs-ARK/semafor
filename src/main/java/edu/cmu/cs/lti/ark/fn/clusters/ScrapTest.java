@@ -43,19 +43,19 @@ public class ScrapTest {
 				if((first>='a'&&first<='z')||(first>='A'&&first<='Z')||(first>='0'&&first<='9'))
 				{
 					String word = toks[0].trim();
-					int count = new Integer(toks[2].trim());
+					int count = Integer.parseInt(toks[2].trim());
 					if(countMap.contains(word))
 					{
 						if(countMap.get(word)<count)
 						{
 							countMap.put(word, count);
-							spans.put(word, new Integer(toks[1].trim()));
+							spans.put(word, Integer.parseInt(toks[1].trim()));
 						}
 					}
 					else
 					{
 						countMap.put(word, count);
-						spans.put(word, new Integer(toks[1].trim()));
+						spans.put(word, Integer.parseInt(toks[1].trim()));
 					}
 				}
 			}

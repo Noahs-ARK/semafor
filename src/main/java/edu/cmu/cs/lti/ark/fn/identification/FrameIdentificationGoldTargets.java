@@ -116,7 +116,7 @@ public class FrameIdentificationGoldTargets
 		for(String input: inputForFrameId)
 		{
 			String[] toks = input.split("\t");
-			int sentNum = new Integer(toks[2]);	// offset of the sentence within the loaded data (relative to options.startIndex)
+			int sentNum = Integer.parseInt(toks[2]);	// offset of the sentence within the loaded data (relative to options.startIndex)
 			String bestFrame = idModel.getBestFrame(input, parses.get(sentNum));
 			String tokenRepresentation = getTokenRepresentation(toks[1],parses.get(sentNum));  
 			String[] split = tokenRepresentation.trim().split("\t");
@@ -137,7 +137,7 @@ public class FrameIdentificationGoldTargets
 		for(String seg:segs)
 		{
 			String[] toks = seg.split("\t");
-			int sentNum = new Integer(toks[5]);
+			int sentNum = Integer.parseInt(toks[5]);
 			if(sentNum<start)
 			{
 				count++;
@@ -156,7 +156,7 @@ public class FrameIdentificationGoldTargets
 	public static String getTokenRepresentation(String tokNum, String parse)
 	{
 		StringTokenizer st = new StringTokenizer(parse,"\t");
-		int tokensInFirstSent = new Integer(st.nextToken());
+		int tokensInFirstSent = Integer.parseInt(st.nextToken());
 		String[][] data = new String[5][tokensInFirstSent];
 		for(int k = 0; k < 5; k ++)
 		{
@@ -169,7 +169,7 @@ public class FrameIdentificationGoldTargets
 		String[] tokNums = tokNum.split("_");
 		int[] intTokNums = new int[tokNums.length];
 		for(int j = 0; j < tokNums.length; j ++)
-			intTokNums[j] = new Integer(tokNums[j]);
+			intTokNums[j] = Integer.parseInt(tokNums[j]);
 		Arrays.sort(intTokNums);
 		
 		String actualTokens = "";

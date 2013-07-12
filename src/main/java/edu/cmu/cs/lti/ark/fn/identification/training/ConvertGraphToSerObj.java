@@ -37,7 +37,7 @@ public class ConvertGraphToSerObj {
 
 	public static void variousMs(String[] args) {
 		String dir = "/mal2/dipanjan/experiments/FramenetParsing/fndata-1.5/ACLSplits";
-		int i = new Integer(args[0]);
+		int i = Integer.parseInt(args[0]);
 		String graphdir = dir + "/" + i;
 		String graphPrefix = "smoothed.graph.a.0.0.k.10.mu.0.1.nu.0.000001";
 		for (int m = 1; m < 11; m++) {
@@ -50,7 +50,7 @@ public class ConvertGraphToSerObj {
 	
 	public static void allGraphs(String[] args) {
 		String dir = "/usr2/dipanjan/experiments/FramenetParsing/fndata-1.5/ACLSplits";
-		int i = new Integer(args[0]);
+		int i = Integer.parseInt(args[0]);
 		String graphdir = dir + "/" + i;
 		FilenameFilter filter = new FilenameFilter() {
 			public boolean accept(File dir, String name) {
@@ -83,7 +83,7 @@ public class ConvertGraphToSerObj {
 //			g.frames = frames;
 //			g.f2Idx = f2Idx;
 //			g.idx2F = idx2F;
-			int t = new Integer(args[1]);
+			int t = Integer.parseInt(args[1]);
 			SmoothedGraph sg = new SmoothedGraph(filepath, t);
 			SerializedObjects.writeSerializedObject(sg, filepath + ".t." + t + ".jobj.gz");
 			System.out.println("Done with:" + j + " " + files[j]);

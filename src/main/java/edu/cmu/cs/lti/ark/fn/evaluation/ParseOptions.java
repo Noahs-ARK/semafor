@@ -79,9 +79,9 @@ public final class ParseOptions {
 			} else if (pair[0].equals("allRelatedWordsFile")) {
 				allRelatedWordsFile = pair[1].trim();
 			} else if (pair[0].equals("startIndex")) {
-				startIndex = new Integer(pair[1].trim());
+				startIndex = Integer.parseInt(pair[1].trim());
 			} else if (pair[0].equals("endIndex")) {
-				endIndex = new Integer(pair[1].trim());
+				endIndex = Integer.parseInt(pair[1].trim());
 			} else if (pair[0].equals("outputFile")) {
 				outputFile = pair[1].trim();
 			} else if (pair[0].equals("wnRelatedWordsForWordsFile")) {

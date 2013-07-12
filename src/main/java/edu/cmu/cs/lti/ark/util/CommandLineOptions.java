@@ -183,7 +183,7 @@ public abstract class CommandLineOptions {
 			range = validRange;
 		}
 		public void set(String value) throws InvalidOptionsException {
-			int v = new Integer(value);
+			int v = Integer.parseInt(value);
 			if (range!=null && !range.contains(v))
 				throw new InvalidOptionsException("Integer value " + v + " for option " + this.name + " falls outside the legal range: " + range.toString());
 			args.put(name, v);

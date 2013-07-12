@@ -21,17 +21,16 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.evaluation;
 
+import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
+import gnu.trove.THashSet;
+import gnu.trove.TIntObjectHashMap;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Random;
-
-
-import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
-import gnu.trove.THashSet;
-import gnu.trove.TIntObjectHashMap;
 
 /**
  * Performs significance testing for the outputs of various stages of two semantic parsing systems.
@@ -271,7 +270,7 @@ public class SignificanceTests
 		for(String gold:goldStuff)
 		{
 			String[] toks = gold.split("\t");
-			int sentNum = new Integer(toks[5]);
+			int sentNum = Integer.parseInt(toks[5]);
 			THashSet<String> set = goldSpans.get(sentNum);
 			if(set==null)
 			{
@@ -290,7 +289,7 @@ public class SignificanceTests
 		for(String line:modelStuff)
 		{
 			String[] toks = PaperEvaluation.getTokens(line);
-			int sentNum = new Integer(toks[toks.length-1]);
+			int sentNum = Integer.parseInt(toks[toks.length-1]);
 			String span = toks[toks.length-3];
 			THashSet<String> set = modelSpans.get(sentNum);
 			if(set==null)
