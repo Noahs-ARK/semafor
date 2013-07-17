@@ -22,7 +22,7 @@ def malt_to_conll(malt_tokens):
             postag=token.postag,
             head=token.head,
             deprel=token.deprel)
-        output.append(u'\t'.join(field for field in conll_token))
+        output.append(unicode(conll_token))
     output.append(u'')
     return u'\n'.join(output)
 
