@@ -22,7 +22,7 @@
 package edu.cmu.cs.lti.ark.util;
 
 
-import org.apache.commons.io.IOUtils;
+import com.google.common.io.InputSupplier;
 
 import java.io.*;
 import java.util.zip.GZIPInputStream;
@@ -60,12 +60,18 @@ public class SerializedObjects {
 		return recoveredObject;
 	}
 
+	public static <T> T readObject(final String inputFile) throws IOException, ClassNotFoundException {
+		return readObject(new InputSupplier<ObjectInputStream>() {
+			@Override public ObjectInputStream getInput() throws IOException {
+				return getObjectInputStream(inputFile);
+			} });
+	}
+
 	@SuppressWarnings("unchecked")
-	public static <T> T readObject(String inputFile)
+	public static <T> T readObject(InputSupplier<ObjectInputStream> inputSupplier)
 			throws IOException, ClassNotFoundException {
-		ObjectInputStream input = null;
+		final ObjectInputStream input = inputSupplier.getInput();
 		try{
-			input = getObjectInputStream(inputFile);
 			return (T) input.readObject();
 		} finally{
 			closeQuietly(input);

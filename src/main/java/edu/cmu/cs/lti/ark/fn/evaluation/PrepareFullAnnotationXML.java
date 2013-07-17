@@ -293,9 +293,9 @@ public class PrepareFullAnnotationXML {
 			feLayer.appendChild(labels);
 
 			final List<Range0Based> fillerSpans = dataPointWithFrameElements.getOvertFrameElementFillerSpans();
-			final String[] feNames = dataPointWithFrameElements.getOvertFilledFrameElementNames();
-			for (int i = 0; i < feNames.length; i++) {
-				final String feName = feNames[i];
+			final List<String> feNames = dataPointWithFrameElements.getOvertFilledFrameElementNames();
+			for (int i = 0; i < feNames.size(); i++) {
+				final String feName = feNames.get(i);
 				final Range fillerSpan = fillerSpans.get(i);
 
 				final int labelId = layerId * 100 + i + 1;

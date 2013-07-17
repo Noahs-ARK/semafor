@@ -20,5 +20,4 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4000m -Xmx4000m \
    ${SCAN_DIR}/cv.train.sentences.frame.elements.spans \
    true \
    1 \
-   null \
-   ${datadir}/framenet.frame.element.map
+   null

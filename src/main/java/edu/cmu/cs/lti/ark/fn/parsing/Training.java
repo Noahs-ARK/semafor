@@ -98,26 +98,16 @@ public class Training {
 			W[i] = 0.0;
 		}
 	}
-	
-	public double getValueOfSample(int index)
-	{
-		return 0.0;
-	}
-	
-	public Pair<Double, double[]> getDerivativesOfSample(double[] sumDers, 
-														 int index)
-	{
+
+	public Pair<Double, double[]> getDerivativesOfSample(double[] sumDers, int index) {
 		FrameFeatures f = mFrameList.get(index);
-		ArrayList<SpanAndCorrespondingFeatures[]> featsList = f.fElementSpansAndFeatures;
-		ArrayList<Integer> goldSpans = f.fGoldSpans;
-		int size = featsList.size();
+		List<SpanAndCorrespondingFeatures[]> featsList = f.fElementSpansAndFeatures;
+		List<Integer> goldSpans = f.goldSpanIdxs;
 		double[] gradients = new double[sumDers.length];
 		for(int i = 0; i < gradients.length; i ++)
 			gradients[i] = 0.0;		
 		double value = 0.0;
-		for(int i = 0; i < size; i ++)
-		{
-			//System.out.println("i = "+i);
+		for(int i = 0; i < featsList.size(); i ++) {
 			SpanAndCorrespondingFeatures[] featureArray = featsList.get(i);
 			int goldSpan = goldSpans.get(i);
 			int featArrLen = featureArray.length;

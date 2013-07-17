@@ -50,7 +50,16 @@ public class WordNetRelations extends Lemmatizer {
 	public static final String NO_RELATION = "no-relation";
 	private static Pattern PUNCTUATION_PATTERN = Pattern.compile("\\p{Punct}");
 	private static final int NUM_THRESHOLD = 4;
-	
+
+	private static class SingletonHolder {
+		public static final WordNetRelations INSTANCE;
+		static {
+			try {
+				INSTANCE = new WordNetRelations();
+			} catch (URISyntaxException e) { throw new RuntimeException(e); }
+		}
+	}
+
 	private String sourceWord = null;
 	private String targetWord = null;
 	private WordNetAPI mWN = null;
@@ -97,6 +106,11 @@ public class WordNetRelations extends Lemmatizer {
 			stopwords = ImmutableSet.copyOf(CharStreams.readLines(stopwordSupplier));
 			mWN = WordNetAPI.getInstance(new FileInputStream(configFile));
 		} catch (Exception e) { throw new RuntimeException(e); }
+	}
+
+	/** Lazy-loading singleton */
+	public static WordNetRelations getInstance() {
+		return SingletonHolder.INSTANCE;
 	}
 
 	public Map<String, THashMap<String, Set<String>>> getWordNetMap() {

@@ -28,10 +28,7 @@ package edu.cmu.cs.lti.ark.fn.parsing;
 public class FEFileName {
 	public static String stopwordFilename = "dict/stopwords.txt";
 	public static String wordnetFilename = "dict/file_properties.xml";
-	public static String feDictFilename = null;
-	
-	public static String tmpDirname="../tmp/";
-	
+
 	public static String feFilename = "lrdata/semeval.fulltrain.sentences.frame.elements";
 	public static String eventFilename = "lrdata/parser.train.events.bin";
 	public static String alphafilename = null;
@@ -42,12 +39,7 @@ public class FEFileName {
 	public static String spanfilename=null;
 	public static String candidateFilename="candidate_file_not_in_use";
 	public static String tagFilename="lrdata/semeval.fulldev.sentences.lemma.tags";
-	public static String modelFilename="model.out";
 	public static int startIndex,endIndex;
-
-	//reranking files
-	public static String listfilename = "lrdata/train.list";
-	public static String rrkfefilename = "rerank.train.frame.elements";
 
 	public static int KBestParse = 1;
 	public static String KBestParseDirectory = null;

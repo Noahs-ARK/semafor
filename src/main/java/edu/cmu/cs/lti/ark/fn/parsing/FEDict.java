@@ -21,32 +21,67 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
-import java.io.IOException;
+import java.io.*;
+import java.util.Map;
 
 /**
  * A map from frames to their frame elements
  */
 public class FEDict {
-	private THashMap<String, THashSet<String>> frameElementsForFrame;
+	public static final String DEFAULT_FILENAME = "framenet.frame.element.map";
 
-	public FEDict(THashMap<String, THashSet<String>> frameElementsForFrame){
+	private Map<String, THashSet<String>> frameElementsForFrame;
+
+	public static class LoadingException extends IOException {
+		public LoadingException(Exception e) { super(e); }
+	}
+
+	private static class SingletonHolder {
+		private static final FEDict INSTANCE;
+		static {
+			try {
+				INSTANCE = new FEDict(readInput(new InputSupplier<InputStream>() {
+					@Override
+					public InputStream getInput() throws IOException {
+						return getClass().getClassLoader().getResourceAsStream(DEFAULT_FILENAME);
+					}
+				}));
+			} catch (LoadingException e) { throw new RuntimeException(e); }
+		}
+	}
+
+	public FEDict(Map<String, THashSet<String>> frameElementsForFrame){
 		this.frameElementsForFrame = frameElementsForFrame;
+	}
+
+	/**
+	 * Lazy-loading singleton
+	 */
+	public static FEDict getInstance() {
+		return SingletonHolder.INSTANCE;
 	}
 
 	/**
 	 * Initialize from a serialized HashMap
 	 * @param dictFilename the path to the file containing the serialized HashMap
 	 */
-	public FEDict(String dictFilename) throws LoadingException {
+	public static FEDict fromFile(String dictFilename) throws LoadingException {
+		return new FEDict(readInput(Files.newInputStreamSupplier(new File(dictFilename))));
+	}
+
+	private static Map<String, THashSet<String>> readInput(final InputSupplier<? extends InputStream> inputSupplier)
+			throws LoadingException {
 		try {
-			frameElementsForFrame = SerializedObjects.readObject(dictFilename);
-		} catch (Exception e) {
-			throw new LoadingException(e);
-		}
+			return SerializedObjects.readObject(new InputSupplier<ObjectInputStream>() {
+				@Override public ObjectInputStream getInput() throws IOException {
+					return new ObjectInputStream(new BufferedInputStream(inputSupplier.getInput()));
+				} });
+		} catch (Exception e) { throw new LoadingException(e); }
 	}
 
 	/**
@@ -58,9 +93,5 @@ public class FEDict {
 		THashSet<String> frameElements = frameElementsForFrame.get(frame);
 		if(frameElements == null) return new String[0];
 		return frameElements.toArray(new String[frameElements.size()]);
-	}
-
-	public static class LoadingException extends IOException {
-		public LoadingException(Exception e) { super(e); }
 	}
 }

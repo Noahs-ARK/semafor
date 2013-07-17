@@ -21,11 +21,14 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 
 public class FrameFeaturesCache {
@@ -34,8 +37,9 @@ public class FrameFeaturesCache {
 		String eventsFile = opts.eventsFile.get();
 		String spanFile = opts.spansFile.get();
 		String frFile = opts.trainFrameFile.get();
-		LocalFeatureReading lfr = new LocalFeatureReading(eventsFile, spanFile, frFile);
-		ArrayList<FrameFeatures> frameFeaturesList = lfr.readLocalFeatures();
+		final List<String> frameLines = Files.readLines(new File(frFile), Charsets.UTF_8);
+		final LocalFeatureReading lfr = new LocalFeatureReading(eventsFile, spanFile, frameLines);
+		final List<FrameFeatures> frameFeaturesList = lfr.readLocalFeatures();
 		SerializedObjects.writeSerializedObject(frameFeaturesList, opts.frameFeaturesCacheFile.get());
 	}	
 }

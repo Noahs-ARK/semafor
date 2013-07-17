@@ -22,47 +22,25 @@
 package edu.cmu.cs.lti.ark.fn.parsing;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Comparator;
 
-public class SpanAndCorrespondingFeatures implements Serializable, Comparator<SpanAndCorrespondingFeatures>
-{
+public class SpanAndCorrespondingFeatures implements Serializable, Comparable<SpanAndCorrespondingFeatures> {
 	private static final long serialVersionUID = 5754166746392268274L;
 	public int[] span;
 	public int[] features;
-		
-	public int compare(SpanAndCorrespondingFeatures arg0, SpanAndCorrespondingFeatures arg1)
-	{
-		String span1 = arg0.span[0]+":"+arg0.span[1];
-		String span2 = arg1.span[0]+":"+arg1.span[1];
-		if(span1.compareTo(span2)<0)
-			return -1;
-		else if(span1.compareTo(span2)==0)
-			return 0;
-		else
-			return 1;	
+
+	public SpanAndCorrespondingFeatures(int[] span, int[] features) {
+		this.span = span;
+		this.features = features;
 	}
-	
-	public static void sort(SpanAndCorrespondingFeatures[] arr)
-	{
-		Arrays.sort(arr,new SpanAndCorrespondingFeatures());
+
+	public SpanAndCorrespondingFeatures(int[] span) {
+		this.span = span;
 	}
-	
-	public static int search(SpanAndCorrespondingFeatures[] arr, SpanAndCorrespondingFeatures s)
-	{
-		return Arrays.binarySearch(arr,s,new SpanAndCorrespondingFeatures());
-	}
-	
-	/*
-	 * span with _
-	 */
-	public static int search(SpanAndCorrespondingFeatures[] arr, String span)
-	{
-		String[] toks = span.split("_");
-		SpanAndCorrespondingFeatures scf = new SpanAndCorrespondingFeatures();
-		scf.span=new int[2];
-		scf.span[0]=Integer.parseInt(toks[0]);
-		scf.span[1]=Integer.parseInt(toks[1]);
-		return search(arr,scf);
+
+	@Override
+	public int compareTo(SpanAndCorrespondingFeatures o) {
+		final String span1 = span[0]+":"+ span[1];
+		final String span2 = o.span[0]+":"+ o.span[1];
+		return  span1.compareTo(span2);
 	}
 }

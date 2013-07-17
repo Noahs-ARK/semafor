@@ -45,10 +45,10 @@ import static java.lang.Integer.parseInt;
 import static java.util.Arrays.asList;
 
 public class DataPointWithFrameElements extends DataPoint {
-	private static Joiner TAB_JOINER = Joiner.on("\t");
+	private final static Joiner TAB_JOINER = Joiner.on("\t");
 
 	private final int numSpans;	// includes the target span and any frame elements
-	public List<FrameElementAndSpan> frameElementsAndSpans;
+	private final List<FrameElementAndSpan> frameElementsAndSpans;
 	public String target;
 	public final int rank;
 	public final double score;
@@ -122,27 +122,17 @@ public class DataPointWithFrameElements extends DataPoint {
 
 	public ImmutableList<FrameElementAndSpan> processFrameElements(String frameElementsString) {
 		// Frame elements
-		ImmutableList.Builder<FrameElementAndSpan> fesAndSpans = ImmutableList.builder();
+		final ImmutableList.Builder<FrameElementAndSpan> fesAndSpans = ImmutableList.builder();
 		final String trimmed = frameElementsString.trim();
 		if (!trimmed.equals("")) {
 			String[] tokens = trimmed.split("\t");
 			for (int i = 0; i < tokens.length; i += 2) {
 				final String feName = tokens[i];
 				final String feSpan = tokens[i+1];
-				final Range0Based span = getSpan(feSpan);
-				fesAndSpans.add(new FrameElementAndSpan(feName, span));
+				fesAndSpans.add(new FrameElementAndSpan(feName, getSpan(feSpan)));
 			}
 		}
-		final ImmutableList<FrameElementAndSpan> results = fesAndSpans.build();
-		if (results.size() != numSpans - 1) {
-			// sanity check
-			throw new RuntimeException("Unable to read correct number of frame elements from string (found " +
-					Integer.toString(results.size()) +
-					", should be " + Integer.toString(numSpans-1) +
-					"):\n" +
-					frameElementsString);
-		}
-		return results;
+		return fesAndSpans.build();
 	}
 
 	public static Range0Based getSpan(String feSpan) {
@@ -205,12 +195,11 @@ public class DataPointWithFrameElements extends DataPoint {
 	 * (of this frame) corresponding to annotated filler spans in the sentence. The same element name may be 
 	 * listed multiple times. Elements filled by null instantiations are not included.
 	 */
-	public String[] getOvertFilledFrameElementNames() {
-		List<String> names = Lists.transform(frameElementsAndSpans, new Function<FrameElementAndSpan, String>() {
+	public List<String> getOvertFilledFrameElementNames() {
+		return Lists.transform(frameElementsAndSpans, new Function<FrameElementAndSpan, String>() {
 			@Nullable @Override public String apply(FrameElementAndSpan input) {
 				return input.name;
 			}});
-		return names.toArray(new String[names.size()]);
 	}
 	
 	/**

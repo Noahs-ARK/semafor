@@ -55,7 +55,7 @@ public class LemmatizeStuff {
 		if(options.isPresent(OUT_FILE)) {
 			outfilename = options.get(OUT_FILE);
 		}
-		wnr = new WordNetRelations();
+		wnr = WordNetRelations.getInstance();
 		run();
 	}
 
@@ -92,7 +92,7 @@ public class LemmatizeStuff {
 	public static void lemmatize(String infile, String outfile) throws URISyntaxException {
 		infilename = infile;
 		outfilename = outfile;
-		wnr = new WordNetRelations();
+		wnr = WordNetRelations.getInstance();
 		run();
 	}
 

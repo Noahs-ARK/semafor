@@ -23,7 +23,6 @@ package edu.cmu.cs.lti.ark.fn.parsing;
 
 import de.saar.coli.salsa.reiter.framenet.FrameElement;
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
-import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 import edu.cmu.cs.lti.ark.util.ds.Range1Based;
@@ -44,6 +43,13 @@ import java.util.StringTokenizer;
  * @see edu.cmu.cs.lti.ark.fn.identification.IdFeatureExtractor
  */
 public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<FeatureExtractor.ArgumentCandidate> {
+	public static final String PASSIVE = "PAS";
+	public static final String ACTIVE = "ACT";
+	public static final String NONE = "";
+	protected static IntCounter<String> featureMap;
+	protected static String frameName;
+	protected static String roleName;
+
 	public class ArgumentCandidate {
 		DataPointWithFrameElements dp;
 		String frameName;
@@ -51,19 +57,10 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 		/** Only needs to be specified if {@code fe} is {@code null} */
 		String roleName;
 		Range0Based fillerSpanRange;
-		WordNetRelations wnr;
 		DependencyParse selectedParse;
 	}
-	
-	public static final String PASSIVE = "PAS";
-	public static final String ACTIVE = "ACT";
-	public static final String NONE = "";
-	
-	protected static IntCounter<String> featureMap;
-	protected static String frameName;
-	protected static String roleName;
+
 	/**
-	 * 
 	 * @param featureName feature to add
 	 * @param comb an integer indicating the combination with role name and frame name.
 	 * 2 for frame and role name
@@ -75,9 +72,9 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 			case 2:
 			String frameAndRoleName = frameName + "." + roleName;
 			featureMap.increment(featureName + "_" + frameAndRoleName);
-			
+
 			//intentional fall through
-			
+
 			case 1:
 				featureMap.increment(featureName + "_" + roleName);
 			case 0:
@@ -86,73 +83,49 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 				break;
 		}
 	}
-	
+
 	public IntCounter<String> features(ArgumentCandidate arg) {
 		if (arg.fe!=null)
-			return extractFeatures(arg.dp, arg.frameName, arg.fe, arg.fillerSpanRange, arg.wnr, arg.selectedParse);
-		return extractFeatures(arg.dp, arg.frameName, arg.roleName, arg.fillerSpanRange, arg.wnr, arg.selectedParse);
+			return extractFeatures(arg.dp, arg.frameName, arg.fe, arg.fillerSpanRange, arg.selectedParse);
+		return extractFeatures(arg.dp, arg.frameName, arg.roleName, arg.fillerSpanRange, arg.selectedParse);
 	}
 	
 	public static IntCounter<String> extractFeatures(DataPointWithFrameElements dp,
-			String frameName, FrameElement fe, Range0Based fillerSpanRange,
-			WordNetRelations wnr /* , Map<String,Frame> frameLexicon */, DependencyParse selectedParse) {
-			return extractFeatures(dp,frameName,fe.getName(),fillerSpanRange,wnr, selectedParse);
+													 String frameName,
+													 FrameElement fe,
+													 Range0Based fillerSpanRange,
+													 DependencyParse selectedParse) {
+			return extractFeatures(dp,frameName,fe.getName(),fillerSpanRange, selectedParse);
 	}
 	
 	public static IntCounter<String> extractFeatures(DataPointWithFrameElements dp,
-			String frameName, String roleName, Range0Based fillerSpanRange,
-			WordNetRelations wnr /* , Map<String,Frame> frameLexicon */, DependencyParse selectedParse) {
+													 String frameName,
+													 String roleName,
+													 Range0Based fillerSpanRange,
+													 DependencyParse parse) {
 		featureMap = new IntCounter<String>();
 		FeatureExtractor.frameName = frameName;
 		FeatureExtractor.roleName = roleName;
 		
-		// String target = dp.getTarget();
-		int[] targetTokenNums = dp.getTokenNums();
-		DependencyParse parse = selectedParse;
+		int[] targetTokenNums = dp.getTargetTokenIdxs();
 
-		// String sentence = parse.getSentence();
 		DependencyParse[] nodes = parse.getIndexSortedListOfNodes();
 		DependencyParse targetHeadNode = DependencyParse.getHeuristicHead(nodes, targetTokenNums);
-		DependencyParse targetFirstNode = nodes[targetTokenNums[0] + 1];
-		// String targetPOS = targetFirstNode.getPOS();
-		// String targetLemma = wnr.getLemma(target, targetPOS);
-		String targetLemma = targetFirstNode.getLemma();
-
-		// StringTokenizer st = new StringTokenizer(target);
-		// while(st.hasMoreTokens())
-		// String word = st.nextToken().trim();
-		// lemma+=mWnr.getLemma(word, pos)+" ";
-		// mFeatureMap.put("l_"+lemma+"_"+mFrameAndRoleName, 1.0);
-
-		String lemma = "";
-		String finePOSSeq = "";
-		String coarsePOSSeq = "";
-
-		/*
-		 * String feS = ""; for (int i=mFillerStart; i<=mFillerEnd; i++) {
-		 * String word = nodes[i].getWord(); feS += word + " "; String pos =
-		 * nodes[i].getPOS(); finePOSSeq+= pos+" "; coarsePOSSeq+=
-		 * pos.substring(0,1)+" "; }
-		 */
-
-		lemma = lemma.trim();
-		finePOSSeq = finePOSSeq.trim();
-		coarsePOSSeq = coarsePOSSeq.trim();
 
 		String overtness = (CandidateFrameElementFilters.isEmptySpan(fillerSpanRange)) ? "NULL" : "OVERT";
 		$(overtness,2);	// overtness of the role
 		
 		String nullness = (CandidateFrameElementFilters.isEmptySpan(fillerSpanRange)) ? "NULL_" : "";
 
-		for (int i = 0; i < targetTokenNums.length; i++) {
-			String voice = findVoice(nodes[targetTokenNums[i] + 1]);
-			$(nullness+"targetLemma_"
-					+ nodes[targetTokenNums[i] + 1].getLemma(),2);
-			$(nullness+"targetLemma_"
-					+ nodes[targetTokenNums[i] + 1].getLemma() + "_"
-					+ voice,1);
-			$(nullness+"targetPOS_"
-					+ nodes[targetTokenNums[i] + 1].getPOS(),2);
+		for (int targetTokenNum : targetTokenNums) {
+			String voice = findVoice(nodes[targetTokenNum + 1]);
+			$(nullness + "targetLemma_"
+					+ nodes[targetTokenNum + 1].getLemma(), 2);
+			$(nullness + "targetLemma_"
+					+ nodes[targetTokenNum + 1].getLemma() + "_"
+					+ voice, 1);
+			$(nullness + "targetPOS_"
+					+ nodes[targetTokenNum + 1].getPOS(), 2);
 		}
 		
 
@@ -304,10 +277,6 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 			// length of the filler span
 			$("len_" + quantizeLength(endNode - startNode + 1) ,2);
 		}
-		// featureMap.put("fe_" + feS +"_"+mFrameAndRoleName, 1.0);
-		// featureMap.put("fPS_"+finePOSSeq+"_"+mFrameAndRoleName, 1.0);
-		// featureMap.put("cPS_:"+coarsePOSSeq+"_"+mFrameAndRoleName, 1.0);
-
 		return featureMap;
 	}
 
@@ -362,41 +331,25 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 	}
 
 	/**
-	 * 
-	 * @param mStart
-	 *            begin of candidate span
-	 * @param mEnd
-	 *            end of candidate span
-	 * @param fstart
-	 *            begin of target span
-	 * @param fend
-	 *            end of target span
+	 * @param mStart begin of candidate span
+	 * @param mEnd end of candidate span
+	 * @param fstart begin of target span
+	 * @param fend end of target span
 	 * @return true if candidate span overlaps with target span.
 	 */
 	private static boolean isOverlap(int mStart, int mEnd, int fstart, int fend) {
-		if (mStart >= fstart && fend >= mStart) {
-			return true;
-		}
-		if (mStart <= fstart && fstart <= mEnd) {
-			return true;
-		}
-		return false;
-
+		return (fstart <= mStart && mStart <= fend) || (mStart <= fstart && fstart <= mEnd);
 	}
+
 	/**
 	 * lemma ,POS tag ,voice and relative position(with respect to target)
 	 * of each word in the candidate span
-	 * @param dp
-	 * @param nodes
-	 * @param frameName
-	 * @param roleName
-	 * @param fillerSpanRange
 	 */
 	private static void extractChildPOSFeatures(DataPointWithFrameElements dp,
 			DependencyParse[] nodes, String frameName, String roleName,
 			Range0Based fillerSpanRange) {
-		int targetStart = dp.getTokenNums()[0];
-		int targetEnd = dp.getTokenNums()[dp.getTokenNums().length - 1];
+		int targetStart = dp.getTargetTokenIdxs()[0];
+		int targetEnd = dp.getTargetTokenIdxs()[dp.getTargetTokenIdxs().length - 1];
 		//for each word in the frame element span
 		for (int i = fillerSpanRange.getStart(); i <= fillerSpanRange.getEnd(); i++) {
 			DependencyParse node = nodes[i + 1];

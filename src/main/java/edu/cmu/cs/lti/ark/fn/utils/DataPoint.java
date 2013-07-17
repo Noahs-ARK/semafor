@@ -43,7 +43,7 @@ public class DataPoint {
 	private String frameName;
 	private String lexicalUnitName;	// e.g. 'cause.v'
 	/* token indices of target phrase */
-	private int[] tokenNums;
+	private int[] targetTokenIdxs;
 	private int sentNum;
 	
 	protected String dataSet;
@@ -70,7 +70,6 @@ public class DataPoint {
 	/**
 	 * Given a sentence tokenized with space separators, populates tokenIndexMap with mappings 
 	 * from token numbers to strings in the format StartCharacterOffset\tEndCharacterOffset
-	 * @param tokenizedSentence
 	 */
 	public void processOrgLine(String tokenizedSentence) {
 		final StringTokenizer st = new StringTokenizer(tokenizedSentence.trim(), " ", true);
@@ -106,21 +105,15 @@ public class DataPoint {
 		// The above 3 lines are duplicated in parseFrameNameAndSentenceNum()
 		lexicalUnitName = (String)Interner.globalIntern(tokens[1]);
 		String[] tokNums = tokens[2].split("_");
-		tokenNums = new int[tokNums.length];
+		targetTokenIdxs = new int[tokNums.length];
 		for(int j = 0; j < tokNums.length; j ++) {
-			tokenNums[j] = parseInt(tokNums[j]);
+			targetTokenIdxs[j] = parseInt(tokNums[j]);
 		}
-		Arrays.sort(tokenNums);
+		Arrays.sort(targetTokenIdxs);
 	}
 	
 	/**
 	 * The inverse of processFrameLine(). Result does not include a trailing newline.
-	 * @param frameName
-	 * @param lexicalUnit
-	 * @param tokenNums
-	 * @param target
-	 * @param sentNum
-	 * @return
 	 * @see #processFrameLine(String)
 	 */
 	public static String makeFrameLine(String frameName, String lexicalUnit, int[] tokenNums, String target, int sentNum) {
@@ -149,8 +142,8 @@ public class DataPoint {
 		return frameName;
 	}
 
-	public int[] getTokenNums() {
-		return tokenNums;
+	public int[] getTargetTokenIdxs() {
+		return targetTokenIdxs;
 	}
 	
 	public int getSentenceNum() {
@@ -197,7 +190,7 @@ public class DataPoint {
 	public List<Range0Based> getTokenStartEnds(boolean mergeAdjacent) {
 		final List<Range0Based> result = Lists.newArrayList();
 		Optional<Range0Based> oCurrent = Optional.absent();
-		for (int tknNum : tokenNums) {
+		for (int tknNum : targetTokenIdxs) {
 			if (!oCurrent.isPresent()) {
 				oCurrent = Optional.of(new Range0Based(tknNum, tknNum));
 			} else {
@@ -215,10 +208,6 @@ public class DataPoint {
 		// add the final span
 		if (oCurrent.isPresent()) result.add(oCurrent.get());
 		return result;
-	}
-
-	public List<Range0Based> getCharacterStartEnds(boolean mergeAdjacent) {
-		return getCharStartEnds(getTokenStartEnds(mergeAdjacent));
 	}
 
 	public List<Range0Based> getCharStartEnds(List<Range0Based> tokenRanges) {

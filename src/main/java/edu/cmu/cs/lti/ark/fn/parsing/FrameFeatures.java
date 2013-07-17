@@ -23,25 +23,42 @@ package edu.cmu.cs.lti.ark.fn.parsing;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
-public class FrameFeatures implements Serializable
-{
+public class FrameFeatures implements Serializable {
 	private static final long serialVersionUID = 1628884148325532841L;
-	public String frameName;
-	public int start;
-	public int end;
+	final public String frameName;
+	final public int start;
+	final public int end;
+	final public List<String> fElements;
+	final public List<SpanAndCorrespondingFeatures[]> fElementSpansAndFeatures;
+	// indexes of fElementSpansAndFeatures that are gold spans (used only in training)
+	final public List<Integer> goldSpanIdxs;
 
-	public ArrayList<String> fElements;
-	public ArrayList<SpanAndCorrespondingFeatures[]> fElementSpansAndFeatures;
-	public ArrayList<Integer> fGoldSpans;
-		
-	public FrameFeatures(String fn, int fs, int fe) {
-		frameName = fn;
-		start = fs;
-		end = fe;
-		fElements = new ArrayList<String>();
-		fElementSpansAndFeatures = new ArrayList<SpanAndCorrespondingFeatures[]>();
-		fGoldSpans = new ArrayList<Integer>();
-	}	
+	public FrameFeatures(String frameName,
+						 int targetStartTokenIdx,
+						 int targetEndTokenIdx,
+						 List<String> fElements,
+						 List<SpanAndCorrespondingFeatures[]> fElementSpansAndFeatures,
+						 List<Integer> goldSpanIdxs) {
+		this.frameName = frameName;
+		this.start = targetStartTokenIdx;
+		this.end = targetEndTokenIdx;
+		this.fElements = fElements;
+		this.fElementSpansAndFeatures = fElementSpansAndFeatures;
+		this.goldSpanIdxs = goldSpanIdxs;
+	}
+
+	public FrameFeatures(String frameName, int start, int end) {
+		this(frameName, start, end, new ArrayList<String>(), new ArrayList<SpanAndCorrespondingFeatures[]>());
+	}
+
+	public FrameFeatures(String frameName,
+						 int targetStartTokenIdx,
+						 int targetEndTokenIdx,
+						 List<String> fElements,
+						 List<SpanAndCorrespondingFeatures[]> fElementSpansAndFeatures) {
+		this(frameName, targetStartTokenIdx, targetEndTokenIdx, fElements, fElementSpansAndFeatures, new ArrayList<Integer>());
+	}
 }
 

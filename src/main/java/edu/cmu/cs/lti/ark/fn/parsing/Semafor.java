@@ -22,7 +22,6 @@
 package edu.cmu.cs.lti.ark.fn.parsing;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
@@ -35,9 +34,13 @@ import edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationJson;
 import edu.cmu.cs.lti.ark.fn.identification.GraphBasedFrameIdentifier;
 import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.fn.segmentation.RoteSegmenter;
+import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
+import edu.cmu.cs.lti.ark.util.ds.Range0Based;
+import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
+import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParses;
 import gnu.trove.THashMap;
 
 import java.io.*;
@@ -54,6 +57,8 @@ import static com.google.common.collect.Lists.transform;
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec.ConllCodec;
 import static edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationJson.processPredictionLine;
 import static edu.cmu.cs.lti.ark.fn.identification.FrameIdentificationRelease.getTokenRepresentation;
+import static edu.cmu.cs.lti.ark.fn.parsing.DataPrep.SpanAndParseIdx;
+import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 import static edu.cmu.cs.lti.ark.util.SerializedObjects.readObject;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
@@ -62,22 +67,16 @@ public class Semafor {
 	private static final String ALPHABET_FILENAME = "parser.conf";
 	private static final String FRAME_ELEMENT_MAP_FILENAME = "framenet.frame.element.map";
 	private static final String ARG_MODEL_FILENAME = "argmodel.dat";
-	/* temp files */
-	private static final String EVENTS_FILENAME = "events.bin";
-	private static final String SPANS_FILENAME = "spans";
 
 	private static final Joiner TAB = Joiner.on("\t");
 
 	protected final Set<String> allRelatedWords;
 	protected final WordNetRelations wordNetRelations;
-
 	protected final FEDict frameElementsForFrame;
-
 	protected final RoteSegmenter segmenter;
 	protected final GraphBasedFrameIdentifier idModel;
 	protected final Decoding decoder;
-	private final String eventsFilename;
-	private final String spansFilename;
+	protected final Map<String, Integer> argIdFeatureIndex;
 
 	/**
 	 *  required flags:
@@ -95,7 +94,7 @@ public class Semafor {
 
 	public static void runSocketServer(String modelDirectory, File tempDirectory, int port)
 			throws URISyntaxException, IOException, ClassNotFoundException {
-		final Semafor server = getSemaforInstance(modelDirectory, tempDirectory);
+		final Semafor server = getSemaforInstance(modelDirectory);
 		// Set up socket server
 		final ServerSocket serverSocket = new ServerSocket(port);
 		System.err.println("Listening on port: " + port);
@@ -117,25 +116,19 @@ public class Semafor {
 		}
 	}
 
-	public static Semafor getSemaforInstance(String modelDirectory, File tempDirectory)
+	public static Semafor getSemaforInstance(String modelDirectory)
 			throws IOException, ClassNotFoundException, URISyntaxException {
 		final String requiredDataFilename = new File(modelDirectory, REQUIRED_DATA_FILENAME).getAbsolutePath();
 		final String alphabetFilename = new File(modelDirectory, ALPHABET_FILENAME).getAbsolutePath();
 		final String frameElementMapFilename = new File(modelDirectory, FRAME_ELEMENT_MAP_FILENAME).getAbsolutePath();
 		final String argModelFilename = new File(modelDirectory, ARG_MODEL_FILENAME).getAbsolutePath();
-		final File eventsFile = new File(tempDirectory, EVENTS_FILENAME);
-		eventsFile.deleteOnExit();
-		final String eventsFilename = eventsFile.getAbsolutePath();
-		final File spansFile = new File(tempDirectory, SPANS_FILENAME);
-		spansFile.deleteOnExit();
-		final String spansFilename = spansFile.getAbsolutePath();
 
 		// unpack required data
 		final RequiredDataForFrameIdentification r = readObject(requiredDataFilename);
 		final Set<String> allRelatedWords = r.getAllRelatedWords();
 
 		/* Initializing WordNet */
-		final WordNetRelations wordNetRelations = new WordNetRelations();
+		final WordNetRelations wordNetRelations = WordNetRelations.getInstance();
 		final Map<String, Set<String>> relatedWordsForWord = r.getRelatedWordsForWord();
 		final Map<String, THashMap<String, Set<String>>> wordNetMap = r.getWordNetMap();
 		wordNetRelations.setRelatedWordsForWord(relatedWordsForWord);
@@ -146,8 +139,8 @@ public class Semafor {
 		final RoteSegmenter segmenter = new RoteSegmenter(allRelatedWords);
 
 		System.err.println("Initializing alphabet for argument identification..");
-		CreateAlphabet.setDataFileNames(alphabetFilename, frameElementMapFilename, eventsFilename, spansFilename);
-		final FEDict frameElementsForFrame = new FEDict(frameElementMapFilename);
+		final Map<String, Integer> argIdFeatureIndex = DataPrep.readFeatureIndex(new File(alphabetFilename));
+		final FEDict frameElementsForFrame = FEDict.fromFile(frameElementMapFilename);
 
 		final Decoding decoder = Decoding.fromFile(argModelFilename, alphabetFilename);
 
@@ -157,8 +150,7 @@ public class Semafor {
 				segmenter,
 				idModel,
 				decoder,
-				eventsFilename,
-				spansFilename);
+				argIdFeatureIndex);
 	}
 
 	public Semafor(Set<String> allRelatedWords,
@@ -166,17 +158,14 @@ public class Semafor {
 				   FEDict frameElementsForFrame,
 				   RoteSegmenter segmenter,
 				   GraphBasedFrameIdentifier idModel,
-				   Decoding decoder,
-				   String eventsFilename,
-				   String spansFilename) {
+				   Decoding decoder, Map<String, Integer> argIdFeatureIndex) {
 		this.allRelatedWords = allRelatedWords;
 		this.wordNetRelations = wordNetRelations;
 		this.frameElementsForFrame = frameElementsForFrame;
 		this.segmenter = segmenter;
 		this.idModel = idModel;
 		this.decoder = decoder;
-		this.eventsFilename = eventsFilename;
-		this.spansFilename = spansFilename;
+		this.argIdFeatureIndex = argIdFeatureIndex;
 	}
 
 	public void runParser(InputSupplier<? extends Readable> input, OutputSupplier<? extends Writer> outputSupplier)
@@ -247,10 +236,50 @@ public class Semafor {
 	}
 
 	public List<String> predictArgumentLines(Sentence sentence, List<String> idResult, int kBest) throws IOException {
-		final List<String> allLemmaTagsSentences =
-				ImmutableList.of(AllLemmaTags.makeLine(sentence.toAllLemmaTagsArray()));
-		return ParserDriver.identifyArguments(wordNetRelations, eventsFilename, spansFilename, decoder, 0, idResult,
-				allLemmaTagsSentences, kBest);
+		final List<FrameFeatures> frameFeaturesList = Lists.newArrayList();
+		for (String feLine : idResult) {
+			final DataPointWithFrameElements dataPoint = new DataPointWithFrameElements(sentence, feLine);
+			final String frame = dataPoint.getFrameName();
+			final DependencyParses parses = dataPoint.getParses();
+			final int targetStartTokenIdx = dataPoint.getTargetTokenIdxs()[0];
+			final int targetEndTokenIdx = dataPoint.getTargetTokenIdxs()[dataPoint.getTargetTokenIdxs().length - 1];
+			final List<SpanAndParseIdx> spans = DataPrep.findSpans(dataPoint, 1);
+			final List<String> frameElements = Lists.newArrayList(frameElementsForFrame.lookupFrameElements(frame));
+			final List<SpanAndCorrespondingFeatures[]> featuresAndSpanByArgument = Lists.newArrayList();
+			for (String frameElement : frameElements) {
+				final List<SpanAndCorrespondingFeatures> spansAndFeatures = Lists.newArrayList();
+				for (SpanAndParseIdx candidateSpanAndParseIdx : spans) {
+					final Range0Based span = candidateSpanAndParseIdx.span;
+					final DependencyParse parse = parses.get(candidateSpanAndParseIdx.parseIdx);
+					final List<String> featureSet =
+							Lists.newArrayList(FeatureExtractor.extractFeatures(dataPoint, frame, frameElement, span, parse).keySet());
+					final int[] featArray = convertToIdxs(featureSet);
+					spansAndFeatures.add(new SpanAndCorrespondingFeatures(new int[] {span.getStart(), span.getEnd()}, featArray));
+				}
+				featuresAndSpanByArgument.add(spansAndFeatures.toArray(new SpanAndCorrespondingFeatures[spansAndFeatures.size()]));
+			}
+			final FrameFeatures frameFeatures =
+					new FrameFeatures(frame,
+							targetStartTokenIdx,
+							targetEndTokenIdx,
+							frameElements,
+							featuresAndSpanByArgument);
+			frameFeaturesList.add(frameFeatures);
+		}
+		return decoder.decodeAll(frameFeaturesList, idResult, 0, kBest);
+	}
+
+	private int[] convertToIdxs(List<String> featureSet) {
+		// convert feature names to feature indexes
+		final List<Integer> featureList = Lists.newArrayList();
+		for (String feature : featureSet) {
+			if (argIdFeatureIndex.containsKey(feature)) {
+				featureList.add(argIdFeatureIndex.get(feature));
+			}
+		}
+		final int[] featArray = new int[featureList.size()];
+		for (int i : xrange(featureList.size())) featArray[i] = featureList.get(i);
+		return featArray;
 	}
 
 	public SemaforParseResult getSemaforParseResult(Sentence sentence, List<String> results) {

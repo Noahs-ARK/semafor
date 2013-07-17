@@ -22,6 +22,7 @@
 package edu.cmu.cs.lti.ark.util.nlp.parse;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.util.Interner;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 
 
 /**
@@ -52,8 +54,8 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 
 	public String getSentence() {
 		return sentence;
-	}	
-	
+	}
+
 	/**
 	 * Sets the member variable 'sentence' to be the string of space-separated tokens
 	 */
@@ -64,7 +66,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 			headWords.add(node.getHeadWord());
 		}
 		sentence = Joiner.on(" ").join(headWords);
-	}	
+	}
 
 	/**
 	 * @param parts An array of five strings, each having \t separated tokens: <ul>
@@ -85,8 +87,8 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 	 * Returns a 3-dimensional array for the sentence:
 	 *  - The 1st dimension indexes the word within the sentence
 	 *  - The 2nd dimension indexes the type of annotation for the word (0 for the word, 1 for its POS, etc.)
-	 *  - The 3rd dimension indexes the annotation series; e.g., if there is a k-best list of POS taggings of the sentence, 
-	 *  	[0][1][0] will refer to the first word's POS tag in the best tagging, [0][1][1] in the second-best tagging, etc. 
+	 *  - The 3rd dimension indexes the annotation series; e.g., if there is a k-best list of POS taggings of the sentence,
+	 *  	[0][1][0] will refer to the first word's POS tag in the best tagging, [0][1][1] in the second-best tagging, etc.
 	 *  	The first form of annotation (words) is assumed to have only 1 series.
 	 * @param parts See {@link #buildParseTrees(String[], double)}
 	 * @return
@@ -102,16 +104,16 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 		String[][][] parseData = new String[count][6][];
 		for(int p = 0; p < 6; p ++) {
 			String[] series = parts[p].split("\t\\|\\|\t");	// series are separated by \t|\t
-			
+
 			for (int j=0; j<count; j++) parseData[j][p] = new String[series.length];
-			
+
 			for (int s=0; s<series.length; s++) {
 				st = new StringTokenizer(series[s],"\t");
 				if(st.countTokens()!=count) {
 					System.err.println("Problem. Count of line "+p+" (" + st.countTokens() + ") not equal to zeroth line (" + count + ").");
 					System.exit(0);
 				}
-				
+
 				// Iterate through words and update with this annotation series
 				for(int j=0; j<count; j++) {
 					parseData[j][p][s] = (String)Interner.globalIntern(st.nextToken());
@@ -122,7 +124,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 	}
 
 	/**
-	 * @return A pair of lists of nodes: the first being all left children of the current node, from left to right; 
+	 * @return A pair of lists of nodes: the first being all left children of the current node, from left to right;
 	 * and the second being all right children of the current node, also from left to right.
 	 */
 	public Pair<DependencyParse[],DependencyParse[]> getLeftAndRightChildren() {
@@ -152,8 +154,8 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 	}
 
 	/**
-	 * @return A pair of lists of nodes: the first being all left descendants of the current node, from left to right; 
-	 * and the second being all right descendants of the current node, also from left to right. If the parse is projective, 
+	 * @return A pair of lists of nodes: the first being all left descendants of the current node, from left to right;
+	 * and the second being all right descendants of the current node, also from left to right. If the parse is projective,
 	 * it follows that the left (right) descendants will be children of this node, or descendants of this node's left (right) children.
 	 */
 	public Pair<DependencyParse[],DependencyParse[]> getLeftAndRightDescendants() {
@@ -187,11 +189,11 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 		return getLeftAndRightDescendants().getSecond();
 	}
 
-	/** 
+	/**
 	 * Generates DependencyParse instances from string representations returned from a parser.
-	 * Currently assumes word tokens and POS/NER tags will each have 1 series associated with them, 
-	 * whereas dependency types and parent indices may have multiple (parallel) series corresponding to 
-	 * a k-best list of parses. 
+	 * Currently assumes word tokens and POS/NER tags will each have 1 series associated with them,
+	 * whereas dependency types and parent indices may have multiple (parallel) series corresponding to
+	 * a k-best list of parses.
 	 * @param parseData See {@link #initFive(String[])}
 	 * @param logProb
 	 * @return Array of k parse instances, in descending order of goodness
@@ -205,12 +207,12 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 
 		final int numParses = parseData[0][2].length;
 		DependencyParse[] parses = new DependencyParse[numParses];
-		
+
 		for(int p=0; p<parseData[0][2].length; p++) {
-			
+
 			ArrayList<DependencyParse> list = new ArrayList<DependencyParse>();
 			ArrayList<DependencyParse> headWords = new ArrayList<DependencyParse>();
-			
+
 			DependencyParse dummyRoot = new DependencyParse();
 			dummyRoot.setParent(null);
 			dummyRoot.setIndex(0);
@@ -222,8 +224,8 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 			dummyRoot.setNE(DependencyParse.NULL_TAG);
 			dummyRoot.setDepth(0);
 			dummyRoot.setLogProb(logProb);
-			dummyRoot.setHeadWord(DependencyParse.NULL_WORD);	
-			
+			dummyRoot.setHeadWord(DependencyParse.NULL_WORD);
+
 			for(int j = 0; j < len; j ++) {
 				DependencyParse dp = new DependencyParse();
 				dp.setWord(parseData[j][0][0]);
@@ -231,13 +233,13 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 				dp.setNE(parseData[j][4][0]);
 				dp.setLemma(parseData[j][5][0]);
 				dp.setIndex(j+1);
-				
+
 				int parentIndex = Integer.parseInt(parseData[j][3][p]);
 				dp.setParentIndex(parentIndex);
 				dp.setLabelType(parseData[j][2][p]);
-				
+
 				dp.setHeadWord(parseData[j][0][0]);
-				
+
 				if(parentIndex==0) {
 					dp.setParent(dummyRoot);
 					headWords.add(dp);
@@ -245,25 +247,25 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 				else
 					list.add(dp);
 			}
-			
+
 			dummyRoot.setChildren(headWords);
 			if(headWords.size()==0) {
 				throw new RuntimeException("Head word size cannot be 0.");
 			}
-			
+
 			for(DependencyParse head : headWords) {
 				head.setDepth(1);
 				processChildren(list, head);
 			}
-				
+
 			parses[p] = dummyRoot;
 		}
-	
+
 		return parses;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param parseData
 	 * @param logProb
 	 * @return
@@ -272,7 +274,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 		final int len = parseData[0].length;
 		ArrayList<DependencyParse> list = new ArrayList<DependencyParse>();
 		ArrayList<DependencyParse> headWords = new ArrayList<DependencyParse>();
-		
+
 		DependencyParse dummyRoot = new DependencyParse();
 		dummyRoot.setParent(null);
 		dummyRoot.setIndex(0);
@@ -283,8 +285,8 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 		dummyRoot.setNE(DependencyParse.NULL_TAG);
 		dummyRoot.setDepth(0);
 		dummyRoot.setLogProb(logProb);
-		dummyRoot.setHeadWord(DependencyParse.NULL_WORD);	
-		
+		dummyRoot.setHeadWord(DependencyParse.NULL_WORD);
+
 		for(int j = 0; j < len; j ++) {
 			DependencyParse dp = new DependencyParse();
 			dp.setWord(parseData[0][j]);
@@ -302,7 +304,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 				list.add(dp);
 			}
 		}
-		
+
 		dummyRoot.setChildren(headWords);
 		if(headWords.isEmpty()) {
 			throw new RuntimeException("Head word size cannot be 0.");
@@ -318,7 +320,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 		int parentIndex = parent.getIndex();
 		int parentLevel = parent.getDepth();
 		ArrayList<DependencyParse> children = new ArrayList<DependencyParse>();
-		
+
 		for(DependencyParse dp : list) {
 			if(dp.getParentIndex() == parentIndex) {
 				dp.setParent(parent);
@@ -336,7 +338,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 	public DependencyParse[] getIndexSortedListOfNodes() {
 		return sortNodesByIndex(getDescendants(true));
 	}
-	
+
 	public static DependencyParse[] sortNodesByIndex(List<DependencyParse> nodes) {
 		DependencyParse[] nodeArray = nodes.toArray(new DependencyParse[nodes.size()]);
 		Arrays.sort(nodeArray, indexComparator);
@@ -360,7 +362,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 		}
 		return DependencyParse.getHeuristicHead(parseNodes, tokenNums);
 	}
-	
+
 	/**
 	 * @param parseNodes All the nodes in the parse
 	 * @param tokenNums Numbers indexing nodes whose common "head" is to be found
@@ -378,20 +380,20 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 			DependencyParse internalNode = parseNodes[tokenNum + 1];
 			listOfParents.add(internalNode.getParentIndex());
 			fragment += internalNode.getWord() + " ";
-		}			
+		}
 		fragment=fragment.trim();
 		int size = listOfParents.size();
 		ArrayList<Integer> internalNodesWithExternalParents = new ArrayList<Integer>();
 		for(int j = 0; j < size; j ++) {
 			int parentIndex = listOfParents.get(j)-1;
-			
+
 			// Check whether the candidate "head" is outside the span
 			boolean isExternalParent = false;
 			if(parentIndex>tokenNums[tokenNums.length-1])
 				isExternalParent = true;
 			else if(parentIndex<tokenNums[0])
 				isExternalParent = true;
-			
+
 			if(isExternalParent)
 				internalNodesWithExternalParents.add(tokenNums[j]+1);
 		}
@@ -411,8 +413,50 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 		if(fragment.contains("of")&&firstNode.getPOS().startsWith("N")) return firstNode;
 		return lastNode;
 	}
-	
+
 	public String toString() {
 		return Integer.toString(index) + ":" + word + "(^=" + Integer.toString(getParent().index) + ":" + getParent().word + ")";
+	}
+
+	/**
+	 * Calculates the list of constituents spans based on the given dependency parse.
+	 * A constituent span is a token and all of its descendants.
+	 * Ranges are 0-based, and include both endpoints.
+	 *
+	 * @return the list of constituents in parse. results.get(i) is the span headed by token i.
+	 */
+	public List<Range0Based> getConstituents() {
+		final DependencyParse[] nodes = getIndexSortedListOfNodes();
+		final int length = nodes.length - 1;
+		// left[i] is the index of the left-most descendant of i
+		int left[] = new int[length];
+		// right[i] is the index of the right-most descendant of i
+		int right[] = new int[length];
+		// translate parent indices from 1-based to 0-based
+		int[] parent = new int[length];
+		for (int i : xrange(length)) {
+			parent[i] = (nodes[i+1].getParentIndex() - 1);
+			left[i] = i;
+			right[i] = i;
+		}
+
+		// for each node i, expand i's ancestors' spans to include i
+		for (int i : xrange(length)) {
+			int parentIndex = parent[i];
+			while (parentIndex >= 0) {
+				if (left[parentIndex] > i) {
+					left[parentIndex] = i;
+				}
+				if (right[parentIndex] < i) {
+					right[parentIndex] = i;
+				}
+				parentIndex = parent[parentIndex];
+			}
+		}
+		ImmutableList.Builder<Range0Based> results = ImmutableList.builder();
+		for(int i : xrange(length)) {
+			results.add(new Range0Based(left[i], right[i]));
+		}
+		return results.build();
 	}
 }

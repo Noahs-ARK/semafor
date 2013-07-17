@@ -74,7 +74,6 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4000m -Xmx4000m \
     false \
     1 \
     null \
-    ${datadir}/framenet.frame.element.map \
     false \
     ${datadir}/validStartEndPOS
 

@@ -94,7 +94,7 @@ public class ParserDriver {
 			mstPort = options.mstServerPort.get();
 		}
 		/* Initializing WordNet */
-		final WordNetRelations wnr = new WordNetRelations();
+		final WordNetRelations wnr = WordNetRelations.getInstance();
 		/* Opening POS tagged file */
 		final String posFile = options.posTaggedFile.get();
 		final String tokenizedFile = options.testTokenizedFile.get();
@@ -175,7 +175,7 @@ public class ParserDriver {
 		// initializing argument identification
 		// reading requires and excludes map
 		System.err.println("Initializing alphabet for argument identification..");
-		CreateAlphabet.setDataFileNames(alphabetFilename, fedictFilename, eventsFilename, spansFilename);
+		CreateAlphabet.setDataFileNames(alphabetFilename, eventsFilename, spansFilename);
 		final Decoding decoding =
 				getDecoding(decodingType, modelFilename, alphabetFilename, requiresMapFile, excludesMapFile);
 
@@ -229,7 +229,7 @@ public class ParserDriver {
 
 			// argument identification
 			final List<String> argResult =
-					identifyArguments(wnr, eventsFilename, spansFilename, decoding, count, idResult,
+					identifyArguments(eventsFilename, spansFilename, decoding, count, idResult,
 							allLemmaTagsSentences, kBestOutput);
 			for (String result: argResult) {
 				outputWriter.write(result + "\n");
@@ -291,17 +291,16 @@ public class ParserDriver {
 		return segments;
 	}
 
-	public static List<String> identifyArguments(WordNetRelations wnr,
-												  String eventsFilename,
-												  String spansFilename,
-												  Decoding decoding,
-												  int count,
-												  List<String> idResult,
-												  List<String> allLemmaTagsSentences,
-												  int kBestOutput) throws IOException {
-		CreateAlphabet.run(false, allLemmaTagsSentences, idResult, wnr);
+	public static List<String> identifyArguments(String eventsFilename,
+												 String spansFilename,
+												 Decoding decoding,
+												 int count,
+												 List<String> idResult,
+												 List<String> allLemmaTagsSentences,
+												 int kBestOutput) throws IOException {
+		CreateAlphabet.run(false, allLemmaTagsSentences, idResult);
 		final LocalFeatureReading lfr = new LocalFeatureReading(eventsFilename, spansFilename, idResult);
-		final ArrayList<FrameFeatures> frameFeaturesList = lfr.readLocalFeatures();
+		final List<FrameFeatures> frameFeaturesList = lfr.readLocalFeatures();
 		return decoding.decodeAll(frameFeaturesList, idResult, count, kBestOutput);
 	}
 

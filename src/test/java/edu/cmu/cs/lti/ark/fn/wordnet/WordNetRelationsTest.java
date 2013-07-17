@@ -9,7 +9,7 @@ import org.junit.Test;
 public class WordNetRelationsTest {
 	@Test
 	public void testWordIsLowercased() throws Exception {
-		final WordNetRelations wordNetRelations = new WordNetRelations();
+		final WordNetRelations wordNetRelations = WordNetRelations.getInstance();
 		final String lemma = wordNetRelations.getLemma("Nuclear", "A");
 		Assert.assertEquals("nuclear", lemma);
 	}

@@ -22,22 +22,16 @@
 
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import edu.cmu.cs.lti.ark.fn.utils.BitOps;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
-import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
 
 public class DDDecoding implements JDecoding {
 	private Map<String, Set<Pair<String, String>>> excludesMap;
@@ -169,7 +163,7 @@ public class DDDecoding implements JDecoding {
 		
 		// adding costs to the objVals for cost augmented decoding
 		if (costAugmented) {
-			ArrayList<String> fes = goldFF.fElements;
+			List<String> fes = goldFF.fElements;
 			for (int i = 0; i < fes.size(); i++) {
 				String fe = fes.get(i);
 				int index = Arrays.binarySearch(keys, fe);
@@ -178,7 +172,7 @@ public class DDDecoding implements JDecoding {
 					System.exit(-1);
 				}
 				Pair<int[], Double>[] arr = scoreMap.get(keys[index]);
-				int[] goldSpan = goldFF.fElementSpansAndFeatures.get(i)[goldFF.fGoldSpans.get(i)].span; 
+				int[] goldSpan = goldFF.fElementSpansAndFeatures.get(i)[goldFF.goldSpanIdxs.get(i)].span;
 				for (int j = 0; j < arr.length; j++) {
 					if (arr[j].getFirst()[0] == goldSpan[0] && 
 					    arr[j].getFirst()[1] == goldSpan[1]) {

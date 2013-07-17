@@ -83,8 +83,8 @@ public class JointDecoding extends Decoding {
 			getDecodedMap(FrameFeatures mFF, double[] w, boolean costAugmented, FrameFeatures goldFF) {
 		String frameName = mFF.frameName;
 		System.out.println("Frame:"+frameName);
-		ArrayList<SpanAndCorrespondingFeatures[]> featsList = mFF.fElementSpansAndFeatures;
-		ArrayList<String> frameElements = mFF.fElements;
+		List<SpanAndCorrespondingFeatures[]> featsList = mFF.fElementSpansAndFeatures;
+		List<String> frameElements = mFF.fElements;
 		int listSize = featsList.size();
 		// maps each FE to a list of spans and their corresponding scores
 		Map<String,Pair<int[], Double>[]> vs = 
