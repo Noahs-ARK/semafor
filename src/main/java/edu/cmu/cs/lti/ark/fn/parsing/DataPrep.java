@@ -305,13 +305,6 @@ public class DataPrep {
 		return featArray;
 	}
 
-	// loads a list of features into a hash
-	public static Map<String, Integer> loadFeatureIndex(String alphabetFilename) throws FileNotFoundException {
-		featureIndex = readFeatureIndex(new File(alphabetFilename));
-		genAlpha = false;
-		return featureIndex;
-	}
-
 	public static Map<String, Integer> readFeatureIndex(File alphabetFile) throws FileNotFoundException {
 		HashMap<String, Integer> featureIndex = Maps.newHashMap();
 		final FileInputStream inputStream = new FileInputStream(alphabetFile);

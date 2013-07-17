@@ -61,7 +61,7 @@ public class CreateAlphabet {
 		FEFileName.alphafilename = alphafilename;
 		FEFileName.spanfilename = spansFile;
 		FEFileName.eventFilename = eventsFile;
-		DataPrep.loadFeatureIndex(FEFileName.alphafilename);
+		DataPrep.featureIndex = DataPrep.readFeatureIndex(new File(FEFileName.alphafilename));
 		DataPrep.genAlpha = false;
 	}
 
@@ -74,7 +74,7 @@ public class CreateAlphabet {
 		} else if(DataPrep.featureIndex == null){
 			System.err.println("Reading alphabet...");
 			long time = System.currentTimeMillis();
-			DataPrep.loadFeatureIndex(FEFileName.alphafilename);
+			DataPrep.featureIndex = DataPrep.readFeatureIndex(new File(FEFileName.alphafilename));
 			System.err.println("Read alphabet in "+(System.currentTimeMillis()-time) + " millis.");
 		}
 		DataPrep.genAlpha = doGenerateAlphabet;

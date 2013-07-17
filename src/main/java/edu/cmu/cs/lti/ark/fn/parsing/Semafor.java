@@ -23,7 +23,6 @@ package edu.cmu.cs.lti.ark.fn.parsing;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
@@ -87,12 +86,10 @@ public class Semafor {
 		final FNModelOptions options = new FNModelOptions(args);
 		final String modelDirectory = options.modelDirectory.get();
 		final int port = options.port.get();
-		final File tempDirectory = Files.createTempDir();
-		tempDirectory.deleteOnExit();
-		runSocketServer(modelDirectory, tempDirectory, port);
+		runSocketServer(modelDirectory, port);
 	}
 
-	public static void runSocketServer(String modelDirectory, File tempDirectory, int port)
+	public static void runSocketServer(String modelDirectory, int port)
 			throws URISyntaxException, IOException, ClassNotFoundException {
 		final Semafor server = getSemaforInstance(modelDirectory);
 		// Set up socket server
