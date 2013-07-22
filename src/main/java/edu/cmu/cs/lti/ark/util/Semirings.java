@@ -21,21 +21,14 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.util;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.path.Path;
 import edu.cmu.cs.lti.ark.util.optimization.LDouble;
+import edu.cmu.cs.lti.ark.util.optimization.LDouble.IdentityElement;
 import edu.cmu.cs.lti.ark.util.optimization.LogFormula;
 import edu.cmu.cs.lti.ark.util.optimization.LogMath;
-import edu.cmu.cs.lti.ark.util.optimization.LogModel;
-import edu.cmu.cs.lti.ark.util.optimization.LDouble.IdentityElement;
-import edu.cmu.cs.lti.ark.util.optimization.LogFormula.Op;
+
+import java.util.*;
 
 /**
  * Represents operations and semirings.

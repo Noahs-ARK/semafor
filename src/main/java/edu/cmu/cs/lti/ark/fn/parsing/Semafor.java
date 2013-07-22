@@ -21,8 +21,12 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Queues;
+import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
@@ -35,22 +39,23 @@ import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.fn.segmentation.RoteSegmenter;
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
-import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
+import edu.cmu.cs.lti.ark.util.nlp.Lemmatizer;
+import edu.cmu.cs.lti.ark.util.nlp.MorphaLemmatizer;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParses;
-import gnu.trove.THashMap;
 
-import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.*;
 
-import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Lists.transform;
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec.ConllCodec;
@@ -59,6 +64,7 @@ import static edu.cmu.cs.lti.ark.fn.identification.FrameIdentificationRelease.ge
 import static edu.cmu.cs.lti.ark.fn.parsing.DataPrep.SpanAndParseIdx;
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 import static edu.cmu.cs.lti.ark.util.SerializedObjects.readObject;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.apache.commons.io.IOUtils.closeQuietly;
 
 public class Semafor {
@@ -70,47 +76,43 @@ public class Semafor {
 	private static final Joiner TAB = Joiner.on("\t");
 
 	protected final Set<String> allRelatedWords;
-	protected final WordNetRelations wordNetRelations;
 	protected final FEDict frameElementsForFrame;
 	protected final RoteSegmenter segmenter;
 	protected final GraphBasedFrameIdentifier idModel;
 	protected final Decoding decoder;
 	protected final Map<String, Integer> argIdFeatureIndex;
+	protected final Lemmatizer lemmatizer = new MorphaLemmatizer();
 
 	/**
-	 *  required flags:
-	 *  model-dir
-	 *  port
+	 * required flags:
+	 * model-dir
+	 * input-file
+	 * output-file
 	 */
 	public static void main(String[] args) throws Exception {
 		final FNModelOptions options = new FNModelOptions(args);
+		final File inputFile = new File(options.inputFile.get());
+		final File outputFile = new File(options.outputFile.get());
 		final String modelDirectory = options.modelDirectory.get();
-		final int port = options.port.get();
-		runSocketServer(modelDirectory, port);
+		final int numThreads = options.numThreads.present() ? options.numThreads.get() : 1;
+		final Semafor semafor = getSemaforInstance(modelDirectory);
+		semafor.runParser(
+				Files.newReaderSupplier(inputFile, Charsets.UTF_8),
+				Files.newWriterSupplier(outputFile, Charsets.UTF_8),
+				numThreads);
 	}
 
-	public static void runSocketServer(String modelDirectory, int port)
-			throws URISyntaxException, IOException, ClassNotFoundException {
-		final Semafor server = getSemaforInstance(modelDirectory);
-		// Set up socket server
-		final ServerSocket serverSocket = new ServerSocket(port);
-		System.err.println("Listening on port: " + port);
-		while (true) {
-			try {
-				final Socket clientSocket = serverSocket.accept();
-				final InputSupplier<InputStreamReader> inputSupplier = new InputSupplier<InputStreamReader>() {
-					@Override public InputStreamReader getInput() throws IOException {
-						return new InputStreamReader(clientSocket.getInputStream(), UTF_8);
-					} };
-				final OutputSupplier<OutputStreamWriter> outputSupplier = new OutputSupplier<OutputStreamWriter>() {
-					@Override public OutputStreamWriter getOutput() throws IOException {
-						return new OutputStreamWriter(clientSocket.getOutputStream(), UTF_8);
-					} };
-				server.runParser(inputSupplier, outputSupplier);
-			} catch (Exception e) {
-				e.printStackTrace(System.err);
-			}
-		}
+	public Semafor(Set<String> allRelatedWords,
+				   FEDict frameElementsForFrame,
+				   RoteSegmenter segmenter,
+				   GraphBasedFrameIdentifier idModel,
+				   Decoding decoder, Map<String, Integer> argIdFeatureIndex) {
+		this.allRelatedWords = allRelatedWords;
+		this.frameElementsForFrame = frameElementsForFrame;
+		this.segmenter = segmenter;
+		this.idModel = idModel;
+		this.decoder = decoder;
+		this.argIdFeatureIndex = argIdFeatureIndex;
 	}
 
 	public static Semafor getSemaforInstance(String modelDirectory)
@@ -119,30 +121,16 @@ public class Semafor {
 		final String alphabetFilename = new File(modelDirectory, ALPHABET_FILENAME).getAbsolutePath();
 		final String frameElementMapFilename = new File(modelDirectory, FRAME_ELEMENT_MAP_FILENAME).getAbsolutePath();
 		final String argModelFilename = new File(modelDirectory, ARG_MODEL_FILENAME).getAbsolutePath();
-
 		// unpack required data
 		final RequiredDataForFrameIdentification r = readObject(requiredDataFilename);
 		final Set<String> allRelatedWords = r.getAllRelatedWords();
-
-		/* Initializing WordNet */
-		final WordNetRelations wordNetRelations = WordNetRelations.getInstance();
-		final Map<String, Set<String>> relatedWordsForWord = r.getRelatedWordsForWord();
-		final Map<String, THashMap<String, Set<String>>> wordNetMap = r.getWordNetMap();
-		wordNetRelations.setRelatedWordsForWord(relatedWordsForWord);
-		wordNetRelations.setWordNetMap(wordNetMap);
-
 		final GraphBasedFrameIdentifier idModel = GraphBasedFrameIdentifier.getInstance(modelDirectory);
-
 		final RoteSegmenter segmenter = new RoteSegmenter(allRelatedWords);
-
 		System.err.println("Initializing alphabet for argument identification..");
 		final Map<String, Integer> argIdFeatureIndex = DataPrep.readFeatureIndex(new File(alphabetFilename));
 		final FEDict frameElementsForFrame = FEDict.fromFile(frameElementMapFilename);
-
 		final Decoding decoder = Decoding.fromFile(argModelFilename, alphabetFilename);
-
 		return new Semafor(allRelatedWords,
-				wordNetRelations,
 				frameElementsForFrame,
 				segmenter,
 				idModel,
@@ -150,34 +138,89 @@ public class Semafor {
 				argIdFeatureIndex);
 	}
 
-	public Semafor(Set<String> allRelatedWords,
-				   WordNetRelations wordNetRelations,
-				   FEDict frameElementsForFrame,
-				   RoteSegmenter segmenter,
-				   GraphBasedFrameIdentifier idModel,
-				   Decoding decoder, Map<String, Integer> argIdFeatureIndex) {
-		this.allRelatedWords = allRelatedWords;
-		this.wordNetRelations = wordNetRelations;
-		this.frameElementsForFrame = frameElementsForFrame;
-		this.segmenter = segmenter;
-		this.idModel = idModel;
-		this.decoder = decoder;
-		this.argIdFeatureIndex = argIdFeatureIndex;
-	}
+	/**
+	 * Reads conll sentences, parses them, and writes the json-serialized results.
+	 *
+	 * @param inputSupplier where to read conll sentences from
+	 * @param outputSupplier where to write the results to
+	 * @param numThreads the number of threads to use
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
+	public void runParser(final InputSupplier<? extends Readable> inputSupplier,
+						  final OutputSupplier<? extends Writer> outputSupplier,
+						  final int numThreads)
+			throws IOException, InterruptedException {
+		// use the producer-worker-consumer pattern to parse all sentences in multiple threads, while keeping
+		// output in order.
+		final BlockingQueue<Future<Optional<SemaforParseResult>>> results =
+				Queues.newLinkedBlockingDeque(5 * numThreads);
+		final ExecutorService workerThreadPool = newFixedThreadPool(numThreads);
+		// try to shutdown gracefully. don't worry too much if it doesn't work
+		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+			@Override public void run() {
+				try {
+					workerThreadPool.shutdown();
+					workerThreadPool.awaitTermination(5, TimeUnit.SECONDS);
+				} catch (InterruptedException ignored) { }
+			} }));
 
-	public void runParser(InputSupplier<? extends Readable> input, OutputSupplier<? extends Writer> outputSupplier)
-			throws IOException {
-		final SentenceCodec.SentenceIterator sentences = ConllCodec.readInput(input.getInput());
+		final PrintWriter output = new PrintWriter(outputSupplier.getOutput());
 		try {
-			final PrintWriter output = new PrintWriter(outputSupplier.getOutput());
+			// Start thread to fetch computed results and write to file
+			final Thread consumer = new Thread(new Runnable() {
+				@Override public void run() {
+					while (!Thread.currentThread().isInterrupted()) {
+						try {
+							System.out.println("fetching result");
+							final Optional<SemaforParseResult> oResult = results.take().get();
+							if (!oResult.isPresent()) break; // got poison pill. we're done
+							System.out.println("Writing result");
+							output.println(oResult.get().toJson());
+							output.flush();
+						} catch (Exception e) {
+							e.printStackTrace();
+							throw new RuntimeException(e);
+						}
+					}
+					System.out.println("Done.");
+				} });
+			consumer.start();
+			// in main thread, put placeholders on results queue (so results stay in order), then
+			// tell a worker thread to fill up the placeholder
+			final SentenceCodec.SentenceIterator sentences = ConllCodec.readInput(inputSupplier.getInput());
 			try {
+				int i = 0;
 				while (sentences.hasNext()) {
-					final SemaforParseResult result = parseSentence(sentences.next());
-					output.println(result.toJson());
-					output.flush();
+					final Sentence sentence = sentences.next();
+					System.out.println("submitting sentence " + i);
+					final int sentenceId = i;
+					results.put(workerThreadPool.submit(new Callable<Optional<SemaforParseResult>>() {
+						@Override public Optional<SemaforParseResult> call() throws Exception {
+							System.out.println("parsing sentence " + sentenceId);
+							final long start = System.currentTimeMillis();
+							try {
+								final SemaforParseResult result = parseSentence(sentence);
+								final long end = System.currentTimeMillis();
+								System.out.println("parsed sentence " + sentenceId + " in " + (end - start) + " millis.");
+								return Optional.of(result);
+							} catch (Exception e) {
+								e.printStackTrace();
+								throw e;
+							}
+						} }));
+					i++;
 				}
-			} finally { closeQuietly(output); }
-		} finally { closeQuietly(sentences); }
+				// put a poison pill on the queue to signal that we're done
+				results.put(workerThreadPool.submit(new Callable<Optional<SemaforParseResult>>() {
+					@Override public Optional<SemaforParseResult> call() throws Exception {
+						return Optional.absent();
+					} }));
+				workerThreadPool.shutdown();
+			} finally { closeQuietly(sentences); }
+			// wait for consumer to finish
+			consumer.join();
+		} finally { closeQuietly(output); }
 	}
 
 	public SemaforParseResult parseSentence(Sentence unLemmatizedSentence) throws IOException {
@@ -234,6 +277,7 @@ public class Semafor {
 
 	public List<String> predictArgumentLines(Sentence sentence, List<String> idResult, int kBest) throws IOException {
 		final List<FrameFeatures> frameFeaturesList = Lists.newArrayList();
+		final FeatureExtractor featureExtractor = new FeatureExtractor();
 		for (String feLine : idResult) {
 			final DataPointWithFrameElements dataPoint = new DataPointWithFrameElements(sentence, feLine);
 			final String frame = dataPoint.getFrameName();
@@ -249,7 +293,7 @@ public class Semafor {
 					final Range0Based span = candidateSpanAndParseIdx.span;
 					final DependencyParse parse = parses.get(candidateSpanAndParseIdx.parseIdx);
 					final List<String> featureSet =
-							Lists.newArrayList(FeatureExtractor.extractFeatures(dataPoint, frame, frameElement, span, parse).keySet());
+							Lists.newArrayList(featureExtractor.extractFeatures(dataPoint, frame, frameElement, span, parse).keySet());
 					final int[] featArray = convertToIdxs(featureSet);
 					spansAndFeatures.add(new SpanAndCorrespondingFeatures(new int[] {span.getStart(), span.getEnd()}, featArray));
 				}
@@ -289,6 +333,6 @@ public class Semafor {
 	}
 
 	public Sentence addLemmas(Sentence sentence) {
-		return wordNetRelations.addLemmas(sentence);
+		return lemmatizer.addLemmas(sentence);
 	}
 }

@@ -45,9 +45,8 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
-import static com.aliasi.util.Math.sum;
-
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
+import static edu.cmu.cs.lti.ark.util.Math2.sum;
 
 
 public class TrainBatch {
@@ -83,7 +82,6 @@ public class TrainBatch {
 	final double[] tValues;
 	private final boolean usePartialCreditCosts;
 	private float costMultiple;
-	private final double oneOverN;
 
 	public static void main(String[] args) throws Exception {
 		final FNModelOptions options = new FNModelOptions(args);
@@ -122,7 +120,6 @@ public class TrainBatch {
 		logger.info(String.format("Number of features: %d", modelSize));
 		this.modelFile = modelFile;
 		this.eventFiles = getEventFiles(new File(eventsDir));
-		this.oneOverN = 1.0 / this.eventFiles.size();
 		this.useL1Regularization = reg.toLowerCase().equals("l1");
 		this.useL2Regularization = reg.toLowerCase().equals("l2");
 		this.lambda = lambda;

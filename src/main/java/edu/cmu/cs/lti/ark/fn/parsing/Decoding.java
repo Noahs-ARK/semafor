@@ -156,7 +156,7 @@ public class Decoding {
 		return modelWeights;
 	}
 
-	public ArrayList<String> decodeAll(List<FrameFeatures> frameFeaturesList, List<String> frameLines, int offset, int kBestOutput) {
+	public List<String> decodeAll(List<FrameFeatures> frameFeaturesList, List<String> frameLines, int offset, int kBestOutput) {
 		final ArrayList<String> results = new ArrayList<String>();
 		for(int i = 0; i < frameFeaturesList.size(); i++) {
 			final FrameFeatures frameFeatures = frameFeaturesList.get(i);

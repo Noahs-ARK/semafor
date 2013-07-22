@@ -20,63 +20,32 @@
  * with SEMAFOR 2.0.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.utils;
-import edu.cmu.cs.lti.ark.fn.parsing.CustomOptions;
-import edu.cmu.cs.lti.ark.fn.wordnet.WordNetRelations;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import edu.cmu.cs.lti.ark.fn.parsing.CustomOptions;
+import edu.cmu.cs.lti.ark.util.nlp.Lemmatizer;
+import edu.cmu.cs.lti.ark.util.nlp.MorphaLemmatizer;
+
+import java.io.*;
 import java.net.URISyntaxException;
 import java.util.Scanner;
+
+import static org.apache.commons.io.IOUtils.closeQuietly;
 
 public class LemmatizeStuff {
 	public static String infilename = "semeval.fulldev.sentences.all.tags";
 	public static String outfilename = "semeval.fulldev.sentences.lemma.tags";
-	public static WordNetRelations wnr;
-	public static String stopWordsFile = "stopwords.txt";
-	public static String wnConfigFile = "file_properties.xml";
-	public static final String STOP_WORDS = "stopWords";
-	public static final String WN_XML = "wnXML";
+	private static Lemmatizer lemmatizer = new MorphaLemmatizer();
 	public static final String IN_FILE = "in";
 	public static final String OUT_FILE = "out";
 
-	public static void main(String[] args) throws URISyntaxException {
+	public static void main(String[] args) throws URISyntaxException, FileNotFoundException {
 		CustomOptions options = new CustomOptions(args);
-		if(options.isPresent(STOP_WORDS)) {
-			stopWordsFile = options.get(STOP_WORDS);
-		}
-		if(options.isPresent(WN_XML)) {
-			wnConfigFile = options.get(WN_XML);
-		}
 		if(options.isPresent(IN_FILE)) {
 			infilename = options.get(IN_FILE);
 		}
 		if(options.isPresent(OUT_FILE)) {
 			outfilename = options.get(OUT_FILE);
 		}
-		wnr = WordNetRelations.getInstance();
-		run();
-	}
-
-	/**
-	 * Reads sentences from infile, in the format
-	 * n   word_1    ...   word_n    ...{other_stuff}...
-	 * and writes them with their lemmatized versions appended to outfile in the format
-	 * n   word_1    ...   word_n    ...{other_stuff}...   lemma_1   ...   lemma_n
-	 *
-	 * @param stopFile path to a file containing a list of stopwords, one per line
-	 * @param wnFile path to the file containing the wordnet map, as created by
-	 * 				 {@link edu.cmu.cs.lti.ark.fn.identification.training.RequiredDataCreation}
-	 * @param infile path to a file containing the input sentences
-	 * @param outfile path to file to which to write
-	 */
-	public static void lemmatize(String stopFile, String wnFile, String infile, String outfile) {
-		stopWordsFile = stopFile;
-		wnConfigFile = wnFile;
-		infilename = infile;
-		outfilename = outfile;
-		wnr = new WordNetRelations(stopWordsFile, wnConfigFile);
 		run();
 	}
 
@@ -89,32 +58,27 @@ public class LemmatizeStuff {
 	 * @param infile path to a file containing the input sentences
 	 * @param outfile path to file to which to write
 	 */
-	public static void lemmatize(String infile, String outfile) throws URISyntaxException {
+	public static void lemmatize(String infile, String outfile) throws FileNotFoundException {
 		infilename = infile;
 		outfilename = outfile;
-		wnr = WordNetRelations.getInstance();
 		run();
 	}
 
-	private static void run() {
-		Scanner sc = null;
-		PrintStream ps = null;
-		try {
-			sc = new Scanner(new FileInputStream(infilename));
-			ps = new PrintStream(new FileOutputStream (outfilename));
-		} catch (IOException ioe){
-			System.out.println(ioe.getMessage());
-		}
+	private static void run() throws FileNotFoundException {
+		Scanner sc = new Scanner(new FileInputStream(infilename));
+		PrintStream ps = new PrintStream(new FileOutputStream (outfilename));
 		while(sc.hasNextLine()) {
 			String line = sc.nextLine();
 			ps.print(line + "\t");
 			String[] toks = line.trim().split("\\s");
 			int sentLen = Integer.parseInt(toks[0]);
 			for(int i = 0; i < sentLen; i++) {
-				String lemma = wnr.getLemma(toks[i + 1].toLowerCase(), toks[i + 1 + sentLen]);
+				String lemma = lemmatizer.getLemma(toks[i + 1].toLowerCase(), toks[i + 1 + sentLen]);
 				ps.print(lemma + "\t");
 			}
 			ps.println();
 		}
+		sc.close();
+		closeQuietly(ps);
 	}
 }

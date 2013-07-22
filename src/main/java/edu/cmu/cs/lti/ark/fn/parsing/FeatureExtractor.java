@@ -21,7 +21,7 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import de.saar.coli.salsa.reiter.framenet.FrameElement;
+import com.google.common.base.Joiner;
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
@@ -29,9 +29,10 @@ import edu.cmu.cs.lti.ark.util.ds.Range1Based;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 
-import java.util.Arrays;
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.List;
-import java.util.StringTokenizer;
+
+import static edu.cmu.cs.lti.ark.fn.parsing.FeatureExtractor.ConjoinLevel.*;
 
 /**
  * Extract features for the parsing model. Based on FeatureExtractor for the
@@ -42,70 +43,63 @@ import java.util.StringTokenizer;
  * @see CandidateFrameElementFilters
  * @see edu.cmu.cs.lti.ark.fn.identification.IdFeatureExtractor
  */
-public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<FeatureExtractor.ArgumentCandidate> {
-	public static final String PASSIVE = "PAS";
-	public static final String ACTIVE = "ACT";
-	public static final String NONE = "";
-	protected static IntCounter<String> featureMap;
-	protected static String frameName;
-	protected static String roleName;
+@NotThreadSafe
+public class FeatureExtractor {
+	private static final Joiner UNDERSCORE = Joiner.on("_");
 
-	public class ArgumentCandidate {
-		DataPointWithFrameElements dp;
-		String frameName;
-		FrameElement fe;
-		/** Only needs to be specified if {@code fe} is {@code null} */
-		String roleName;
-		Range0Based fillerSpanRange;
-		DependencyParse selectedParse;
+	protected enum ConjoinLevel {
+		FRAME_AND_ROLE_NAME,
+		ROLE_NAME,
+		NO_CONJOIN
 	}
+
+	protected enum Voice {
+		PASSIVE("PAS"),
+		ACTIVE("ACT"),
+		NO_VOICE("");
+
+		private final String name;
+
+		Voice(String name) {
+			this.name = name;
+		}
+
+		@Override
+		public String toString() {
+			return name;
+		}
+	}
+
+	protected String frameName;
+	protected String roleName;
 
 	/**
 	 * @param featureName feature to add
-	 * @param comb an integer indicating the combination with role name and frame name.
-	 * 2 for frame and role name
-	 * 1 for role name
-	 * 0 for none
+	 * @param level indicates whether to conjoin with role name and/or frame name.
 	 */
-	protected static void $(String featureName, int comb) {
-		switch(comb) {
-			case 2:
-			String frameAndRoleName = frameName + "." + roleName;
-			featureMap.increment(featureName + "_" + frameAndRoleName);
-
-			//intentional fall through
-
-			case 1:
-				featureMap.increment(featureName + "_" + roleName);
-			case 0:
+	protected void conjoinAndIncrement(IntCounter<String> featureMap, String featureName, ConjoinLevel level) {
+		switch(level) {
+			case FRAME_AND_ROLE_NAME:
+				String frameAndRoleName = frameName + "." + roleName;
+				featureMap.increment(UNDERSCORE.join(featureName, frameAndRoleName));
+				//intentional fall through
+			case ROLE_NAME:
+				featureMap.increment(UNDERSCORE.join(featureName, roleName));
+			case NO_CONJOIN:
 				featureMap.increment(featureName);
 			default:
 				break;
 		}
 	}
 
-	public IntCounter<String> features(ArgumentCandidate arg) {
-		if (arg.fe!=null)
-			return extractFeatures(arg.dp, arg.frameName, arg.fe, arg.fillerSpanRange, arg.selectedParse);
-		return extractFeatures(arg.dp, arg.frameName, arg.roleName, arg.fillerSpanRange, arg.selectedParse);
-	}
-	
-	public static IntCounter<String> extractFeatures(DataPointWithFrameElements dp,
-													 String frameName,
-													 FrameElement fe,
-													 Range0Based fillerSpanRange,
-													 DependencyParse selectedParse) {
-			return extractFeatures(dp,frameName,fe.getName(),fillerSpanRange, selectedParse);
-	}
-	
-	public static IntCounter<String> extractFeatures(DataPointWithFrameElements dp,
-													 String frameName,
-													 String roleName,
-													 Range0Based fillerSpanRange,
-													 DependencyParse parse) {
-		featureMap = new IntCounter<String>();
-		FeatureExtractor.frameName = frameName;
-		FeatureExtractor.roleName = roleName;
+	public IntCounter<String> extractFeatures(DataPointWithFrameElements dp,
+											  String frameName,
+											  String roleName,
+											  Range0Based fillerSpanRange,
+											  DependencyParse parse) {
+		final IntCounter<String> featureMap = new IntCounter<String>();
+		this.frameName = frameName;
+		this.roleName = roleName;
 		
 		int[] targetTokenNums = dp.getTargetTokenIdxs();
 
@@ -113,51 +107,50 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 		DependencyParse targetHeadNode = DependencyParse.getHeuristicHead(nodes, targetTokenNums);
 
 		String overtness = (CandidateFrameElementFilters.isEmptySpan(fillerSpanRange)) ? "NULL" : "OVERT";
-		$(overtness,2);	// overtness of the role
+		conjoinAndIncrement(featureMap, overtness, FRAME_AND_ROLE_NAME);	// overtness of the role
 		
-		String nullness = (CandidateFrameElementFilters.isEmptySpan(fillerSpanRange)) ? "NULL_" : "";
+		String nullness = CandidateFrameElementFilters.isEmptySpan(fillerSpanRange) ? "NULL_" : "";
 
 		for (int targetTokenNum : targetTokenNums) {
-			String voice = findVoice(nodes[targetTokenNum + 1]);
-			$(nullness + "targetLemma_"
-					+ nodes[targetTokenNum + 1].getLemma(), 2);
-			$(nullness + "targetLemma_"
+			final Voice voice = findVoice(nodes[targetTokenNum + 1]);
+			conjoinAndIncrement(featureMap, nullness + "targetLemma_"
+					+ nodes[targetTokenNum + 1].getLemma(), FRAME_AND_ROLE_NAME);
+			conjoinAndIncrement(featureMap, nullness + "targetLemma_"
 					+ nodes[targetTokenNum + 1].getLemma() + "_"
-					+ voice, 1);
-			$(nullness + "targetPOS_"
-					+ nodes[targetTokenNum + 1].getPOS(), 2);
+					+ voice, ROLE_NAME);
+			conjoinAndIncrement(featureMap, nullness + "targetPOS_"
+					+ nodes[targetTokenNum + 1].getPOS(), FRAME_AND_ROLE_NAME);
 		}
 		
 
 		List<DependencyParse> tgtChildren = targetHeadNode.getChildren();
-		$(nullness+"NCHILDREN_" + tgtChildren.size(),2);	// number of children
+		conjoinAndIncrement(featureMap, nullness + "NCHILDREN_" + tgtChildren.size(), FRAME_AND_ROLE_NAME);	// number of children
 
 		// Dependency subcategorization
 		String dsubcat = "";
 		if (tgtChildren.size() > 0) {
 			for (DependencyParse dpn : tgtChildren) {
 				dsubcat += dpn.getLabelType() + "_";
-				$(nullness+"SUBCAT_" + dpn.getLabelType(),1);
+				conjoinAndIncrement(featureMap, nullness + "SUBCAT_" + dpn.getLabelType(), ROLE_NAME);
 			}
-			$(nullness+"SUBCATSEQ" + dsubcat,1);
+			conjoinAndIncrement(featureMap, nullness + "SUBCATSEQ" + dsubcat, ROLE_NAME);
 		}
 		
 		
 		if (!CandidateFrameElementFilters.isEmptySpan(fillerSpanRange)) { // null span
 			 // lemma, POS tag, voice, and relative position (with respect to target)
 			 // of each word in the candidate span
-			extractChildPOSFeatures(dp, nodes, frameName, roleName,
-					fillerSpanRange);
+			extractChildPOSFeatures(featureMap, dp, nodes, fillerSpanRange);
 			DependencyParse fillerHeadNode = DependencyParse.getHeuristicHead(
 					nodes, fillerSpanRange);
-			List<Pair<String, DependencyParse>> targetToFillerPath = DependencyParse
-					.getPath(targetHeadNode, fillerHeadNode);
+			List<Pair<String, DependencyParse>> targetToFillerPath =
+					DependencyParse.getPath(targetHeadNode, fillerHeadNode);
 			int pathSize = targetToFillerPath.size();
 			String depTypePath = ""; // target's POS and dependency types on the
 			// path to the head of the filler
 			// To avoid feature explosion, only include paths of length <=7, and
 			// only include the dependency types if the path's length is <=5.  
-			// (To put this in perspective, <2% of FE fillers have a path length
+			// (To put this in perspective, < FRAME_AND_ROLE_NAME% of FE fillers have a path length
 			// of >5 in the training/dev data, and hardly any have length >7.)
 			// e.g. "=<VB> !VMOD !PMOD" ( GIVE to [the paper *boy*] )
 			// "=<PRP> ^OBJ ^VMOD ^VMOD !OBJ" ( want [*him*] to make a REQUEST )
@@ -169,14 +162,14 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 				//relative position of the span with respect to the target
 				
 				//does the span overlap with target
-				$("O_W_T",2);
+				conjoinAndIncrement(featureMap, "O_W_T", FRAME_AND_ROLE_NAME);
 				if (targetTokenNums.length > 1) {
 					if ((fillerSpanRange.getStart() < targetTokenNums[0] && fillerSpanRange
 							.getEnd() < targetTokenNums[targetTokenNums.length - 1])
 							|| (fillerSpanRange.getStart() > targetTokenNums[0] && fillerSpanRange
 									.getEnd() > targetTokenNums[targetTokenNums.length - 1])) {
 						//does the span cross the target
-						$("CROS_TAR",0);
+						conjoinAndIncrement(featureMap, "CROS_TAR", NO_CONJOIN);
 					}
 				}
 			} else {
@@ -185,7 +178,7 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 						targetTokenNums[targetTokenNums.length - 1],
 						fillerSpanRange.getStart(), fillerSpanRange.getEnd());
 				String feature = "dist_" + dist;
-				$(feature,0);
+				conjoinAndIncrement(featureMap, feature, NO_CONJOIN);
 				if (dist.charAt(0) == '-') {
 					//span is left to target
 					feature = "LEFTTAR";
@@ -193,7 +186,7 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 					//span is right to target
 					feature = "RIGHTTAR";
 				}
-				$(feature,2);
+				conjoinAndIncrement(featureMap, feature, FRAME_AND_ROLE_NAME);
 				int fmid = (targetTokenNums[0] + targetTokenNums[targetTokenNums.length - 1]) / 2;
 				int femid = (fillerSpanRange.getStart() + fillerSpanRange
 						.getEnd()) / 2;
@@ -201,15 +194,14 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 				//of target span and candidate span
 				feature = "midDist_"
 						+ getDistToTarget(fmid, fmid, femid, femid);
-				$(feature,0);
+				conjoinAndIncrement(featureMap, feature, NO_CONJOIN);
 			}
 			
 			
 			if (pathSize <= 7) {
 				DependencyParse lastNode = null;
 				for (int i = 0; i < targetToFillerPath.size(); i++) {
-					Pair<String, DependencyParse> item = targetToFillerPath
-							.get(i);
+					Pair<String, DependencyParse> item = targetToFillerPath.get(i);
 					if (i == 0)
 						depTypePath += "=<" + item.getSecond().getPOS() + ">";
 					else if (item.getFirst().equals("^"))
@@ -227,55 +219,55 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 						+ targetToFillerPath.get(0).getSecond().getPOS()
 						+ "> ...";
 			}
-			$("depPath_" + depTypePath,0);
-			$("pathLength_" + quantizeLength(pathSize),0);
+			conjoinAndIncrement(featureMap, "depPath_" + depTypePath, NO_CONJOIN);
+			conjoinAndIncrement(featureMap, "pathLength_" + quantizeLength(pathSize), NO_CONJOIN);
 			
 
 			// head word
 			// left and right most dependents
 			List<DependencyParse> children = fillerHeadNode.getChildren();
-			$("headLemma_" + fillerHeadNode.getLemma(),0);
-			$("headPOS_" + fillerHeadNode.getPOS(),0);
-			$("headLabel_" + fillerHeadNode.getLabelType(),0);
+			conjoinAndIncrement(featureMap, "headLemma_" + fillerHeadNode.getLemma(), NO_CONJOIN);
+			conjoinAndIncrement(featureMap, "headPOS_" + fillerHeadNode.getPOS(), NO_CONJOIN);
+			conjoinAndIncrement(featureMap, "headLabel_" + fillerHeadNode.getLabelType(), NO_CONJOIN);
 			if (children.size() > 0) {
-				$("leftLemma_" + children.get(0).getLemma(),0);
-				$("leftPOS_" + children.get(0).getPOS(),0);
-				$("rightLemma_"
-						+ children.get(children.size() - 1).getLemma(),0);
-				$("rightPOS_"
-						+ children.get(children.size() - 1).getPOS(),0);
+				conjoinAndIncrement(featureMap, "leftLemma_" + children.get(0).getLemma(), NO_CONJOIN);
+				conjoinAndIncrement(featureMap, "leftPOS_" + children.get(0).getPOS(), NO_CONJOIN);
+				conjoinAndIncrement(featureMap, "rightLemma_"
+						+ children.get(children.size() - 1).getLemma(), NO_CONJOIN);
+				conjoinAndIncrement(featureMap, "rightPOS_"
+						+ children.get(children.size() - 1).getPOS(), NO_CONJOIN);
 			}
 			
-			// word/POS/dependency type of 1st, 2nd, last word in the span
+			// word/POS/dependency type of 1st,  FrameAndRoleNamend, last word in the span
 			int startNode = new Range1Based(fillerSpanRange).getStart();
 			int endNode = new Range1Based(fillerSpanRange).getEnd();
 
 			if (isClosedClass(nodes[startNode].getPOS()))
-				$("w[0]pos[0]_" + nodes[startNode].getWord()
-						+ " " + nodes[startNode].getPOS() ,2);
-			$("dep[0]_" + nodes[startNode].getLabelType(),2);
+				conjoinAndIncrement(featureMap, "w[0]pos[0]_" + nodes[startNode].getWord()
+						+ " " + nodes[startNode].getPOS(), FRAME_AND_ROLE_NAME);
+			conjoinAndIncrement(featureMap, "dep[0]_" + nodes[startNode].getLabelType(), FRAME_AND_ROLE_NAME);
 
 			if (endNode - startNode > 0) {
 				if (isClosedClass(nodes[startNode + 1].getPOS()))
-					$("w[1]pos[1]_"
+					conjoinAndIncrement(featureMap, "w[1]pos[1]_"
 							+ nodes[startNode + 1].getWord() + " "
-							+ nodes[startNode + 1].getPOS() ,2
-							);
-				$("dep[1]_"+ nodes[startNode + 1].getLabelType() ,2);
+							+ nodes[startNode + 1].getPOS(), FRAME_AND_ROLE_NAME
+					);
+				conjoinAndIncrement(featureMap, "dep[1]_" + nodes[startNode + 1].getLabelType(), FRAME_AND_ROLE_NAME);
 				if (endNode - startNode > 1) {
 					if (isClosedClass(nodes[endNode].getPOS()))
-						$("w[-1]pos[-1]_"
+						conjoinAndIncrement(featureMap, "w[-1]pos[-1]_"
 								+ nodes[endNode].getWord() + " "
 								+ nodes[endNode].getPOS() + "_"
-								,2);
-					$("dep[-1]_"
+								, FRAME_AND_ROLE_NAME);
+					conjoinAndIncrement(featureMap, "dep[-1]_"
 							+ nodes[endNode].getLabelType() + "_"
-							,2);
+							, FRAME_AND_ROLE_NAME);
 				}
 			}
 			
 			// length of the filler span
-			$("len_" + quantizeLength(endNode - startNode + 1) ,2);
+			conjoinAndIncrement(featureMap, "len_" + quantizeLength(endNode - startNode + 1), FRAME_AND_ROLE_NAME);
 		}
 		return featureMap;
 	}
@@ -314,22 +306,6 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 		return (!isContentPOS(pos) && !isNumber(pos));
 	}
 
-	public String getTokens(String sentence, int[] intNums) {
-		StringTokenizer st = new StringTokenizer(sentence, " ", true);
-		int count = 0;
-		String result = "";
-		Arrays.sort(intNums);
-		while (st.hasMoreTokens()) {
-			String token = st.nextToken().trim();
-			if (token.equals(""))
-				continue;
-			if (Arrays.binarySearch(intNums, count) >= 0)
-				result += token + " ";
-			count++;
-		}
-		return result.trim();
-	}
-
 	/**
 	 * @param mStart begin of candidate span
 	 * @param mEnd end of candidate span
@@ -345,25 +321,26 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 	 * lemma ,POS tag ,voice and relative position(with respect to target)
 	 * of each word in the candidate span
 	 */
-	private static void extractChildPOSFeatures(DataPointWithFrameElements dp,
-			DependencyParse[] nodes, String frameName, String roleName,
-			Range0Based fillerSpanRange) {
+	private void extractChildPOSFeatures(IntCounter<String> featureMap,
+										 DataPointWithFrameElements dp,
+										 DependencyParse[] nodes,
+										 Range0Based fillerSpanRange) {
 		int targetStart = dp.getTargetTokenIdxs()[0];
 		int targetEnd = dp.getTargetTokenIdxs()[dp.getTargetTokenIdxs().length - 1];
 		//for each word in the frame element span
 		for (int i = fillerSpanRange.getStart(); i <= fillerSpanRange.getEnd(); i++) {
 			DependencyParse node = nodes[i + 1];
-			String voice = findVoice(node);
+			final Voice voice = findVoice(node);
 			//lemma of the word
 			String feature;
 			feature = "ltok_"+node.getLemma();
-			$(feature,1);
+			conjoinAndIncrement(featureMap, feature, ROLE_NAME);
 			//POS tag of the word
 			feature = "POS_" + node.getPOS();
-			$(feature,0);
-			if (voice != NONE) {
+			conjoinAndIncrement(featureMap, feature, NO_CONJOIN);
+			if (!voice.equals(Voice.NO_VOICE)) {
 				//lemma and voice of the token
-				$("Voice_" + node.getLemma() + "_" + voice,1);
+				conjoinAndIncrement(featureMap, "Voice_" + node.getLemma() + "_" + voice, ROLE_NAME);
 				String before;
 				if (i < targetStart) {
 					before = "B4_TARGET";
@@ -374,8 +351,8 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 				}
 				//is the word before or after the frame evoking word
 				//+ voice + lemma of the word
-				$("Voice_" + node.getLemma() + "_" + voice
-						+ "_" + before,1);
+				conjoinAndIncrement(featureMap, "Voice_" + node.getLemma() + "_" + voice
+						+ "_" + before, ROLE_NAME);
 			}
 			/*feature="BIGRAM"+prevword+"_"+node.getLemma();
 			featureMap.increment(feature);
@@ -394,58 +371,55 @@ public class FeatureExtractor implements com.aliasi.util.FeatureExtractor<Featur
 			if (i < 0)
 				continue;
 			DependencyParse node = nodes[i + 1];
-			$("pPOS_" + node.getPOS(),0);
+			conjoinAndIncrement(featureMap, "pPOS_" + node.getPOS(), NO_CONJOIN);
 		}
 		// up to 3 following POS tags
 		for (int i = fillerSpanRange.getEnd()+1; i <= fillerSpanRange.getEnd() + 3; i++) {
 			if (i >= nodes.length - 1)
 				break;
 			DependencyParse node = nodes[i + 1];
-			$("nPOS_" + node.getPOS(),0);
+			conjoinAndIncrement(featureMap, "nPOS_" + node.getPOS(), NO_CONJOIN);
 		}
 	}
 
-	private static String getDistToTarget(int fstart, int fend, int festart,
-			int feend) {
+	private static String getDistToTarget(int fstart, int fend, int festart, int feend) {
 		if (festart >= fstart) {
-			String dist = quantizeLength(fend - festart);
-			return dist;
+			return quantizeLength(fend - festart);
 		}
 		if (festart <= fstart) {
-			String dist = quantizeLength(fstart - feend);
-			return dist;
+			return quantizeLength(fstart - feend);
 		}
 		return "0";
 	}
 
-	public static String findVoice(DependencyParse tn) {
+	public static Voice findVoice(DependencyParse tn) {
 		if (!tn.getPOS().startsWith("V"))
-			return NONE;
+			return Voice.NO_VOICE;
 		if (tn.getWord().toLowerCase().equals("been"))
-			return ACTIVE;
+			return Voice.ACTIVE;
 		if (!tn.getPOS().equals("VBN"))
-			return ACTIVE;
+			return Voice.ACTIVE;
 
-		return findPassiveInParents(tn.getParent());
+		return findVoiceInParents(tn.getParent());
 	}
 
-	private static String findPassiveInParents(DependencyParse n) {
+	private static Voice findVoiceInParents(DependencyParse n) {
 		if (n == null || n.getIndex() == 0)
-			return PASSIVE;
+			return Voice.PASSIVE;
 		String word = n.getWord().toLowerCase(), pos = n.getPOS();
 
 		if (pos.startsWith("NN"))
-			return PASSIVE;
+			return Voice.PASSIVE;
 
 		if (word.matches("am|are|is|was|were|be|been|being"))
-			return PASSIVE;
+			return Voice.PASSIVE;
 
 		if (word.matches("ha(ve|s|d|ving)"))
-			return ACTIVE;
+			return Voice.ACTIVE;
 
 		if (pos.matches("VBZ|VBD|VBP|MD"))
-			return PASSIVE;
+			return Voice.PASSIVE;
 
-		return findPassiveInParents(n.getParent());
+		return findVoiceInParents(n.getParent());
 	}
 }

@@ -95,6 +95,8 @@ public final class FNModelOptions extends CommandLineOptions {
 	public IntOption numThreads = new IntOption("numthreads");
 	public BoolOption usePartialCredit = new BoolOption("use-partial-credit");
 	public DoubleOption costMultiple = new DoubleOption("cost-multiple");
+	public ExistingPathOption inputFile = new ExistingPathOption("input-file");
+	public NewFilePathOption outputFile = new NewFilePathOption("output-file");
 
 	public StringOption idFeatureExtractorType = new StringOption("id-feature-extractor-type");
 	public StringOption eventsFile = new StringOption("eventsfile");

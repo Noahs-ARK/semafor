@@ -295,7 +295,7 @@ public class DataPrep {
 							 Range0Based span,
 							 DependencyParse parse) {
 		final Set<String> featureSet =
-				FeatureExtractor.extractFeatures(dataPoint, frame, fe, span, parse).keySet();
+				new FeatureExtractor().extractFeatures(dataPoint, frame, fe, span, parse).keySet();
 		final int[] featArray = new int[featureSet.size()];
 		int i = 0;
 		for (String feature : featureSet) {

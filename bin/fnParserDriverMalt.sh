@@ -26,18 +26,8 @@ MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null && pwd )"
 source "${MY_DIR}/config.sh"
 
 if [ $# -lt 2 -o $# -gt 3 ]; then
-   echo "USAGE: `basename "${0}"` <input-file> <output-file> [<output-format>]"
+   echo "USAGE: `basename "${0}"` <input-file> <output-file> <num-threads>"
    exit 1
-fi
-
-if [ `uname -m` != "x86_64" ]; then
-   echo -n "\nNOTE: You should really be running this on a 64-bit architecture."
-   # give the user the chance to CTRL-C here...
-   for dot in 1 2 3 4 5 6; do
-       sleep 1
-       echo -n "."
-   done
-   echo
 fi
 
 # location of input file. must be absolute path
@@ -46,18 +36,7 @@ INPUT_FILE="${1}"
 # where to write the output
 OUTPUT_FILE="${2}"
 
-# what format to use to write the output
-if [ ${3} = "xml" ]
-then
-    OUTPUT_FORMAT="xml"
-elif [ ${3} = "json" ] || [ -z ${3} ]
-then
-    OUTPUT_FORMAT="json" # default
-else
-    echo "output format must be \"xml\" or \"json\"."
-    exit 1
-fi
-
+NUM_THREADS="${3}"
 
 
 TEMP_DIR=$(mktemp -d -t semafor.XXXXXXXXXX)
@@ -72,88 +51,19 @@ FRAME_ELEMENTS_OUTPUT_FILE="${TEMP_DIR}/fes"
 bash ${MY_DIR}/runMalt.sh ${INPUT_FILE} ${TEMP_DIR}
 
 
-if [ "${AUTO_TARGET_ID_MODE}" == "relaxed" ]
-then 
-    # Use python version for relaxed target id'ing
-    # treat this output as gold targets in ParserDriver.java
-    GOLD_TARGET_FILE="${TEMP_DIR}/targets"
-    echo "**********************************************************************"
-    echo "Performing relaxed segmentation"
-    PYTHONPATH="${PYTHONPATH}:${SEMAFOR_HOME}/src/main/python/" \
-        python ${SEMAFOR_HOME}/src/main/python/semafor/targetid/targetid_simple.py \
-        "${TEST_PARSED_FILE}" \
-        > "${GOLD_TARGET_FILE}"
-fi
-RELAXED_FLAG=no
-
-if [ "${USE_GRAPH_FILE}" == "yes" ]
-then
-    GRAPH_FILE="${MALT_MODEL_DIR}/sparsegraph.gz"
-else
-    GRAPH_FILE=null
-fi
-
-
-echo "**********************************************************************"
-echo "Performing frame-semantic parsing"
+echo "**********************************"
+echo "Performing frame-semantic parsing."
 cd ${SEMAFOR_HOME}
 time ${JAVA_HOME_BIN}/java \
     -classpath ${CLASSPATH} \
-    -Xms4g -Xmx4g \
-    edu.cmu.cs.lti.ark.fn.parsing.ParserDriver \
-    mstmode:noserver \
-    mstserver:null \
-    mstport:12345 \
-    posfile:${POS_TAGGED} \
-    test-parsefile:${TEST_PARSED_FILE} \
-    fnidreqdatafile:${MALT_MODEL_DIR}/reqData.jobj \
-    goldsegfile:${GOLD_TARGET_FILE} \
-    userelaxed:${RELAXED_FLAG} \
-    testtokenizedfile:${TOKENIZED} \
-    idmodelfile:${MALT_MODEL_DIR}/idmodel.dat \
-    alphabetfile:${MALT_MODEL_DIR}/parser.conf \
-    framenet-femapfile:${MALT_MODEL_DIR}/framenet.frame.element.map \
-    eventsfile:${TEMP_DIR}/events.bin \
-    spansfile:${TEMP_DIR}/spans \
-    model:${MALT_MODEL_DIR}/argmodel.dat \
-    useGraph:${GRAPH_FILE} \
-    frameelementsoutputfile:${FRAME_ELEMENTS_OUTPUT_FILE} \
-    alllemmatagsfile:${ALL_LEMMA_TAGS_FILE} \
-    requiresmap:${MALT_MODEL_DIR}/requires.map \
-    excludesmap:${MALT_MODEL_DIR}/excludes.map \
-    decoding:${DECODING_TYPE} \
-    k-best-output:1
-
-end=`wc -l ${TOKENIZED}`
-end=`expr ${end% *}`
-echo "${end} sentences"
-
-
-echo "Producing final ${OUTPUT_FORMAT} document:"
-if [ "${OUTPUT_FORMAT}" == "xml" ] ; then
-    time ${JAVA_HOME_BIN}/java -classpath ${CLASSPATH} \
-        -Xms4g -Xmx4g \
-        edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationXML \
-        testFEPredictionsFile:${FRAME_ELEMENTS_OUTPUT_FILE} \
-        startIndex:0 \
-        endIndex:${end} \
-        testParseFile:${ALL_LEMMA_TAGS_FILE} \
-        testTokenizedFile:${TOKENIZED} \
-        outputFile:${OUTPUT_FILE} ;
-elif [ "${OUTPUT_FORMAT}" == "json" ] ; then
-    time ${JAVA_HOME_BIN}/java -classpath ${CLASSPATH} \
-        -Xms8g -Xmx8g \
-        edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationJson \
-        testFEPredictionsFile:${FRAME_ELEMENTS_OUTPUT_FILE} \
-        testTokenizedFile:${TOKENIZED} \
-        outputFile:${OUTPUT_FILE} ;
-else
-    exit 1 ;
-fi
-
-
+    -Xms7g -Xmx7g \
+    edu.cmu.cs.lti.ark.fn.parsing.Semafor \
+    input-file:${TEST_PARSED_FILE} \
+    output-file:${OUTPUT_FILE} \
+    model-dir:${MALT_MODEL_DIR} \
+    numthreads:${NUM_THREADS}
 echo "Finished frame-semantic parsing."
-echo "**********************************************************************"
+echo "********************************"
 echo
 echo
 

@@ -21,9 +21,10 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.data.prep;
 
+import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.fn.utils.LemmatizeStuff;
 
-import java.net.URISyntaxException;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -32,20 +33,14 @@ import java.util.StringTokenizer;
  * Script to merge the POS tags, dependency parse, and lemmatized version of each sentence into one line
  */
 public class AllAnnotationsMergingWithoutNE {
-	public static void main(String[] args) throws URISyntaxException {
+	public static void main(String[] args) throws FileNotFoundException {
 		// parse args
 		final String tokenizedFile = args[0];
 		final String conllParseFile = args[1];
 		final String tmpParseFile = args[2];
 		final String outfile = args[3];
 		// merge all annotations into one combined file (*.all.lemma.tags)
-		if (args.length > 4) {
-			final String stopWordsFile = args[4];
-			final String wordNetConfigFile = args[5];
-			mergeAllAnnotations(tokenizedFile, conllParseFile, tmpParseFile, stopWordsFile, wordNetConfigFile, outfile);
-		} else {
-			mergeAllAnnotations(tokenizedFile, conllParseFile, tmpParseFile, outfile);
-		}
+		mergeAllAnnotations(tokenizedFile, conllParseFile, tmpParseFile, outfile);
 	}
 
 	/**
@@ -54,34 +49,10 @@ public class AllAnnotationsMergingWithoutNE {
 	 * @param tokenizedFile path to file of the tokenized sentences
 	 * @param conllParseFile path to the file of dependency parsed sentences
 	 * @param tmpParseFile path to a temporary file
-	 * @param stopWordsFile path to a file containing a list of stopwords, one per line
-	 * @param wordNetConfigFile path to the WordNet config file
 	 * @param outfile path to file to which to write the combined sentences
 	 */
 	public static void mergeAllAnnotations(String tokenizedFile, String conllParseFile, String tmpParseFile,
-										   String stopWordsFile, String wordNetConfigFile, String outfile) {
-		ArrayList<String> tokenizedSentences = ParsePreparation.readSentencesFromFile(tokenizedFile);
-		ArrayList<String> neSentences = findDummyNESentences(tokenizedSentences);
-		ArrayList<ArrayList<String>> parses = OneLineDataCreation.readCoNLLParses(conllParseFile);
-		ArrayList<String> perSentenceParses =
-				OneLineDataCreation.getPerSentenceParses(parses, tokenizedSentences, neSentences);
-		ParsePreparation.writeSentencesToFile(tmpParseFile, perSentenceParses);
-		LemmatizeStuff.lemmatize(stopWordsFile, wordNetConfigFile, tmpParseFile, outfile);
-	}
-
-	/**
-	 * Merges the POS tags, dependency parse, and lemmatized version of each sentence into one line
-	 *
-	 * @param tokenizedFile path to file of the tokenized sentences
-	 * @param conllParseFile path to the file of dependency parsed sentences
-	 * @param tmpParseFile path to a temporary file
-	 * @param outfile path to file to which to write the combined sentences
-	 */
-	public static void mergeAllAnnotations(String tokenizedFile,
-										   String conllParseFile,
-										   String tmpParseFile,
-										   String outfile)
-			throws URISyntaxException {
+										   String outfile) throws FileNotFoundException {
 		ArrayList<String> tokenizedSentences = ParsePreparation.readSentencesFromFile(tokenizedFile);
 		ArrayList<String> neSentences = findDummyNESentences(tokenizedSentences);
 		ArrayList<ArrayList<String>> parses = OneLineDataCreation.readCoNLLParses(conllParseFile);
@@ -92,7 +63,7 @@ public class AllAnnotationsMergingWithoutNE {
 	}
 
 	public static ArrayList<String> findDummyNESentences(List<String> tokenizedSentences) {
-		ArrayList<String> res = new ArrayList<String>();
+		ArrayList<String> res = Lists.newArrayList();
 		for(String sentence : tokenizedSentences) {
 			final StringTokenizer st = new StringTokenizer(sentence.trim());
 			String resSent = "";

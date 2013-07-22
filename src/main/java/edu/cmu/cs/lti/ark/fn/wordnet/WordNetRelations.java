@@ -32,18 +32,20 @@ import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
 import edu.cmu.cs.lti.ark.fn.wordnet.WordNetAPI.RelationType;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
-import edu.cmu.cs.lti.ark.util.nlp.Lemmatizer;
+import edu.washington.cs.knowitall.morpha.MorphaStemmer;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import net.didion.jwnl.data.POS;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-public class WordNetRelations extends Lemmatizer {
+public class WordNetRelations {
 	public static final String DEFAULT_FILE_PROPERTIES_FILE = "file_properties.xml";
 	public static final String DEFAULT_STOPWORDS_FILE = "stopwords.txt";
 	private static final int LEMMA_CACHE_SIZE = 100000;
@@ -74,14 +76,14 @@ public class WordNetRelations extends Lemmatizer {
 	public THashMap<String, Set<String>> workingRelationSet = null;
 	public Set<String> workingRelatedWords = null;
 	public Set<String> workingLSRelations = null;
-	private final LoadingCache<Pair<String, POS>, String> lemmaCache =
+	private final LoadingCache<Pair<String, String>, String> lemmaCache =
 			CacheBuilder.newBuilder()
 					.maximumSize(LEMMA_CACHE_SIZE)
-					.build(new CacheLoader<Pair<String, POS>, String>() {
-						@Override public String load(Pair<String, POS> lemmaAndPostag) throws Exception {
+					.build(new CacheLoader<Pair<String, String>, String>() {
+						@Override public String load(Pair<String, String> lemmaAndPostag) throws Exception {
 							final String lemma = lemmaAndPostag.getFirst();
-							final POS postag = lemmaAndPostag.getSecond();
-							return WordNetAPI.getLemma(lemma, postag).toLowerCase();
+							final String postag = lemmaAndPostag.getSecond();
+							return MorphaStemmer.stemToken(lemma, postag).toLowerCase();
 						}
 					});
 
@@ -130,39 +132,7 @@ public class WordNetRelations extends Lemmatizer {
 	}
 
 	public String getLemma(String word, String postag) {
-		final POS wnPostag = getWordNetPostag(postag);
-		final String expanded = expandContractions(word, postag);
-		return lemmaCache.getUnchecked(Pair.of(expanded, wnPostag));
-	}
-
-	private String expandContractions(String word, String postag) {
-		final String wordLower = word.toLowerCase();
-		if(wordLower.equals("'ve")) {
-			return "have";
-		} else if(wordLower.equals("n't")) {
-			return "not";
-		} else if(wordLower.equals("'s") && postag.toUpperCase().startsWith("V")) {
-			return "is";
-		} else if(wordLower.equals("'ll")) {
-			return "will";
-		} else if(wordLower.equals("'re")) {
-			return "are";
-		} else {
-			return wordLower;
-		}
-	}
-
-	private POS getWordNetPostag(String postag) {
-		final String postagUpper = postag.toUpperCase();
-		if(postagUpper.startsWith("V")) {
-			return POS.VERB;
-		} else if(postagUpper.startsWith("J")) {
-			return POS.ADJECTIVE;
-		} else if(postagUpper.startsWith("R")) {
-			return POS.ADVERB;
-		} else {
-			return POS.NOUN;
-		}
+		return lemmaCache.getUnchecked(Pair.of(word.toLowerCase(), postag));
 	}
 
 	public THashMap<String, Set<String>> getAllRelationsMap(String sWord) {
