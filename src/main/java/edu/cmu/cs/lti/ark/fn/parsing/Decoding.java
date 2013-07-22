@@ -23,20 +23,16 @@ package edu.cmu.cs.lti.ark.fn.parsing;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.primitives.Ints;
-import edu.cmu.cs.lti.ark.fn.optimization.LDouble;
+import com.google.common.collect.*;
 import edu.cmu.cs.lti.ark.util.FileUtil;
 import edu.cmu.cs.lti.ark.util.ds.Scored;
+import org.pcollections.HashTreePMap;
+import org.pcollections.PMap;
 
 import java.util.*;
 
 import static com.google.common.collect.ImmutableList.copyOf;
 import static com.google.common.collect.Iterables.transform;
-import static edu.cmu.cs.lti.ark.fn.optimization.LogMath.logtimes;
 import static edu.cmu.cs.lti.ark.util.ds.Scored.scored;
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.min;
@@ -46,8 +42,6 @@ import static java.lang.Math.min;
  */
 public class Decoding {
 	private static final int DEFAULT_BEAM_WIDTH = 100;
-	private static final LDouble LOG_ZERO = LDouble.convertToLogDomain(0);
-	private static final LDouble LOG_ONE = new LDouble(0.0);
 	private static final Joiner TAB_JOINER = Joiner.on("\t");
 
 	protected double[] modelWeights;
@@ -77,8 +71,9 @@ public class Decoding {
 
 		@Override
 		public int compareTo(Span other) {
-			int cmp = Ints.compare(start, other.start);
-			return cmp != 0 ? cmp : Ints.compare(end, other.end);
+			return ComparisonChain.start()
+					.compare(start, other.start)
+					.compare(end, other.end).result();
 		}
 
 		@Override
@@ -88,40 +83,53 @@ public class Decoding {
 	}
 
 	/** An assignment of spans to roles of a particular frame */
-	public static class RoleAssignments extends HashMap<String,Span> {
-		private final Function<Map.Entry<String,Span>,String> JOIN_ENTRY = new Function<Map.Entry<String, Span>, String>() {
+	public static class RoleAssignments implements Comparable<RoleAssignments> {
+		private final static Function<Map.Entry<String,Span>,String> JOIN_ENTRY = new Function<Map.Entry<String, Span>, String>() {
 			@Override public String apply(Map.Entry<String, Span> input) {
-				return input.getKey() + "\t" + input.getValue().toString();
+				return TAB_JOINER.join(input.getKey(), input.getValue().toString());
 			}
 		};
-		private final Predicate<Map.Entry<String,Span>> IS_NOT_NULL = new Predicate<Map.Entry<String, Span>>() {
-			@Override public boolean apply(Map.Entry<String, Span> input) {
-				return !input.getValue().isEmpty();
-			}
-		};
+		private final PMap<String, Span> nonNullAssignments;
+		private final PMap<String, Span> nullAssignments;
 
-		public Map<String, Span> filterNulls() {
-			// TODO: could keep null spans separate from non-null for speedup
-			return Maps.filterEntries(this, IS_NOT_NULL);
+		public RoleAssignments(PMap<String, Span> nonNullAssignments, PMap<String, Span> nullAssignments) {
+			this.nonNullAssignments = nonNullAssignments;
+			this.nullAssignments = nullAssignments;
+		}
+
+		public RoleAssignments() {
+			this(HashTreePMap.<String, Span>empty(), HashTreePMap.<String, Span>empty());
+		}
+
+		public RoleAssignments plus(String key, Span value) {
+			if (value.isEmpty()) {
+				return new RoleAssignments(nonNullAssignments, nullAssignments.plus(key, value));
+			} else {
+				return new RoleAssignments(nonNullAssignments.plus(key, value), nullAssignments);
+			}
+		}
+
+		private Map<String, Span> getNonNullAssignments() {
+			return nonNullAssignments;
 		}
 
 		/** Determines whether the given span overlaps with any of our spans */
 		private boolean overlaps(Span otherSpan) {
 			if(otherSpan.isEmpty()) return false;
-			for (Span span : filterNulls().values()) {
+			for (Span span : getNonNullAssignments().values()) {
 				if (span.overlaps(otherSpan)) return true;
 			}
 			return false;
 		}
 
-		public int count() {
-			// includes the target
-			return filterNulls().size() + 1;
+		@Override
+		public String toString()  {
+			return TAB_JOINER.join(transform(getNonNullAssignments().entrySet(), JOIN_ENTRY));
 		}
 
 		@Override
-		public String toString()  {
-			return TAB_JOINER.join(transform(filterNulls().entrySet(), JOIN_ENTRY));
+		public int compareTo(RoleAssignments other) {
+			return Ordering.arbitrary().compare(this, other);
 		}
 	}
 
@@ -172,13 +180,13 @@ public class Decoding {
 		return results;
 	}
 
-	private String formatPrediction(int rank, String initialDecisionLine, RoleAssignments assignments, LDouble score) {
-		final String result = rank + "\t" +
-				score.getValue() + "\t" +
-				assignments.count() + "\t" +
-				initialDecisionLine + "\t" +
-				assignments.toString();
-		return result.trim();
+	private String formatPrediction(int rank, String initialDecisionLine, RoleAssignments assignments, double score) {
+		return TAB_JOINER.join(
+				rank,
+				score,
+				assignments.getNonNullAssignments().size() + 1, // includes the target
+				initialDecisionLine,
+				assignments.toString());
 	}
 
 	/**
@@ -222,27 +230,23 @@ public class Decoding {
 				scoreCandidatesForRoles(frameFeatures.fElements, frameFeatures.fElementSpansAndFeatures);
 
 		// run beam search to find the (approximately) k-best non-overlapping configurations
-		final List<String> roleNames = copyOf(candidatesAndScoresByRole.keySet());
 		// our beam
-		List<Scored<RoleAssignments>> currentBeam = Lists.newArrayList(scored(new RoleAssignments(), LOG_ONE));
+		List<Scored<RoleAssignments>> currentBeam = Lists.newArrayList(scored(new RoleAssignments(), 0.0));
 		// run beam search
-		for (String roleName : roleNames) {
-			final TreeSet<Scored<RoleAssignments>> newBeam = Sets.newTreeSet();
+		for (String roleName : candidatesAndScoresByRole.keySet()) {
+			final PriorityQueue<Scored<RoleAssignments>> newBeam = Queues.newPriorityQueue();
 			for (Scored<Span> candidate : candidatesAndScoresByRole.get(roleName)) {
 				for (Scored<RoleAssignments> partialAssignment : currentBeam) {
-					// TODO: stop as soon as we know we can't improve the beam
-					final LDouble newScore = partialAssignment.value.overlaps(candidate.value)
-							? LOG_ZERO
-							: logtimes(partialAssignment.score, candidate.score);
-					// TODO: a PersistentHashMap would be real nice here
-					final RoleAssignments newAssignment = new RoleAssignments();
-					newAssignment.putAll(partialAssignment.value);
-					newAssignment.put(roleName, candidate.value);
-					newBeam.add(scored(newAssignment, newScore));
+					final double newScore = partialAssignment.score + candidate.score; // multiply in log-space
+					if (newBeam.size() >= DEFAULT_BEAM_WIDTH && newScore <= newBeam.peek().score) break;
+					if (!partialAssignment.value.overlaps(candidate.value)) {
+						final RoleAssignments newAssignment = partialAssignment.value.plus(roleName, candidate.value);
+						newBeam.add(scored(newAssignment, newScore));
+					}
+					if (newBeam.size() > DEFAULT_BEAM_WIDTH) newBeam.poll();
 				}
 			}
-			// TODO: configurable beam width
-			currentBeam = safeTruncate(copyOf(newBeam), DEFAULT_BEAM_WIDTH);
+			currentBeam = copyOf(newBeam);
 			//System.out.println("Considering " + roleName);
 			//System.out.println("Beam grew to " + newBeam.size());
 			//System.out.println("Current best: " + newBeam.first().value + " " + newBeam.first().score);
@@ -258,7 +262,7 @@ public class Decoding {
 			final CandidatesForRole candidatesForRole = new CandidatesForRole();
 			for (SpanAndCorrespondingFeatures spanAndFeatures : featuresList.get(i)) {
 				final Span span = new Span(spanAndFeatures.span[0], spanAndFeatures.span[1]);
-				final LDouble logScore = new LDouble(getWeightSum(spanAndFeatures.features, modelWeights));
+				final double logScore = getWeightSum(spanAndFeatures.features, modelWeights);
 				candidatesForRole.add(scored(span, logScore));
 			}
 			results.put(roleName, candidatesForRole);

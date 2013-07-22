@@ -29,6 +29,7 @@ import com.google.common.collect.Queues;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
+import com.google.common.primitives.Ints;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec;
@@ -62,7 +63,6 @@ import static edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec.ConllCodec;
 import static edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationJson.processPredictionLine;
 import static edu.cmu.cs.lti.ark.fn.identification.FrameIdentificationRelease.getTokenRepresentation;
 import static edu.cmu.cs.lti.ark.fn.parsing.DataPrep.SpanAndParseIdx;
-import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 import static edu.cmu.cs.lti.ark.util.SerializedObjects.readObject;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.apache.commons.io.IOUtils.closeQuietly;
@@ -283,7 +283,7 @@ public class Semafor {
 			final String frame = dataPoint.getFrameName();
 			final DependencyParses parses = dataPoint.getParses();
 			final int targetStartTokenIdx = dataPoint.getTargetTokenIdxs()[0];
-			final int targetEndTokenIdx = dataPoint.getTargetTokenIdxs()[dataPoint.getTargetTokenIdxs().length - 1];
+			final int targetEndTokenIdx = dataPoint.getTargetTokenIdxs()[dataPoint.getTargetTokenIdxs().length-1];
 			final List<SpanAndParseIdx> spans = DataPrep.findSpans(dataPoint, 1);
 			final List<String> frameElements = Lists.newArrayList(frameElementsForFrame.lookupFrameElements(frame));
 			final List<SpanAndCorrespondingFeatures[]> featuresAndSpanByArgument = Lists.newArrayList();
@@ -292,35 +292,32 @@ public class Semafor {
 				for (SpanAndParseIdx candidateSpanAndParseIdx : spans) {
 					final Range0Based span = candidateSpanAndParseIdx.span;
 					final DependencyParse parse = parses.get(candidateSpanAndParseIdx.parseIdx);
-					final List<String> featureSet =
-							Lists.newArrayList(featureExtractor.extractFeatures(dataPoint, frame, frameElement, span, parse).keySet());
+					final Set<String> featureSet =
+							featureExtractor.extractFeatures(dataPoint, frame, frameElement, span, parse).keySet();
 					final int[] featArray = convertToIdxs(featureSet);
 					spansAndFeatures.add(new SpanAndCorrespondingFeatures(new int[] {span.getStart(), span.getEnd()}, featArray));
 				}
 				featuresAndSpanByArgument.add(spansAndFeatures.toArray(new SpanAndCorrespondingFeatures[spansAndFeatures.size()]));
 			}
-			final FrameFeatures frameFeatures =
-					new FrameFeatures(frame,
-							targetStartTokenIdx,
-							targetEndTokenIdx,
-							frameElements,
-							featuresAndSpanByArgument);
-			frameFeaturesList.add(frameFeatures);
+			frameFeaturesList.add(new FrameFeatures(frame,
+					targetStartTokenIdx,
+					targetEndTokenIdx,
+					frameElements,
+					featuresAndSpanByArgument));
 		}
 		return decoder.decodeAll(frameFeaturesList, idResult, 0, kBest);
 	}
 
-	private int[] convertToIdxs(List<String> featureSet) {
+	private int[] convertToIdxs(Iterable<String> featureSet) {
 		// convert feature names to feature indexes
 		final List<Integer> featureList = Lists.newArrayList();
 		for (String feature : featureSet) {
-			if (argIdFeatureIndex.containsKey(feature)) {
-				featureList.add(argIdFeatureIndex.get(feature));
+			final Integer idx = argIdFeatureIndex.get(feature);
+			if (idx != null) {
+				featureList.add(idx);
 			}
 		}
-		final int[] featArray = new int[featureList.size()];
-		for (int i : xrange(featureList.size())) featArray[i] = featureList.get(i);
-		return featArray;
+		return Ints.toArray(featureList);
 	}
 
 	public SemaforParseResult getSemaforParseResult(Sentence sentence, List<String> results) {

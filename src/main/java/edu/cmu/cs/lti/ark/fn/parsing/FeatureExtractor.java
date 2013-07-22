@@ -32,6 +32,7 @@ import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.List;
 
+import static edu.cmu.cs.lti.ark.fn.parsing.CandidateFrameElementFilters.isEmptySpan;
 import static edu.cmu.cs.lti.ark.fn.parsing.FeatureExtractor.ConjoinLevel.*;
 
 /**
@@ -95,7 +96,7 @@ public class FeatureExtractor {
 	public IntCounter<String> extractFeatures(DataPointWithFrameElements dp,
 											  String frameName,
 											  String roleName,
-											  Range0Based fillerSpanRange,
+											  final Range0Based fillerSpanRange,
 											  DependencyParse parse) {
 		final IntCounter<String> featureMap = new IntCounter<String>();
 		this.frameName = frameName;
@@ -106,10 +107,11 @@ public class FeatureExtractor {
 		DependencyParse[] nodes = parse.getIndexSortedListOfNodes();
 		DependencyParse targetHeadNode = DependencyParse.getHeuristicHead(nodes, targetTokenNums);
 
-		String overtness = (CandidateFrameElementFilters.isEmptySpan(fillerSpanRange)) ? "NULL" : "OVERT";
+		final boolean isEmpty = isEmptySpan(fillerSpanRange);
+		String overtness = isEmpty ? "NULL" : "OVERT";
 		conjoinAndIncrement(featureMap, overtness, FRAME_AND_ROLE_NAME);	// overtness of the role
 		
-		String nullness = CandidateFrameElementFilters.isEmptySpan(fillerSpanRange) ? "NULL_" : "";
+		String nullness = isEmpty ? "NULL_" : "";
 
 		for (int targetTokenNum : targetTokenNums) {
 			final Voice voice = findVoice(nodes[targetTokenNum + 1]);
@@ -137,7 +139,7 @@ public class FeatureExtractor {
 		}
 		
 		
-		if (!CandidateFrameElementFilters.isEmptySpan(fillerSpanRange)) { // null span
+		if (!isEmpty) { // null span
 			 // lemma, POS tag, voice, and relative position (with respect to target)
 			 // of each word in the candidate span
 			extractChildPOSFeatures(featureMap, dp, nodes, fillerSpanRange);
@@ -154,7 +156,9 @@ public class FeatureExtractor {
 			// of >5 in the training/dev data, and hardly any have length >7.)
 			// e.g. "=<VB> !VMOD !PMOD" ( GIVE to [the paper *boy*] )
 			// "=<PRP> ^OBJ ^VMOD ^VMOD !OBJ" ( want [*him*] to make a REQUEST )
-			if (isOverlap(fillerSpanRange.getStart(), fillerSpanRange.getEnd(),
+			final int start = fillerSpanRange.getStart();
+			final int end = fillerSpanRange.getEnd();
+			if (isOverlap(start, end,
 					targetTokenNums[0],
 					targetTokenNums[targetTokenNums.length - 1])) {
 				
@@ -164,10 +168,8 @@ public class FeatureExtractor {
 				//does the span overlap with target
 				conjoinAndIncrement(featureMap, "O_W_T", FRAME_AND_ROLE_NAME);
 				if (targetTokenNums.length > 1) {
-					if ((fillerSpanRange.getStart() < targetTokenNums[0] && fillerSpanRange
-							.getEnd() < targetTokenNums[targetTokenNums.length - 1])
-							|| (fillerSpanRange.getStart() > targetTokenNums[0] && fillerSpanRange
-									.getEnd() > targetTokenNums[targetTokenNums.length - 1])) {
+					if ((start < targetTokenNums[0] && end < targetTokenNums[targetTokenNums.length - 1])
+							|| (start > targetTokenNums[0] && end > targetTokenNums[targetTokenNums.length - 1])) {
 						//does the span cross the target
 						conjoinAndIncrement(featureMap, "CROS_TAR", NO_CONJOIN);
 					}
@@ -176,7 +178,7 @@ public class FeatureExtractor {
 				// distance between nearest words of span and target
 				String dist = getDistToTarget(targetTokenNums[0],
 						targetTokenNums[targetTokenNums.length - 1],
-						fillerSpanRange.getStart(), fillerSpanRange.getEnd());
+						start, end);
 				String feature = "dist_" + dist;
 				conjoinAndIncrement(featureMap, feature, NO_CONJOIN);
 				if (dist.charAt(0) == '-') {
@@ -188,8 +190,7 @@ public class FeatureExtractor {
 				}
 				conjoinAndIncrement(featureMap, feature, FRAME_AND_ROLE_NAME);
 				int fmid = (targetTokenNums[0] + targetTokenNums[targetTokenNums.length - 1]) / 2;
-				int femid = (fillerSpanRange.getStart() + fillerSpanRange
-						.getEnd()) / 2;
+				int femid = (start + end) / 2;
 				//distance between words in the middle
 				//of target span and candidate span
 				feature = "midDist_"
@@ -324,11 +325,13 @@ public class FeatureExtractor {
 	private void extractChildPOSFeatures(IntCounter<String> featureMap,
 										 DataPointWithFrameElements dp,
 										 DependencyParse[] nodes,
-										 Range0Based fillerSpanRange) {
+										 final Range0Based fillerSpanRange) {
 		int targetStart = dp.getTargetTokenIdxs()[0];
 		int targetEnd = dp.getTargetTokenIdxs()[dp.getTargetTokenIdxs().length - 1];
 		//for each word in the frame element span
-		for (int i = fillerSpanRange.getStart(); i <= fillerSpanRange.getEnd(); i++) {
+		final int start = fillerSpanRange.getStart();
+		final int end = fillerSpanRange.getEnd();
+		for (int i = start; i <= end; i++) {
 			DependencyParse node = nodes[i + 1];
 			final Voice voice = findVoice(node);
 			//lemma of the word
@@ -367,14 +370,14 @@ public class FeatureExtractor {
 			 */
 		}
 		// up to 3 preceding POS tags
-		for (int i = fillerSpanRange.getStart() - 3; i < fillerSpanRange.getStart(); i++) {
+		for (int i = start - 3; i < start; i++) {
 			if (i < 0)
 				continue;
 			DependencyParse node = nodes[i + 1];
 			conjoinAndIncrement(featureMap, "pPOS_" + node.getPOS(), NO_CONJOIN);
 		}
 		// up to 3 following POS tags
-		for (int i = fillerSpanRange.getEnd()+1; i <= fillerSpanRange.getEnd() + 3; i++) {
+		for (int i = end +1; i <= end + 3; i++) {
 			if (i >= nodes.length - 1)
 				break;
 			DependencyParse node = nodes[i + 1];
