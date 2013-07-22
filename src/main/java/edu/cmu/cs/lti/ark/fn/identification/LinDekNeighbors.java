@@ -38,8 +38,8 @@ public class LinDekNeighbors {
 	public static void main(String[] args) {
 		Pair<TObjectIntHashMap<String>, TObjectIntHashMap<String>> p = 
 			readAdjectivesAndAdverbs();
-		TObjectIntHashMap<String> adjectives = p.getFirst();
-		TObjectIntHashMap<String> adverbs = p.getSecond();
+		TObjectIntHashMap<String> adjectives = p.first;
+		TObjectIntHashMap<String> adverbs = p.second;
 		System.out.println("Number of adjectives:" + adjectives.size());
 		System.out.println("Number of adverbs:" + adverbs.size());
 		try {
@@ -228,8 +228,8 @@ public class LinDekNeighbors {
 			advSet.add(w);
 		}
 
-		TObjectIntHashMap<String> dAdjectives = p.getFirst();
-		TObjectIntHashMap<String> dAdverbs = p.getSecond();
+		TObjectIntHashMap<String> dAdjectives = p.first;
+		TObjectIntHashMap<String> dAdverbs = p.second;
 		// adverbs and adjectives;
 		BufferedReader bReader = new BufferedReader(new FileReader(lindekdirectory + "/simA.lsp"));
 		line = bReader.readLine();

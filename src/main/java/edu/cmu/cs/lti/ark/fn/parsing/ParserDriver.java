@@ -149,9 +149,9 @@ public class ParserDriver {
 		wnr.setWordNetMap(wordNetMap);
 		final Pair<IdFeatureExtractor,TObjectDoubleHashMap<String>> extractorAndParams =
 				FrameIdentificationRelease.parseParamFile(idParamsFile);
-		final IdFeatureExtractor featureExtractor = extractorAndParams.getFirst();
+		final IdFeatureExtractor featureExtractor = extractorAndParams.first;
 		final TObjectDoubleHashMap<String> paramList =
-				extractorAndParams.getSecond();
+				extractorAndParams.second;
 
 		System.err.println("Initializing frame identification model...");
 		FastFrameIdentifier idModel;
@@ -260,8 +260,8 @@ public class ParserDriver {
 			final String parseLine = allLemmaTagsSentences.get(sentNum);
 			final String frame = idModel.getBestFrame(input, parseLine);
 			final Pair<String, String> tokenRepresentation = getTokenRepresentation(tokenIdxsStr, parseLine);
-			final String lexicalUnit = tokenRepresentation.getFirst();
-			final String tokenStrs = tokenRepresentation.getSecond();
+			final String lexicalUnit = tokenRepresentation.first;
+			final String tokenStrs = tokenRepresentation.second;
 			// rank(=0) \t score(=1.0) \t numTargets+numFes(=1) \t bestFrame \t targetTokenNum(s) \t sentenceOffset
 			idResult.add(TAB.join(0, 1.0, 1, frame, lexicalUnit, tokenIdxsStr, tokenStrs, sentNum));
 		}

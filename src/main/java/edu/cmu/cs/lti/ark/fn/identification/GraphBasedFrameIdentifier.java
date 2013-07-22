@@ -39,9 +39,9 @@ public class GraphBasedFrameIdentifier extends FastFrameIdentifier {
 		System.err.println("Reading model parameters...");
 		final Pair<IdFeatureExtractor,TObjectDoubleHashMap<String>> extractorAndParams =
 				FrameIdentificationRelease.parseParamFile(idParamsFile);
-		final IdFeatureExtractor featureExtractor = extractorAndParams.getFirst();
+		final IdFeatureExtractor featureExtractor = extractorAndParams.first;
 		final TObjectDoubleHashMap<String> params =
-				extractorAndParams.getSecond();
+				extractorAndParams.second;
 		System.err.println("Done reading model parameters.");
 		System.err.println("Reading graph from: " + graphFilename + "...");
 		final SmoothedGraph graph = readObject(graphFilename);

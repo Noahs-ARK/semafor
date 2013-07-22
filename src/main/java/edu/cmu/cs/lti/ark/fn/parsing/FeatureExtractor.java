@@ -156,8 +156,8 @@ public class FeatureExtractor {
 			// of >5 in the training/dev data, and hardly any have length >7.)
 			// e.g. "=<VB> !VMOD !PMOD" ( GIVE to [the paper *boy*] )
 			// "=<PRP> ^OBJ ^VMOD ^VMOD !OBJ" ( want [*him*] to make a REQUEST )
-			final int start = fillerSpanRange.getStart();
-			final int end = fillerSpanRange.getEnd();
+			final int start = fillerSpanRange.start;
+			final int end = fillerSpanRange.end;
 			if (isOverlap(start, end,
 					targetTokenNums[0],
 					targetTokenNums[targetTokenNums.length - 1])) {
@@ -202,22 +202,27 @@ public class FeatureExtractor {
 			if (pathSize <= 7) {
 				DependencyParse lastNode = null;
 				for (int i = 0; i < targetToFillerPath.size(); i++) {
-					Pair<String, DependencyParse> item = targetToFillerPath.get(i);
+					final Pair<String, DependencyParse> item = targetToFillerPath.get(i);
+					final DependencyParse node = item.second;
 					if (i == 0)
-						depTypePath += "=<" + item.getSecond().getPOS() + ">";
-					else if (item.getFirst().equals("^"))
-						depTypePath += " ^"
-								+ ((pathSize <= 5) ? lastNode.getLabelType()
-										: "");
-					else if (item.getFirst().equals("!"))
-						depTypePath += " !"
-								+ ((pathSize <= 5) ? item.getSecond()
+						depTypePath += "=<" + node.getPOS() + ">";
+					else {
+						if (item.first.equals("^"))
+							depTypePath += " ^"
+									+ ((pathSize <= 5) ? lastNode.getLabelType()
+											: "");
+						else {
+							if (item.first.equals("!"))
+								depTypePath += " !"
+										+ ((pathSize <= 5) ? node
 										.getLabelType() : "");
-					lastNode = item.getSecond();
+						}
+					}
+					lastNode = node;
 				}
 			} else {
 				depTypePath = "=<"
-						+ targetToFillerPath.get(0).getSecond().getPOS()
+						+ targetToFillerPath.get(0).second.getPOS()
 						+ "> ...";
 			}
 			conjoinAndIncrement(featureMap, "depPath_" + depTypePath, NO_CONJOIN);
@@ -240,8 +245,8 @@ public class FeatureExtractor {
 			}
 			
 			// word/POS/dependency type of 1st,  FrameAndRoleNamend, last word in the span
-			int startNode = new Range1Based(fillerSpanRange).getStart();
-			int endNode = new Range1Based(fillerSpanRange).getEnd();
+			int startNode = new Range1Based(fillerSpanRange).start;
+			int endNode = new Range1Based(fillerSpanRange).end;
 
 			if (isClosedClass(nodes[startNode].getPOS()))
 				conjoinAndIncrement(featureMap, "w[0]pos[0]_" + nodes[startNode].getWord()
@@ -329,8 +334,8 @@ public class FeatureExtractor {
 		int targetStart = dp.getTargetTokenIdxs()[0];
 		int targetEnd = dp.getTargetTokenIdxs()[dp.getTargetTokenIdxs().length - 1];
 		//for each word in the frame element span
-		final int start = fillerSpanRange.getStart();
-		final int end = fillerSpanRange.getEnd();
+		final int start = fillerSpanRange.start;
+		final int end = fillerSpanRange.end;
 		for (int i = start; i <= end; i++) {
 			DependencyParse node = nodes[i + 1];
 			final Voice voice = findVoice(node);

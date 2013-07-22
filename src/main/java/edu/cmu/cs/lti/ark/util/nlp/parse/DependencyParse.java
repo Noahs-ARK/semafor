@@ -143,14 +143,14 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 	 * @return A list of left children of the current node, from left to right.
 	 */
 	public DependencyParse[] getLeftChildren() {
-		return getLeftAndRightChildren().getFirst();
+		return getLeftAndRightChildren().first;
 	}
 
 	/**
 	 * @return A list of right children of the current node, from left to right.
 	 */
 	public DependencyParse[] getRightChildren() {
-		return getLeftAndRightChildren().getSecond();
+		return getLeftAndRightChildren().second;
 	}
 
 	/**
@@ -178,7 +178,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 	 * it follows that the left descendants will be children of this node, or descendants of this node's left children.
 	 */
 	public DependencyParse[] getLeftDescendants() {
-		return getLeftAndRightDescendants().getFirst();
+		return getLeftAndRightDescendants().first;
 	}
 
 	/**
@@ -186,7 +186,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 	 * it follows that the right descendants will be children of this node, or descendants of this node's right children.
 	 */
 	public DependencyParse[] getRightDescendants() {
-		return getLeftAndRightDescendants().getSecond();
+		return getLeftAndRightDescendants().second;
 	}
 
 	/**
@@ -358,7 +358,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 	public static DependencyParse getHeuristicHead(DependencyParse[] parseNodes, Range0Based span) {
 		int[] tokenNums = new int[span.length()];
 		for(int i = 0; i < tokenNums.length; i++) {
-			tokenNums[i] = span.getStart() + i;
+			tokenNums[i] = span.start + i;
 		}
 		return DependencyParse.getHeuristicHead(parseNodes, tokenNums);
 	}

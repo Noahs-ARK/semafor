@@ -65,7 +65,7 @@ public class Semirings {
 				v = $(v, operand);
 			return v;
 		}
-		public final static Double logadd(Double a, Double b) {
+		public static Double logadd(Double a, Double b) {
 			return LogMath.logplus(new LDouble(a),new LDouble(b)).getValue();
 		}
 		{ IDENTITY = Double.NEGATIVE_INFINITY; ZERO = Double.NaN; }	// TODO: is there a zero??
@@ -122,14 +122,14 @@ public class Semirings {
 				
 				for (Pair<Q,Path<T>> item0 : operand0) {
 					for (Pair<Q,Path<T>> item1 : operand1) {
-						Q v = _innerOp.$(item0.getFirst(), item1.getFirst());
-						if (!(item0.getSecond() instanceof Path<?>)) {	// TODO: temporary
-							item0 = new Pair<Q,Path<T>>(item0.getFirst(), new Path<T>(item0.getSecond()));
+						Q v = _innerOp.$(item0.first, item1.first);
+						if (item0.second == null) {	// TODO: temporary
+							item0 = Pair.of(item0.first, new Path<T>(item0.second));
 						}
-						if (!(item1.getSecond() instanceof Path<?>)) {	// TODO: temporary
-							item1 = new Pair<Q,Path<T>>(item1.getFirst(), new Path<T>((ArrayList<T>)item1.getSecond()));
+						if (item1.second == null) {	// TODO: temporary
+							item1 = Pair.of(item1.first, new Path<T>(item1.second));
 						}
-						Path<T> concat = item0.getSecond().extend(item1.getSecond().getEnd());	// concatenation of consecutive parts of the path
+						Path<T> concat = item0.second.extend(item1.second.getEnd());	// concatenation of consecutive parts of the path
 						result.add(new Pair<Q,Path<T>>(v, concat));
 					}
 				}
@@ -178,11 +178,11 @@ public class Semirings {
 			ZERO.add(new Pair<Double,Path<T>>(Double.NEGATIVE_INFINITY,null));
 		}
 		public final Pair<Double,Path<T>> $(Pair<Double,Path<T>> a, Pair<Double,Path<T>> b) {
-			return (b.getFirst()>a.getFirst()) ? b : a;
+			return (b.first > a.first) ? b : a;
 		}
 		public final Pair<Double,Path<T>> $(Collection<Pair<Double,Path<T>>> operands) {
 			Pair<Double,Path<T>> v = IDENTITY.iterator().next();
-			v = new Pair<Double,Path<T>>(v.getFirst(), (Path<T>)v.getSecond().clone());	// this way, the subtype of Path<T> will be maintained from IDENTITY
+			v = new Pair<Double,Path<T>>(v.first, (Path<T>) v.second.clone());	// this way, the subtype of Path<T> will be maintained from IDENTITY
 			for (Pair<Double,Path<T>> operand : operands)
 				v = $(v, operand);
 			return v;

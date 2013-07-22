@@ -89,8 +89,8 @@ public class FrameIdentificationGoldTargets
 		ArrayList<String> idResult = new ArrayList<String>();
 		final Pair<IdFeatureExtractor,TObjectDoubleHashMap<String>> extractorAndParams =
 				FrameIdentificationRelease.parseParamFile(options.idParamFile.get());
-		final IdFeatureExtractor featureExtractor = extractorAndParams.getFirst();
-		final TObjectDoubleHashMap<String> paramList = extractorAndParams.getSecond();
+		final IdFeatureExtractor featureExtractor = extractorAndParams.first;
+		final TObjectDoubleHashMap<String> paramList = extractorAndParams.second;
 		System.out.println("Size of originalSentences list:"+originalIndices.size());
 
 		boolean usegraph = !options.useGraph.get().equals("null");

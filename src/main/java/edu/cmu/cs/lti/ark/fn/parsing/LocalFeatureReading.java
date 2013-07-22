@@ -112,8 +112,8 @@ public class LocalFeatureReading {
 	private List<FrameFeatures> parseSpanLines(List<String> spanLines, List<String> frameLines) {
 		final Pair<List<String>, List<List<SpanAndCorrespondingFeatures>>> feLinesAndSpanLines =
 				readFeLinesAndSpans(spanLines);
-		final List<String> feLines = feLinesAndSpanLines.getFirst();
-		final List<List<SpanAndCorrespondingFeatures>> spansList = feLinesAndSpanLines.getSecond();
+		final List<String> feLines = feLinesAndSpanLines.first;
+		final List<List<SpanAndCorrespondingFeatures>> spansList = feLinesAndSpanLines.second;
 
 		// group by sentence idx
 		// map from sentence idx to list of feLines/parseLines idxs for that sentence

@@ -32,8 +32,8 @@ import java.util.*;
  * @since 2009-04-20
  */
 public abstract class Range implements Iterable<Integer> {
-	protected int start;
-	protected int end;
+	public final int start;
+	public final int end;
 	protected boolean endInclusive;
 
 	/** The smallest valid index: 0 for 0-based ranges, 1 for 1-based ranges */
@@ -58,14 +58,6 @@ public abstract class Range implements Iterable<Integer> {
 		
 		endInclusive = isEndInclusive;
 		
-	}
-	
-	public int getStart() {
-		return start;
-	}
-	
-	public int getEnd() {
-		return end;
 	}
 
 	public int getBaseIndex() {

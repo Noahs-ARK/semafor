@@ -81,8 +81,8 @@ public class WordNetRelations {
 					.maximumSize(LEMMA_CACHE_SIZE)
 					.build(new CacheLoader<Pair<String, String>, String>() {
 						@Override public String load(Pair<String, String> lemmaAndPostag) throws Exception {
-							final String lemma = lemmaAndPostag.getFirst();
-							final String postag = lemmaAndPostag.getSecond();
+							final String lemma = lemmaAndPostag.first;
+							final String postag = lemmaAndPostag.second;
 							return MorphaStemmer.stemToken(lemma, postag).toLowerCase();
 						}
 					});

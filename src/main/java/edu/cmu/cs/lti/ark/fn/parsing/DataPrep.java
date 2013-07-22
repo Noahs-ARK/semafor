@@ -30,9 +30,7 @@ import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
 import edu.cmu.cs.lti.ark.util.FileUtil;
-import edu.cmu.cs.lti.ark.util.ds.Pair;
-import edu.cmu.cs.lti.ark.util.ds.Range0Based;
-import edu.cmu.cs.lti.ark.util.ds.Range1Based;
+import edu.cmu.cs.lti.ark.util.ds.*;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParses;
 
@@ -116,7 +114,7 @@ public class DataPrep {
 			}
 		}
 		for(Range0Based span : dataPoint.getOvertFrameElementFillerSpans()) {
-			spanMatrix[span.getStart()][span.getEnd()] = true;
+			spanMatrix[span.start][span.end] = true;
 		}
 		if(kBestParses > 1) {
 			addKBestParses(dataPoint, depParses);
@@ -181,10 +179,10 @@ public class DataPrep {
 			Range1Based span1 = new Range1Based(span);
 			Optional<Pair<Integer, DependencyParse>> indexAndParse = parses.matchesSomeConstituent(span1);
 			if (indexAndParse.isPresent()) {
-				int fIndex = indexAndParse.get().getFirst();
-				depParses[span.getStart()][span.getEnd()] = fIndex;
+				int fIndex = indexAndParse.get().first;
+				depParses[span.start][span.end] = fIndex;
 			} else {
-				depParses[span.getStart()][span.getEnd()] = 0;
+				depParses[span.start][span.end] = 0;
 			}
 		}
 	}
@@ -244,8 +242,8 @@ public class DataPrep {
 		final PrintWriter ps = new PrintWriter(new FileWriter(FEFileName.spanfilename, true));
 		try {
 			for (Pair<List<int[]>, List<String>> featuresAndSpanLines : allFeaturesAndSpanLines) {
-				final List<int[]> features = featuresAndSpanLines.getFirst();
-				final List<String> spanLines = featuresAndSpanLines.getSecond();
+				final List<int[]> features = featuresAndSpanLines.first;
+				final List<String> spanLines = featuresAndSpanLines.second;
 				for (String spanLine : spanLines) ps.println(spanLine);
 				featuresList.add(features.toArray(new int[features.size()][]));
 			}
@@ -283,7 +281,7 @@ public class DataPrep {
 			final Range0Based candidateSpan = candidateSpanAndParseIdx.span;
 			final DependencyParse parse = parses.get(candidateSpanAndParseIdx.parseIdx);
 			features.add(getFeaturesByIndex(dp, frame, fe, candidateSpan, parse));
-			spanLines.add(candidateSpan.getStart() + "\t" + candidateSpan.getEnd());
+			spanLines.add(candidateSpan.start + "\t" + candidateSpan.end);
 		}
 		spanLines.add("");
 		return Pair.of(features, spanLines);

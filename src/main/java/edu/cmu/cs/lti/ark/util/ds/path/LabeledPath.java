@@ -51,20 +51,20 @@ public class LabeledPath<E,L> extends Path<Pair<E,L>> {
 	public LabeledPath(List<Pair<E,L>> that) {
 		super(that);
 		if (_includeSource) {
-			assert getStart().getSecond()==null;	// source should not have an associated incoming label
+			assert getStart().second ==null;	// source should not have an associated incoming label
 		}
 	}
 	public LabeledPath(List<Pair<E,L>> entries, boolean allowCycles, boolean allowSelfLoops) {
 		super(entries, allowCycles, allowSelfLoops);
 		if (_includeSource) {
-			assert getStart().getSecond()==null;	// source should not have an associated incoming label
+			assert getStart().second ==null;	// source should not have an associated incoming label
 		}
 	}
 	public LabeledPath(List<Pair<E,L>> entries, boolean includeSource, boolean allowCycles, boolean allowSelfLoops) {
 		super(entries, allowCycles, allowSelfLoops);
 		this._includeSource = includeSource;
 		if (_includeSource) {
-			assert getStart().getSecond()==null;	// source should not have an associated incoming label
+			assert getStart().second ==null;	// source should not have an associated incoming label
 		}
 	}
 	public LabeledPath(LabeledPath<E,L> that) {
@@ -81,31 +81,32 @@ public class LabeledPath<E,L> extends Path<Pair<E,L>> {
 	public List<E> getEntries() {
 		List<E> entries = new ArrayList<E>();
 		for (Pair<E, L> item : this) {
-			entries.add(item.getFirst());
+			entries.add(item.first);
 		}
 		return entries;
 	}
 	public List<L> getLabels() {
 		List<L> labels = new ArrayList<L>();
 		for (Pair<E, L> item : this) {
-			labels.add(item.getSecond());
+			labels.add(item.second);
 		}
 		return labels;
 	}
 	
 	@Override
 	public Object getNode(int i) {
-		return get(i).getFirst();
+		return get(i).first;
 	}
 	@Override
 	public Object getSource() {
-		if (_includeSource)
-			return getStart().getFirst();
+		if (_includeSource) {
+			return getStart().first;
+		}
 		return null;
 	}
 	@Override
 	public Object getTarget() {
-		return getEnd().getFirst();
+		return getEnd().first;
 	}
 	
 	/** Return a new LabeledPath which is the suffix of this path of up to length 'maxLength'. 
@@ -120,8 +121,9 @@ public class LabeledPath<E,L> extends Path<Pair<E,L>> {
 	public LabeledPath<E,L> getSuffixPath(int maxLength) {
 		assert maxLength>=0;
 		List<Pair<E,L>> pre = new ArrayList<Pair<E,L>>(this.subList(Math.max(0, this.size()-maxLength), this.size()));
-		if (_includeSource)
-			pre.set(0, new Pair<E,L>(pre.get(0).getFirst(),null));
+		if (_includeSource) {
+			pre.set(0, new Pair<E,L>(pre.get(0).first,null));
+		}
 		return new LabeledPath<E,L>(pre, this._includeSource, this._allowCycles, this._allowSelfLoops);
 
 	}
@@ -158,7 +160,7 @@ public class LabeledPath<E,L> extends Path<Pair<E,L>> {
 		Path<Pair<E,L>> newPath = this.extend(newItem);
 		newPath.remove(0);
 		if (this._includeSource) {
-			E newSource = newPath.get(0).getFirst();
+			E newSource = newPath.get(0).first;
 			newPath.set(0, new Pair<E,L>(newSource,null));
 		}
 		return newPath;
@@ -169,7 +171,7 @@ public class LabeledPath<E,L> extends Path<Pair<E,L>> {
 		Path<Pair<E,L>> newPath = this.extend(newElt, newLabel);
 		newPath.remove(0);
 		if (this._includeSource) {
-			E newSource = newPath.get(0).getFirst();
+			E newSource = newPath.get(0).first;
 			newPath.set(0, new Pair<E,L>(newSource,null));
 		}
 		return newPath;
@@ -177,8 +179,8 @@ public class LabeledPath<E,L> extends Path<Pair<E,L>> {
 	
 	@Override
 	public boolean sameItem(Pair<E,L> a, Pair<E,L> b) {
-		if ((a.getFirst()==null) != (b.getFirst()==null)) return false;
-		return (a.getFirst()==null && b.getFirst()==null) || a.getFirst().equals(b.getFirst());
+		if ((a.first ==null) != (b.first ==null)) return false;
+		return (a.first ==null && b.first ==null) || a.first.equals(b.first);
 	}
 	
 	@Override

@@ -95,8 +95,8 @@ public class DDDecoding implements JDecoding {
 			totalCount += arr.length;
 			mappedIndices[i] = new int[arr.length];
 			for (int j = 0; j < arr.length; j++) {
-				int start = arr[j].getFirst()[0];
-				int end = arr[j].getFirst()[1];
+				int start = arr[j].first[0];
+				int end = arr[j].first[1];
 				if (start != -1) {
 					if (start > max) {
 						max = start;
@@ -123,8 +123,8 @@ public class DDDecoding implements JDecoding {
 		if (requiresMap.containsKey(frame)) {
 			Set<Pair<String, String>> set = requiresMap.get(frame);
 			for (Pair<String, String> p: set) {
-				String one = p.getFirst();
-				String two = p.getSecond();
+				String one = p.first;
+				String two = p.second;
 				int oneIndex = Arrays.binarySearch(keys, one);
 				if (oneIndex < 0) {
 					continue;
@@ -140,13 +140,13 @@ public class DDDecoding implements JDecoding {
 				Pair<int[], Double>[] arr1 = scoreMap.get(one);
 				Pair<int[], Double>[] arr2 = scoreMap.get(two);
 				for (int j = 0; j < scoreMap.get(one).length; j++) {
-					if (arr1[j].getFirst()[0] == -1 && arr1[j].getFirst()[1] == -1) {
+					if (arr1[j].first[0] == -1 && arr1[j].first[1] == -1) {
 						nullIndex1 = mappedIndices[oneIndex][j];
 						break;
 					}
 				}				
 				for (int j = 0; j < scoreMap.get(two).length; j++) {
-					if (arr2[j].getFirst()[0] == -1 && arr2[j].getFirst()[1] == -1) {
+					if (arr2[j].first[0] == -1 && arr2[j].first[1] == -1) {
 						nullIndex2 = mappedIndices[twoIndex][j];
 						break;
 					}
@@ -174,8 +174,8 @@ public class DDDecoding implements JDecoding {
 				Pair<int[], Double>[] arr = scoreMap.get(keys[index]);
 				int[] goldSpan = goldFF.fElementSpansAndFeatures.get(i)[goldFF.goldSpanIdxs.get(i)].span;
 				for (int j = 0; j < arr.length; j++) {
-					if (arr[j].getFirst()[0] == goldSpan[0] && 
-					    arr[j].getFirst()[1] == goldSpan[1]) {
+					if (arr[j].first[0] == goldSpan[0] &&
+					    arr[j].first[1] == goldSpan[1]) {
 						costs[mappedIndices[index][j]] = 0.0;
 					} else {
 						costs[mappedIndices[index][j]] = 1.0;
@@ -187,12 +187,12 @@ public class DDDecoding implements JDecoding {
 		for (int i = 0; i < keys.length; i++) {
 			Pair<int[], Double>[] arr = scoreMap.get(keys[i]);
 			for (int j = 0; j < arr.length; j++) {
-				objVals[count] = arr[j].getSecond();
+				objVals[count] = arr[j].second;
 				if (costAugmented) {
 					objVals[count] += costs[count];
 				}
-				int start = arr[j].getFirst()[0];
-				int end = arr[j].getFirst()[1];
+				int start = arr[j].first[0];
+				int end = arr[j].first[1];
 				if (start != -1 && end != -1) {
 					for (int k = start; k <= end; k++) {
 						overlapArray[k].add(count);
@@ -211,8 +211,8 @@ public class DDDecoding implements JDecoding {
 		if (excludesMap.containsKey(frame)) {
 			Set<Pair<String, String>> set = excludesMap.get(frame);	
 			for (Pair<String, String> p: set) {
-				String one = p.getFirst();
-				String two = p.getSecond();
+				String one = p.first;
+				String two = p.second;
 				int oneIndex = Arrays.binarySearch(keys, one);
 				if (oneIndex < 0) {
 					continue;
@@ -228,13 +228,13 @@ public class DDDecoding implements JDecoding {
 				Pair<int[], Double>[] arr1 = scoreMap.get(one);
 				Pair<int[], Double>[] arr2 = scoreMap.get(two);
 				for (int j = 0; j < scoreMap.get(one).length; j++) {
-					if (arr1[j].getFirst()[0] == -1 && arr1[j].getFirst()[1] == -1) {
+					if (arr1[j].first[0] == -1 && arr1[j].first[1] == -1) {
 						nullIndex1 = mappedIndices[oneIndex][j];
 						break;
 					}
 				}
 				for (int j = 0; j < scoreMap.get(two).length; j++) {
-					if (arr2[j].getFirst()[0] == -1 && arr2[j].getFirst()[1] == -1) {
+					if (arr2[j].first[0] == -1 && arr2[j].first[1] == -1) {
 						nullIndex2 = mappedIndices[twoIndex][j];
 						break;
 					}
@@ -473,8 +473,8 @@ public class DDDecoding implements JDecoding {
 			// System.out.println();
 			if (maxIndex != -1 && maxVal > 0) {
 				totalScore += score;
-				Pair<String, Double> p = 
-					new Pair<String, Double>(arr[maxIndex].getFirst()[0] + "_" + arr[maxIndex].getFirst()[1], score);
+				Pair<String, Double> p =
+					new Pair<String, Double>(arr[maxIndex].first[0] + "_" + arr[maxIndex].first[1], score);
 				res.put(keys[i], p);
 			}  			
 		}

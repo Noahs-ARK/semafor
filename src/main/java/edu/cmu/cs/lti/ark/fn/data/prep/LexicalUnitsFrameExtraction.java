@@ -335,11 +335,11 @@ public class LexicalUnitsFrameExtraction
 							String numRep = getTokenNumberRepresentation(text,start,end);
 							String feInfoS = "";
 							for (Pair<String,Pair<Integer,Integer>> feData : feInfo) {
-								String feName = feData.getFirst();
+								String feName = feData.first;
 								if (text.equals("")) {
 									System.out.print("");
 								}
-								String feNumRep = getTokenNumberRangeRepresentation(text,feData.getSecond().getFirst(),feData.getSecond().getSecond());
+								String feNumRep = getTokenNumberRangeRepresentation(text, feData.second.first, feData.second.second);
 								feInfoS += feName + "\t" + feNumRep + "\t";
 							}
 							if (feInfoS.endsWith("\t"))

@@ -126,8 +126,8 @@ public class JointDecoding extends Decoding {
 			if (keys.size() > 0) {
 				score = 0.0;
 				for (String fe: keys) {
-					score += feMap.get(fe).getSecond();
-					retMap.put(fe, feMap.get(fe).getFirst());
+					score += feMap.get(fe).second;
+					retMap.put(fe, feMap.get(fe).first);
 				}
 				score /= (double) keys.size();
 			}
@@ -153,7 +153,7 @@ public class JointDecoding extends Decoding {
 		System.out.println("Frame:"+frameName);
 		// vs is the set of FEs on which joint decoding has to be done
 		Pair<Map<String, String>, Double> pair = getDecodedMap(mFF, w, costAugmented, goldFF);
-		Map<String, String> feMap = pair.getFirst();
+		Map<String, String> feMap = pair.first;
 		Set<String> keySet = feMap.keySet();
 		int count = 1;
 		for(String fe:keySet) {
@@ -174,7 +174,7 @@ public class JointDecoding extends Decoding {
 		}		
 		decisionLine="0\t"+count+"\t"+decisionLine.trim();
 		if (returnScores) {
-			decisionLine = decisionLine + "\t" + pair.getSecond();
+			decisionLine = decisionLine + "\t" + pair.second;
 		}
 		System.out.println(decisionLine);
 		return decisionLine;

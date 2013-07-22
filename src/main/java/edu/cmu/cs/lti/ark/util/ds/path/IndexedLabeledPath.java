@@ -79,8 +79,9 @@ public class IndexedLabeledPath<N,L> extends LabeledPath<Integer,L> implements C
 	
 	public int[] getIndices() {
 		int[] items = new int[this.size()];
-		for (int i=0; i<items.length; i++)
-			items[i] = this.get(i).getFirst();
+		for (int i=0; i<items.length; i++) {
+			items[i] = this.get(i).first;
+		}
 		return items;
 	}
 	@Override
@@ -92,8 +93,9 @@ public class IndexedLabeledPath<N,L> extends LabeledPath<Integer,L> implements C
 	public IndexedLabeledPath<N,L> getSuffix(int maxLength) {
 		assert maxLength>0;
 		List<Pair<Integer,L>> pre = new ArrayList<Pair<Integer,L>>(this.subList(Math.max(0, this.size()-maxLength), this.size()));
-		if (_includeSource)
-			pre.set(0, new Pair<Integer,L>(pre.get(0).getFirst(),null));
+		if (_includeSource) {
+			pre.set(0, new Pair<Integer,L>(pre.get(0).first,null));
+		}
 		return new IndexedLabeledPath<N,L>(pre, this._includeSource, this._allowCycles, this._allowSelfLoops);
 	}
 	@Override
@@ -112,7 +114,7 @@ public class IndexedLabeledPath<N,L> extends LabeledPath<Integer,L> implements C
 		LabeledPath<N,L> path = new LabeledPath<N,L>();
 		path._includeSource = this._includeSource;
 		for (Pair<Integer,L> item : this) {
-			path.add(new Pair<N,L>(nodes.get(item.getFirst()), item.getSecond()));
+			path.add(new Pair<N,L>(nodes.get(item.first), item.second));
 		}
 		return path;
 	}
@@ -134,13 +136,17 @@ public class IndexedLabeledPath<N,L> extends LabeledPath<Integer,L> implements C
 				continue;
 			
 			// if corresponding indices don't match, order them so the path with the lower index comes first
-			if (a.getFirst()<b.getFirst()) return -1;
-			else if (a.getFirst()>b.getFirst()) return 1;
+			if (a.first < b.first) return -1;
+			else {
+				if (a.first > b.first) return 1;
+			}
 			
 			// corresponding labels don't match
-			assert (a.getSecond()!=b.getSecond());
-			if (a.getSecond()==null || a.getSecond().hashCode()<b.getSecond().hashCode()) return -1;
-			else if (b.getSecond()==null || a.getSecond().hashCode()>b.getSecond().hashCode()) return 1;
+			assert (a.second != b.second);
+			if (a.second ==null || a.second.hashCode()< b.second.hashCode()) return -1;
+			else {
+				if (b.second ==null || a.second.hashCode()> b.second.hashCode()) return 1;
+			}
 			
 			assert false;	// equals() or hashCode() problem?
 		}

@@ -60,13 +60,13 @@ public class RequiredDataCreation {
 		THashMap<String, THashSet<String>> cMap = getHVCorrespondence(options);
 		Pair<Map<String, Set<String>>, Map<String, THashMap<String, Set<String>>>>
 				pair = buildHVWordNetCache(options);
-		Map<String, Map<String, Set<String>>> revisedMap = reviseRelMap(pair.getSecond(), options);
+		Map<String, Map<String, Set<String>>> revisedMap = reviseRelMap(pair.second, options);
 		String fmFile = options.frameNetMapFile.get();
 		THashMap<String, THashSet<String>> frameMap = SerializedObjects.readObject(fmFile);
 		RequiredDataForFrameIdentification req =
 				new RequiredDataForFrameIdentification(relWords,
-						pair.getFirst(),
-						pair.getSecond(),
+						pair.first,
+						pair.second,
 						frameMap,
 						cMap, revisedMap,
 						hvLemmas);

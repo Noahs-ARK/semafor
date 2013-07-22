@@ -182,7 +182,7 @@ public class Training {
 				int sampleIndex = arr[j];
 				System.out.println("Sample index:"+sampleIndex);
 				Pair<Double, double[]> p = getDerivativesOfSample(sumDers,sampleIndex);
-				sumDers = p.getSecond();
+				sumDers = p.second;
 			}
 			countDataEncountered+=batchsize;
 			W = SGA.updateGradient(W, sumDers,0.1);
@@ -223,8 +223,8 @@ public class Training {
 		Arrays.fill(sumDers, 0.0);
 		for (int index = start; index < end; index ++) {
 			Pair<Double, double[]> p = getDerivativesOfSample(sumDers, index);
-			sumDers = p.getSecond();
-			tValues[threadID] += p.getFirst();
+			sumDers = p.second;
+			tValues[threadID] += p.first;
 		}
 		for (int i = 0; i < W.length; i++) {
 			tGradients[threadID][i] += sumDers[i];

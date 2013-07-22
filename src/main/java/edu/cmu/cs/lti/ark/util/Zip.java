@@ -167,8 +167,8 @@ public class Zip {
 		Collection<Integer> nums = Arrays.asList(10,15,42,-8);
 		
 		for (Pair<String,Integer> pair : Zip.zip2(names,nums)) {
-			String s = pair.getFirst();
-			Integer i = pair.getSecond();
+			String s = pair.first;
+			Integer i = pair.second;
 			System.out.println(s + ":" + i);
 		}
 		
@@ -184,8 +184,8 @@ public class Zip {
 		z = Zip.zip2(names.iterator(), nums.iterator());
 		try {
 			for (Pair<String,Integer> pair : z) {
-				String s = pair.getFirst();
-				Integer i = pair.getSecond();
+				String s = pair.first;
+				Integer i = pair.second;
 				System.out.println(s + ":" + i);
 			}
 		} catch (IllegalStateException ex) { System.out.println("Correctly threw exception after reaching the end of the shorter of two Iterators (" + ex.getMessage() + ")"); }
@@ -197,8 +197,8 @@ public class Zip {
 		nums = Arrays.asList(10, 15, 42, -8);
 		
 		for (Pair<String,Integer> pair : Zip.zip2(names,nums,3)) {
-			String s = pair.getFirst();
-			Integer i = pair.getSecond();
+			String s = pair.first;
+			Integer i = pair.second;
 			if (i==-8) throw new RuntimeException("Error: iteration beyond limit");
 			System.out.println(s + ":" + i);
 		}
@@ -214,8 +214,8 @@ public class Zip {
 		z = Zip.zip2(names.iterator(), nums.iterator(), 3);
 		try {
 			for (Pair<String,Integer> pair : z) {
-				String s = pair.getFirst();
-				Integer i = pair.getSecond();
+				String s = pair.first;
+				Integer i = pair.second;
 				System.out.println(s + ":" + i);
 			}
 		} catch (IllegalStateException ex) { System.err.println("Zip of two Iterators should not have thrown an exception since iteration was limited"); }
@@ -223,8 +223,8 @@ public class Zip {
 		z = Zip.zip2(names.iterator(), nums.iterator(), 4);
 		try {
 			for (Pair<String,Integer> pair : z) {
-				String s = pair.getFirst();
-				Integer i = pair.getSecond();
+				String s = pair.first;
+				Integer i = pair.second;
 				System.out.println(s + ":" + i);
 			}
 		} catch (IllegalStateException ex) { System.out.println("Correctly threw exception after reaching the end of the shorter of two Iterators--limit was too large (" + ex.getMessage() + ")"); }

@@ -261,8 +261,8 @@ public class WeightedRootedHyperDAG<N extends RootedDAGNode<N> & HasWeightedHype
 	
 	protected <T,U,V,I extends Path<T> & Indexer<List<Integer>,List<N>,? extends Path<U>>,L> V _startAgenda(boolean isLabeled, Pair<Map<I,V>, SortedSet<I>> chartAndAgenda, List<N> sortedNodes, 
 			Semirings.Semiring<V> semr, int order, Path<U> relevantPath, Subroutine edgeOperation) {
-		Map<I,V> chart = chartAndAgenda.getFirst();
-		SortedSet<I> agenda = chartAndAgenda.getSecond();
+		Map<I,V> chart = chartAndAgenda.first;
+		SortedSet<I> agenda = chartAndAgenda.second;
 		
 		while (!agenda.isEmpty()) {
 			I nextItem = agenda.first();
@@ -313,7 +313,7 @@ public class WeightedRootedHyperDAG<N extends RootedDAGNode<N> & HasWeightedHype
 					continue;
 				for (L l : ((HasLabeledEdges<N,L>)node).getLabels(c)) {
 					if (relevantPath!=null) {
-						L rL = ((Pair<N,L>)relevantPath.get(1)).getSecond();
+						L rL = ((Pair<N, L>) relevantPath.get(1)).second;
 						if ((rL==null)!=(l==null) || !rL.equals(l))
 							continue;
 					}

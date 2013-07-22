@@ -169,9 +169,9 @@ public class DataPointWithFrameElements extends DataPoint {
 			Range0Based span = argument.getValue();
 			if (CandidateFrameElementFilters.isEmptySpan(span))	// unfilled FE
 				continue;
-			String rangeS = ""+span.getStart();
+			String rangeS = ""+ span.start;
 			if (span.length()>1)
-				rangeS += ":" + (span.getStart()+span.length());
+				rangeS += ":" + (span.start +span.length());
 			s += argument.getKey() + "\t" + rangeS + "\t";
 			numNonemptySpans++;
 		}

@@ -195,9 +195,9 @@ public class DataPoint {
 				oCurrent = Optional.of(new Range0Based(tknNum, tknNum));
 			} else {
 				final Range0Based current = oCurrent.get();
-				if (mergeAdjacent && current.getStart() == tknNum - 1) {
+				if (mergeAdjacent && current.start == tknNum - 1) {
 					// merge with previous
-					oCurrent = Optional.of(new Range0Based(current.getStart(), tknNum));
+					oCurrent = Optional.of(new Range0Based(current.start, tknNum));
 				} else {
 					// done with group of consecutive tokens
 					result.add(current);
@@ -215,8 +215,8 @@ public class DataPoint {
 		for (Range0Based tokenRange : tokenRanges) {
 			final Range0Based charRange =
 					new Range0Based(
-							tokenIndexMap.get(tokenRange.getStart()).getStart(),
-							tokenIndexMap.get(tokenRange.getEnd()).getEnd()
+							tokenIndexMap.get(tokenRange.start).start,
+							tokenIndexMap.get(tokenRange.end).end
 					);
 			result.add(charRange);
 		}

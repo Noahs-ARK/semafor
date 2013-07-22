@@ -99,7 +99,7 @@ public class PrepareFullAnnotationXML {
 		// output of MapReduce--will have an extra number and tab at the beginning of each line
 		String pFELine;
 		while((pFELine=inFELines.readLine()) != null) {
-			int sentNum = DataPointWithFrameElements.parseFrameNameAndSentenceNum(pFELine).getSecond();
+			int sentNum = DataPointWithFrameElements.parseFrameNameAndSentenceNum(pFELine).second;
 			if (sentenceNums.contains(sentNum)) {
 				predictedFELines.add(pFELine.trim());
 			}
@@ -115,7 +115,7 @@ public class PrepareFullAnnotationXML {
 		while((parseLine=inParses.readLine())!=null) {
 			String sentence = inOrgSentences.readLine().trim();
 			// skip sentences prior to the specified range
-			if(count < sentenceNums.getStart()) {
+			if(count < sentenceNums.start) {
 				count++;
 				continue;
 			}
@@ -124,7 +124,7 @@ public class PrepareFullAnnotationXML {
 			orgSentenceLines.add(sentence);
 
 			// skip sentences after the specified range
-			if(count == sentenceNums.getStart() + sentenceNums.length()) {
+			if(count == sentenceNums.start + sentenceNums.length()) {
 				break;
 			}
 			count++;
@@ -175,7 +175,7 @@ public class PrepareFullAnnotationXML {
 		// Map sentence offsets to frame annotation data points within each sentence
 		final TIntObjectHashMap<Set<String>> predictions = new TIntObjectHashMap<Set<String>>();
 		for (String feLine : predictedFELines) {
-			final int sentNum = DataPointWithFrameElements.parseFrameNameAndSentenceNum(feLine).getSecond();
+			final int sentNum = DataPointWithFrameElements.parseFrameNameAndSentenceNum(feLine).second;
 
 			if (!predictions.containsKey(sentNum))
 				predictions.put(sentNum, new THashSet<String>());
@@ -183,14 +183,14 @@ public class PrepareFullAnnotationXML {
 			predictions.get(sentNum).add(feLine);
 		}
 
-		for (int sent = sentenceNums.getStart(); sent < sentenceNums.getStart() + sentenceNums.length(); sent++) {
-			final String parseLine = parses.get(sent-sentenceNums.getStart());
+		for (int sent = sentenceNums.start; sent < sentenceNums.start + sentenceNums.length(); sent++) {
+			final String parseLine = parses.get(sent- sentenceNums.start);
 
 			final Element sentence = doc.createElement("sentence");
-			addAttribute(doc, "ID", sentence, "" + (sent - sentenceNums.getStart()));
+			addAttribute(doc, "ID", sentence, "" + (sent - sentenceNums.start));
 
 			final Element text = doc.createElement("text");
-			final String origLine = origLines.get(sent - sentenceNums.getStart());
+			final String origLine = origLines.get(sent - sentenceNums.start);
 			final Node textNode = doc.createTextNode(origLine);
 			text.appendChild(textNode);
 			sentence.appendChild(text);
@@ -224,7 +224,7 @@ public class PrepareFullAnnotationXML {
 				for (String frame : dataPointsByFrame.keySet()) {
 					final List<DataPointWithFrameElements> dps = dataPointsByFrame.get(frame);
 					// Create the <annotationSet> Element for the predicted frame annotation, and add it under the sentence
-					Element annotationSet = buildAnnotationSet(frame, dps, doc, sent - sentenceNums.getStart(), frameIndex);
+					Element annotationSet = buildAnnotationSet(frame, dps, doc, sent - sentenceNums.start, frameIndex);
 					annotationSets.appendChild(annotationSet);
 					frameIndex++;
 				}
@@ -267,10 +267,10 @@ public class PrepareFullAnnotationXML {
 			final Element label1 = doc.createElement("label");
 			addAttribute(doc, "ID", label1, "" + labelId1);
 			addAttribute(doc, "name", label1, "Target");
-			addAttribute(doc, "start", label1, "" + charRange.getStart());
-			addAttribute(doc, "end", label1, "" + charRange.getEnd());
-			addAttribute(doc, "tokenStart", label1, "" + tokenRange.getStart());
-			addAttribute(doc, "tokenEnd", label1, "" + tokenRange.getEnd());
+			addAttribute(doc, "start", label1, "" + charRange.start);
+			addAttribute(doc, "end", label1, "" + charRange.end);
+			addAttribute(doc, "tokenStart", label1, "" + tokenRange.start);
+			addAttribute(doc, "tokenEnd", label1, "" + tokenRange.end);
 			targetLabels.appendChild(label1);
 			count = count + 3;
 		}
@@ -303,10 +303,10 @@ public class PrepareFullAnnotationXML {
 				addAttribute(doc, "ID", label, "" + labelId);
 				addAttribute(doc, "name", label, feName);
 
-				final int tokenStart = fillerSpan.getStart();
-				final int tokenEnd = fillerSpan.getEnd();
-				final int startCharIndex = dataPointWithFrameElements.getCharacterIndicesForToken(tokenStart).getStart();
-				final int endCharIndex = dataPointWithFrameElements.getCharacterIndicesForToken(tokenEnd).getEnd();
+				final int tokenStart = fillerSpan.start;
+				final int tokenEnd = fillerSpan.end;
+				final int startCharIndex = dataPointWithFrameElements.getCharacterIndicesForToken(tokenStart).start;
+				final int endCharIndex = dataPointWithFrameElements.getCharacterIndicesForToken(tokenEnd).end;
 				addAttribute(doc, "start", label, "" + startCharIndex);
 				addAttribute(doc, "end", label, "" + endCharIndex);
 				addAttribute(doc, "tokenStart", label, "" + tokenStart);

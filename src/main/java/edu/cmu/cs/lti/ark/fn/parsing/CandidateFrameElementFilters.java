@@ -135,7 +135,7 @@ public class CandidateFrameElementFilters {
 		
 		public String getSufficientStatistics(DependencyParse parse, Range fillerSpanRange) {
 			DependencyParse[] nodes = parse.getIndexSortedListOfNodes();
-			return getSufficientStatistics(nodes, fillerSpanRange.getStart(), fillerSpanRange.getEnd());
+			return getSufficientStatistics(nodes, fillerSpanRange.start, fillerSpanRange.end);
 		}
 		
 		/**

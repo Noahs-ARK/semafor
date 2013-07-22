@@ -91,12 +91,14 @@ public class NormalizeLinDekNeighbors {
 		ArrayList<String> finalLines = new ArrayList<String>();
 		Comparator<Pair<String, Double>> c = new Comparator<Pair<String, Double>> () {
 			public int compare(Pair<String, Double> o1, Pair<String, Double> o2) {
-				if (o1.getSecond() > o2.getSecond()) 
+				if (o1.second > o2.second)
 					return -1;
-				else if (o1.getSecond() == o2.getSecond()) {
-					return 0;
-				} else 
-					return 1;
+				else {
+					if (o1.second == o2.second) {
+						return 0;
+					} else
+						return 1;
+				}
 			}			
 		};
 		for (String unit: arr) {
@@ -110,7 +112,7 @@ public class NormalizeLinDekNeighbors {
 			}
 			Arrays.sort(pArray, c);
 			for (int i = 0; i < keys.length; i++) {
-				line += pArray[i].getFirst() + "\t" + pArray[i].getSecond() + "\t";
+				line += pArray[i].first + "\t" + pArray[i].second + "\t";
 			}
 			line = line.trim();
 			finalLines.add(line);

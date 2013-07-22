@@ -26,7 +26,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.*;
 import edu.cmu.cs.lti.ark.fn.parsing.RankedScoredRoleAssignment;
 import edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult;
-import edu.cmu.cs.lti.ark.util.ds.Range0Based;
+import edu.cmu.cs.lti.ark.util.ds.*;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -160,7 +160,7 @@ public class PrepareFullAnnotationJson {
 		for (Range0Based targetSpan : predictionsByFrame.keySet()) {
 			final List<RankedScoredRoleAssignment> predictionsForFrame = predictionsByFrame.get(targetSpan);
 			final RankedScoredRoleAssignment first = predictionsForFrame.get(0);
-			final NamedSpanSet target = makeSpan(first.targetSpan.getStart(), first.targetSpan.getEnd() + 1, first.frame, tokens);
+			final NamedSpanSet target = makeSpan(first.targetSpan.start, first.targetSpan.end + 1, first.frame, tokens);
 			final List<Frame.ScoredRoleAssignment> scoredRoleAssignments = Lists.newArrayList();
 			for (RankedScoredRoleAssignment ra : predictionsForFrame) {
 				// extract frame elements
@@ -168,7 +168,7 @@ public class PrepareFullAnnotationJson {
 				final List<NamedSpanSet> frameElements = Lists.newArrayList();
 				for(FrameElementAndSpan frameElementAndSpan : frameElementsAndSpans) {
 					final Range0Based range = frameElementAndSpan.span;
-					frameElements.add(makeSpan(range.getStart(), range.getEnd() + 1, frameElementAndSpan.name, tokens));
+					frameElements.add(makeSpan(range.start, range.end + 1, frameElementAndSpan.name, tokens));
 				}
 				scoredRoleAssignments.add(new Frame.ScoredRoleAssignment(ra.rank, ra.score, frameElements));
 			}

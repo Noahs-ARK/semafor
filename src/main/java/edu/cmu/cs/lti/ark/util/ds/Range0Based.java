@@ -37,7 +37,7 @@ public class Range0Based extends Range {
 	 * @param r A 1-based range
 	 */
 	public Range0Based(Range1Based r) {
-		this(r.getStart()-1, r.getEnd()-1, r.isEndInclusive());
+		this(r.start -1, r.end -1, r.isEndInclusive());
 	}
 	
 	/**
@@ -47,7 +47,7 @@ public class Range0Based extends Range {
 	 * @param deltaEnd Amount to add to the end position in the provided range
 	 */
 	public Range0Based(Range r, int deltaStart, int deltaEnd) {
-		this(r.getStart()+deltaStart, r.getEnd()+deltaEnd, r.isEndInclusive());
+		this(r.start +deltaStart, r.end +deltaEnd, r.isEndInclusive());
 	}
 	
 	/**

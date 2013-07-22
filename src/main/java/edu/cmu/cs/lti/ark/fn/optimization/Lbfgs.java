@@ -55,8 +55,8 @@ public class Lbfgs {
 			do {
 				Pair<Double, double[]> valueAndGradient =
 						valueAndGradientProvider.apply(currentParams);
-				double value = valueAndGradient.getFirst();
-				double[] gradients = valueAndGradient.getSecond();
+				double value = valueAndGradient.first;
+				double[] gradients = valueAndGradient.second;
 					final long startTime = System.currentTimeMillis();
 					riso.numerical.LBFGS.lbfgs(modelSize,
 							NUM_CORRECTIONS,

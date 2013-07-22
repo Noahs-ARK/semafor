@@ -264,12 +264,12 @@ public class Semafor {
 		final List<String> idResultLines = Lists.newArrayList();
 		final String parseLine = AllLemmaTags.makeLine(sentence.toAllLemmaTagsArray());
 		for (Pair<List<Integer>, String> targetAndFrame : idResults) {
-			final List<Integer> targetTokenIdxs = targetAndFrame.getFirst();
-			final String frame = targetAndFrame.getSecond();
+			final List<Integer> targetTokenIdxs = targetAndFrame.first;
+			final String frame = targetAndFrame.second;
 			final String tokenIdxsStr = Joiner.on("_").join(targetTokenIdxs);
 			final Pair<String, String> tokenRepresentation = getTokenRepresentation(tokenIdxsStr, parseLine);
-			final String lexicalUnit = tokenRepresentation.getFirst();
-			final String tokenStrs = tokenRepresentation.getSecond();
+			final String lexicalUnit = tokenRepresentation.first;
+			final String tokenStrs = tokenRepresentation.second;
 			idResultLines.add(TAB.join(0, 1.0, 1, frame, lexicalUnit, tokenIdxsStr, tokenStrs, 0));
 		}
 		return idResultLines;
@@ -295,7 +295,7 @@ public class Semafor {
 					final Set<String> featureSet =
 							featureExtractor.extractFeatures(dataPoint, frame, frameElement, span, parse).keySet();
 					final int[] featArray = convertToIdxs(featureSet);
-					spansAndFeatures.add(new SpanAndCorrespondingFeatures(new int[] {span.getStart(), span.getEnd()}, featArray));
+					spansAndFeatures.add(new SpanAndCorrespondingFeatures(new int[] {span.start, span.end}, featArray));
 				}
 				featuresAndSpanByArgument.add(spansAndFeatures.toArray(new SpanAndCorrespondingFeatures[spansAndFeatures.size()]));
 			}
