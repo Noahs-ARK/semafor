@@ -22,6 +22,7 @@
 package edu.cmu.cs.lti.ark.util.optimization;
 
 import edu.cmu.cs.lti.ark.util.optimization.LDouble.IdentityElement;
+import edu.cmu.cs.lti.ark.fn.optimization.Alphabet;
 import gnu.trove.TObjectDoubleHashMap;
 
 import java.util.ArrayList;

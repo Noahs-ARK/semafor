@@ -172,10 +172,8 @@ public class Semafor {
 				@Override public void run() {
 					while (!Thread.currentThread().isInterrupted()) {
 						try {
-							System.out.println("fetching result");
 							final Optional<SemaforParseResult> oResult = results.take().get();
 							if (!oResult.isPresent()) break; // got poison pill. we're done
-							System.out.println("Writing result");
 							output.println(oResult.get().toJson());
 							output.flush();
 						} catch (Exception e) {
@@ -183,7 +181,6 @@ public class Semafor {
 							throw new RuntimeException(e);
 						}
 					}
-					System.out.println("Done.");
 				} });
 			consumer.start();
 			// in main thread, put placeholders on results queue (so results stay in order), then
@@ -193,16 +190,14 @@ public class Semafor {
 				int i = 0;
 				while (sentences.hasNext()) {
 					final Sentence sentence = sentences.next();
-					System.out.println("submitting sentence " + i);
 					final int sentenceId = i;
 					results.put(workerThreadPool.submit(new Callable<Optional<SemaforParseResult>>() {
 						@Override public Optional<SemaforParseResult> call() throws Exception {
-							System.out.println("parsing sentence " + sentenceId);
 							final long start = System.currentTimeMillis();
 							try {
 								final SemaforParseResult result = parseSentence(sentence);
 								final long end = System.currentTimeMillis();
-								System.out.println("parsed sentence " + sentenceId + " in " + (end - start) + " millis.");
+								System.err.printf("parsed sentence %d in %d millis.%n", sentenceId, end - start);
 								return Optional.of(result);
 							} catch (Exception e) {
 								e.printStackTrace();
@@ -221,6 +216,7 @@ public class Semafor {
 			// wait for consumer to finish
 			consumer.join();
 		} finally { closeQuietly(output); }
+		System.err.println("Done.");
 	}
 
 	public SemaforParseResult parseSentence(Sentence unLemmatizedSentence) throws IOException {

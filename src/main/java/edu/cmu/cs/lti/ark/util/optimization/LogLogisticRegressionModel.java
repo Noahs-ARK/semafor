@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Random;
 
 import edu.cmu.cs.lti.ark.util.optimization.LDouble.IdentityElement;
+import edu.cmu.cs.lti.ark.fn.optimization.Alphabet;
 
 import riso.numerical.LBFGS;
 
