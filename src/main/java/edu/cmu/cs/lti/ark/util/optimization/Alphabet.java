@@ -21,11 +21,11 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.util.optimization;
 
-import java.io.Serializable;
-import java.util.*;
+import gnu.trove.TObjectIdentityHashingStrategy;
+import gnu.trove.TObjectIntHashMap;
 
-import edu.cmu.cs.lti.ark.util.Interner;
-import gnu.trove.*;
+import java.io.Serializable;
+import java.util.ArrayList;
 
 public class Alphabet implements Serializable
 {
@@ -37,7 +37,6 @@ public class Alphabet implements Serializable
 	private static final long serialVersionUID = -3475498139713667452L;
 	private ArrayList<String> m_decode;
 	private TObjectIntHashMap<String> m_encode;
-	private Interner<String> m_interner = new Interner<String>();
 	private static int ALPHABET_INITIAL_CAPACITY = 2000000;
 
 	public Alphabet() {
@@ -67,7 +66,7 @@ public class Alphabet implements Serializable
 	 * @param s String to add
 	 */
 	public void addString(String s) {
-		String ss = m_interner.intern(s);
+		String ss = s.intern();
 		if (!m_encode.containsKey(ss)) {
 			m_encode.put(ss, m_decode.size());
 			m_decode.add(ss);
@@ -77,7 +76,7 @@ public class Alphabet implements Serializable
 	}
 
 	public boolean checkString(String s) {
-		String ss = m_interner.intern(s);
+		String ss = s.intern();
 		if (m_encode.containsKey(ss)) {
 			return true;
 		} else {
@@ -93,7 +92,7 @@ public class Alphabet implements Serializable
 	 */
 	public int getInt(String s) {
 		boolean check = checkString(s);
-		String ss = m_interner.intern(s);
+		String ss = s.intern();
 		if(!check)
 		{
 			m_decode.add(ss);

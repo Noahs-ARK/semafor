@@ -26,7 +26,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import edu.cmu.cs.lti.ark.util.Interner;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 import edu.cmu.cs.lti.ark.util.ds.graph.IndexComparator;
@@ -124,7 +123,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 
 				// Iterate through words and update with this annotation series
 				for(int j=0; j<count; j++) {
-					parseData[j][p][s] = (String)Interner.globalIntern(st.nextToken());
+					parseData[j][p][s] = st.nextToken().intern();
 				}
 			}
 		}

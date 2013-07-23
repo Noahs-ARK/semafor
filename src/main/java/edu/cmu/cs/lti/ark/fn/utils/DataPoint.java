@@ -23,7 +23,6 @@ package edu.cmu.cs.lti.ark.fn.utils;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
-import edu.cmu.cs.lti.ark.util.Interner;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.Range;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
@@ -100,10 +99,10 @@ public class DataPoint {
 		// tokens[3]: target word(s), separated by " "
 		// tokens[4]: sentence number
 		final String[] tokens = frameLine.split("\t");
-		frameName = (String)Interner.globalIntern(tokens[0]);
+		frameName = tokens[0].intern();
 		sentNum = parseInt(tokens[4]);
 		// The above 3 lines are duplicated in parseFrameNameAndSentenceNum()
-		lexicalUnitName = (String)Interner.globalIntern(tokens[1]);
+		lexicalUnitName = tokens[1].intern();
 		String[] tokNums = tokens[2].split("_");
 		targetTokenIdxs = new int[tokNums.length];
 		for(int j = 0; j < tokNums.length; j ++) {
@@ -129,7 +128,7 @@ public class DataPoint {
 	protected static Pair<String,Integer> parseFrameNameAndSentenceNum(String frameLine) {
 		// A subset of the code in processFrameLine()
 		String[] toks = frameLine.split("\t");
-		String frameName = (String)Interner.globalIntern(toks[0]);
+		String frameName = toks[0].intern();
 		int sentNum = Integer.parseInt(toks[4]);
 		return new Pair<String,Integer>(frameName, sentNum);
 	}

@@ -21,11 +21,11 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.optimization;
 
-import java.io.Serializable;
-import java.util.*;
+import gnu.trove.TObjectIdentityHashingStrategy;
+import gnu.trove.TObjectIntHashMap;
 
-import edu.cmu.cs.lti.ark.util.Interner;
-import gnu.trove.*;
+import java.io.Serializable;
+import java.util.ArrayList;
 
 /**
  * Maps each unique string to a unique index.
@@ -36,7 +36,6 @@ public class Alphabet implements Serializable {
 	private static final long serialVersionUID = -3475498139713667452L;
 	private final ArrayList<String> strings;
 	private final TObjectIntHashMap<String> reverseIndex;
-	private final Interner<String> interner = new Interner<String>();
 
 	public Alphabet() {
 		final int ALPHABET_INITIAL_CAPACITY = 2000000;
@@ -66,7 +65,7 @@ public class Alphabet implements Serializable {
 	 * @param s String to add
 	 */
 	public void addString(String s) {
-		String ss = interner.intern(s);
+		String ss = s.intern();
 		if (!reverseIndex.containsKey(ss)) {
 			reverseIndex.put(ss, strings.size());
 			strings.add(ss);
@@ -74,7 +73,7 @@ public class Alphabet implements Serializable {
 	}
 
 	public boolean checkString(String s) {
-		return reverseIndex.containsKey(interner.intern(s));
+		return reverseIndex.containsKey(s.intern());
 	}
 	
 	/**
@@ -84,7 +83,7 @@ public class Alphabet implements Serializable {
 	 * @return
 	 */
 	public int getInt(String s) {
-		String ss = interner.intern(s);
+		String ss = s.intern();
 		if(!checkString(s)) {
 			strings.add(ss);
 			int newIndex = strings.size();

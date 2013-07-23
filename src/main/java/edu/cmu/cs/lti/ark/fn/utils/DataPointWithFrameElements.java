@@ -28,7 +28,6 @@ import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.parsing.CandidateFrameElementFilters;
-import edu.cmu.cs.lti.ark.util.Interner;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParses;
@@ -224,7 +223,7 @@ public class DataPointWithFrameElements extends DataPoint {
 		String result="";
 		Arrays.sort(intNums);
 		while(st.hasMoreTokens()) {
-			String token = (String)Interner.globalIntern(st.nextToken().trim());
+			String token = st.nextToken().trim().intern();
 			if(token.equals(""))
 				continue;
 			if(Arrays.binarySearch(intNums, count)>=0)
