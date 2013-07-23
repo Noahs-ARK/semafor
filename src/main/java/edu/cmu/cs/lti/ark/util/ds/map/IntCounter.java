@@ -24,6 +24,7 @@ package edu.cmu.cs.lti.ark.util.ds.map;
 import com.google.common.collect.Maps;
 import gnu.trove.*;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.*;
 
 /**
@@ -37,13 +38,10 @@ import java.util.*;
  * @since 2009-03-19
  * @param <T> Type for keys
  */
+@NotThreadSafe
 public class IntCounter<T> extends AbstractCounter<T, Integer> implements java.io.Serializable {
 	private static final long serialVersionUID = -5622820446958578575L;
-	
-	public class IntCounterFactory implements FactoryDefaultMap.DefaultValueFactory<IntCounter<T>> {
-		public IntCounter<T> newDefaultValue() { return new IntCounter<T>(); }
-	}
-	
+
 	protected TObjectIntHashMap<T> m_map;
 	protected int m_sum = 0;
 	
@@ -52,11 +50,7 @@ public class IntCounter<T> extends AbstractCounter<T, Integer> implements java.i
 	public IntCounter() {
 		m_map = new TObjectIntHashMap<T>();
 	}
-	
-	public IntCounter(TObjectHashingStrategy<T> hs) {
-		m_map = new TObjectIntHashMap<T>(hs);
-	}
-	
+
 	public IntCounter(TObjectIntHashMap<T> map) {
 		m_map = map;
 		

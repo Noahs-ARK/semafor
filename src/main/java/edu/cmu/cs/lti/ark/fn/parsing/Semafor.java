@@ -293,7 +293,7 @@ public class Semafor {
 					final Range0Based span = candidateSpanAndParseIdx.span;
 					final DependencyParse parse = parses.get(candidateSpanAndParseIdx.parseIdx);
 					final Set<String> featureSet =
-							featureExtractor.extractFeatures(dataPoint, frame, frameElement, span, parse).keySet();
+							featureExtractor.extractFeatures(dataPoint, frame, frameElement, span, parse).elementSet();
 					final int[] featArray = convertToIdxs(featureSet);
 					spansAndFeatures.add(new SpanAndCorrespondingFeatures(new int[] {span.start, span.end}, featArray));
 				}

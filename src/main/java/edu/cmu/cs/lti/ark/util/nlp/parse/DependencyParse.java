@@ -22,6 +22,8 @@
 package edu.cmu.cs.lti.ark.util.nlp.parse;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.util.Interner;
@@ -51,6 +53,12 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 	private static final IndexComparator indexComparator = new IndexComparator();
 
 	protected String sentence = "";
+	// memoize
+	private final Supplier<DependencyParse[]> indexSortedNodesSupplier =
+			Suppliers.memoize(new Supplier<DependencyParse[]>() {
+				@Override public DependencyParse[] get() {
+					return sortNodesByIndex(getDescendants(true));
+				} });
 
 	public String getSentence() {
 		return sentence;
@@ -336,7 +344,8 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 	 * @return A list of nodes in this parse, sorted ascending by index
 	 */
 	public DependencyParse[] getIndexSortedListOfNodes() {
-		return sortNodesByIndex(getDescendants(true));
+		// memoized
+		return indexSortedNodesSupplier.get();
 	}
 
 	public static DependencyParse[] sortNodesByIndex(List<DependencyParse> nodes) {
