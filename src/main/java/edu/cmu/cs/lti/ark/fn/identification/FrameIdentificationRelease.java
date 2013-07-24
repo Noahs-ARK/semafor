@@ -33,19 +33,26 @@ import gnu.trove.TObjectDoubleHashMap;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 import static com.google.common.base.Strings.nullToEmpty;
+import static java.lang.Math.exp;
 
 
 public class FrameIdentificationRelease {
 	public static Pair<IdFeatureExtractor, TObjectDoubleHashMap<String>>
 			parseParamFile(String paramsFile) throws IOException {
 		final List<String> lines = Files.readLines(new File(paramsFile), Charsets.UTF_8);
-		TObjectDoubleHashMap<String> model = new TObjectDoubleHashMap<String>(lines.size());
-		int count = 0;
 		final IdFeatureExtractor featureExtractor = IdFeatureExtractor.fromName(lines.get(0));
-		for (String line : lines.subList(1, lines.size())) {
+		final TObjectDoubleHashMap<String> model = readModel(lines.subList(1, lines.size()));
+		return Pair.of(featureExtractor, model);
+	}
+
+	public static TObjectDoubleHashMap<String> readModel(Collection<String> featureLines) {
+		final TObjectDoubleHashMap<String> model = new TObjectDoubleHashMap<String>(featureLines.size());
+		int count = 0;
+		for (String line : featureLines) {
 			String[] fields = line.split("\t");
 			final String featureName = fields[0].trim();
 			final Double featureValue = Double.parseDouble(fields[1].trim());
@@ -53,9 +60,22 @@ public class FrameIdentificationRelease {
 			count++;
 			if (count % 100000 == 0) System.out.print(count + " ");
 		}
-		return Pair.of(featureExtractor, model);
+		return model;
 	}
-	
+
+	public static TObjectDoubleHashMap<String> readOldModel(String idParamsFile) throws IOException {
+		TObjectDoubleHashMap<String> params = new TObjectDoubleHashMap<String>();
+		final List<String> lines = Files.readLines(new File(idParamsFile), Charsets.UTF_8);
+		for (String line : lines) {
+			final String[] nameAndVal = line.split("\t");
+			final String[] logAndSign = nameAndVal[1].split(", ");
+			final double value = exp(Double.parseDouble(logAndSign[0]));
+			final double sign = Boolean.parseBoolean(logAndSign[1]) ? 1.0 : -1.0;
+			params.put(nameAndVal[0], value * sign);
+		}
+		return params;
+	}
+
 	public static Pair<String, String> getTokenRepresentation(String tokNum, String parse) {
 		String[] tokNums = tokNum.split("_");
 		List<Integer> indices = Lists.newArrayList();

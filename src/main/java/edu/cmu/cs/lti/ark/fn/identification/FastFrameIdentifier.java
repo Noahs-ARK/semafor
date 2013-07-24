@@ -35,7 +35,6 @@ import gnu.trove.TObjectDoubleHashMap;
 
 import java.util.*;
 
-import static com.google.common.base.Strings.nullToEmpty;
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.readLine;
 
 /**
@@ -47,7 +46,7 @@ import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.readLine;
  */
 public class FastFrameIdentifier {
 	public final TObjectDoubleHashMap<String> params;
-	private final Set<String> allFrames;
+	protected final Set<String> allFrames;
 	// map from lemmas to frames
 	private THashMap<String, THashSet<String>> framesByLemma;
 	public final IdFeatureExtractor featureExtractor;
@@ -89,7 +88,7 @@ public class FastFrameIdentifier {
 	 * Applies the log-linear model to frame
 	 * @return the log score of the frame
 	 */
-	private double getValueForFrame(Map<String, Double> features) {
+	protected double getValueForFrame(Map<String, Double> features) {
 		Preconditions.checkArgument(features.size() > 0);
 		double featSum = 0.0;
 		for (String feat : features.keySet()) {
@@ -108,56 +107,8 @@ public class FastFrameIdentifier {
 		return Optional.fromNullable(framesByLemma.get(lemmas));
 	}
 
-	protected Set<String> getCandidateFrames(int[] tokenIndices, Sentence sentence, SmoothedGraph graph) {
-		final List<Token> sentenceTokens = sentence.getTokens();
-		final Optional<THashSet<String>> frames = checkPresenceOfTokensInMap(tokenIndices, sentence);
-		if (frames.isPresent()) return frames.get();
-
-		final List<Token> frameTokens = Lists.newArrayList();
-		final List<String> lowerCaseForms = Lists.newArrayList();
-		for (int tokNum : tokenIndices) {
-			final Token token = sentenceTokens.get(tokNum);
-			frameTokens.add(token);
-			lowerCaseForms.add(token.getForm().toLowerCase());
-		}
-		final Map<String, Set<String>> coarseMap = graph.getCoarseMap();
-		if (frameTokens.size() > 1) {
-			final String coarseToken = getCanonicalForm(Joiner.on(" ").join(lowerCaseForms));
-			if (coarseMap.containsKey(coarseToken)) return coarseMap.get(coarseToken);
-		} else {
-			final Token token = frameTokens.get(0);
-			final String lemma = token.getLemma();
-			final String pos = convertPostag(token.getPostag());
-			if (pos != null) {
-				final String fineToken = getCanonicalForm(lemma + "." + pos);
-				if (graph.getFineMap().containsKey(fineToken)) return graph.getFineMap().get(fineToken);
-			}
-			final String coarseToken = getCanonicalForm(lemma);
-			if (coarseMap.containsKey(coarseToken)) return coarseMap.get(coarseToken);
-		}
-		return allFrames;
-	}
-
-	/* convert from PTB postags to FrameNet postags */
-	private String convertPostag(String postag) {
-		final String postagUpper = nullToEmpty(postag).toUpperCase();
-		if (postagUpper.startsWith("N")) {
-			return  "n";
-		} else if (postagUpper.startsWith("V")) {
-			return  "v";
-		} else if (postagUpper.startsWith("J")) {
-			return "a";
-		} else if (postagUpper.startsWith("RB")) {
-			return "adv";
-		} else if (postagUpper.startsWith("I") || postagUpper.startsWith("TO")) {
-			return "prep";
-		} else {
-			return null;
-		}
-	}
-
 	public String getBestFrame(String frameLine, String parseLine) {
-		return getBestFrame(parseFrameLine(frameLine), Sentence.fromAllLemmaTagsArray(readLine(parseLine)));
+		return getBestFrame(getTargetTokenIdxs(frameLine), Sentence.fromAllLemmaTagsArray(readLine(parseLine)));
 	}
 
 	public String getBestFrame(Collection<Integer> indices, Sentence sentence) {
@@ -171,7 +122,7 @@ public class FastFrameIdentifier {
 		return pickBestFrame(frames, sentence, tokenIndices);
 	}
 
-	protected int[] parseFrameLine(String frameLine) {
+	private int[] getTargetTokenIdxs(String frameLine) {
 		String[] toks = frameLine.split("\t");
 		String[] tokNums = toks[1].split("_");
 		int[] intTokNums = new int[tokNums.length];
@@ -180,19 +131,5 @@ public class FastFrameIdentifier {
 		}
 		Arrays.sort(intTokNums);
 		return intTokNums;
-	}
-
-	private static String getCanonicalForm(String word) {
-		int len = word.length();
-		String ans = "";
-		for (int i = 0; i < len; i ++) {
-			char c = word.charAt(i);
-			if (Character.isDigit(c)) {
-				ans += "@";
-			} else {
-				ans += c;
-			}
-		}
-		return ans.toLowerCase();
 	}
 }
