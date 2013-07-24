@@ -73,3 +73,5 @@ echo "Finished rrunning MaltParser."
 echo "**********************************************************************"
 echo
 echo
+
+rm "${POS_TAGGED}.conll"

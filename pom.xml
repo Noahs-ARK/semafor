@@ -153,7 +153,7 @@
                             <transformers>
                                 <!-- make it executable -->
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>edu.cmu.cs.lti.ark.fn.parsing.Semafor</mainClass>
+                                    <mainClass>edu.cmu.cs.lti.ark.fn.Semafor</mainClass>
                                 </transformer>
                             </transformers>
                             <!-- only include dependencies that are actually used (the transitive hull)

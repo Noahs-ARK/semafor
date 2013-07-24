@@ -6,7 +6,7 @@ import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;
 import edu.cmu.cs.lti.ark.fn.identification.latentmodel.LatentFeatureExtractor;
-import edu.cmu.cs.lti.ark.fn.parsing.Semafor;
+import edu.cmu.cs.lti.ark.fn.Semafor;
 import edu.cmu.cs.lti.ark.fn.wordnet.CachedRelations;
 import edu.cmu.cs.lti.ark.fn.wordnet.Relations;
 import edu.cmu.cs.lti.ark.util.ds.Pair;

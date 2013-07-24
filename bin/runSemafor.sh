@@ -42,11 +42,7 @@ NUM_THREADS="${3}"
 TEMP_DIR=$(mktemp -d -t semafor.XXXXXXXXXX)
 echo "TEMP_DIR: ${TEMP_DIR}"
 
-TOKENIZED="${TEMP_DIR}/tokenized"
-POS_TAGGED="${TEMP_DIR}/pos.tagged"
-TEST_PARSED_FILE="${TEMP_DIR}/conll"
-ALL_LEMMA_TAGS_FILE="${TEMP_DIR}/all.lemma.tags"
-FRAME_ELEMENTS_OUTPUT_FILE="${TEMP_DIR}/fes"
+DEPENDENCY_PARSED_FILE="${TEMP_DIR}/conll"
 
 bash ${MY_DIR}/runMalt.sh ${INPUT_FILE} ${TEMP_DIR}
 
@@ -57,8 +53,8 @@ cd ${SEMAFOR_HOME}
 time ${JAVA_HOME_BIN}/java \
     -classpath ${CLASSPATH} \
     -Xms7g -Xmx7g \
-    edu.cmu.cs.lti.ark.fn.parsing.Semafor \
-    input-file:${TEST_PARSED_FILE} \
+    edu.cmu.cs.lti.ark.fn.Semafor \
+    input-file:${DEPENDENCY_PARSED_FILE} \
     output-file:${OUTPUT_FILE} \
     model-dir:${MALT_MODEL_DIR} \
     numthreads:${NUM_THREADS}

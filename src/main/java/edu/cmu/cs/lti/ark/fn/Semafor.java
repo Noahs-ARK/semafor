@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU General Public License along
  * with SEMAFOR 2.1.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package edu.cmu.cs.lti.ark.fn.parsing;
+package edu.cmu.cs.lti.ark.fn;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -37,6 +37,7 @@ import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;
 import edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationJson;
 import edu.cmu.cs.lti.ark.fn.identification.GraphBasedFrameIdentifier;
 import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
+import edu.cmu.cs.lti.ark.fn.parsing.*;
 import edu.cmu.cs.lti.ark.fn.segmentation.RoteSegmenter;
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
