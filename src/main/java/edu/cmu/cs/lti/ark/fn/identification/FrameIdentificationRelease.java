@@ -58,7 +58,7 @@ public class FrameIdentificationRelease {
 			final Double featureValue = Double.parseDouble(fields[1].trim());
 			model.put(featureName, featureValue);
 			count++;
-			if (count % 100000 == 0) System.out.print(count + " ");
+			if (count % 100000 == 0) System.err.print(count + " ");
 		}
 		return model;
 	}
@@ -66,12 +66,15 @@ public class FrameIdentificationRelease {
 	public static TObjectDoubleHashMap<String> readOldModel(String idParamsFile) throws IOException {
 		TObjectDoubleHashMap<String> params = new TObjectDoubleHashMap<String>();
 		final List<String> lines = Files.readLines(new File(idParamsFile), Charsets.UTF_8);
+		int count = 0;
 		for (String line : lines) {
 			final String[] nameAndVal = line.split("\t");
 			final String[] logAndSign = nameAndVal[1].split(", ");
 			final double value = exp(Double.parseDouble(logAndSign[0]));
 			final double sign = Boolean.parseBoolean(logAndSign[1]) ? 1.0 : -1.0;
 			params.put(nameAndVal[0], value * sign);
+			count++;
+			if (count % 100000 == 0) System.err.print(count + " ");
 		}
 		return params;
 	}

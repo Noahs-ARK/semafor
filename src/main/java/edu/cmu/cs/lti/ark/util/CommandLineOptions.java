@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Joiner;
 import edu.cmu.cs.lti.ark.util.ds.Range;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 import edu.cmu.cs.lti.ark.util.ds.Range1Based;
@@ -57,7 +58,7 @@ public abstract class CommandLineOptions {
 		}
 
 		public MissingOptionsException(List<Option> missingOptions) {
-			super("Missing required arguments: " + StringUtil.join(optionNames(missingOptions), ", "));
+			super("Missing required arguments: " + Joiner.on(", ").join(optionNames(missingOptions)));
 		}
 	}
 	
