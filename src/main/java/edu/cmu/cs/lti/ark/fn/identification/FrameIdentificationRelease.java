@@ -31,6 +31,7 @@ import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import gnu.trove.TObjectDoubleHashMap;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -38,6 +39,7 @@ import java.util.List;
 
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.lang.Math.exp;
+import static org.apache.commons.io.IOUtils.closeQuietly;
 
 
 public class FrameIdentificationRelease {
@@ -65,16 +67,21 @@ public class FrameIdentificationRelease {
 
 	public static TObjectDoubleHashMap<String> readOldModel(String idParamsFile) throws IOException {
 		TObjectDoubleHashMap<String> params = new TObjectDoubleHashMap<String>();
-		final List<String> lines = Files.readLines(new File(idParamsFile), Charsets.UTF_8);
 		int count = 0;
-		for (String line : lines) {
-			final String[] nameAndVal = line.split("\t");
-			final String[] logAndSign = nameAndVal[1].split(", ");
-			final double value = exp(Double.parseDouble(logAndSign[0]));
-			final double sign = Boolean.parseBoolean(logAndSign[1]) ? 1.0 : -1.0;
-			params.put(nameAndVal[0], value * sign);
-			count++;
-			if (count % 100000 == 0) System.err.print(count + " ");
+		String line;
+		final BufferedReader input = Files.newReader(new File(idParamsFile), Charsets.UTF_8);
+		try {
+			while ((line = input.readLine()) != null) {
+				final String[] nameAndVal = line.split("\t");
+				final String[] logAndSign = nameAndVal[1].split(", ");
+				final double value = exp(Double.parseDouble(logAndSign[0]));
+				final double sign = Boolean.parseBoolean(logAndSign[1]) ? 1.0 : -1.0;
+				params.put(nameAndVal[0], value * sign);
+				count++;
+				if (count % 100000 == 0) System.err.print(count + " ");
+			}
+		} finally {
+			closeQuietly(input);
 		}
 		return params;
 	}
