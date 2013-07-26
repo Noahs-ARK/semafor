@@ -1,10 +1,13 @@
 package edu.cmu.cs.lti.ark.util.nlp;
 
 import com.google.common.base.Preconditions;
-import edu.washington.cs.knowitall.morpha.MorphaStemmer;
+import uk.ac.susx.informatics.Morpha;
+
+import java.io.IOException;
+import java.io.StringReader;
 
 /**
- * Adapts MorphaStemmer to our Lemmatizer interface
+ * Adapts Morpha to Lemmatizer interface
  *
  * @author sthomson@cs.cmu.edu
  */
@@ -13,8 +16,13 @@ public class MorphaLemmatizer extends Lemmatizer {
 	public String getLemma(String word, String postag) {
 		Preconditions.checkNotNull(word);
 		Preconditions.checkNotNull(postag);
-		Preconditions.checkArgument(!word.isEmpty());
-		final String lemma = MorphaStemmer.stemToken(word.toLowerCase(), postag.toUpperCase()).toLowerCase();
-		return lemma.isEmpty() ? word : lemma;
+		if (word.isEmpty()) return "";
+		final String token = word.toLowerCase();
+		final String tokenAndPostag = String.format("%s_%s", token.replaceAll("_", "-"), postag.toUpperCase());
+		try {
+			return new Morpha(new StringReader(tokenAndPostag), true).next();
+		} catch (IOException e) {
+			return token;
+		}
 	}
 }

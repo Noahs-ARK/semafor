@@ -41,5 +41,6 @@ public class MorphaLemmatizerTest {
 		// MorphaLemmatizer used to turn "null" into ""
 		final Lemmatizer lemmatizer = new MorphaLemmatizer();
 		Assert.assertEquals("null", lemmatizer.getLemma("null", "JJ"));
+		Assert.assertEquals("null", lemmatizer.getLemma("nulls", "NN"));
 	}
 }
