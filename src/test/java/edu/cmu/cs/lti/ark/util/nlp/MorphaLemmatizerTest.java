@@ -10,7 +10,7 @@ public class MorphaLemmatizerTest {
 	@Test
 	public void testWordIsLowercased() throws Exception {
 		final Lemmatizer lemmatizer = new MorphaLemmatizer();
-		final String lemma = lemmatizer.getLemma("Nuclear", "A");
+		final String lemma = lemmatizer.getLemma("Nuclear", "JJ");
 		Assert.assertEquals("nuclear", lemma);
 	}
 
@@ -34,5 +34,12 @@ public class MorphaLemmatizerTest {
 		//Assert.assertEquals("lie", lemmatizer.getLemma("lay", "VBD"));
 		Assert.assertEquals("see", lemmatizer.getLemma("saw", "VBD"));
 		//Assert.assertEquals("person", lemmatizer.getLemma("people", "NNS"));
+	}
+
+	@Test
+	public void testNullIsRetained() {
+		// MorphaLemmatizer used to turn "null" into ""
+		final Lemmatizer lemmatizer = new MorphaLemmatizer();
+		Assert.assertEquals("null", lemmatizer.getLemma("null", "JJ"));
 	}
 }

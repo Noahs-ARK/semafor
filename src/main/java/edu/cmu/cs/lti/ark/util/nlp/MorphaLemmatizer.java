@@ -1,5 +1,6 @@
 package edu.cmu.cs.lti.ark.util.nlp;
 
+import com.google.common.base.Preconditions;
 import edu.washington.cs.knowitall.morpha.MorphaStemmer;
 
 /**
@@ -10,6 +11,10 @@ import edu.washington.cs.knowitall.morpha.MorphaStemmer;
 public class MorphaLemmatizer extends Lemmatizer {
 	@Override
 	public String getLemma(String word, String postag) {
-		return MorphaStemmer.stemToken(word.toLowerCase(), postag.toUpperCase()).toLowerCase();
+		Preconditions.checkNotNull(word);
+		Preconditions.checkNotNull(postag);
+		Preconditions.checkArgument(!word.isEmpty());
+		final String lemma = MorphaStemmer.stemToken(word.toLowerCase(), postag.toUpperCase()).toLowerCase();
+		return lemma.isEmpty() ? word : lemma;
 	}
 }
