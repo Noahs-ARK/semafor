@@ -1,3 +1,5 @@
+[![Build Status](https://api.travis-ci.org/sammthomson/semafor.png?branch=nell)](https://travis-ci.org/sammthomson/semafor)
+
     SEMAFOR (a frame-semantic parser for English)
     Copyright (C) 2012
     Dipanjan Das, Andre Martins, Nathan Schneider, Desai Chen, Sam Thomson &
