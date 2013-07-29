@@ -22,33 +22,29 @@
 package edu.cmu.cs.lti.ark.fn.wordnet;
 
 
-import net.didion.jwnl.*;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import net.didion.jwnl.JWNL;
 import net.didion.jwnl.data.*;
-import net.didion.jwnl.data.list.*;
-
-
+import net.didion.jwnl.data.list.PointerTargetNode;
+import net.didion.jwnl.data.list.PointerTargetNodeList;
 import net.didion.jwnl.dictionary.Dictionary;
-import net.didion.jwnl.dictionary.MorphologicalProcessor;
 
-
-import gnu.trove.*;
-
-import java.io.*;
-import java.util.*;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Mengqiu Wang
  *
  */
-
 public class WordNetAPI {
-
-	public static String SEPERATOR = ";";
 	private static WordNetAPI instance = null;
 	
 	private static Dictionary wDict;
 	private PointerUtils pUtils;
-	private MorphologicalProcessor morphProcessor;
 	private static Set<String> identity;
 	private static Set<String> synonyms;
 	private static Set<String> hypernyms;
@@ -65,7 +61,6 @@ public class WordNetAPI {
 	private static Set<String> extendedAntonyms;
 	private static Set<String> indirectAntonyms;
 	private static Set<String> morph;
-	private static Set<String> qword;
 
 	private static Set<IndexWord> allIndexWords = new THashSet<IndexWord>();
 	private static Set<Synset> allSenses = new THashSet<Synset>();
@@ -80,7 +75,6 @@ public class WordNetAPI {
 	private static String[] nounPOS = new String[]{"NN","NNS","NNP","NNPS"};
 	private static String[] adjPOS = new String[]{"JJ","JJR","JJS"};
 	private static String[] advPOS = new String[]{"RB","RBR","RBS"};
-	public static Set<String[]> qWordSet = new THashSet<String[]>();
 	public static Map<POS,String[]> posMap = new THashMap<POS,String[]>();
 
 	static{
@@ -110,42 +104,16 @@ public class WordNetAPI {
 		morph //in paper
 	}
 
-	public static WordNetAPI getInstance(String configFile) throws Exception  {
-		return getInstance(new FileInputStream(configFile));
-	}
-
 	public static WordNetAPI getInstance(InputStream configFile) throws Exception  {
 		if (instance == null)
 			instance = new WordNetAPI(configFile);
 		return instance;
 	}
-	
-	public void nullInstance() {
-		instance = null;
-		wDict = null;
-	}
-	
+
 	private static void info(String info){
 		System.out.println(info);
 	}
-	
-	public static Properties readProperties(String fileName)
-	{
-		Properties properties = new Properties();
-		try {
-			properties.load(new FileInputStream(fileName));
-		} 
-		catch (Exception e) {
-			System.err.println("Problem in reading properties:"+fileName);
-			e.printStackTrace();
-		}
-		return properties;
-	}
 
-
-	private WordNetAPI(String propsFile) throws Exception {
-		this(new FileInputStream(propsFile));
-	}
 
 	private WordNetAPI(InputStream propsFile) throws Exception {
 
@@ -158,7 +126,6 @@ public class WordNetAPI {
 			JWNL.initialize(propsFile);
 			wDict = Dictionary.getInstance();
 			pUtils = PointerUtils.getInstance();
-			morphProcessor = wDict.getMorphologicalProcessor();
 		} catch (Exception e) {
 			throw new RuntimeException("Initialization failed", e);
 		}
@@ -168,15 +135,14 @@ public class WordNetAPI {
 
 	public void getAllIndexWords(String word){
 		allIndexWords.clear();
-		IndexWord[] iWordArr = null;
-		IndexWord iWord = null;
+		IndexWord[] iWordArr;
+		IndexWord iWord;
 		try {
 			IndexWordSet iWordSet = wDict.lookupAllIndexWords(word);
 			if(iWordSet != null){
 				iWordArr = iWordSet.getIndexWordArray();
-				for(int i=0;i<iWordArr.length;i++){
-					iWord = iWordArr[i];
-					//System.out.println("indexWord:"+iWord.getLemma());
+				for (IndexWord anIWordArr : iWordArr) {
+					iWord = anIWordArr;
 					allIndexWords.add(iWord);
 				}
 			}  
@@ -189,13 +155,12 @@ public class WordNetAPI {
 		getAllIndexWords(word);
 		allSenses.clear();
 		Iterator<IndexWord> itr = allIndexWords.iterator();
-		IndexWord iWord = null;
+		IndexWord iWord;
 		while(itr.hasNext()){
 			iWord = itr.next();
 			try {
 				Synset[] senses = iWord.getSenses();
-				for(int i=0;i<senses.length;i++)
-					allSenses.add(senses[i]);
+				Collections.addAll(allSenses, senses);
 			} catch (Exception e) {
 				//System.out.println("getSynonym ERROR: " + word);
 			}
@@ -224,7 +189,6 @@ public class WordNetAPI {
 		extendedAntonyms =  new THashSet<String>();
 		indirectAntonyms =  new THashSet<String>();
 		morph =  new THashSet<String>();
-		qword =  new THashSet<String>();
 
 		ret.put(RelationType.idty, identity);
 		ret.put(RelationType.synm, synonyms);
@@ -252,13 +216,12 @@ public class WordNetAPI {
 	}
 
 	private void checkWordWithPOS(String w, POS p){
-		//String pos = p.getLabel();
 		String[] posSet = posMap.get(p);
-		String pos = null;  
-		for(int i=0;i<posSet.length;i++){
-			pos = posSet[i];
-			String tempStr = w+pos;
-			if(!relatedWordWithPOSCheck.contains(tempStr)){
+		String pos;
+		for (String aPosSet : posSet) {
+			pos = aPosSet;
+			String tempStr = w + pos;
+			if (!relatedWordWithPOSCheck.contains(tempStr)) {
 				relatedWordWithPOSCheck.add(tempStr);
 				relatedWordWithPOS.add(new String[]{w, pos});
 			}
@@ -271,23 +234,7 @@ public class WordNetAPI {
 		checkWordWithPOS(w, pos);
 	}
 
-	private void addQWord(){
-		Iterator<String[]> qWordItr = qWordSet.iterator();
-		String[] words = null;
-		String word = null;
-		int i= 0;
-		while(qWordItr.hasNext()){
-			words = qWordItr.next();
-			word = words[0];
-			qword.add(word);
-			relatedWord.add(word);
-			for(i=1;i<words.length;i++){
-				relatedWordWithPOS.add(words);
-			}
-		}
-	}
-
-	public Map<RelationType, Set<String>> getAllRelatedWords(String word) { 
+	public Map<RelationType, Set<String>> getAllRelatedWords(String word) {
 		Map<RelationType, Set<String>> ret = createContainer();
 		identity.add(word);
 		relatedWord.add(word);
@@ -299,24 +246,22 @@ public class WordNetAPI {
 		}
 
 		Iterator<Synset> senseItr = allSenses.iterator();
-		Synset sense = null;
-		Word[] words = null;
-		Word w = null;
-		POS pos = null;
-		String lemma = null;
+		Synset sense;
+		Word[] words;
+		Word w;
+		POS pos;
+		String lemma;
 
 		while(senseItr.hasNext()){
 			sense = senseItr.next();
 			words = sense.getWords();
 			/** Synonyms */
-			String syn = null;
-			for(int i=0;i<words.length;i++){
-				w = words[i];
+			String syn;
+			for (Word word1 : words) {
+				w = word1;
 				syn = w.getLemma();
 				pos = w.getPOS();
-				//System.out.println("Synonym:"+syn);
 				synonyms.add(syn);
-				//relatedWord.add(word);
 				checkWordWithPOS(syn, pos);
 			} 
 
@@ -342,8 +287,7 @@ public class WordNetAPI {
 			/** Hypernyms, etc */
 			for(RelationType relation: RelationType.values()){
 				PointerTargetNodeList nodeList = null;
-				Set<String> listToStore = null;
-				//RelationType relation = relations[i];
+				Set<String> listToStore;
 				try{
 					switch(relation){
 					case hype:
@@ -385,28 +329,27 @@ public class WordNetAPI {
 						nodeList = (PointerTargetNodeList)pUtils.getIndirectAntonyms(sense).toList();
 						break;
 					}
-				} catch (Exception e) {
-				}
+				} catch (Exception ignored) { }
 				if(nodeList != null){
 					listToStore = ret.get(relation);
 					Iterator targetItr = nodeList.iterator();
-					PointerTargetNode pTargetNode = null;
+					PointerTargetNode pTargetNode;
 					while(targetItr.hasNext()){
 						pTargetNode = (PointerTargetNode)targetItr.next();
 						if(!pTargetNode.isLexical()){
 							words = pTargetNode.getSynset().getWords();
-							for(int j=0;j<words.length;j++){
-								w = words[j];
+							for (Word word1 : words) {
+								w = word1;
 								lemma = w.getLemma();
 								pos = w.getPOS();
-								if(lemma.contains("_")){
+								if (lemma.contains("_")) {
 									String[] parts = lemma.split("_");
-									if(parts.length == 2)
+									if (parts.length == 2)
 										multiword.add(lemma.toLowerCase());
-								}else{
+								} else {
 									listToStore.add(lemma);
 									checkWordWithPOS(lemma, pos);
-								}  
+								}
 							} 
 						}else{
 							w = pTargetNode.getWord();
@@ -423,64 +366,13 @@ public class WordNetAPI {
 						}
 					}
 				}
-				nodeList = null;
 			}
-		}//end for all senses  
-		//System.out.println("Synonyms:");
-		//for(String w: synonyms)
-		//  System.out.println("\t"+w);
-		//System.out.println("\nSynonym2:");
-		//for(String w: synonyms2)
-		//  System.out.println("\t"+w);
-		//System.out.println("\nHypernyms:");
-		//for(String w: hypernyms)
-		//  System.out.println("\t"+w);
-		//System.out.println("\nHyponyms:");
-		//for(String w: hyponyms)
-		//  System.out.println("\t"+w);
-		//System.out.println("\nCoordinates:");
-		//for(String w: coordinates)
-		//  System.out.println("\t"+w);
-		//System.out.println("\nDerived:");
-		//for(String w: derived)
-		//  System.out.println("\t"+w);
-		//System.out.println("\nVerbGroup:");
-		//for(String w: verbGroup)
-		//  System.out.println("\t"+w);
-		//System.out.println("\nCauses:");
-		//for(String w: causes)
-		//  System.out.println("\t"+w);
-		//System.out.println("\nEntailments:");
-		//for(String w: entailments)
-		//  System.out.println("\t"+w);
-		//System.out.println("\nEntailedBys:");
-		//for(String w: entailedBys)
-		//  System.out.println("\t"+w);
-		//System.out.println("\nAntonym:");
-		//for(String w: antonyms)
-		//  System.out.println("\t"+w);
-		//System.out.println("\nExtendedAntonym:");
-		//for(String w: extendedAntonyms)
-		//  System.out.println("\t"+w);
-		//System.out.println("\nIndirectAntonym:");
-		//for(String w: indirectAntonyms)
-		//  System.out.println("\t"+w);
-		//System.out.println("\nAlso See:");
-		//for(String w: alsosees)
-		//  System.out.println("\t"+w);
+		}
 		return ret;
-	}
-
-	public static Set<String> getMultiwords(){
-		return multiword;
 	}
 
 	public Set<String> getRelatedWord(){
 		return relatedWord;
-	}
-
-	public static Set<String[]> getRelatedWordWithPOS(){
-		return relatedWordWithPOS;
 	}
 
 	public static void clear(){
@@ -493,7 +385,6 @@ public class WordNetAPI {
 		synonyms=null;
 		hypernyms=null;
 		hyponyms=null;
-		//coordinates=null;
 		derived=null;
 		verbGroup=null;
 		causes=null;
@@ -505,35 +396,5 @@ public class WordNetAPI {
 		extendedAntonyms=null;
 		indirectAntonyms=null;
 		morph=null;
-	}
-
-	/**
-	 * Gets the lemma of a word.
-	 * 
-	 * @param word a word
-	 * @param pos part of speech
-	 * @return lemma or the input if it could not be lemmatized
-	 */
-	public static String getLemma(String word, POS pos) {
-		if (wDict == null) return word;
-		IndexWord indexWord = null;
-
-		try {
-			indexWord = wDict.lookupIndexWord(pos, word);
-		} catch (JWNLException e) {}
-
-		return (indexWord != null) ? indexWord.getLemma() : word;
-	}
-
-	/**
-	 * the word itself may be returned as a lemma
-	 */
-	public static Set<String> getAllLemma(String word){
-		Set<String> set = new HashSet<String>();
-		POS[] poses = new POS[]{POS.NOUN, POS.VERB, POS.ADVERB, POS.ADJECTIVE};
-		for(POS pos: poses){
-			set.add( getLemma(word, pos)); 
-		}
-		return set;
 	}
 }

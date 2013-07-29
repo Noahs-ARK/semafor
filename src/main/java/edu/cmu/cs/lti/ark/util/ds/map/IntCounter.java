@@ -39,7 +39,7 @@ import java.util.*;
  * @param <T> Type for keys
  */
 @NotThreadSafe
-public class IntCounter<T> extends AbstractCounter<T, Integer> implements java.io.Serializable {
+public class IntCounter<T> implements ICounter<T, Integer>, java.io.Serializable {
 	private static final long serialVersionUID = -5622820446958578575L;
 
 	protected TObjectIntHashMap<T> m_map;

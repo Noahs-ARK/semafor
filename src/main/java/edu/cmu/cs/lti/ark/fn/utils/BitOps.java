@@ -21,29 +21,12 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.utils;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 
 public class BitOps {
-	
-	/** simple test code*/
-	/*
-	public static void main(String args[]){
-		double testnum=3.14159;
-		PrintStream ps=FileUtil.openOutFile("testbit");
-		writeDouble(testnum,ps);
-		ps.close();
-		FileInputStream fis=FileUtil.openInputStream("testbit");
-		double testread=readDouble(fis);
-		if(Math.abs(testread-testnum)>0.00001){
-			System.out.println("error:"+testnum+", "+testread);
-		}
-	}
-	*/
-	
 	public static boolean nearlyEquals(double[] a1, double[] a2, double tol) {
 		if (a1.length != a2.length) {
 			return false;
@@ -57,13 +40,7 @@ public class BitOps {
 	}
 	
 	public static boolean nearlyBinary(double a1, double tol) {
-		if (a1*a1 < tol) {
-			return true;
-		} else if ((a1 - 1.0)*(a1 - 1.0) < tol) {
-			return true;
-		} else {
-			return false;
-		}
+		return a1 * a1 < tol || (a1 - 1.0) * (a1 - 1.0) < tol;
 	}
 	
 	public static void writeInt(int a, OutputStream ps) {
@@ -92,22 +69,7 @@ public class BitOps {
 		ret += ((int) b[3] & 0xff);
 		return ret;
 	}
-	public static void writeDouble(double d, OutputStream ps) {
-		int a,b;
-		long l=Double.doubleToLongBits(d);
-		a= (int)(l>>32);
-		b=(int)l ;
-		writeInt(a,ps);
-		writeInt(b,ps);
-	}
-	
-	public static double readDouble(InputStream fis) {
-		double ret;
-		long a= readAnInt(fis) ;
-		long b=readAnInt(fis);
-		ret=Double.longBitsToDouble((a<<32)+b);
-		return ret;
-	}
+
 	public static int[] readALine(InputStream fis) {
 		ArrayList<Integer> temp = new ArrayList<Integer>();
 		int[] ret;
@@ -122,5 +84,4 @@ public class BitOps {
 		}
 		return ret;
 	}
-
 }

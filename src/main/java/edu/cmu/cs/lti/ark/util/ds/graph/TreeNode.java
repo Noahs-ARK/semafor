@@ -40,13 +40,9 @@ import gnu.trove.TIntHashSet;
  */
 
 public abstract class TreeNode<T extends TreeNode<T>> extends RootedDAGNode<T> {
-	
 	private static final long serialVersionUID = -5923423841213967909L;
 
-
-	public TreeNode() {
-		
-	}
+	public TreeNode() { }
 	
 	public void setParentIndex(int i) {
 		List<Integer> pIndices = new ArrayList<Integer>(1);
@@ -55,7 +51,6 @@ public abstract class TreeNode<T extends TreeNode<T>> extends RootedDAGNode<T> {
 			setParentIndices(pIndices);
 		}
 		catch (GraphException gex) {
-			;
 		}
 	}
 
@@ -78,10 +73,7 @@ public abstract class TreeNode<T extends TreeNode<T>> extends RootedDAGNode<T> {
 		
 		try {
 			setParents(plist);
-		}
-		catch (GraphException gex) {
-			;
-		}
+		} catch (GraphException gex) { }
 	}
 	
 	/**
@@ -105,10 +97,7 @@ public abstract class TreeNode<T extends TreeNode<T>> extends RootedDAGNode<T> {
 	public void setChildren(List<T> c) {
 		try {
 			super.setChildren(c);
-		}
-		catch (GraphException gex) {
-			;
-		}
+		} catch (GraphException gex) { }
 	}
 
 	/**
