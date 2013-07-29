@@ -153,8 +153,8 @@ Compilation is easiest using Maven version >= 3.0 (<http://maven.apache.org/>).
 
     mvn package
 
-will compile and package Semafor-3.0-alpha-04.jar (including all dependencies) to the target/ directory.
-Many scripts in bin/ point to Semafor-3.0-alpha-04.jar, so run `mvn package` immediately after installing, and again
+will compile and package Semafor-3.0-alpha-05-SNAPSHOT.jar (including all dependencies) to the target/ directory.
+Many scripts in bin/ point to Semafor-3.0-alpha-05-SNAPSHOT.jar, so run `mvn package` immediately after installing, and again
 after making any changes to source code.
 
 
@@ -170,7 +170,7 @@ SEMAFOR can also be run as a TCP socket server.
 It accepts dependency parses in conll format, and replies with json frame-semantic parses.
 Run the following command
 
-    java -Xms4g -Xmx4g -cp target/Semafor-3.0-alpha-04.jar edu.cmu.cs.lti.ark.fn.SemaforSocketServer model-dir:<directory-of-trained-model> port:<port>
+    java -Xms4g -Xmx4g -cp target/Semafor-3.0-alpha-05-SNAPSHOT.jar edu.cmu.cs.lti.ark.fn.SemaforSocketServer model-dir:<directory-of-trained-model> port:<port>
 
 
 The message: `Listening on port: NNNN` will appear once the server has loaded

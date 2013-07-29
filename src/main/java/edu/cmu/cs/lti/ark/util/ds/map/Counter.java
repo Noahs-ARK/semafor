@@ -38,13 +38,9 @@ import java.util.*;
  * @param <T> Type for keys
  * @see IntCounter
  */
-public class Counter<T> extends AbstractCounter<T,Double> implements java.io.Serializable {
+public class Counter<T> implements ICounter<T,Double>, java.io.Serializable {
 	private static final long serialVersionUID = 8749403819704088504L;
 
-	public class CounterFactory implements FactoryDefaultMap.DefaultValueFactory<Counter<T>> {
-		public Counter<T> newDefaultValue() { return new Counter<T>(); }
-	}
-	
 	protected TObjectDoubleHashMap<T> m_map;
 	protected double m_sum = 0.0;
 	
@@ -53,11 +49,7 @@ public class Counter<T> extends AbstractCounter<T,Double> implements java.io.Ser
 	public Counter() {
 		m_map = new TObjectDoubleHashMap<T>();
 	}
-	
-	public Counter(TObjectHashingStrategy<T> hs) {
-		m_map = new TObjectDoubleHashMap<T>(hs);
-	}
-	
+
 	public Counter(TObjectDoubleHashMap<T> map) {
 		m_map = map;
 		

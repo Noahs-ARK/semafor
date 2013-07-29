@@ -21,11 +21,11 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 import edu.cmu.cs.lti.ark.fn.optimization.Lbfgs;
-import edu.cmu.cs.lti.ark.fn.optimization.SGA;
+import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
 import edu.cmu.cs.lti.ark.util.FileUtil;
+import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import riso.numerical.LBFGS;
 
@@ -39,56 +39,53 @@ public class Training {
 	private double[] W;
 	private double[] mGradients;
 	private int numFeatures;
-	private ArrayList<String> mFrameLines;
-	private Random rand;
 	private double mLambda;
 	private int numDataPoints;
 	private int mNumThreads;
 	private double[][] tGradients;
 	private double[] tValues;
 	
-	public Training()
-	{
-
+	/**
+	 *
+	 * @param args command-line arguments as follows:
+	 *             frameFeaturesCacheFile: path to file containing a serialized cache of all of the features
+	 *                 extracted from the training data
+	 *             alphabetFile: path to file containing the alphabet
+	 *             lambda: regularization hyperparameter
+	 *             numThreads: the number of parallel threads to run while optimizing
+	 *             modelFile: path to output file to write resulting model to. intermediate models will be written to
+	 *                 modelFile + "_" + i
+	 */
+	public static void main(String[] args) throws Exception {
+		FNModelOptions opts = new FNModelOptions(args);
+		String modelFile = opts.modelFile.get();
+		String alphabetFile = opts.alphabetFile.get();
+		String frameFeaturesCacheFile = opts.frameFeaturesCacheFile.get();
+		double lambda = opts.lambda.get();
+		int numThreads = opts.numThreads.get();
+		ArrayList<FrameFeatures> list = SerializedObjects.readObject(frameFeaturesCacheFile);
+		Training bpt = new Training();
+		bpt.init(modelFile, alphabetFile, list, lambda, numThreads);
+		bpt.runCustomLBFGS();
 	}
-	
+
+	public Training() { }
+
 	public void init(String modelFile,
 					 String alphabetFile,
 					 ArrayList<FrameFeatures> list,
-					 String frFile)
-	{
-		mModelFile = modelFile;
-		mAlphabetFile = alphabetFile;
-		initModel();
-		mFrameList = list;
-		mFrameLines = ParsePreparation.readSentencesFromFile(frFile);
-		rand = new Random(new Date().getTime());
-		mLambda = 0.0;
-		numDataPoints = mFrameList.size();
-		mNumThreads = 1;
-	}
-
-	public void init(String modelFile,
-					 String alphabetFile,
-					 ArrayList<FrameFeatures> list,
-					 String frFile,
-					 String reg,
 					 double lambda,
-					 int numThreads)
-	{
+					 int numThreads) {
 		mModelFile = modelFile;
 		mAlphabetFile = alphabetFile;
 		initModel();
 		mFrameList = list;
-		mFrameLines = ParsePreparation.readSentencesFromFile(frFile);
-		rand = new Random(new Date().getTime());
 		mLambda = lambda;
 		numDataPoints = mFrameList.size();
 		mNumThreads = numThreads;
 	}
 	
-	private void initModel()
-	{
+	private void initModel() {
 		Scanner localsc = FileUtil.openInFile(mAlphabetFile);
 		numFeatures = localsc.nextInt() + 1;
 		localsc.close();
@@ -114,105 +111,48 @@ public class Training {
 			double weiFeatSum[] = new double[featArrLen];
 			double exp[] = new double[featArrLen];
 			double sumExp = 0.0;
-			for(int j = 0; j < featArrLen; j ++)
-			{
+			for(int j = 0; j < featArrLen; j ++) {
 				weiFeatSum[j] = W[0];
 				int[] feats = featureArray[j].features;
-				for (int k = 0; k < feats.length; k++) {
+				for (int feat : feats) {
 					double weight = 0;
 					try {
-						weight = W[feats[k]];
+						weight = W[feat];
 					} catch (Exception e) {
 						System.out.println(e.getMessage() + W.length + "|"
 								+ numFeatures);
 					}
-					if (feats[k] == 0) {
+					if (feat == 0) {
 						continue;
 					}
 					weiFeatSum[j] += weight;
-				//	System.out.println("k = "+k);
 				}
 				exp[j] = Math.exp(weiFeatSum[j]);
 				sumExp += exp[j];
-				//System.out.println("j = "+j);
 			}
 			value -= Math.log(exp[goldSpan] / sumExp);
 			double YMinusP[] = new double[featureArray.length];
-			for(int j = 0; j < featArrLen; j ++)
-			{
+			for(int j = 0; j < featArrLen; j ++) {
 				int Y = 0;
 				if (j == goldSpan)
 					Y = 1;
 				int[] feats = featureArray[j].features;
 				YMinusP[j] = Y - exp[j]/sumExp;
 				gradients[0] -= YMinusP[j];
-				for(int k = 0; k < feats.length; k ++)
-				{
-					gradients[feats[k]] -= YMinusP[j];
-					//System.out.println("k = "+j);
+				for (int feat : feats) {
+					gradients[feat] -= YMinusP[j];
 				}
-			//	System.out.println("j = "+j);
 			}
 		}		
 		double lambda = mLambda / numDataPoints;
-		for(int i = 0; i < sumDers.length; i ++)
-		{
+		for(int i = 0; i < sumDers.length; i ++) {
 			sumDers[i] += (gradients[i] + 2*lambda*W[i]);
 			value += lambda * W[i] * W[i];
 		}
 		return new Pair<Double, double[]>(value, sumDers);
 	}
-	
-	
-	public void trainSGA(int TOTAL_PASSES, int batchsize)
-	{
-		int sizeOfData = mFrameList.size();
-		int maxUpdates = (int)(((double)TOTAL_PASSES*(double)sizeOfData)/(double)batchsize);
-		int totalUpdates=0;
-		int countPasses = 0;
-		int countDataEncountered=0;
-		System.out.println("Max updates:"+maxUpdates);
-		double[] sumDers = new double[W.length];
-		while(totalUpdates<maxUpdates)
-		{
-			int[] arr = getRandArray(batchsize, sizeOfData, rand);
-			Arrays.fill(sumDers, 0.0);
-			for(int j = 0; j < arr.length; j ++)
-			{
-				int sampleIndex = arr[j];
-				System.out.println("Sample index:"+sampleIndex);
-				Pair<Double, double[]> p = getDerivativesOfSample(sumDers,sampleIndex);
-				sumDers = p.second;
-			}
-			countDataEncountered+=batchsize;
-			W = SGA.updateGradient(W, sumDers,0.1);
-			System.out.println("Performed update number:"+totalUpdates);
-			totalUpdates++;
-			if(countDataEncountered>=sizeOfData)
-			{
-				System.out.println("\nCompleted pass number:"+(countPasses+1)+" total updates till now:"+totalUpdates);
-				writeModel(mModelFile+"_"+countPasses);
-				countPasses++;
-				countDataEncountered=0;
-			}
-		}		
-	}
-	
-	
-	public void trainBatch()
-	{
-		try
-		{
-			runCustomLBFGS();
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-			System.exit(0);
-		}
-	}
-	
-	
+
+
 	public void processBatch(int taskID, int start, int end) {
 		int threadID = taskID % mNumThreads;
 		System.out.println("Processing batch:" + taskID + " thread ID:" + threadID);
@@ -232,8 +172,7 @@ public class Training {
 	}
 	
 	
-	public Runnable createTask(final int count, final int start, final int end)
-	{
+	public Runnable createTask(final int count, final int start, final int end) {
 		return new Runnable() {
 		      public void run() {
 		        System.out.println("Task " + count + " : start");
@@ -307,48 +246,13 @@ public class Training {
 				writeModel(mModelFile+"_"+iteration);
 		} while (iteration <= Lbfgs.MAX_ITERATIONS &&iflag[0] != 0);
 		writeModel(mModelFile);
-	}	
-	
-	
-	public static int[] getRandArray(int batchSize, int sizeOfData, Random rand) {
-		int count = 0;
-		ArrayList<Integer> list = new ArrayList<Integer>();
-		while(count<batchSize) {
-			Integer next = rand.nextInt(sizeOfData);
-			if (!list.contains(next)) {
-				list.add(next);
-				count++;
-			}
-		}
-		int[] arr = new int[batchSize];
-		for(int i = 0; i < arr.length; i ++)
-		{
-			arr[i] = list.get(i);
-		}
-		return arr;
 	}
-	
+
 	public void writeModel(String modelFile) {
 		PrintStream ps = FileUtil.openOutFile(modelFile);
-		// ps.println(w[0]);
 		System.out.println("Writing Model... ...");
-		// for (String key : paramIndex.keySet()) {\
-		for (int i = 0; i < W.length; i++) {
-			// ps.println(key + "\t" + w[paramIndex.get(key)]);
-			ps.println(W[i]);
-		}
-		System.out.println("Finished Writing Model");
-		ps.close();
-	}
-	
-	public void writeModel() {
-		PrintStream ps = FileUtil.openOutFile(mModelFile);
-		// ps.println(w[0]);
-		System.out.println("Writing Model... ...");
-		// for (String key : paramIndex.keySet()) {\
-		for (int i = 0; i < W.length; i++) {
-			// ps.println(key + "\t" + w[paramIndex.get(key)]);
-			ps.println(W[i]);
+		for (double aW : W) {
+			ps.println(aW);
 		}
 		System.out.println("Finished Writing Model");
 		ps.close();
