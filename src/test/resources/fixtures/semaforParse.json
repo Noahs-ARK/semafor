@@ -1,138 +1,177 @@
 {
-      "frames": [
+    "frames": [
         {
-	  "annotationSets": [
-              {"score": 10.2,
-          "frameElements": [
-            {
-                "name": "Relatives",
-                "spans": [{
-                  "start": 10,
-                  "end": 11,
-                  "text": "family"
-                }]
-            }
-          ]
-          }],
-          "target": {
-              "name": "Kinship",
-              "spans": [{
-                "start": 10,
-                "end": 11,
-                "text": "family"
-              }]
-          }
+            "target": {
+                "name": "Kinship",
+                "spans": [
+                    {
+                        "start": 10,
+                        "end": 11,
+                        "text": "family"
+                    }
+                ]
+            },
+            "annotationSets": [
+                {
+                    "frameElements": [
+                        {
+                            "name": "Relatives",
+                            "spans": [
+                                {
+                                    "start": 10,
+                                    "end": 11,
+                                    "text": "family"
+                                }
+                            ]
+                        }
+                    ],
+                    "score": 10.2,
+                    "rank": 0
+                }
+            ]
         },
         {
-          "annotationSets": [
-              {"score": 10.2,
-          "frameElements": [
-            {
+            "target": {
                 "name": "Vehicle",
-                "spans": [{
-                  "start": 12,
-                  "end": 13,
-                  "text": "vehicles"
-                }]
-            }
-          ]
-	  }],
-          "target": {
-              "name": "Vehicle",
-              "spans": [{
-                "start": 12,
-                "end": 13,
-                "text": "vehicles"
-              }]
-          }
+                "spans": [
+                    {
+                        "start": 12,
+                        "end": 13,
+                        "text": "vehicles"
+                    }
+                ]
+            },
+            "annotationSets": [
+                {
+                    "frameElements": [
+                        {
+                            "name": "Vehicle",
+                            "spans": [
+                                {
+                                    "start": 12,
+                                    "end": 13,
+                                    "text": "vehicles"
+                                }
+                            ]
+                        }
+                    ],
+                    "score": 10.2,
+                    "rank": 0
+                }
+            ]
         },
         {
-          "annotationSets": [
-              {"score": 10.2,
-          "frameElements": [
-            {
-                "name": "Group",
-                "spans": [{
-                  "start": 7,
-                  "end": 13,
-                  "text": "of the Stryker family of vehicles"
-                }]
+            "target": {
+                "name": "Membership",
+                "spans": [
+                    {
+                        "start": 6,
+                        "end": 7,
+                        "text": "member"
+                    }
+                ]
             },
-            {
-                "name": "Member",
-                "spans": [{
-                  "start": 6,
-                  "end": 7,
-                  "text": "member"
-                }]
-            }
-          ]
-	  }],
-          "target": {
-              "name": "Membership",
-              "spans": [{
-                "start": 6,
-                "end": 7,
-                "text": "member"
-              }]
-          }
+            "annotationSets": [
+                {
+                    "frameElements": [
+                        {
+                            "name": "Group",
+                            "spans": [
+                                {
+                                    "start": 7,
+                                    "end": 13,
+                                    "text": "oftheStrykerfamilyofvehicles"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Member",
+                            "spans": [
+                                {
+                                    "start": 6,
+                                    "end": 7,
+                                    "text": "member"
+                                }
+                            ]
+                        }
+                    ],
+                    "score": 10.2,
+                    "rank": 0
+                }
+            ]
         },
         {
-          "annotationSets": [
-              {"score": 10.2,
-          "frameElements": [
-            {
-                "name": "Entity",
-                "spans": [{
-                  "start": 6,
-                  "end": 7,
-                  "text": "member"
-                }]
-            },
-            {
+            "target": {
                 "name": "Age",
-                "spans": [{
-                  "start": 5,
-                  "end": 6,
-                  "text": "newest"
-                }]
-            }
-          ]
-	  }],
-          "target": {
-              "name": "Age",
-              "spans": [{
-                "start": 5,
-                "end": 6,
-                "text": "newest"
-              }]
-          }
+                "spans": [
+                    {
+                        "start": 5,
+                        "end": 6,
+                        "text": "newest"
+                    }
+                ]
+            },
+            "annotationSets": [
+                {
+                    "frameElements": [
+                        {
+                            "name": "Entity",
+                            "spans": [
+                                {
+                                    "start": 6,
+                                    "end": 7,
+                                    "text": "member"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Age",
+                            "spans": [
+                                {
+                                    "start": 5,
+                                    "end": 6,
+                                    "text": "newest"
+                                }
+                            ]
+                        }
+                    ],
+                    "score": 10.2,
+                    "rank": 0
+                }
+            ]
         },
         {
-          "annotationSets": [
-              {"score": 10.2,
-          "frameElements": [
-            {
-                "name": "Person",
-                "spans": [{
-                  "start": 1,
-                  "end": 2,
-                  "text": "Soldiers"
-                }]
-            }
-          ]
-	  }],
-          "target": {
-              "name": "People_by_vocation",
-              "spans": [{
-                "start": 1,
-                "end": 2,
-                "text": "Soldiers"
-              }]
-          }
+            "target": {
+                "name": "People_by_vocation",
+                "spans": [
+                    {
+                        "start": 1,
+                        "end": 2,
+                        "text": "Soldiers"
+                    }
+                ]
+            },
+            "annotationSets": [
+                {
+                    "frameElements": [
+                        {
+                            "name": "Person",
+                            "spans": [
+                                {
+                                    "start": 1,
+                                    "end": 2,
+                                    "text": "Soldiers"
+                                }
+                            ]
+                        }
+                    ],
+                    "score": 10.2,
+                    "rank": 0
+                }
+            ]
         }
-      ],
-      "tokens": [
+    ],
+    "tokens": [
         "``",
         "Soldiers",
         "have",
@@ -147,5 +186,5 @@
         "of",
         "vehicles",
         "."
-      ]
+    ]
 }

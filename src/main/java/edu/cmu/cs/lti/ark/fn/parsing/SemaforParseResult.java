@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.annotation.concurrent.Immutable;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -95,5 +96,9 @@ public class SemaforParseResult {
 
 	public String toJson() throws JsonProcessingException {
 		return jsonMapper.writeValueAsString(this);
+	}
+
+	public static SemaforParseResult fromJson(String jsonString) throws IOException {
+		return jsonMapper.readValue(jsonString, SemaforParseResult.class);
 	}
 }
