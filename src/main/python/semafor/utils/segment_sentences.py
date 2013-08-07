@@ -15,7 +15,7 @@ def main(in_filename, out_filename):
             if sentence.strip():
                 sentence = re.sub("''", " ''  ", sentence)
                 sentence = re.sub("``", " `` ", sentence)
-                out_file.write(sentence.strip() + u'\n')
+                out_file.write(sentence.strip().replace("\n", " ") + u'\n')
 
 
 if __name__ == "__main__":

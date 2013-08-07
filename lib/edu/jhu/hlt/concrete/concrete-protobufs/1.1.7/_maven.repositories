@@ -1,0 +1,5 @@
+#NOTE: This is an internal implementation file, its format can be changed without prior notice.
+#Mon Jul 29 20:42:56 EDT 2013
+concrete-protobufs-1.1.7.pom>=
+concrete-protobufs-1.1.7.jar>=
+concrete-protobufs-1.1.7-sources.jar>=

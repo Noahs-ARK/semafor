@@ -1,4 +1,4 @@
-[![Build Status](https://api.travis-ci.org/sammthomson/semafor.png?branch=develop)](https://travis-ci.org/sammthomson/semafor)
+[![Build Status](https://api.travis-ci.org/sammthomson/semafor.png?branch=concrete)](https://travis-ci.org/sammthomson/semafor)
 
     SEMAFOR (a frame-semantic parser for English)
     Copyright (C) 2012
