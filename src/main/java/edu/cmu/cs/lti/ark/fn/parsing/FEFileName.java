@@ -36,7 +36,6 @@ public class FEFileName {
 	public static String spanfilename=null;
 	public static String candidateFilename="candidate_file_not_in_use";
 	public static String tagFilename="lrdata/semeval.fulldev.sentences.lemma.tags";
-	public static int startIndex,endIndex;
 
 	public static int KBestParse = 1;
 	public static String KBestParseDirectory = null;

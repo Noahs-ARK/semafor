@@ -28,6 +28,7 @@ import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
+import edu.cmu.cs.lti.ark.fn.framenet.FEDict;
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
 import edu.cmu.cs.lti.ark.util.FileUtil;
 import edu.cmu.cs.lti.ark.util.ds.*;
@@ -96,7 +97,7 @@ public class DataPrep {
 	}
 
 	/** Finds a set of candidate spans based on a dependency parse */
-	public static List<SpanAndParseIdx> findSpans(DataPointWithFrameElements dataPoint, int kBestParses) {
+	public static List<SpanAndParseIdx> findSpans(DataPointWithFrameElements dataPoint, int kBestDependencyParses) {
 		final DependencyParses parses = dataPoint.getParses();
 		final DependencyParse bestParse = parses.getBestParse();
 		final DependencyParse[] nodes = bestParse.getIndexSortedListOfNodes();
@@ -116,7 +117,7 @@ public class DataPrep {
 		for(Range0Based span : dataPoint.getOvertFrameElementFillerSpans()) {
 			spanMatrix[span.start][span.end] = true;
 		}
-		if(kBestParses > 1) {
+		if(kBestDependencyParses > 1) {
 			addKBestParses(dataPoint, depParses);
 		}
 		addConstituents(spanMatrix, heads, nodes);

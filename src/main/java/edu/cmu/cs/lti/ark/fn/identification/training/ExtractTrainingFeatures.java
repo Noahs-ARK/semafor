@@ -25,7 +25,7 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
-import edu.cmu.cs.lti.ark.fn.identification.FrameCosts;
+import edu.cmu.cs.lti.ark.fn.framenet.FrameCosts;
 import edu.cmu.cs.lti.ark.fn.identification.IdFeatureExtractor;
 import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;

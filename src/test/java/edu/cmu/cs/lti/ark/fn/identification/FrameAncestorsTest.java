@@ -1,6 +1,7 @@
 package edu.cmu.cs.lti.ark.fn.identification;
 
 import com.google.common.collect.ImmutableSet;
+import edu.cmu.cs.lti.ark.fn.framenet.FrameAncestors;
 import org.junit.Test;
 
 import java.io.IOException;

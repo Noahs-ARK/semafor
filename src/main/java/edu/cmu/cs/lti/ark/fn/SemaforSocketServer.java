@@ -45,7 +45,7 @@ public class SemaforSocketServer {
 				while (sentences.hasNext()) {
 					final Sentence sentence = sentences.next();
 					final long start = System.currentTimeMillis();
-					output.println(semafor.parseSentence(sentence).toJson());
+					output.println(semafor.parseSentence(sentence, 1).toJson());
 					output.flush();
 					final long end = System.currentTimeMillis();
 					System.err.printf("parsed sentence with %d tokens in %d millis.%n", sentence.size(), end - start);

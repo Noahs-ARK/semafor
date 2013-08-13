@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU General Public License along
  * with SEMAFOR 2.0.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package edu.cmu.cs.lti.ark.fn.parsing;
+package edu.cmu.cs.lti.ark.fn.framenet;
 
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;

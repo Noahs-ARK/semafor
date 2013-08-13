@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import edu.cmu.cs.lti.ark.fn.framenet.FrameAncestors;
 import edu.cmu.cs.lti.ark.util.ds.map.IntCounter;
 
 import java.io.IOException;

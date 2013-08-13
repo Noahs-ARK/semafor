@@ -32,7 +32,6 @@ import gnu.trove.THashMap;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.StringTokenizer;
 
 import static java.lang.Integer.parseInt;
@@ -40,7 +39,6 @@ import static java.lang.Integer.parseInt;
 public class DataPoint {
 	private DependencyParses parses;
 	private String frameName;
-	private String lexicalUnitName;	// e.g. 'cause.v'
 	/* token indices of target phrase */
 	private int[] targetTokenIdxs;
 	private int sentNum;
@@ -49,7 +47,6 @@ public class DataPoint {
 	
 	/**
 	 * Maps token numbers in the sentence to corresponding character indices
-	 * @see #processOrgLine(String)
 	 * @see #getCharacterIndicesForToken(int)
 	 */
 	private THashMap<Integer,Range0Based> tokenIndexMap;
@@ -102,7 +99,6 @@ public class DataPoint {
 		frameName = tokens[0].intern();
 		sentNum = parseInt(tokens[4]);
 		// The above 3 lines are duplicated in parseFrameNameAndSentenceNum()
-		lexicalUnitName = tokens[1].intern();
 		String[] tokNums = tokens[2].split("_");
 		targetTokenIdxs = new int[tokNums.length];
 		for(int j = 0; j < tokNums.length; j ++) {
@@ -110,21 +106,7 @@ public class DataPoint {
 		}
 		Arrays.sort(targetTokenIdxs);
 	}
-	
-	/**
-	 * The inverse of processFrameLine(). Result does not include a trailing newline.
-	 * @see #processFrameLine(String)
-	 */
-	public static String makeFrameLine(String frameName, String lexicalUnit, int[] tokenNums, String target, int sentNum) {
-		String s = "";
-		s += frameName + "\t" + lexicalUnit + "\t";
-		for (int i=0; i<tokenNums.length; i++) {
-			s += ((i==0) ? tokenNums[i] : "_" + tokenNums[i]);
-		}
-		s += "\t" + target + "\t" + sentNum;
-		return s;
-	}
-	
+
 	protected static Pair<String,Integer> parseFrameNameAndSentenceNum(String frameLine) {
 		// A subset of the code in processFrameLine()
 		String[] toks = frameLine.split("\t");
@@ -220,94 +202,5 @@ public class DataPoint {
 			result.add(charRange);
 		}
 		return result;
-	}
-
-	public static final String FN13_LEXICON_EXEMPLARS = "exemplars";
-	public static final String SEMEVAL07_TRAIN_SET = "train";
-	public static final String SEMEVAL07_DEV_SET = "dev";
-	public static final String SEMEVAL07_TEST_SET = "test";
-	/** Sentence index ranges for documents in the train, dev, and test portions of the SemEval'07 data */
-	protected static final Map<String,Map<String,? extends Range>> DOCUMENT_SENTENCE_RANGES = new THashMap<String,Map<String,? extends Range>>();
-	static {
-		{
-		Map<String,Range0Based> exemplarMap = new THashMap<String,Range0Based>();
-		exemplarMap.put("*", new Range0Based(0,139439,false));
-		DOCUMENT_SENTENCE_RANGES.put(FN13_LEXICON_EXEMPLARS, exemplarMap);
-		}
-		
-		/* Document descriptor: SubcorpusName/DocumentName
-		 * Note that sentence indices are only unique within a particular data set
-		
-		train (18 documents, 1663 sentences)
-		ANC/EntrepreneurAsMadonna	0	33
-		ANC/HistoryOfJerusalem		171	292
-		NTI/BWTutorial_chapter1		292     393
-		NTI/Iran_Chemical			393     536
-		NTI/Iran_Introduction		536     598
-		NTI/Iran_Missile			598     778
-		NTI/Iran_Nuclear			778     913
-		NTI/Kazakhstan				913     942
-		NTI/LibyaCountry1			942     983
-		NTI/NorthKorea_ChemicalOverview		983     1055
-		NTI/NorthKorea_NuclearCapabilities	1055    1085
-		NTI/NorthKorea_NuclearOverview		1085    1206
-		NTI/Russia_Introduction		1206    1247
-		NTI/SouthAfrica_Introduction		1247    1300
-		NTI/Syria_NuclearOverview			1300    1356
-		NTI/Taiwan_Introduction		1356    1392
-		NTI/WMDNews_062606			1392    1476
-		PropBank/PropBankCorpus		1476    1801
-
-		dev (4 documents, 251 sentences)
-		ANC/StephanopoulosCrimes	146     178
-		NTI/Iran_Biological			178     280
-		NTI/NorthKorea_Introduction	280     329
-		NTI/WMDNews_042106			329     397
-
-		test (3 documents, 120 sentences)
-		ANC/IntroOfDublin			0       67
-		NTI/chinaOverview			67      106
-		NTI/workAdvances			106     120
-		*/
-
-		{
-		Map<String,Range0Based> trainMap = new THashMap<String,Range0Based>();
-		trainMap.put("ANC/EntrepreneurAsMadonna",			new Range0Based(0,33,false));
-		trainMap.put("ANC/HistoryOfJerusalem",				new Range0Based(171,292,false));
-		trainMap.put("NTI/BWTutorial_chapter1",				new Range0Based(292,393,false));
-		trainMap.put("NTI/Iran_Chemical",					new Range0Based(393,536,false));
-		trainMap.put("NTI/Iran_Introduction",				new Range0Based(536,598,false));
-		trainMap.put("NTI/Iran_Missile",					new Range0Based(598,778,false));
-		trainMap.put("NTI/Iran_Nuclear",					new Range0Based(778,913,false));
-		trainMap.put("NTI/Kazakhstan",						new Range0Based(913,942,false));
-		trainMap.put("NTI/LibyaCountry1",					new Range0Based(942,983,false));
-		trainMap.put("NTI/NorthKorea_ChemicalOverview",		new Range0Based(983,1055,false));
-		trainMap.put("NTI/NorthKorea_NuclearCapabilities",	new Range0Based(1055,1085,false));
-		trainMap.put("NTI/NorthKorea_NuclearOverview",		new Range0Based(1085,1206,false));
-		trainMap.put("NTI/Russia_Introduction",				new Range0Based(1206,1247,false));
-		trainMap.put("NTI/SouthAfrica_Introduction",		new Range0Based(1247,1300,false));
-		trainMap.put("NTI/Syria_NuclearOverview",			new Range0Based(1300,1356,false));
-		trainMap.put("NTI/Taiwan_Introduction",				new Range0Based(1356,1392,false));
-		trainMap.put("NTI/WMDNews_062606",					new Range0Based(1392,1476,false));
-		trainMap.put("PropBank/PropBankCorpus",				new Range0Based(1476,1801,false));
-		DOCUMENT_SENTENCE_RANGES.put(SEMEVAL07_TRAIN_SET, trainMap);
-		}
-		
-		{
-		Map<String,Range0Based> devMap = new THashMap<String,Range0Based>();
-		devMap.put("ANC/StephanopoulosCrimes",		new Range0Based(146,178,false));
-		devMap.put("NTI/Iran_Biological",			new Range0Based(178,280,false));
-		devMap.put("NTI/NorthKorea_Introduction",	new Range0Based(280,329,false));
-		devMap.put("NTI/WMDNews_042106",			new Range0Based(329,397,false));
-		DOCUMENT_SENTENCE_RANGES.put(SEMEVAL07_DEV_SET, devMap);
-		}
-		
-		{
-		Map<String,Range0Based> testMap = new THashMap<String,Range0Based>();
-		testMap.put("ANC/IntroOfDublin",	new Range0Based(0,67,false));
-		testMap.put("NTI/chinaOverview",	new Range0Based(67,106,false));
-		testMap.put("NTI/workAdvances",		new Range0Based(106,120,false));
-		DOCUMENT_SENTENCE_RANGES.put(SEMEVAL07_TEST_SET, testMap);
-		}
 	}
 }

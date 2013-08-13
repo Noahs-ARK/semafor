@@ -1,5 +1,6 @@
 package edu.cmu.cs.lti.ark.fn.identification;
 
+import edu.cmu.cs.lti.ark.fn.framenet.FrameCosts;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

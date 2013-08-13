@@ -35,6 +35,7 @@ import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Token;
 import edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationJson;
+import edu.cmu.cs.lti.ark.fn.framenet.FEDict;
 import edu.cmu.cs.lti.ark.fn.identification.GraphBasedFrameIdentifier;
 import edu.cmu.cs.lti.ark.fn.identification.RequiredDataForFrameIdentification;
 import edu.cmu.cs.lti.ark.fn.parsing.*;
@@ -89,17 +90,23 @@ public class Semafor {
 	 * model-dir
 	 * input-file
 	 * output-file
+	 *
+	 * optional flags:
+	 * k-best-output
+	 * numthreads
 	 */
 	public static void main(String[] args) throws Exception {
 		final FNModelOptions options = new FNModelOptions(args);
 		final File inputFile = new File(options.inputFile.get());
 		final File outputFile = new File(options.outputFile.get());
 		final String modelDirectory = options.modelDirectory.get();
+		final int kBest = options.kBestOutput.present() ? options.kBestOutput.get() : 1;
 		final int numThreads = options.numThreads.present() ? options.numThreads.get() : 1;
 		final Semafor semafor = getSemaforInstance(modelDirectory);
 		semafor.runParser(
 				Files.newReaderSupplier(inputFile, Charsets.UTF_8),
 				Files.newWriterSupplier(outputFile, Charsets.UTF_8),
+				kBest,
 				numThreads);
 	}
 
@@ -107,7 +114,8 @@ public class Semafor {
 				   FEDict frameElementsForFrame,
 				   RoteSegmenter segmenter,
 				   GraphBasedFrameIdentifier idModel,
-				   Decoding decoder, Map<String, Integer> argIdFeatureIndex) {
+				   Decoding decoder,
+				   Map<String, Integer> argIdFeatureIndex) {
 		this.allRelatedWords = allRelatedWords;
 		this.frameElementsForFrame = frameElementsForFrame;
 		this.segmenter = segmenter;
@@ -144,12 +152,13 @@ public class Semafor {
 	 *
 	 * @param inputSupplier where to read conll sentences from
 	 * @param outputSupplier where to write the results to
-	 * @param numThreads the number of threads to use
-	 * @throws IOException
+	 * @param kBest the number of k-best parses to return for each frame
+	 *@param numThreads the number of threads to use  @throws IOException
 	 * @throws InterruptedException
 	 */
 	public void runParser(final InputSupplier<? extends Readable> inputSupplier,
 						  final OutputSupplier<? extends Writer> outputSupplier,
+						  final int kBest,
 						  final int numThreads)
 			throws IOException, InterruptedException {
 		// use the producer-worker-consumer pattern to parse all sentences in multiple threads, while keeping
@@ -196,7 +205,7 @@ public class Semafor {
 						@Override public Optional<SemaforParseResult> call() throws Exception {
 							final long start = System.currentTimeMillis();
 							try {
-								final SemaforParseResult result = parseSentence(sentence);
+								final SemaforParseResult result = parseSentence(sentence, kBest);
 								final long end = System.currentTimeMillis();
 								System.err.printf("parsed sentence %d in %d millis.%n", sentenceId, end - start);
 								return Optional.of(result);
@@ -220,7 +229,7 @@ public class Semafor {
 		System.err.println("Done.");
 	}
 
-	public SemaforParseResult parseSentence(Sentence unLemmatizedSentence) throws IOException {
+	public SemaforParseResult parseSentence(Sentence unLemmatizedSentence, int kBest) throws IOException {
 		// look up lemmas
 		final Sentence sentence = addLemmas(unLemmatizedSentence);
 		// find targets
@@ -228,7 +237,7 @@ public class Semafor {
 		// frame identification
 		final List<Pair<List<Integer>, String>> idResult = predictFrames(sentence, segments);
 		// argument identification
-		return predictArguments(sentence, idResult);
+		return predictArguments(sentence, idResult, kBest);
 	}
 
 	public List<List<Integer>> predictTargets(Sentence sentence) {
@@ -244,10 +253,12 @@ public class Semafor {
 		return idResult;
 	}
 
-	public SemaforParseResult predictArguments(Sentence sentence, List<Pair<List<Integer>, String>> idResults)
+	public SemaforParseResult predictArguments(Sentence sentence,
+											   List<Pair<List<Integer>, String>> idResults,
+											   int kBest)
 			throws IOException {
 		final List<String> idResultLines = getArgumentIdInput(sentence, idResults);
-		final List<String> argResult = predictArgumentLines(sentence, idResultLines, 1);
+		final List<String> argResult = predictArgumentLines(sentence, idResultLines, kBest);
 		return getSemaforParseResult(sentence, argResult);
 	}
 

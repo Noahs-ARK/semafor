@@ -27,7 +27,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
-import edu.cmu.cs.lti.ark.fn.parsing.CandidateFrameElementFilters;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParses;
@@ -35,7 +34,6 @@ import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParses;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.StringTokenizer;
 
 import static edu.cmu.cs.lti.ark.fn.parsing.CandidateFrameElementFilters.createSpanRange;
@@ -149,34 +147,6 @@ public class DataPointWithFrameElements extends DataPoint {
 		return createSpanRange(feStart, feEnd);
 	}
 
-	/**
-	 * Produces a frame elements line representation of a specified frame annotation. 
-	 * Result does not end in a newline.
-	 * 
-	 * @param arguments Map from role names to filler argument token ranges
-	 * @param frameName
-	 * @param lexicalUnit
-	 * @param tokenNums Token numbers for the target
-	 * @param target The target word(s), separated by spaces
-	 * @param sentNum
-	 * @return
-	 */
-	public static String makeFrameElementsLine(Map<String,Range0Based> arguments, String frameName, String lexicalUnit, int[] tokenNums, String target, int sentNum) {
-		String s = makeFrameLine(frameName, lexicalUnit, tokenNums, target, sentNum) + "\t";
-		int numNonemptySpans = 0;
-		for (Map.Entry<String,Range0Based> argument : arguments.entrySet()) {
-			Range0Based span = argument.getValue();
-			if (CandidateFrameElementFilters.isEmptySpan(span))	// unfilled FE
-				continue;
-			String rangeS = ""+ span.start;
-			if (span.length()>1)
-				rangeS += ":" + (span.start +span.length());
-			s += argument.getKey() + "\t" + rangeS + "\t";
-			numNonemptySpans++;
-		}
-		return (numNonemptySpans+1) + "\t" + s.trim();
-	}
-	
 	public int getNumSpans() {
 		return numSpans;
 	}

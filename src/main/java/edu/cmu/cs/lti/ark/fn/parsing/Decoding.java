@@ -269,6 +269,4 @@ public class Decoding {
 		}
 		return results;
 	}
-
-	public void wrapUp() { /* no op unless overridden */ }
 }
