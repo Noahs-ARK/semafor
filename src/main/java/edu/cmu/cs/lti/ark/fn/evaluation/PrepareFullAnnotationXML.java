@@ -35,6 +35,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
@@ -69,7 +70,6 @@ public class PrepareFullAnnotationXML {
 	 * @see #generateXMLForPrediction
 	 */
 	public static void main(String[] args) throws Exception {
-		// TODO: Change to CommandLineOptions framework (involves changes to shell scripts which use this class)
 		ParseOptions options = new ParseOptions(args);
 		generateXMLForPrediction(
 				options.testFEPredictionsFile,
@@ -148,7 +148,7 @@ public class PrepareFullAnnotationXML {
 	private static Document createXMLDoc(List<String> predictedFELines,
 										 Range sentenceNums,
 										 List<String> parses,
-										 List<String> origLines) {
+										 List<String> origLines) throws ParserConfigurationException {
 		final Document doc = XmlUtils.getNewDocument();
 		final Element corpus = doc.createElement("corpus");
 		addAttribute(doc, "ID", corpus, "100");

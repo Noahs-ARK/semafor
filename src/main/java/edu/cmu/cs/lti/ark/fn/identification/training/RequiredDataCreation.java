@@ -32,7 +32,10 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -53,7 +56,8 @@ public class RequiredDataCreation {
 			put("ART", "DET").
 			put("SCON", "IN").build();
 
-	public static void main(String[] args) throws IOException, ClassNotFoundException {
+	public static void main(String[] args)
+			throws IOException, ClassNotFoundException, ParserConfigurationException, SAXException, TransformerException {
 		FNModelOptions options = new FNModelOptions(args);
 		Map<String, String> hvLemmas = getHVLemmas(options);
 		THashSet<String> relWords = getRelatedWords(options);
@@ -142,7 +146,7 @@ public class RequiredDataCreation {
 	}
 
 	public static Pair<Map<String, Set<String>>, Map<String, THashMap<String, Set<String>>>>
-	buildHVWordNetCache(FNModelOptions options) throws IOException, ClassNotFoundException {
+			buildHVWordNetCache(FNModelOptions options) throws IOException, ClassNotFoundException {
 		String fmFile = options.frameNetMapFile.get();
 		String wnConfigFile = options.wnConfigFile.get();
 		String stopFile = options.stopWordsFile.get();
@@ -172,8 +176,8 @@ public class RequiredDataCreation {
 				Map<String, THashMap<String, Set<String>>>>(relatedWordsForWord, wordNetMap);
 	}
 
-	public static THashMap<String, THashSet<String>>
-	getHVCorrespondence(FNModelOptions options) throws IOException, ClassNotFoundException {
+	public static THashMap<String, THashSet<String>> getHVCorrespondence(FNModelOptions options)
+			throws IOException, ClassNotFoundException {
 		String fmFile = options.frameNetMapFile.get();
 		String wnConfigFile = options.wnConfigFile.get();
 		String stopFile = options.stopWordsFile.get();
@@ -210,15 +214,15 @@ public class RequiredDataCreation {
 		return cMap;
 	}
 
-	public static THashSet<String> getRelatedWords(FNModelOptions options) throws IOException, ClassNotFoundException {
+	public static THashSet<String> getRelatedWords(FNModelOptions options)
+			throws IOException, ClassNotFoundException, ParserConfigurationException, SAXException, TransformerException {
 		String fmFile = options.frameNetMapFile.get();
 		String wnConfigFile = options.wnConfigFile.get();
 		String stopFile = options.stopWordsFile.get();
 		String luXmlDir = options.luXmlDir.get();
 		THashMap<String, THashSet<String>> mFrameMap = SerializedObjects.readObject(fmFile);
 		WordNetRelations wnr = new WordNetRelations(stopFile, wnConfigFile);
-		THashSet<String> set = getAllRelatedWords(mFrameMap,
-				wnr);
+		THashSet<String> set = getAllRelatedWords(mFrameMap, wnr);
 		THashSet<String> absentExampleLUs = getListOfLUs(luXmlDir, wnr);
 		set.addAll(absentExampleLUs);
 		String relatedWordsFile = options.allRelatedWordsFile.get();
@@ -226,7 +230,8 @@ public class RequiredDataCreation {
 		return set;
 	}
 
-	public static THashSet<String> getListOfLUs(String directory, WordNetRelations wnr) {
+	public static THashSet<String> getListOfLUs(String directory, WordNetRelations wnr)
+			throws IOException, SAXException, ParserConfigurationException, TransformerException {
 		File f = new File(directory);
 		FilenameFilter filt = new FilenameFilter() {
 			public boolean accept(File dir, String name) {
