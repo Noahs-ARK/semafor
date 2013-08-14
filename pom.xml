@@ -84,11 +84,6 @@
             <version>2.0.1</version>
         </dependency>
         <dependency>
-            <groupId>de.saar.coli.salsa.reiter</groupId>
-            <artifactId>framenet</artifactId>
-            <version>0</version>
-        </dependency>
-        <dependency>
             <groupId>danbikel</groupId>
             <artifactId>wordnet</artifactId>
             <version>0</version>
