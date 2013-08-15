@@ -1,6 +1,6 @@
 package edu.cmu.cs.lti.ark.fn.data.prep.concrete
 
-import Util.{getAllSentences, setSentences}
+import Utils.{getAllSentences, setSentences}
 import edu.jhu.hlt.concrete.Concrete._
 import java.io.File
 import edu.jhu.hlt.concrete.util.IdUtil.generateUUID

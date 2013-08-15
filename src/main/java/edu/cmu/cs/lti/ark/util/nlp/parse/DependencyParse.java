@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags.*;
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 
 
@@ -271,18 +272,12 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 		return parses;
 	}
 
-	/**
-	 *
-	 * @param parseData
-	 * @param logProb
-	 * @return
-	 */
 	public static DependencyParse processFN(String[][] parseData, double logProb) {
 		final int len = parseData[0].length;
-		ArrayList<DependencyParse> list = new ArrayList<DependencyParse>();
-		ArrayList<DependencyParse> headWords = new ArrayList<DependencyParse>();
+		final List<DependencyParse> list = Lists.newArrayListWithExpectedSize(len);
+		final List<DependencyParse> headWords = Lists.newArrayListWithExpectedSize(len);
 
-		DependencyParse dummyRoot = new DependencyParse();
+		final DependencyParse dummyRoot = new DependencyParse();
 		dummyRoot.setParent(null);
 		dummyRoot.setIndex(0);
 		dummyRoot.setParentIndex(-1);
@@ -294,17 +289,17 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 		dummyRoot.setLogProb(logProb);
 		dummyRoot.setHeadWord(DependencyParse.NULL_WORD);
 
-		for(int j = 0; j < len; j ++) {
-			DependencyParse dp = new DependencyParse();
-			dp.setWord(parseData[0][j]);
-			dp.setPOS(parseData[1][j]);
-			dp.setNE(parseData[4][j]);
-			dp.setIndex(j+1);
-			int parentIndex = Integer.parseInt(parseData[3][j]);
+		for (int j = 0; j < len; j++) {
+			final DependencyParse dp = new DependencyParse();
+			dp.setWord(parseData[PARSE_TOKEN_ROW][j]);
+			dp.setPOS(parseData[PARSE_POS_ROW][j]);
+			dp.setNE(parseData[PARSE_NE_ROW][j]);
+			dp.setIndex(j+1);  // 1-indexed
+			final int parentIndex = Integer.parseInt(parseData[PARSE_HEAD_ROW][j]);
 			dp.setParentIndex(parentIndex);
-			dp.setLabelType(parseData[2][j]);
-			dp.setHeadWord(parseData[0][j]);
-			if(parentIndex==0) {
+			dp.setLabelType(parseData[PARSE_DEPREL_ROW][j]);
+			dp.setHeadWord(parseData[PARSE_TOKEN_ROW][j]);
+			if(parentIndex == 0) {
 				dp.setParent(dummyRoot);
 				headWords.add(dp);
 			} else {
@@ -323,10 +318,10 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 		return dummyRoot;
 	}
 
-	private static void processChildren(ArrayList<DependencyParse> list, DependencyParse parent) {
+	private static void processChildren(List<DependencyParse> list, DependencyParse parent) {
 		int parentIndex = parent.getIndex();
 		int parentLevel = parent.getDepth();
-		ArrayList<DependencyParse> children = new ArrayList<DependencyParse>();
+		final List<DependencyParse> children = Lists.newArrayList();
 
 		for(DependencyParse dp : list) {
 			if(dp.getParentIndex() == parentIndex) {

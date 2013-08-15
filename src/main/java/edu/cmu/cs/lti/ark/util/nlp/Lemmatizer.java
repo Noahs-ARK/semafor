@@ -14,7 +14,7 @@ public abstract class Lemmatizer {
 	public Sentence addLemmas(Sentence sentence) {
 		return new Sentence(Lists.transform(sentence.getTokens(), new Function<Token, Token>() {
 			@Override public Token apply(Token input) {
-				return input.setLemma(getLemma(input.getForm(), input.getPostag()));
+				return input.withLemma(getLemma(input.getForm(), input.getPostag()));
 			} }));
 	}
 }

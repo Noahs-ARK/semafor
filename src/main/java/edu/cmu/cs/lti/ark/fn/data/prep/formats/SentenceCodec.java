@@ -78,7 +78,7 @@ public abstract class SentenceCodec {
 			try {
 				final Token token = decodeToken(tokenStrs[i]);
 				//indexed starting at 1!
-				tokens.add(token.withIndex(i + 1));
+				tokens.add(token.withId(i + 1));
 			} catch (IllegalArgumentException e) {
 				throw new IllegalArgumentException(tokenStrs[i], e);
 			}
