@@ -1,16 +1,16 @@
 package edu.cmu.cs.lti.ark.fn.data.prep.concrete
 
 import edu.jhu.hlt.concrete.Concrete._
-import java.io.{FileInputStream, FileOutputStream, File}
-import edu.cmu.cs.lti.ark.fn.parsing.SemaforParseResult
-import edu.cmu.cs.lti.ark.util.ds.Range0Based
+import java.io.File
 import edu.jhu.hlt.concrete.util.IdUtil.generateUUID
 import scala.collection.JavaConversions._
-import scala.collection.mutable.ListBuffer
-import io.Source
-import resource.managed
 
-object Util {
+object Utils {
+  val baseDir = new File("/Users/sam/Documents/CMU/research/DEFT/Firestone_texts_semafor_parsed/")
+  val originalDir = new File(baseDir, "original")
+  val rawConcreteFile = new File(baseDir, "firestone_all_raw.pb")
+  val semaforParsedFile = new File(baseDir, "firestone_all_semafor_parsed.pb")
+
   def getAllSentences(communication: Communication): List[Sentence] = {
     communication.getSectionSegmentationList
       .flatMap(_.getSectionList)

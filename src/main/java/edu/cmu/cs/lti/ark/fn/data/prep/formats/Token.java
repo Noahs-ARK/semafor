@@ -103,6 +103,7 @@ public class Token {
 	public Token(String form, @Nullable String postag, @Nullable Integer head, @Nullable String deprel) {
 		this(null, form, null, postag, postag, null, head, deprel, null, null);
 	}
+
 	/**
 	 * Convenience constructor for (word, pos)
 	 */
@@ -129,8 +130,8 @@ public class Token {
 		}
 	}
 
-	public Token withIndex(int id) {
-		return new Token(id, form,lemma, cpostag, postag, feats, head, deprel, phead, pdeprel);
+	public Token withId(int id) {
+		return new Token(id, form, lemma, cpostag, postag, feats, head, deprel, phead, pdeprel);
 	}
 
 	/*
@@ -150,9 +151,8 @@ public class Token {
 		return lemma;
 	}
 
-	public Token setLemma(@Nullable String lemma) {
-		return new Token(getId(), getForm(), lemma, getCpostag(), getPostag(), getFeats(),
-				getHead(), getDeprel(), getPhead(), getPdeprel());
+	public Token withLemma(@Nullable String lemma) {
+		return new Token(id, form, lemma, cpostag, postag, feats, head, deprel, phead, pdeprel);
 	}
 
 	@Nullable
@@ -175,9 +175,17 @@ public class Token {
 		return head;
 	}
 
+	public Token withHead(@Nullable Integer head) {
+		return new Token(id, form, lemma, cpostag, postag, feats, head, deprel, phead, pdeprel);
+	}
+
 	@Nullable
 	public String getDeprel() {
 		return deprel;
+	}
+
+	public Token withDeprel(@Nullable String deprel) {
+		return new Token(id, form, lemma, cpostag, postag, feats, head, deprel, phead, pdeprel);
 	}
 
 	@Nullable
