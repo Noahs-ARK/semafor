@@ -74,7 +74,7 @@ object SemaforToConcrete {
     val concreteSentences = getAllSentences(communication)
     val semaforResultsConcrete = concreteSentences.view.map(concreteSentence => {
       val depParsedSentence = depParseFromConcrete(concreteSentence)
-      val semaforResult = semafor.parseSentence(depParsedSentence)
+      val semaforResult = semafor.parseSentence(depParsedSentence, 1)
       semaforParseToConcrete(semaforResult, concreteSentence, meta)
     })
     communication.toBuilder
