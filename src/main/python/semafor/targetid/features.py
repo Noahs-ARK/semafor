@@ -11,11 +11,11 @@ from itertools import chain
 import json
 import os
 import sys
-#from nltk import FreqDist
 
 from semafor.scoring.frameparseval import DATE_NAMES
+from semafor.utils.utils import get_coarse_pos, ngrams
 from semafor.utils.wordnet import get_lemma
-from semafor.utils.malt_to_conll import ConllToken, ConllFields, read_conll
+from semafor.utils.formats.conll import ConllToken, ConllFields, read_conll
 
 TRAIN_DATA_DIR = "/Users/sam/repo/project/semafor/semafor/training/data/naacl2012"
 GOLD_FILENAME = os.path.join(TRAIN_DATA_DIR, "cv.%s.sentences.json")
@@ -33,6 +33,7 @@ INTRATOKEN_JOIN = u':'.join
 #FEATURES = ("prev_lemma", "prev_pos", "lemma", "pos", "next_lemma", "next_pos")
 #Features = namedtuple("Features", FEATURES)
 #DataPoint = namedtuple("DataPoint", ("is_target", "features"))
+
 
 def get_non_target_token_idxs(gold_sentence):
     non_target_token_idxs = set()
