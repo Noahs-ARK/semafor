@@ -215,28 +215,28 @@ def print_stats(stats, out=sys.stdout):
         out.write("\n")
 
 
-# def get_high_precision_paths(sentences):
-#     stats = defaultdict(FrameStats)
-#     for sentence in sentences:
-#         dep_parse = sentence['tokens']
-#         for frame_dict in sentence['frames']:
-#             target = frame_dict['target']
-#             frame_name = target['name']
-#             target_tokens = target['tokens']
-#             target_head = get_head(target_tokens)
-#             lu = "_".join(t.lemma for t in target_tokens) + "." + get_coarse_pos(target_head.postag)
-#             stats[frame_name].lus.inc(lu)
-#             for frame_element in frame_dict['annotationSets'][0]['frameElements']:
-#                 fe_name = frame_element['name']
-#                 fe_head = get_head(frame_element['tokens'])
-#                 path, with_lemmas = get_path(target_head, fe_head, dep_parse)
-#                 fe_lemma_and_pos = fe_head.lemma + "." + get_coarse_pos(fe_head.postag)
-#                 fe_stats = stats[frame_name].fes[fe_name]
-#                 fe_stats.count += 1
-#                 fe_stats.heads.inc(fe_lemma_and_pos)
-#                 fe_stats.paths.inc(path)
-#                 fe_stats.paths_with_lemma.inc(with_lemmas)
-#     return stats
+def get_high_precision_paths(sentences):
+    stats = defaultdict(FrameStats)
+    for sentence in sentences:
+        dep_parse = sentence['tokens']
+        for frame_dict in sentence['frames']:
+            target = frame_dict['target']
+            frame_name = target['name']
+            target_tokens = target['tokens']
+            target_head = get_head(target_tokens)
+            lu = "_".join(t.lemma for t in target_tokens) + "." + get_coarse_pos(target_head.postag)
+            stats[frame_name].lus.inc(lu)
+            for frame_element in frame_dict['annotationSets'][0]['frameElements']:
+                fe_name = frame_element['name']
+                fe_head = get_head(frame_element['tokens'])
+                path, with_lemmas = get_path(target_head, fe_head, dep_parse)
+                fe_lemma_and_pos = fe_head.lemma + "." + get_coarse_pos(fe_head.postag)
+                fe_stats = stats[frame_name].fes[fe_name]
+                fe_stats.count += 1
+                fe_stats.heads.inc(fe_lemma_and_pos)
+                fe_stats.paths.inc(path)
+                fe_stats.paths_with_lemma.inc(with_lemmas)
+    return stats
 
 
 def main():
@@ -245,6 +245,7 @@ def main():
         stats = counts_by_frame(sentences, out=log_file)
     with codecs.open(COUNTS_FILENAME, "w", encoding="utf-8") as out_file:
         print_stats(stats, out=out_file)
+
 
 
 if __name__ == "__main__":
