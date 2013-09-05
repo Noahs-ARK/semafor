@@ -47,6 +47,7 @@ where $A_i$ means the number of arguments in tuple $i$, say 1 or 2 or 3 or so.
 \textbf{Model skeleton.}
 
 \includegraphics[width=2.5in]{diagram}
+
 Variables in one tuple.  Leaving out $i$ subscripts
 
 \begin{itemizesquish}
@@ -99,6 +100,11 @@ Training is really easy with collapsed Gibbs sampling.
 Want to make $R_f$ nonparametric since it's a lot of hyperparameters to fix.
 This is also a simple extension of the Gibbs sampler (go to CRP), though a tiny bit
 harder to implement.
+
+\textbf{Training with collapsed Gibbs sampling.}
+Count ratios for generation probabilities (add pseudocounts to get CGS updates) are as follows.
+
+\includegraphics[width=3in]{cgs_ratios.pdf}
 
 
 \textbf{More advanced models.}  Role sharing between frames?  Relationships between frames?  Etc.  One approach is to keep the indicator ID's, but swap out the Dirichlets for log-linear additive effects, to get soft weight sharing.  (If the logit linear effects have normal noise, it's a logistic normal system...)
