@@ -1,0 +1,2 @@
+~/sem/framelearn/semafor/unsup/model/data % cat crime2.semtuple | python convert.py > crime.tuple
+
