@@ -796,8 +796,8 @@
 			<integer>96</integer>
 			<key>Points</key>
 			<array>
-				<string>{206.92378725279647, 285.48715041075951}</string>
-				<string>{249.10845375874834, 317.40364096470802}</string>
+				<string>{206.93397656495262, 285.47369521610926}</string>
+				<string>{249.1672334666699, 317.32518394973454}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -829,8 +829,8 @@
 			<integer>87</integer>
 			<key>Points</key>
 			<array>
-				<string>{209.15056947243804, 278.87899832552029}</string>
-				<string>{248.15141362782325, 278.98376759933439}</string>
+				<string>{209.15060882012091, 278.85087894871327}</string>
+				<string>{248.15060033457934, 278.85594965335019}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -862,8 +862,8 @@
 			<integer>86</integer>
 			<key>Points</key>
 			<array>
-				<string>{290.66094388965718, 279.35923950910029}</string>
-				<string>{270.06788556654192, 280.19978689315309}</string>
+				<string>{290.65077922535505, 278.91684666701229}</string>
+				<string>{270.14917814916032, 279.02738943782265}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -895,8 +895,8 @@
 			<integer>85</integer>
 			<key>Points</key>
 			<array>
-				<string>{258.98704328260277, 289.84824514262857}</string>
-				<string>{258.65228651873485, 312.35932841577528}</string>
+				<string>{259.13142376807991, 289.84943738824376}</string>
+				<string>{259.09219186394603, 312.34957921737583}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -1489,8 +1489,8 @@
 			<integer>20</integer>
 			<key>Points</key>
 			<array>
-				<string>{236.21559322137367, 181}</string>
-				<string>{229.75607304682396, 145.79570026077988}</string>
+				<string>{236.42324570918393, 191.50602610562146}</string>
+				<string>{229.40115700758329, 145.85529470807023}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -1522,8 +1522,8 @@
 			<integer>19</integer>
 			<key>Points</key>
 			<array>
-				<string>{166.49998696746388, 181}</string>
-				<string>{166.49998696746388, 146.00000517241398}</string>
+				<string>{166.49998696746388, 191.50602610562146}</string>
+				<string>{166.49998696746388, 146.00000530318425}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -1545,7 +1545,7 @@
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{209, 181}, {57, 14}}</string>
+			<string>{{209, 191.50602610562146}, {57, 14}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -1593,7 +1593,7 @@
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{133, 181}, {67, 14}}</string>
+			<string>{{133, 191.50602610562146}, {67, 14}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -2019,7 +2019,7 @@
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{111, 19}, {210, 191}}</string>
+			<string>{{111, 51.807228088378906}, {210, 126.50603485107422}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>ID</key>
@@ -2102,7 +2102,7 @@
 	<key>MasterSheets</key>
 	<array/>
 	<key>ModificationDate</key>
-	<string>2013-09-05 23:43:04 +0000</string>
+	<string>2013-09-06 19:23:49 +0000</string>
 	<key>Modifier</key>
 	<string>Brendan O'Connor</string>
 	<key>NotesVisible</key>
@@ -2197,7 +2197,7 @@
 		<key>SidebarWidth</key>
 		<integer>120</integer>
 		<key>VisibleRegion</key>
-		<string>{{25.301205328023396, 211.14458255886191}, {496.98796180045957, 382.5301281736871}}</string>
+		<string>{{0, 0}, {496.98796180045957, 382.5301281736871}}</string>
 		<key>Zoom</key>
 		<real>1.6599999666213989</real>
 		<key>ZoomValues</key>
