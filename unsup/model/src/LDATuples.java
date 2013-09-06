@@ -21,7 +21,7 @@ import util.Vocabulary;
 
 public class LDATuples {
 
-	double linkyConc = .1;
+	double linkyConc = 1;
 	double argwordConc = 1000;
 	double headwordConc = 100;
 	double frameConc = 1;
@@ -34,8 +34,8 @@ public class LDATuples {
 		static int concResampleEvery = 1000;
 	}
 	
-	int numFrames = 4;
-	int numRolesPerFrame = 4;   // totally lame
+	int numFrames = 10;
+	int numRolesPerFrame = 2;
 	
 	int numWordTypes = -1;
 	int numPathTypes = -1;
@@ -192,8 +192,8 @@ public class LDATuples {
 		}
 		U.pf("pseudoLL %.1f\n", pseudoLL);
 		U.pf("frames "); U.p(nFrame);
-		U.p("framerole"); U.p(nFrameRole);
-		U.p("pathframe"); U.p(nPathFrame);
+//		U.p("framerole"); U.p(nFrameRole);
+//		U.p("pathframe"); U.p(nPathFrame);
 	}
 
 	/** don't have roles assigned yet when doing frame sampling decision. */
@@ -279,9 +279,9 @@ public class LDATuples {
 				return calcHeadLL(Math.exp(input[0])); }};
 		List<double[]> history;
 
-		history = MCMC.slice_sample(rLL, new double[]{Math.log(linkyConc)}, new double[]{1}, 30);
-		this.linkyConc  = Math.exp(history.get(history.size()-1)[0]);
-		U.pf("linkyConc %.6g\n", this.linkyConc);
+//		history = MCMC.slice_sample(rLL, new double[]{Math.log(linkyConc)}, new double[]{1}, 30);
+//		this.linkyConc  = Math.exp(history.get(history.size()-1)[0]);
+//		U.pf("linkyConc %.6g\n", this.linkyConc);
 		
 		history = MCMC.slice_sample(awLL, new double[]{Math.log(argwordConc)}, new double[]{1}, 30);
 		this.argwordConc  = Math.exp(history.get(history.size()-1)[0]);

@@ -29,12 +29,14 @@ def pageheader():
 prefix = sys.argv[1]
 def fname(suff): return prefix + "." + suff
 
-wc_thresh = 10
+wc_thresh = 5
 
 
 nWordFrameRole = np.loadtxt(fname("nWordFrameRole.sparse"))
 nPathFrameRole = np.loadtxt(fname("nPathFrameRole.sparse"))
 nHeadFrame = np.loadtxt(fname("nHeadFrame"))
+nFrame = nHeadFrame.sum(0)
+print nFrame
 numFrames = int(max(nWordFrameRole[:,1]))
 numRoles = int(max(nPathFrameRole[:,2]))
 
@@ -50,7 +52,9 @@ def get_tops(countvec):
     return tops
 
 for f in range(numFrames):
+    if nFrame[f] < 100: continue
     print
+    print '---------'
     print "f=%d headwords" % f
     print word_vocab[get_tops(nHeadFrame[:,f])]
 
