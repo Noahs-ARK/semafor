@@ -21,16 +21,17 @@ import util.Vocabulary;
 
 public class LDATuples {
 
-	double linkyConc = .01;
-	double wordConc = 100;
-	double frameConc = .1;
+	double linkyConc = .1;
+	double argwordConc = 1000;
+	double headwordConc = 100;
+	double frameConc = 1;
 	
 	static class Opts {
 		static String dataFilename = "data/crime.tuple";
 		static String outputDir = "out";
-		static int maxIter = 10000 + 1;
-		static int saveEvery = 1000;
-		static int concResampleEvery = 100;
+		static int maxIter = 100000 + 1;
+		static int saveEvery = 10000;
+		static int concResampleEvery = 1000;
 	}
 	
 	int numFrames = 4;
@@ -136,8 +137,8 @@ public class LDATuples {
 		double psum = 0;
 		for (int f=0; f<numFrames; f++) {
 			field[f] = nFrame[f] + frameConc/numFrames;
-			double a = nHeadFrame[tuple.headid][f] + wordConc/numWordTypes;
-			double b = nFrame[f] + wordConc;
+			double a = nHeadFrame[tuple.headid][f] + headwordConc/numWordTypes;
+			double b = nFrame[f] + headwordConc;
 			field[f] *= a/b;
 			if (!skipArgs) {
 				for (Arg arg : tuple.args) {
@@ -157,8 +158,8 @@ public class LDATuples {
 		double b = nPathFrame[arg.pathid][tuple.frameid] + linkyConc;
 		for (int r=0; r<numRolesPerFrame; r++) {
 			double a = nPathFrameRole[arg.pathid][tuple.frameid][r] + linkyConc/numRolesPerFrame;
-			double c = nWordFrameRole[arg.wordid][tuple.frameid][r] + wordConc/numWordTypes;
-			double d = nFrameRole[tuple.frameid][r] + wordConc;
+			double c = nWordFrameRole[arg.wordid][tuple.frameid][r] + argwordConc/numWordTypes;
+			double d = nFrameRole[tuple.frameid][r] + argwordConc;
 			field[r] = a/b * c/d;
 			psum += field[r];
 		}
@@ -219,54 +220,79 @@ public class LDATuples {
 	}
 
 	
-//	/** this does NOT use model's concentration; instead the passed-in value. **/
-//	double calcClassLL(double _docConc) {
-//		double ll = 0;
-//		for (int docid=0; docid < pathVocab.size(); docid++) {
-//			ll += Util.dirmultSymmLogprob(nDocTopic[docid], nDoc[docid], _docConc/numFrames);
-//		}
-//		return ll;
-//	}
-//	/** this does NOT use model's concentration; instead the passed-in value. **/
-//	double calcWordLL(double _wordConc) {
-//		double ll = 0;
-//		for (int k=0; k < numFrames; k++) {
-//			double vec[] = Arr.getCol(nWordFrameRole, k);
-//			ll += Util.dirmultSymmLogprob(vec, nFrame[k], _wordConc/numWordTypes);
-//		}
-//		return ll;
-//	}
-//
-//	double calcWordLL() {
-//		return calcWordLL(wordConc);
-//	}
-//	double calcClassLL() {
-//		return calcClassLL(docConc);
-//	}
+	double calcFrameLL(double _frameConc) {
+		return Util.dirmultSymmLogprob(nFrame, _frameConc);
+	}
+	/** this does NOT use model's concentration; instead the passed-in value. **/
+	double calcRoleLL(double _linkyConc) {
+		double ll = 0;
+		for (int f=0; f<numFrames; f++) {
+			for (int path=0; path<numPathTypes; path++) {
+				int[] c = nPathFrameRole[path][f];
+				ll += Util.dirmultSymmLogprob(c, _linkyConc / numRolesPerFrame);
+			}
+		}
+		return ll;
+	}
+	/** this does NOT use model's concentration; instead the passed-in value. **/
+	double calcHeadLL(double _conc) {
+		double ll = 0;
+		for (int f=0; f < numFrames; f++) {
+			int vec[] = Arr.getCol(nHeadFrame, f);
+			ll += Util.dirmultSymmLogprob(vec, nFrame[f], _conc/numWordTypes);
+		}
+		return ll;
+	}
+	double calcArgwordLL(double _conc) {
+		double ll = 0;
+		for (int f=0; f<numFrames; f++) {
+			for (int r=0; r<numRolesPerFrame; r++) {
+				int vec[] = sumToFirstDim(nWordFrameRole);
+				ll += Util.dirmultSymmLogprob(vec, _conc/numWordTypes);
+			}
+		}
+		return ll;
+	}
+	
+	static int[] sumToFirstDim(int[][][] x) {
+		int[] ret = new int[x.length];
+		for (int i=0; i<x.length; i++) {
+			for (int j=0; j<x[0].length; j++) {
+				for (int k=0; k<x[0][0].length; k++) {
+					ret[i] += x[i][j][k];
+				}
+			}			
+		}
+		return ret;
+	}
+	
 
-//	void resampleConcs() {
-//		Function <double[],Double> zLL = new Function<double[],Double>() {
-//			@Override
-//			public Double apply(double[] input) {
-//				return calcClassLL(Math.exp(input[0]));
-//			}
-//		};
-//		Function <double[],Double> wLL = new Function<double[],Double>() {
-//			@Override
-//			public Double apply(double[] input) {
-//				return calcWordLL(Math.exp(input[0]));
-//			}
-//		};
-//		List<double[]> history;
-//
-//		history = MCMC.slice_sample(wLL, new double[]{Math.log(wordConc)}, new double[]{1}, 30);
-//		this.wordConc  = Math.exp(history.get(history.size()-1)[0]);
-//		U.pf("wordConc %.6g\n", wordConc);
-//		
-//		history = MCMC.slice_sample(zLL, new double[]{Math.log(docConc)}, new double[]{1}, 30);
-//		this.docConc  = Math.exp(history.get(history.size()-1)[0]);
-//		U.pf("docConc %.6g\n", docConc);
-//	}
+	void resampleConcs() {
+		Function <double[],Double> rLL = new Function<double[],Double>() {
+			@Override public Double apply(double[] input) {
+				return calcRoleLL(Math.exp(input[0])); }};
+		Function <double[],Double> awLL = new Function<double[],Double>() {
+			@Override public Double apply(double[] input) {
+				return calcArgwordLL(Math.exp(input[0])); }};
+		Function <double[],Double> hwLL = new Function<double[],Double>() {
+			@Override public Double apply(double[] input) {
+				return calcHeadLL(Math.exp(input[0])); }};
+		List<double[]> history;
+
+		history = MCMC.slice_sample(rLL, new double[]{Math.log(linkyConc)}, new double[]{1}, 30);
+		this.linkyConc  = Math.exp(history.get(history.size()-1)[0]);
+		U.pf("linkyConc %.6g\n", this.linkyConc);
+		
+		history = MCMC.slice_sample(awLL, new double[]{Math.log(argwordConc)}, new double[]{1}, 30);
+		this.argwordConc  = Math.exp(history.get(history.size()-1)[0]);
+		U.pf("argwordConc %.6g\n", this.argwordConc);
+		
+		history = MCMC.slice_sample(hwLL, new double[]{Math.log(headwordConc)}, new double[]{1}, 30);
+		this.headwordConc  = Math.exp(history.get(history.size()-1)[0]);
+		U.pf("headwordConc %.6g\n", this.headwordConc);
+
+		
+	}
 	
 	/** output:  (i,j,k, value)  */
 	static double[][] toSparseCoordinates(double[][][] X) {
@@ -325,15 +351,17 @@ public class LDATuples {
 			U.pf("ITER %d\n", iter);
 			sampleIteration();
 			
-//			if (iter<=100 || iter % 20 == 0) {
-//				double wordLL = calcWordLL();
-//				double classLL= calcClassLL();
-//				U.pf("totalLL %f\n", wordLL+classLL);
-//			}
-//			
-//			if (iter % Opts.concResampleEvery == 0 && Opts.concResampleEvery>=0) {
-//				resampleConcs();
-//			}
+			if (iter<=100 || iter % 20 == 0) {
+				double hwLL = calcHeadLL(headwordConc);
+				double awLL = calcArgwordLL(argwordConc);
+				double rLL = calcRoleLL(linkyConc);
+				double fLL = calcFrameLL(frameConc);
+				U.pf("totalLL %.1f\n", hwLL+awLL+rLL+fLL);
+			}
+			
+			if (iter % Opts.concResampleEvery == 0 && Opts.concResampleEvery>=0) {
+				resampleConcs();
+			}
 			if (iter % Opts.saveEvery == 0) {
 				U.p("saving");
 				saveModel(iter);
