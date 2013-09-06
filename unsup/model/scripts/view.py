@@ -35,8 +35,8 @@ wc_thresh = 10
 nWordFrameRole = np.loadtxt(fname("nWordFrameRole.sparse"))
 nPathFrameRole = np.loadtxt(fname("nPathFrameRole.sparse"))
 nHeadFrame = np.loadtxt(fname("nHeadFrame"))
-numFrames = int(max(nWordFrameRole[:,1]))
-numRoles = int(max(nPathFrameRole[:,2]))
+numFrames = int(max(nWordFrameRole[:,1])) + 1
+numRoles = int(max(nPathFrameRole[:,2])) + 1
 
 word_vocab = os.path.join(os.path.dirname(prefix), "word.vocab")
 word_vocab = np.array([x.strip() for x in open(word_vocab)])
