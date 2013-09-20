@@ -23,6 +23,11 @@ public class MorphaLemmatizer extends Lemmatizer {
 			return new Morpha(new StringReader(tokenAndPostag), true).next();
 		} catch (IOException e) {
 			return token;
+		} catch (Error e) {
+			// Morpha can't handle "<", for example
+			if (e.getMessage().equals("Error: could not match input")) return token;
+			throw e;
 		}
+
 	}
 }

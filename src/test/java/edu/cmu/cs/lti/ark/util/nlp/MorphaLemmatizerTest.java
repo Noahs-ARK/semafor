@@ -43,4 +43,12 @@ public class MorphaLemmatizerTest {
 		Assert.assertEquals("null", lemmatizer.getLemma("null", "JJ"));
 		Assert.assertEquals("null", lemmatizer.getLemma("nulls", "NN"));
 	}
+
+	@Test
+	public void testHandlesAngleBracket() {
+		// MorphaLemmatizer used to return an error on "<" or ">"
+		final Lemmatizer lemmatizer = new MorphaLemmatizer();
+		Assert.assertEquals("<", lemmatizer.getLemma("<", "."));
+		Assert.assertEquals(">", lemmatizer.getLemma(">", "."));
+	}
 }
