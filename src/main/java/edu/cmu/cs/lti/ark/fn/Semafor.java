@@ -244,7 +244,7 @@ public class Semafor {
 		return segmenter.getSegmentation(sentence);
 	}
 
-	private List<Pair<List<Integer>, String>> predictFrames(Sentence sentence, List<List<Integer>> targets) {
+	public List<Pair<List<Integer>, String>> predictFrames(Sentence sentence, List<List<Integer>> targets) {
 		final List<Pair<List<Integer>, String>> idResult = Lists.newArrayList();
 		for (List<Integer> targetTokenIdxs : targets) {
 			final String frame = idModel.getBestFrame(targetTokenIdxs, sentence);
