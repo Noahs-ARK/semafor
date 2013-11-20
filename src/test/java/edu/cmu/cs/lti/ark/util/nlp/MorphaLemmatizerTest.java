@@ -43,4 +43,12 @@ public class MorphaLemmatizerTest {
 		Assert.assertEquals("null", lemmatizer.getLemma("null", "JJ"));
 		Assert.assertEquals("null", lemmatizer.getLemma("nulls", "NN"));
 	}
+
+	@Test
+	public void testAngleBracketsHandled() {
+		// MorphaLemmatizer used to throw "java.lang.Error: Error: could not match input" for ">"
+		final Lemmatizer lemmatizer = new MorphaLemmatizer();
+		Assert.assertEquals(">", lemmatizer.getLemma(">", "JJR"));
+		Assert.assertEquals("<", lemmatizer.getLemma("<", "JJR"));
+	}
 }

@@ -107,7 +107,8 @@ public class Semafor {
 				   FEDict frameElementsForFrame,
 				   RoteSegmenter segmenter,
 				   GraphBasedFrameIdentifier idModel,
-				   Decoding decoder, Map<String, Integer> argIdFeatureIndex) {
+				   Decoding decoder,
+				   Map<String, Integer> argIdFeatureIndex) {
 		this.allRelatedWords = allRelatedWords;
 		this.frameElementsForFrame = frameElementsForFrame;
 		this.segmenter = segmenter;
@@ -163,7 +164,7 @@ public class Semafor {
 				try {
 					workerThreadPool.shutdown();
 					workerThreadPool.awaitTermination(5, TimeUnit.SECONDS);
-				} catch (InterruptedException ignored) { }
+				} catch (InterruptedException ignored) { /* there, there, hush now... */ }
 			} }));
 
 		final PrintWriter output = new PrintWriter(outputSupplier.getOutput());
