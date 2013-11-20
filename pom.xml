@@ -150,9 +150,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.0</version>
                 <configuration>
-                    <!-- target Java 1.6 -->
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <!-- target Java 1.7 -->
+                    <source>1.7</source>
+                    <target>1.7</target>
                 </configuration>
             </plugin>
             <!-- include source code in the final jar -->
