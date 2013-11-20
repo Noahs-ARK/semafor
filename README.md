@@ -64,7 +64,7 @@ new data.
 Requirements
 ============
 
-Running the SEMAFOR tool *requires* Java 1.6. It should run on any platform (Windows, Unix, or Mac OS).
+Running the SEMAFOR tool *requires* Java 1.7. It should run on any platform (Windows, Unix, or Mac OS).
 
 
 Contents
