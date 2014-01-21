@@ -22,13 +22,13 @@
 package edu.cmu.cs.lti.ark.fn.parsing;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import edu.cmu.cs.lti.ark.util.FileUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 
 import static com.google.common.base.Charsets.UTF_8;
@@ -68,17 +68,17 @@ public class CreateAlphabet {
 	public static void run(boolean doGenerateAlphabet,
 						   List<String> tagLines,
 						   List<String> frameElementLines) throws IOException {
-		List<int[][][]> dataPoints = getDataPoints(tagLines, frameElementLines);
+		DataPrep.genAlpha = doGenerateAlphabet;
 		if(doGenerateAlphabet){
-			DataPrep.featureIndex = new HashMap<String,Integer>();
+			DataPrep.featureIndex = Maps.newHashMap();
 		} else if(DataPrep.featureIndex == null){
 			System.err.println("Reading alphabet...");
 			long time = System.currentTimeMillis();
 			DataPrep.featureIndex = DataPrep.readFeatureIndex(new File(FEFileName.alphafilename));
 			System.err.println("Read alphabet in "+(System.currentTimeMillis()-time) + " millis.");
 		}
-		DataPrep.genAlpha = doGenerateAlphabet;
-		long time = System.currentTimeMillis();
+		final List<int[][][]> dataPoints = getDataPoints(tagLines, frameElementLines);
+		final long time = System.currentTimeMillis();
 		writeEvents(dataPoints, FEFileName.eventFilename);
 		System.err.println("Wrote events in " + (System.currentTimeMillis() - time) + " millis.");
 		if(doGenerateAlphabet){
