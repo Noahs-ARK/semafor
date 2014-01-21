@@ -11,7 +11,7 @@ source "$(dirname ${0})/config.sh"
 mkdir -p ${SCAN_DIR}
 
 
-${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4000m -Xmx4000m \
+${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4g -Xmx4g \
    edu.cmu.cs.lti.ark.fn.parsing.CreateAlphabet \
    ${fe_file} \
    ${parsed_file} \

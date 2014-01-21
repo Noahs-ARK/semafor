@@ -161,7 +161,7 @@ public class LocalFeatureReading {
 			} else if (fields.length == 2) {
 				spans.add(new SpanAndCorrespondingFeatures(
 						new int[] {Integer.parseInt(fields[0]), Integer.parseInt(fields[1])}));
-			} else if (fields.length == 0) {
+			} else if (spanLine.isEmpty()) {
 				// blank line marks the end of a block
 				spansList.add(spans);
 				spans = Lists.newArrayList();
