@@ -181,7 +181,10 @@ class Span(object):
     
     def __call__(self, sequence, typ=list or str):
         if typ in (str,unicode):
-            return typ(' '.join(sequence[i] for i in self))
+            try:
+                return typ(' '.join(sequence[i] for i in self))
+            except:
+                raise Exception('Span out of bounds for sequence: {!r}, {!r}'.format(self,sequence))
         return typ(sequence[i] for i in self)
 
     def encompasses(self, that):
@@ -323,9 +326,7 @@ def score_sentence(gold, predicted, errors):
             pos = '_'+pos
         errors['extra'][sp(gold['tokens'],str)+pos] += 1
     
-    
     if any(pred_frames.values()):   # some frames were predicted
-    
         correct_target_spans = set(gold_frames.keys()) & set(pred_frames.keys())
         sentence_stats['Frames with correct targets (ignore P)'] = set(gold_frames.items()), set(pred_frames.items())
     
