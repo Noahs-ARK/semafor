@@ -61,7 +61,7 @@ public class SerializedObjects {
 	}
 
 	public static <T> T readObject(final String inputFile) throws IOException, ClassNotFoundException {
-		return readObject(new InputSupplier<ObjectInputStream>() {
+		return SerializedObjects.<T>readObject(new InputSupplier<ObjectInputStream>() {
 			@Override public ObjectInputStream getInput() throws IOException {
 				return getObjectInputStream(inputFile);
 			} });
