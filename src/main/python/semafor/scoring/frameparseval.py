@@ -5,6 +5,26 @@ Requires two JSON files: the gold analysis, and the predictions.
 
 If k-best argument predictions are present, only considers the top-ranked set.
 
+Requires a list of core frame elements. In labeled argument scoring, only .5 is awarded to anything not in this list (non-core, core unexpressed, etc.).
+
+TODO:
+ - Partial credit for frames via the hierarchy, and (if a related frame is found) their frame elements via the hierarchy.
+
+Known differences from fnSemScore_modified.pl:
+ - The target identification in the Perl script is based on which spans have a gold frame label. 
+   This is not really correct, as there are many spans that ideally would evoke a frame 
+   but that are missing an annotation. So we use the Word Status Layer (WSL) 
+   and Named Entity Recognition (NER) layers to decide which words ought to count as targets.
+   A system will not be penalized for predicting a frame for a word that is theoretically 
+   frame-evoking but has no gold label.
+
+ - We do not specially handle frame elements labeled Path. (If there are multiple Path argument spans 
+   for a given frame instance, the Perl script lists them separately, though it concatenates 
+   the spans for all other roles.)
+   
+ - The Perl script ignores annotation layers with a "rank" attribute greater than 1.
+   We do not check this attribute.
+
 @author: Nathan Schneider (nschneid)
 @since: 2013-05-15
 """
@@ -37,25 +57,41 @@ DATE_NAMES = [
 # add all three-letter abbreviations
 DATE_NAMES += [v for d in DATE_NAMES for v in [d[:3], d[:3]+'.']]
 
+with codecs.open('fn1.5_fe_core_status.json', 'r', 'utf-8') as inF:
+    CORE_STATUS = json.load(inF)
+CORE_POINTS = 1.0
+OTHER_CORENESS_POINTS = 0.5
 
 class PRCounter(object):
     COLUMNS = ['Numer', 'PDenom', 'RDenom', 'P', 'R', 'F', 'T', 'N', 'Acc']
+    COMPUTE_RATIOS_ON_ADD = False   # if False, the division (compute_ratios()) will be deferred in case denominators are initially 0
 
     def __init__(self):
         self._df = DataFrame(columns=PRCounter.COLUMNS)
 
     def __setitem__(self, k, v):
+        points = {}
         if isinstance(v[0], int):
             N, gold_set, pred_set = v
             if gold_set or pred_set:
                 assert N>0,(N,gold_set,pred_set)
         else:
-            gold_set, pred_set = v
             N = ''
+            gold, pred = v
+            pred_set = set(pred.keys()) if isinstance(pred, dict) else pred
+            gold_set = set(gold.keys()) if isinstance(gold, dict) else gold
+            if isinstance(gold, dict):
+                points.update(gold)
+                if isinstance(pred, dict):
+                    for elt in gold_set & pred_set:
+                        assert gold[elt]==pred[elt],(elt,gold[elt],pred[elt])
+            if isinstance(pred, dict):
+                points.update(pred)
+            
         entry = {
-            'Numer': len(gold_set & pred_set),
-            'PDenom': len(pred_set),
-            'RDenom': len(gold_set),
+            'Numer': sum(points.get(elt,1) for elt in gold_set & pred_set),
+            'PDenom': sum(points.get(elt,1) for elt in pred_set),
+            'RDenom': sum(points.get(elt,1) for elt in gold_set),
             'N': N
         }
         entry['P'] = entry['Numer'] / entry['PDenom'] if entry['PDenom'] else float('nan')
@@ -96,15 +132,34 @@ class PRCounter(object):
         # add counts
         new_df = me + you
         
-        # recompute ratios
-        new_df['P'] = new_df['Numer'] / new_df['PDenom']
-        new_df['R'] = new_df['Numer'] / new_df['RDenom']
-        denom = (new_df['P'] + new_df['R'])
-        new_df['F'] = 2 * new_df['P'] * new_df['R'] / denom[denom>0]
-        new_df['Acc'] = new_df['T'] / new_df['N']
         result = PRCounter()
         result._df = new_df
+        if self.COMPUTE_RATIOS_ON_ADD: # recompute ratios
+            self.compute_ratios()
         return result
+    
+    def compute_ratios(self):
+        '''
+        new_df['P'] = new_df['Numer'] / new_df['PDenom']
+            new_df['R'] = new_df['Numer'] / new_df['RDenom']
+            denom = (new_df['P'] + new_df['R'])
+            new_df['F'] = 2 * new_df['P'] * new_df['R'] / denom[denom>0]
+            new_df['Acc'] = new_df['T'] / new_df['N']
+        '''
+        df = self._df
+        
+        # if denominators are 0, set them to NaN
+        for c in ('PDenom','RDenom'):
+            for r,v in enumerate(df[c]):
+                if v==0:
+                    df[c][r] = float('nan')
+        
+        
+        df['P'] = df['Numer'] / df['PDenom']
+        df['R'] = df['Numer'] / df['RDenom']
+        denom = (df['P'] + df['R'])
+        df['F'] = 2 * df['P'] * df['R'] / denom[denom>0]
+        df['Acc'] = df['T'] / df['N']
 
     def to_string(self, *args, **kwargs):
         return self._df.to_string(*args, **kwargs)
@@ -138,6 +193,9 @@ class Span(object):
     Unlike slice objects, Span objects are hashable, so they
     can be used as dict keys/set entries.
     """
+    
+    JOIN_ADJACENT_SUBRANGES = False
+    
     def __init__(self, *args):
         if not args or len(args)%2!=0:
             raise Exception('Span() constructor must have a positive even number of arguments: '+repr(args))
@@ -148,7 +206,7 @@ class Span(object):
                 first = False
             elif self.overlaps(Span(start,stop)):
                 raise Exception('Span() constructor must not contain overlapping ranges: '+repr(args))
-            elif self._s[-1].stop==start:   # join adjacent subranges
+            elif self.JOIN_ADJACENT_SUBRANGES and self._s[-1].stop==start:   # join adjacent subranges
                 if self._s[-1].stop==start:
                     self._s[-1] = slice(self._s[-1].start,stop)
                 continue
@@ -182,7 +240,7 @@ class Span(object):
     def __call__(self, sequence, typ=list or str):
         if typ in (str,unicode):
             try:
-                return typ(' '.join(sequence[i] for i in self))
+                return unicode(u' '.join(sequence[i] for i in self))
             except:
                 raise Exception('Span out of bounds for sequence: {!r}, {!r}'.format(self,sequence))
         return typ(sequence[i] for i in self)
@@ -257,7 +315,10 @@ def get_non_targets(gold_sentence):
     return wsl, excluded_spans, poses
 
 
-def score_sentence(gold, predicted, errors):
+def _arg_points(frame_name, arg_name, non_core_score=OTHER_CORENESS_POINTS):
+    return CORE_POINTS if CORE_STATUS[frame_name][arg_name]=='Core' else non_core_score
+
+def score_sentence(gold, predicted, errors, verbose=False):
     #TODO
     #assert len(gold['tokens']) == len(predicted['tokens']) and ' '.join(gold['tokens']) == ' '.join(predicted['tokens'])
     sentence_stats = PRCounter()
@@ -326,10 +387,45 @@ def score_sentence(gold, predicted, errors):
             pos = '_'+pos
         errors['extra'][sp(gold['tokens'],str)+pos] += 1
     
-    if any(pred_frames.values()):   # some frames were predicted
-        correct_target_spans = set(gold_frames.keys()) & set(pred_frames.keys())
+    if any(pred_frames.values()) or any(gold_frames.values()):
+        
         sentence_stats['Frames with correct targets (ignore P)'] = set(gold_frames.items()), set(pred_frames.items())
-    
+        
+        gold_tot, pred_tot = {}, {}
+        
+        if any(pred_args.values()) or any(gold_args.values()):
+        
+            # this is an unlabeled measure, so we do not distinguish between core and non-core; 
+            # every span is 1 point
+            all_gold_args = {(tspan,aspan) for tspan,args in gold_args.items() for aspan in args}
+            all_pred_args = {(tspan,aspan) for tspan,args in pred_args.items() for aspan in args}
+            sentence_stats['Argument spans with correct targets'] = all_gold_args, all_pred_args
+                    
+            all_gold_args = {(tspan,gold_frames[tspan],aspan) for tspan,args in gold_args.items() for aspan in args}
+            all_pred_args = {(tspan,pred_frames[tspan],aspan) for tspan,args in pred_args.items() for aspan in args}
+            sentence_stats['Argument spans with correct targets and frames'] = all_gold_args, all_pred_args
+            
+            all_gold_args = {(tspan,gold_frames[tspan],aspan,aname): _arg_points(gold_frames[tspan], aname) for tspan,args in gold_args.items() for aspan,aname in args.items()}
+            all_pred_args = {(tspan,pred_frames[tspan],aspan,aname): _arg_points(pred_frames[tspan], aname) for tspan,args in pred_args.items() for aspan,aname in args.items()}
+            sentence_stats['Arguments, labeled, with correct targets and frames'] = all_gold_args, all_pred_args
+        
+            gold_tot, pred_tot = dict(all_gold_args), dict(all_pred_args)
+            
+            all_gold_args = {(tspan,gold_frames[tspan],aspan,aname): _arg_points(gold_frames[tspan], aname, 0) for tspan,args in gold_args.items() for aspan,aname in args.items()}
+            all_pred_args = {(tspan,pred_frames[tspan],aspan,aname): _arg_points(pred_frames[tspan], aname, 0) for tspan,args in pred_args.items() for aspan,aname in args.items()}
+            sentence_stats['Core arguments, labeled, with correct targets and frames'] = all_gold_args, all_pred_args
+        
+        gold_tot.update({x: 1 for x in set(gold_frames.items())})
+        pred_tot.update({x: 1 for x in set(pred_frames.items())})
+        
+        # TODO: partial credit frame/frame element matching (issues include: if the gold and pred FE are related 
+        # through the hierarchy but only one is core, should 1 or .5 points be awarded?)
+        
+        
+        # now remove everything that involved a target for which we have no gold frame
+        
+        correct_target_spans = set(gold_frames.keys()) & set(pred_frames.keys())
+        
         for span in gold_frames.keys():
             if span not in correct_target_spans:
                 del gold_frames[span]
@@ -338,16 +434,8 @@ def score_sentence(gold, predicted, errors):
                 del pred_frames[span]
         assert len(gold_frames)==len(pred_frames)==len(correct_target_spans),(gold_frames,pred_frames,correct_target_spans)
         sentence_stats['Frames (correct targets only)'] = len(correct_target_spans), set(gold_frames.items()), set(pred_frames.items())
-    
-        if any(pred_args.values()): # some arguments were predicted
-            
-            all_gold_args = set((tspan,arg) for tspan, args in gold_args.items() for arg in args)
-            all_pred_args = set((tspan,arg) for tspan, args in pred_args.items() for arg in args)
-            sentence_stats['Argument spans with correct targets'] = all_gold_args, all_pred_args
         
-            all_gold_args = set((tspan,)+arg for tspan, args in gold_args.items() for arg in args.items())
-            all_pred_args = set((tspan,)+arg for tspan, args in pred_args.items() for arg in args.items())
-            sentence_stats['Arguments, labeled, with correct targets'] = all_gold_args, all_pred_args
+        if any(pred_args.values()) or any(gold_args.values()):
         
             for span in gold_args.keys():
                 if span not in correct_target_spans:
@@ -355,14 +443,27 @@ def score_sentence(gold, predicted, errors):
             for span in pred_args.keys():
                 if span not in correct_target_spans:
                     del pred_args[span]
-            all_gold_args = set((tspan,arg) for tspan, args in gold_args.items() for arg in args)
-            all_pred_args = set((tspan,arg) for tspan, args in pred_args.items() for arg in args)
+            
+            all_gold_args = {(tspan,aspan) for tspan,args in gold_args.items() for aspan in args}
+            all_pred_args = {(tspan,aspan) for tspan,args in pred_args.items() for aspan in args}
             sentence_stats['Argument spans (correct targets only)'] = all_gold_args, all_pred_args
-        
-            all_gold_args = set((tspan,)+arg for tspan, args in gold_args.items() for arg in args.items())
-            all_pred_args = set((tspan,)+arg for tspan, args in pred_args.items() for arg in args.items())
-            sentence_stats['Arguments, labeled (correct targets only)'] = all_gold_args, all_pred_args
-        
+            
+            all_gold_args = {(tspan,gold_frames[tspan],aspan) for tspan,args in gold_args.items() for aspan in args}
+            all_pred_args = {(tspan,pred_frames[tspan],aspan) for tspan,args in pred_args.items() for aspan in args}
+            sentence_stats['Argument spans (correct targets and frames only)'] = all_gold_args, all_pred_args
+            
+            all_gold_args = {(tspan,gold_frames[tspan],aspan,aname): _arg_points(gold_frames[tspan], aname) for tspan,args in gold_args.items() for aspan,aname in args.items()}
+            all_pred_args = {(tspan,pred_frames[tspan],aspan,aname): _arg_points(pred_frames[tspan], aname) for tspan,args in pred_args.items() for aspan,aname in args.items()}
+            sentence_stats['Arguments, labeled (correct targets and frames only)'] = all_gold_args, all_pred_args
+            
+            all_gold_args = {(tspan,gold_frames[tspan],aspan,aname): _arg_points(gold_frames[tspan], aname, 0) for tspan,args in gold_args.items() for aspan,aname in args.items()}
+            all_pred_args = {(tspan,pred_frames[tspan],aspan,aname): _arg_points(pred_frames[tspan], aname, 0) for tspan,args in pred_args.items() for aspan,aname in args.items()}
+            sentence_stats['Core arguments, labeled (correct targets and frames only)'] = all_gold_args, all_pred_args
+            
+        if verbose:
+            print('gold_tot', gold_tot, file=sys.stderr)
+            print('pred_tot', pred_tot, file=sys.stderr)
+        sentence_stats['Total frames and labeled arguments'] = gold_tot, pred_tot
     # TODO: provided the target is correct, arguments can get credit regardless of the predicted frame label
     # should this be changed/made an option?
     #print(sentence_stats.to_string())
@@ -376,11 +477,18 @@ if __name__=='__main__':
     with codecs.open(gold_filename, 'r', 'utf-8') as gold_file, codecs.open(pred_filename, 'r', 'utf-8') as pred_file:
         errors = {'miss': Counter(), 'extra': Counter()}
         for sentNum,(gold_line,pred_line) in enumerate(zip(gold_file, pred_file)):
-            sent_scores = score_sentence(json.loads(gold_line), json.loads(pred_line), errors)
+            sent_scores = score_sentence(json.loads(gold_line), json.loads(pred_line), errors, verbose=(sentNum==366))
+            if sentNum==366:
+                assert False,errors
+            # sentence statistics format matches that of fnSemScore_modified.pl
+            if 'Total frames and labeled arguments' in sent_scores._df.index:
+                tot = sent_scores._df['Total frames and labeled arguments':'Total frames and labeled arguments']
+                print('Sentence ID={sentNum}: Recall={t.R[0]:0.5f} ({t.Numer[0]:0.1f}/{t.RDenom[0]:0.1f}) Precision={t.P[0]:0.5f} ({t.Numer[0]:0.1f}/{t.PDenom[0]:0.1f}) Fscore={t.F[0]:0.5f}'.format(sentNum=sentNum, t=tot), file=sys.stderr)
             if scores is None:
                 scores = sent_scores
             else:
                 scores = scores + sent_scores
-    print(errors, file=sys.stderr)
+    #print(errors, file=sys.stderr)
+    scores.compute_ratios()
     print(scores.to_string())
     
