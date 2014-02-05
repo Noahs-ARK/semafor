@@ -55,9 +55,9 @@ def parse_annotation_set(annotation_set_elt, text):
         'spans': sorted(target_spans, key=lambda x: x["start"]),
     }
     # extract the frame elements
-    frame_element_layer = [l for l in layers
-                           if l.getAttribute('name') == "FE"][0]
-    frame_element_labels = [parse_label(l, text) for l in frame_element_layer.getElementsByTagName('label')
+    frame_element_layers = [l for l in layers
+                           if l.getAttribute('name') == "FE" and l.getAttribute('rank') in ("","1")]
+    frame_element_labels = [parse_label(l, text) for layer in frame_element_layers for l in layer.getElementsByTagName('label')
                             if l.getAttribute("itype").lower() not in ("ini", "dni", "cni", "inc")]
     frame_elements_by_role = defaultdict(list)
     for label in frame_element_labels:
@@ -77,7 +77,7 @@ def get_text(sentence_node):
     return sentence_node.getElementsByTagName("text")[0].firstChild.wholeText
 
 
-def parse_sentence(sentence_elt):
+def parse_sentence(sentence_elt, i=None):
     """ Parses one sentence tag in the xml file """
     # extract the text of the sentence
     text = get_text(sentence_elt)
@@ -105,8 +105,8 @@ def parse_sentence(sentence_elt):
 def parse_to_dicts(xml_string):
     """ Parses the xml output of Semafor into a dict """
     dom = parseString(xml_string)
-    return [parse_sentence(sentence)
-            for sentence in dom.getElementsByTagName('sentence')]
+    return [parse_sentence(sentence,i)
+            for i,sentence in enumerate(dom.getElementsByTagName('sentence'))]
 
 
 def parse_to_json(xml_string):
