@@ -22,9 +22,9 @@
 package edu.cmu.cs.lti.ark.fn.evaluation;
 
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Multimaps;
+import com.google.common.collect.Sets;
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
 import edu.cmu.cs.lti.ark.util.XmlUtils;
 import edu.cmu.cs.lti.ark.util.ds.Range;
@@ -37,10 +37,7 @@ import org.w3c.dom.Node;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static edu.cmu.cs.lti.ark.util.IntRanges.xrange;
 import static edu.cmu.cs.lti.ark.util.XmlUtils.addAttribute;
@@ -218,13 +215,19 @@ public class PrepareFullAnnotationXML {
 					dp.processOrgLine(origLine);
 					dataPoints.add(dp);
 				}
-				// group by frame (could be k-best list)
-				final ImmutableListMultimap<String,DataPointWithFrameElements> dataPointsByFrame =
-						Multimaps.index(dataPoints, GET_FRAME);
-				for (String frame : dataPointsByFrame.keySet()) {
-					final List<DataPointWithFrameElements> dps = dataPointsByFrame.get(frame);
+				final Set<String> seenTargetSpans = Sets.newHashSet();
+				for (DataPointWithFrameElements dp : dataPoints) {
+					final String targetIdxsString = Arrays.toString(dp.getTargetTokenIdxs());
+					if (seenTargetSpans.contains(targetIdxsString)) {
+						System.err.println("Duplicate target tokens: " + targetIdxsString + ". Skipping. Sentence id: " + sent);
+						continue; // same target tokens should never show up twice in the same sentence
+					} else {
+						seenTargetSpans.add(targetIdxsString);
+					}
+					assert dp.rank == 1; // this doesn't work with k-best lists anymore
+					final String frame = dp.getFrameName();
 					// Create the <annotationSet> Element for the predicted frame annotation, and add it under the sentence
-					Element annotationSet = buildAnnotationSet(frame, dps, doc, sent - sentenceNums.start, frameIndex);
+					Element annotationSet = buildAnnotationSet(frame, ImmutableList.of(dp), doc, sent - sentenceNums.start, frameIndex);
 					annotationSets.appendChild(annotationSet);
 					frameIndex++;
 				}
@@ -279,13 +282,13 @@ public class PrepareFullAnnotationXML {
 
 		// Frame Element Layers
 		for (DataPointWithFrameElements dataPointWithFrameElements : dataPointList) {
-			final int rank = dataPointWithFrameElements.rank + 1;
+			final int rank = dataPointWithFrameElements.rank;
 			final double score = dataPointWithFrameElements.score;
 			final Element feLayer = doc.createElement("layer");
 			final int layerId = setId * 100 + rank + 1;
 			addAttribute(doc, "ID", feLayer, "" + layerId);
 			addAttribute(doc, "name", feLayer, "FE");
-			addAttribute(doc, "rank", feLayer, "" + rank);
+			addAttribute(doc, "kbestRank", feLayer, "" + rank);
 			addAttribute(doc, "score", feLayer, "" + score);
 			layers.appendChild(feLayer);
 
