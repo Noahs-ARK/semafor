@@ -117,7 +117,7 @@ def parse_to_json(xml_string):
 
 def main(filename):
     """ Parses the xml output of Semafor into json and print it """
-    with open(filename) as xml_file:
+    with codecs.open(filename, encoding='utf-8') as xml_file:
         xml_text = xml_file.read()
     print parse_to_json(xml_text)
 
