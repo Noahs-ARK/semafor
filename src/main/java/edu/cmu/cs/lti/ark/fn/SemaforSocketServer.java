@@ -34,7 +34,7 @@ public class SemaforSocketServer {
 		final Semafor semafor = Semafor.getSemaforInstance(modelDirectory);
 		// Set up socket server
 		final ServerSocket serverSocket = new ServerSocket(port);
-		System.err.println("Listening on port: " + port);
+		System.err.println("Listening on port: " + serverSocket.getLocalPort());
 		while (true) {
 			try {
 				final Socket clientSocket = serverSocket.accept();
