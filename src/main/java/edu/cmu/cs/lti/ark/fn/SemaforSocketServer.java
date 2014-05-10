@@ -12,11 +12,14 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URISyntaxException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static com.google.common.io.Closeables.closeQuietly;
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec.ConllCodec;
 
 public class SemaforSocketServer {
+	private static final ObjectMapper jsonMapper = new ObjectMapper();
+
 	/**
 	 * required flags:
 	 * model-dir
@@ -45,7 +48,14 @@ public class SemaforSocketServer {
 				while (sentences.hasNext()) {
 					final Sentence sentence = sentences.next();
 					final long start = System.currentTimeMillis();
-					output.println(semafor.parseSentence(sentence).toJson());
+					try {
+					    output.println(semafor.parseSentence(sentence).toJson());
+					} catch (Exception e) {
+					    System.err.println("Error on parsing sentence:" + e);
+					    e.printStackTrace(System.err);
+					    String message = jsonMapper.writeValueAsString(e.toString());
+					    output.println("{\"error\": "+message+"}");
+					}
 					output.flush();
 					final long end = System.currentTimeMillis();
 					System.err.printf("parsed sentence with %d tokens in %d millis.%n", sentence.size(), end - start);
