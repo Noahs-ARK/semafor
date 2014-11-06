@@ -50,19 +50,19 @@ Used for training and inference procedure.
   ```
   ./training/3_1_idCreateAlphabet.sh
   ```
-  This takes ~1 min using 8 threads (AMD Opteron(TM) 6272 2.1MHz processors; using the "ancestor" model)
+  This takes ~1 min using 8 threads (AMD Opteron(TM) 6272 2.1MHz processors; using the "ancestor" model).
 
 2. creating feature events for each datapoint:
   ```
   ./training/3_2_idCreateFeatureEvents.sh
   ```
-  Takes ~3-4 minutes
+  Takes ~3-4 minutes.
 
 3. training the frame identification model:
   ```
   ./training/3_3_idTrainBatch.sh
   ```
-  Takes ~40 minutes
+  Takes ~40 minutes.
   Line search in L-BFGS may fail at the end, but that does not mean training failed. 
   In models_0.0, there will be models produced every few iterations. If line search failed, take the last model.
 
@@ -70,7 +70,7 @@ Used for training and inference procedure.
   ```
   ./training/3_4_idConvertAlphabetFile.sh
   ```
-  Takes <1 minute
+  Takes <1 minute.
 
 ### 4. Training the argument identification model
 
@@ -80,17 +80,17 @@ Used for training and inference procedure.
   ```
   ./training/4_1_createAlphabet.sh
   ```
-  Takes ~7 minutes
+  Takes ~7 minutes.
 
 2. caching feature vectors:
   ```
   ./training/4_2_cacheFeatureVectors.sh
   ```
-  Takes ~10 minutes
+  Takes ~10 minutes.
 
 3. training:
   ```
   ./training/4_3_training.sh
   ```
-  Takes ~ a day
+  Takes ~ a day.
   This step has a regularization hyperparameter, lambda. You may tune lambda on a development set to get the best results.
