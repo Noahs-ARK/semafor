@@ -10,6 +10,7 @@ from collections import defaultdict
 from itertools import chain
 from json import dumps
 import sys
+import codecs
 from xml.dom.minidom import parseString
 
 
@@ -104,7 +105,7 @@ def parse_sentence(sentence_elt, i=None):
 
 def parse_to_dicts(xml_string):
     """ Parses the xml output of Semafor into a dict """
-    dom = parseString(xml_string)
+    dom = parseString(xml_string.encode('utf-8'))
     return [parse_sentence(sentence,i)
             for i,sentence in enumerate(dom.getElementsByTagName('sentence'))]
 
