@@ -142,10 +142,10 @@ public class PrepareFullAnnotationXML {
 	 * @param origLines The original sentences, untokenized
 	 * @return
 	 */
-	private static Document createXMLDoc(List<String> predictedFELines,
-										 Range sentenceNums,
-										 List<String> parses,
-										 List<String> origLines) {
+	public static Document createXMLDoc(List<String> predictedFELines,
+										Range sentenceNums,
+										List<String> parses,
+										List<String> origLines) {
 		final Document doc = XmlUtils.getNewDocument();
 		final Element corpus = doc.createElement("corpus");
 		addAttribute(doc, "ID", corpus, "100");

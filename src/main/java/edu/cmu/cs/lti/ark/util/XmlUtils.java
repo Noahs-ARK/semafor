@@ -21,26 +21,21 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
+import com.sun.org.apache.xpath.internal.XPathAPI;
+import org.w3c.dom.*;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Result;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
-import com.sun.org.apache.xpath.internal.XPathAPI;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
 
 public class XmlUtils {
 
@@ -183,24 +178,18 @@ public class XmlUtils {
 	}
 	
 	
-	public static void writeXML(String OUTPUT_XML_FILE,
-			org.w3c.dom.Document xmlDoc) {
-		try {
-			javax.xml.transform.Source source = new DOMSource(xmlDoc);
-			System.out.println("writing File: " + OUTPUT_XML_FILE);
-			// Prepare the output file
-			File file = new File(OUTPUT_XML_FILE);
-			Result result = new StreamResult(file);
-			// Write the DOM document to the file
-			javax.xml.transform.Transformer xformer = javax.xml.transform.TransformerFactory
-			.newInstance().newTransformer();
-			xformer.setOutputProperty(OutputKeys.INDENT, "yes");
-			xformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-			xformer.transform(source, result);
-		} catch (Exception e) {
-			System.err.println("Exception in writing file:" + OUTPUT_XML_FILE);
-			e.printStackTrace();
-		}
+	public static void writeXML(String OUTPUT_XML_FILE, org.w3c.dom.Document xmlDoc) throws TransformerException {
+		javax.xml.transform.Source source = new DOMSource(xmlDoc);
+		System.out.println("writing File: " + OUTPUT_XML_FILE);
+		// Prepare the output file
+		File file = new File(OUTPUT_XML_FILE);
+		Result result = new StreamResult(file);
+		// Write the DOM document to the file
+		javax.xml.transform.Transformer xformer = javax.xml.transform.TransformerFactory
+		.newInstance().newTransformer();
+		xformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		xformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+		xformer.transform(source, result);
 	}
 	
 	public static Element addANode(Document doc, String name, Node parent)

@@ -1,44 +1,46 @@
 #!/bin/bash -e                                                                                       
 
-source "$(dirname ${0})/../bin/config.sh"
-
+source "$(dirname "${BASH_SOURCE[0]}")/../bin/config.sh"
 
 
 
 # choose a name for the model to train
-#model_name="mst_frame_id_20130625"
-#model_name="ancestor_frame_id_20130626"
-model_name="ancestor_frame_id_partial_credit_20130627"
+export model_name="changeme"
 
 # should set to roughly the number of cores available
-num_threads=8
-gc_threads=2
+export num_threads=8
+export gc_threads=2
 
-classpath="${CLASSPATH}"
+export classpath="${CLASSPATH}"
 # the directory that contains framenet.frame.element.map and framenet.original.map
-datadir="${SEMAFOR_HOME}/training/data"
+export datadir="${SEMAFOR_HOME}/training/data"
+
+export experiments_dir="${SEMAFOR_HOME}/experiments/${model_name}"
 
 # the directory the resulting model will end up in
-model_dir="${datadir}/${model_name}"
+export model_dir="${experiments_dir}/model"
 
-id_features="ancestor"
+# the directory the evaluation results will end up in
+export results_dir="${experiments_dir}/results"
 
-old_model_dir="${MALT_MODEL_DIR}"
+export id_features="ancestor"
 
-fn_id_req_data_file="${model_dir}/reqData.jobj"
+export old_model_dir="${MALT_MODEL_DIR}"
+
+export fn_id_req_data_file="${model_dir}/reqData.jobj"
 
 
 # paths to the gold-standard annotated sentences, and dependency-parsed version of it
-training_dir="${datadir}/naacl2012"
-fe_file="${training_dir}/cv.train.sentences.frame.elements"
-parsed_file="${training_dir}/cv.train.sentences.all.lemma.tags"
-fe_file_length=`wc -l ${fe_file}`
-fe_file_length=`expr ${fe_file_length% *}`
+export training_dir="${datadir}/naacl2012"
+export fe_file="${training_dir}/cv.train.sentences.frame.elements"
+export parsed_file="${training_dir}/cv.train.sentences.all.lemma.tags"
+export fe_file_length=`wc -l ${fe_file}`
+export fe_file_length=`expr ${fe_file_length% *}`
 
 # path to store the alphabet we create:
-alphabet_file="${model_dir}/alphabet.dat"
+export alphabet_file="${model_dir}/alphabet.dat"
 
-SCAN_DIR="${model_dir}/scan"
+export SCAN_DIR="${model_dir}/scan"
 
 echo num_threads="${num_threads}"
 echo gc_threads="${gc_threads}"
