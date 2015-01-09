@@ -27,22 +27,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 
 public class BitOps {
-	public static boolean nearlyEquals(double[] a1, double[] a2, double tol) {
-		if (a1.length != a2.length) {
-			return false;
-		}
-		for (int i = 0; i < a1.length; i++) {
-			if ((a1[i] - a2[i])*(a1[i] - a2[i]) >= tol) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	public static boolean nearlyBinary(double a1, double tol) {
-		return a1 * a1 < tol || (a1 - 1.0) * (a1 - 1.0) < tol;
-	}
-	
 	public static void writeInt(int a, OutputStream ps) {
 		byte byteout[] = { (byte) ((a >> 24) & 0xff),
 				(byte) ((a >> 16) & 0xff), (byte) ((a >> 8) & 0xff),
