@@ -27,7 +27,6 @@ import edu.cmu.cs.lti.ark.util.FileUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
@@ -38,63 +37,53 @@ import static org.apache.commons.io.IOUtils.closeQuietly;
 
 public class CreateAlphabet {
 	public static void main(String[] args) throws IOException {
-		FEFileName.feFilename = args[0];
-		FEFileName.tagFilename =  args[1];
-		FEFileName.eventFilename =  args[2];
-		FEFileName.alphafilename = args[3];
-		FEFileName.spanfilename = args[4];
-		boolean genAlpha = Boolean.parseBoolean(args[5]);
-		FEFileName.KBestParse = Integer.parseInt(args[6]);
-		FEFileName.KBestParseDirectory = args[7];
+		final String feFilename = args[0];
+		final String tagFilename =  args[1];
+		final String eventFilename =  args[2];
+		final String alphabetFilename = args[3];
+		final String spanFilename = args[4];
+		final boolean doGenerateAlphabet = Boolean.parseBoolean(args[5]);
+		final int kBestParse = Integer.parseInt(args[6]);
 
-		if(genAlpha) System.out.println("Generating alphabet too...");
+		if(doGenerateAlphabet) System.out.println("Generating alphabet too...");
 
-		final List<String> feLines = readLines(new File(FEFileName.feFilename), UTF_8);
-		final List<String> tagLines = readLines(new File(FEFileName.tagFilename), UTF_8);
-		run(genAlpha, tagLines, feLines);
-	}	
-	
-	// Used during testing with minimal IO
-	public static void setDataFileNames(String alphafilename,
-										String eventsFile,
-										String spansFile) throws FileNotFoundException {
-		FEFileName.alphafilename = alphafilename;
-		FEFileName.spanfilename = spansFile;
-		FEFileName.eventFilename = eventsFile;
-		DataPrep.featureIndex = DataPrep.readFeatureIndex(new File(FEFileName.alphafilename));
-		DataPrep.genAlpha = false;
+		final List<String> feLines = readLines(new File(feFilename), UTF_8);
+		final List<String> tagLines = readLines(new File(tagFilename), UTF_8);
+		run(doGenerateAlphabet, tagLines, feLines, eventFilename, alphabetFilename, spanFilename, kBestParse);
 	}
 
-	public static void run(boolean doGenerateAlphabet,
-						   List<String> tagLines,
-						   List<String> frameElementLines) throws IOException {
+	private static void run(boolean doGenerateAlphabet,
+							List<String> tagLines,
+							List<String> frameElementLines,
+							String eventFilename,
+							String alphabetFilename,
+							String spanFilename,
+							int kBestParse) throws IOException {
 		DataPrep.genAlpha = doGenerateAlphabet;
 		if(doGenerateAlphabet){
 			DataPrep.featureIndex = Maps.newHashMap();
 		} else if(DataPrep.featureIndex == null){
 			System.err.println("Reading alphabet...");
 			long time = System.currentTimeMillis();
-			DataPrep.featureIndex = DataPrep.readFeatureIndex(new File(FEFileName.alphafilename));
+			DataPrep.featureIndex = DataPrep.readFeatureIndex(new File(alphabetFilename));
 			System.err.println("Read alphabet in "+(System.currentTimeMillis()-time) + " millis.");
 		}
-		final List<int[][][]> dataPoints = getDataPoints(tagLines, frameElementLines);
+		final List<int[][][]> dataPoints = getDataPoints(tagLines, frameElementLines, spanFilename, kBestParse);
 		final long time = System.currentTimeMillis();
-		writeEvents(dataPoints, FEFileName.eventFilename);
+		writeEvents(dataPoints, eventFilename);
 		System.err.println("Wrote events in " + (System.currentTimeMillis() - time) + " millis.");
 		if(doGenerateAlphabet){
-			DataPrep.writeFeatureIndex(FEFileName.alphafilename);
+			DataPrep.writeFeatureIndex(alphabetFilename);
 		}
 	}
 
-	public static void writeEvents(List<int[][][]> dataPoints, String eventFilename) {
+	private static void writeEvents(List<int[][][]> dataPoints, String eventFilename) {
 		BufferedOutputStream eventOutputStream = new BufferedOutputStream(FileUtil.openOutFile(eventFilename));
 		try  {
 			int fCount = 0;
 			for(int[][][] dataPoint : dataPoints) {
 				System.err.print(".");
-				if(fCount % 100 == 0){
-					System.err.println(fCount);
-				}
+				if(fCount % 100 == 0) System.err.println(fCount);
 				for (int[][] aDataPoint : dataPoint) {
 					for (int[] anADataPoint : aDataPoint) {
 						for (int anAnADataPoint : anADataPoint) {
@@ -112,12 +101,14 @@ public class CreateAlphabet {
 		}
 	}
 
-	public static List<int[][][]> getDataPoints(List<String> tagLines, List<String> frameElementLines)
-			throws IOException {
-		final DataPrep dataPrep = new DataPrep(tagLines, frameElementLines);
+	private static List<int[][][]> getDataPoints(List<String> tagLines,
+												 List<String> frameElementLines,
+												 String spanFilename,
+												 int kBestParse) throws IOException {
+		final DataPrep dataPrep = new DataPrep(tagLines, frameElementLines, spanFilename, kBestParse);
 		final List<int[][][]> dataPoints = Lists.newArrayList();
 		while(dataPrep.hasNext()){
-			dataPoints.add(dataPrep.getNextTrainData());
+			dataPoints.add(dataPrep.getNextTrainData(spanFilename));
 		}
 		return dataPoints;
 	}
