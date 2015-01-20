@@ -1,7 +1,6 @@
 #!/bin/bash -e                                                                                       
 
-source "$(dirname ${0})/../bin/config.sh"
-
+source "$(dirname ${BASH_SOURCE[0]})/../bin/config.sh"
 
 
 
