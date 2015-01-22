@@ -236,7 +236,7 @@ public class Semafor {
 		return segmenter.getSegmentation(sentence);
 	}
 
-	private List<Pair<List<Integer>, String>> predictFrames(Sentence sentence, List<List<Integer>> targets) {
+	public List<Pair<List<Integer>, String>> predictFrames(Sentence sentence, List<List<Integer>> targets) {
 		final List<Pair<List<Integer>, String>> idResult = Lists.newArrayList();
 		for (List<Integer> targetTokenIdxs : targets) {
 			final String frame = idModel.getBestFrame(targetTokenIdxs, sentence);
@@ -258,7 +258,7 @@ public class Semafor {
 	 * @param idResults a list of (target, frame) pairs
 	 * @return a list of strings in the format that {@link #predictArgumentLines} expects.
 	 */
-	private List<String> getArgumentIdInput(Sentence sentence, List<Pair<List<Integer>, String>> idResults) {
+	public List<String> getArgumentIdInput(Sentence sentence, List<Pair<List<Integer>, String>> idResults) {
 		final List<String> idResultLines = Lists.newArrayList();
 		final String parseLine = AllLemmaTags.makeLine(sentence.toAllLemmaTagsArray());
 		for (Pair<List<Integer>, String> targetAndFrame : idResults) {

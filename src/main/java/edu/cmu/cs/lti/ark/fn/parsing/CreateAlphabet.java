@@ -45,7 +45,7 @@ public class CreateAlphabet {
 		final boolean doGenerateAlphabet = Boolean.parseBoolean(args[5]);
 		final int kBestParse = Integer.parseInt(args[6]);
 
-		if(doGenerateAlphabet) System.out.println("Generating alphabet too...");
+		if(doGenerateAlphabet) System.out.println("Generating alphabet...");
 
 		final List<String> feLines = readLines(new File(feFilename), UTF_8);
 		final List<String> tagLines = readLines(new File(tagFilename), UTF_8);

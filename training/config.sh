@@ -16,9 +16,9 @@ gc_threads=2
 classpath="${CLASSPATH}"
 # the directory that contains framenet.frame.element.map and framenet.original.map
 datadir="${SEMAFOR_HOME}/training/data"
-experiments_dir="${SEMAFOR_HOME}/experiments"
+experiments_dir="${SEMAFOR_HOME}/experiments/${model_name}"
 # the directory the resulting model will end up in
-model_dir="${experiments_dir}/${model_name}"
+model_dir="${experiments_dir}/model"
 
 id_features="ancestor"
 
