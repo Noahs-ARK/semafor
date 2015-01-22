@@ -2,7 +2,7 @@
 
 set -e # fail fast
 
-source "$(dirname ${0})/config.sh"
+source "$(dirname ${BASH_SOURCE[0]})/config.sh"
 
 echo
 echo "step 3.3: creating feature events for each datapoint"

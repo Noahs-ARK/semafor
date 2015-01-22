@@ -21,88 +21,84 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
-import edu.cmu.cs.lti.ark.fn.optimization.Lbfgs;
+import edu.cmu.cs.lti.ark.ml.optimization.Lbfgs;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
 import edu.cmu.cs.lti.ark.util.FileUtil;
-import edu.cmu.cs.lti.ark.util.SerializedObjects;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import riso.numerical.LBFGS;
 
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
+
+import static edu.cmu.cs.lti.ark.util.SerializedObjects.readObject;
+import static java.lang.Math.log;
+import static java.lang.Math.min;
 
 public class Training {
-	private String mModelFile;
-	private String mAlphabetFile;
-	private ArrayList<FrameFeatures> mFrameList; 
-	private double[] W;
-	private double[] mGradients;
-	private int numFeatures;
-	private double mLambda;
-	private int numDataPoints;
-	private int mNumThreads;
-	private double[][] tGradients;
-	private double[] tValues;
+	private final String modelFile;
+	private final ArrayList<FrameFeatures> frameFeaturesList;
+	// all of these arrays get reused to conserve memory
+	private final double[] weights;
+	private final double[] gradients;
+	private final double lambda; // L2 regularization hyperparameter
+	private final int numThreads;
+	private final double[][] threadGradients; // per-thread gradients
+	private final double[] threadObjectives; // per-thread objective values
 	
 	/**
-	 *
 	 * @param args command-line arguments as follows:
-	 *             frameFeaturesCacheFile: path to file containing a serialized cache of all of the features
-	 *                 extracted from the training data
-	 *             alphabetFile: path to file containing the alphabet
-	 *             lambda: regularization hyperparameter
-	 *             numThreads: the number of parallel threads to run while optimizing
-	 *             modelFile: path to output file to write resulting model to. intermediate models will be written to
-	 *                 modelFile + "_" + i
+	 *   frameFeaturesCacheFile: path to file containing a serialized cache of all of the features
+	 *       extracted from the training data
+	 *   alphabetFile: path to file containing the alphabet
+	 *   lambda: L2 regularization hyperparameter
+	 *   numThreads: the number of parallel threads to run while optimizing
+	 *   modelFile: path to output file to write resulting model to. intermediate models will be written to
+	 *       modelFile + "_" + i
 	 */
 	public static void main(String[] args) throws Exception {
-		FNModelOptions opts = new FNModelOptions(args);
-		String modelFile = opts.modelFile.get();
-		String alphabetFile = opts.alphabetFile.get();
-		String frameFeaturesCacheFile = opts.frameFeaturesCacheFile.get();
-		double lambda = opts.lambda.get();
-		int numThreads = opts.numThreads.get();
-		ArrayList<FrameFeatures> list = SerializedObjects.readObject(frameFeaturesCacheFile);
-		Training bpt = new Training();
-		bpt.init(modelFile, alphabetFile, list, lambda, numThreads);
-		bpt.runCustomLBFGS();
+		final FNModelOptions opts = new FNModelOptions(args);
+		final String modelFile = opts.modelFile.get();
+		final String alphabetFile = opts.alphabetFile.get();
+		final String frameFeaturesCacheFile = opts.frameFeaturesCacheFile.get();
+		final double lambda = opts.lambda.get();
+		final int numThreads = opts.numThreads.get();
+		final ArrayList<FrameFeatures> frameFeaturesList = readObject(frameFeaturesCacheFile);
+		final Training training = new Training(modelFile, alphabetFile, frameFeaturesList, lambda, numThreads);
+		training.runCustomLBFGS();
 	}
 
-	public Training() { }
-
-	public void init(String modelFile,
-					 String alphabetFile,
-					 ArrayList<FrameFeatures> list,
-					 double lambda,
-					 int numThreads) {
-		mModelFile = modelFile;
-		mAlphabetFile = alphabetFile;
-		initModel();
-		mFrameList = list;
-		mLambda = lambda;
-		numDataPoints = mFrameList.size();
-		mNumThreads = numThreads;
+	public Training(String modelFile,
+					String alphabetFile,
+					ArrayList<FrameFeatures> frameFeaturesList,
+					double lambda,
+					int numThreads) {
+		this.modelFile = modelFile;
+		this.frameFeaturesList = frameFeaturesList;
+		this.lambda =  lambda;
+		this.numThreads = numThreads;
+		int numFeatures = readNumFeatures(alphabetFile);
+		weights = new double[numFeatures];
+		gradients = new double[numFeatures];
+		threadGradients =  new double[numThreads][numFeatures];
+		threadObjectives = new double[numThreads];
 	}
 	
-	private void initModel() {
-		Scanner localsc = FileUtil.openInFile(mAlphabetFile);
-		numFeatures = localsc.nextInt() + 1;
-		localsc.close();
-		W = new double[numFeatures];
-		for (int i = 0; i < numFeatures; i++)
-		{
-			W[i] = 0.0;
-		}
+	private int readNumFeatures(String alphabetFile) {
+		final Scanner scanner = FileUtil.openInFile(alphabetFile);
+		final int numFeatures = scanner.nextInt() + 1;
+		scanner.close();
+		return numFeatures;
 	}
 
-	public Pair<Double, double[]> getDerivativesOfSample(double[] sumDers, int index) {
-		FrameFeatures f = mFrameList.get(index);
-		List<SpanAndCorrespondingFeatures[]> featsList = f.fElementSpansAndFeatures;
-		List<Integer> goldSpans = f.goldSpanIdxs;
-		double[] gradients = new double[sumDers.length];
-		for(int i = 0; i < gradients.length; i ++)
-			gradients[i] = 0.0;		
+	private Pair<Double, double[]> getObjectiveAndGradient(FrameFeatures ffs) {
+		final int modelSize = weights.length;
+		final List<SpanAndCorrespondingFeatures[]> featsList = ffs.fElementSpansAndFeatures;
+		final List<Integer> goldSpans = ffs.goldSpanIdxs;
+		final double[] gradients = new double[modelSize];
 		double value = 0.0;
 		for(int i = 0; i < featsList.size(); i ++) {
 			SpanAndCorrespondingFeatures[] featureArray = featsList.get(i);
@@ -112,25 +108,19 @@ public class Training {
 			double exp[] = new double[featArrLen];
 			double sumExp = 0.0;
 			for(int j = 0; j < featArrLen; j ++) {
-				weiFeatSum[j] = W[0];
+				weiFeatSum[j] = weights[0];
 				int[] feats = featureArray[j].features;
 				for (int feat : feats) {
-					double weight = 0;
-					try {
-						weight = W[feat];
-					} catch (Exception e) {
-						System.out.println(e.getMessage() + W.length + "|"
-								+ numFeatures);
-					}
 					if (feat == 0) {
 						continue;
 					}
+					double weight = weights[feat];
 					weiFeatSum[j] += weight;
 				}
 				exp[j] = Math.exp(weiFeatSum[j]);
 				sumExp += exp[j];
 			}
-			value -= Math.log(exp[goldSpan] / sumExp);
+			value -= log(exp[goldSpan] / sumExp);
 			double YMinusP[] = new double[featureArray.length];
 			for(int j = 0; j < featArrLen; j ++) {
 				int Y = 0;
@@ -143,35 +133,27 @@ public class Training {
 					gradients[feat] -= YMinusP[j];
 				}
 			}
-		}		
-		double lambda = mLambda / numDataPoints;
-		for(int i = 0; i < sumDers.length; i ++) {
-			sumDers[i] += (gradients[i] + 2*lambda*W[i]);
-			value += lambda * W[i] * W[i];
 		}
-		return new Pair<Double, double[]>(value, sumDers);
+		return Pair.of(value, gradients);
 	}
 
 
 	public void processBatch(int taskID, int start, int end) {
-		int threadID = taskID % mNumThreads;
+		final int threadID = taskID % numThreads;
 		System.out.println("Processing batch:" + taskID + " thread ID:" + threadID);
-		if (end > mFrameList.size()) {
-			end = mFrameList.size();
-		}
-		double[] sumDers = new double[W.length];
-		Arrays.fill(sumDers, 0.0);
-		for (int index = start; index < end; index ++) {
-			Pair<Double, double[]> p = getDerivativesOfSample(sumDers, index);
-			sumDers = p.second;
-			tValues[threadID] += p.first;
-		}
-		for (int i = 0; i < W.length; i++) {
-			tGradients[threadID][i] += sumDers[i];
+		final int safeEnd = min(end, frameFeaturesList.size());
+		for (int index = start; index < safeEnd; index ++) {
+			final FrameFeatures ffs = frameFeaturesList.get(index);
+			final Pair<Double, double[]> objAndGrad = getObjectiveAndGradient(ffs);
+			final double objective = objAndGrad.first;
+			final double[] gradient = objAndGrad.second;
+			threadObjectives[threadID] += objective;
+			for (int i = 0; i < weights.length; i++) {
+				threadGradients[threadID][i] += gradient[i];
+			}
 		}
 	}
-	
-	
+
 	public Runnable createTask(final int count, final int start, final int end) {
 		return new Runnable() {
 		      public void run() {
@@ -183,56 +165,54 @@ public class Training {
 	}
 
 	/**
-	 * @return the value of the function. fills out mGradients as a side-effect
+	 * @return the value of the function. fills out gradients as a side-effect
 	 */
 	private double getValuesAndGradients() {
 		double value = 0.0;
-		Arrays.fill(mGradients, 0.0);
-		for (int i = 0; i < mNumThreads; i++) {
-			Arrays.fill(tGradients[i], 0.0);
+		Arrays.fill(gradients, 0.0);
+		for (int i = 0; i < numThreads; i++) {
+			Arrays.fill(threadGradients[i], 0.0);
 		}
-		Arrays.fill(tValues, 0.0);
-		ThreadPool threadPool = new ThreadPool(mNumThreads);
+		Arrays.fill(threadObjectives, 0.0);
+		ThreadPool threadPool = new ThreadPool(numThreads);
 		int batchSize = 10;
 		int count = 0;
-		for (int i = 0; i < mFrameList.size(); i = i + batchSize) {
+		for (int i = 0; i < frameFeaturesList.size(); i = i + batchSize) {
 			threadPool.runTask(createTask(count, i, i + batchSize));
 			count++;
 		}
-		threadPool.join();		
-		for (int i = 0; i < mNumThreads; i++) {
-			value += tValues[i];
-			for (int j = 0; j < W.length; j++) {
-				mGradients[j] += tGradients[i][j];
+		threadPool.join();
+		// sum up results from all threads
+		for (int i = 0; i < numThreads; i++) {
+			value += threadObjectives[i];
+			for (int j = 0; j < weights.length; j++) {
+				gradients[j] += threadGradients[i][j];
 			}
+		}
+		// L2 regularization
+		for(int i = 0; i < weights.length; i ++) {
+			gradients[i] += 2 * lambda * weights[i];
+			value += lambda * weights[i] * weights[i];
 		}
 		System.out.println("Finished value and gradient computation.");
 		return value;
 	}
 	
-	public void runCustomLBFGS() throws Exception
-	{   
-		int modelSize = W.length;
+	public void runCustomLBFGS() throws Exception {
+		int modelSize = weights.length;
 		double[] diagco = new double[modelSize];
-		int[] iprint = new int[2];
-		iprint[0] = Lbfgs.DEBUG ?1:-1;
-		iprint[1] = 0; //output the minimum level of info
-		int[] iflag = new int[1];
-		iflag[0] = 0;
-		mGradients = new double[modelSize];
-		tGradients =  new double[mNumThreads][modelSize];
-		tValues = new double[mNumThreads];
+		int[] iprint = { Lbfgs.DEBUG ? 1 : -1,  0 };   //output the minimum level of info
+		int[] iflag = { 0 };
 		int iteration = 0;
 		do {
-			Arrays.fill(mGradients, 0.0);
 			System.out.println("Starting iteration:" + iteration);
-			double m_value = getValuesAndGradients();
+			double m_value = getValuesAndGradients(); // fills out gradients as a side-effect
 			System.out.println("Function value:"+m_value);
 			LBFGS.lbfgs(modelSize,
 					Lbfgs.NUM_CORRECTIONS,
-					W, 
+					weights,
 					m_value,
-					mGradients, 
+					gradients,
 					false, //true if we're providing the diag of cov matrix Hk0 (?)
 					diagco, //the cov matrix
 					iprint, //type of output generated
@@ -243,16 +223,16 @@ public class Training {
 			System.out.println("Finished iteration:"+iteration);
 			iteration++;
 			if (iteration% Lbfgs.SAVE_EVERY_K ==0)
-				writeModel(mModelFile+"_"+iteration);
-		} while (iteration <= Lbfgs.MAX_ITERATIONS &&iflag[0] != 0);
-		writeModel(mModelFile);
+				writeModel(modelFile +"_"+iteration);
+		} while (iteration <= Lbfgs.MAX_ITERATIONS && iflag[0] != 0);
+		writeModel(modelFile);
 	}
 
 	public void writeModel(String modelFile) {
-		PrintStream ps = FileUtil.openOutFile(modelFile);
+		final PrintStream ps = FileUtil.openOutFile(modelFile);
 		System.out.println("Writing Model... ...");
-		for (double aW : W) {
-			ps.println(aW);
+		for (double w : weights) {
+			ps.println(w);
 		}
 		System.out.println("Finished Writing Model");
 		ps.close();

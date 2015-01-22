@@ -6,7 +6,7 @@ echo
 echo "step 4: training the frame identification model."
 echo
 
-source "$(dirname ${0})/config.sh"
+source "$(dirname ${BASH_SOURCE[0]})/config.sh"
 
 mkdir -p ${model_dir}
 

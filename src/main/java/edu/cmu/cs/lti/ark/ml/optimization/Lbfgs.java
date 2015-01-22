@@ -1,4 +1,4 @@
-package edu.cmu.cs.lti.ark.fn.optimization;
+package edu.cmu.cs.lti.ark.ml.optimization;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;

@@ -6,7 +6,7 @@ echo
 echo "step 4i: create the alphabet file for the argument identification model."
 echo
 
-source "$(dirname ${0})/config.sh"
+source "$(dirname ${BASH_SOURCE[0]})/config.sh"
 
 mkdir -p ${SCAN_DIR}
 
