@@ -72,15 +72,6 @@ def predictArgsForSentence(sentence: Sentence, frames: List[String], kBest: Int,
   results.flatMap(_.split("\n")).map(setSentenceId(_, sentenceId))
 }
 
-//def predictArgsForAllSentences(sentencesAndFrames: List[(Sentence, List[String])],
-//                               sem: Semafor): Iterator[String] = {
-//  val argResults = sentencesAndFrames.iterator.map({
-//    case (sentence, frame) =>
-//      predictArgsForSentence(sentence, frame.toList, K_BEST, sem)
-//  })
-//  argResults.flatten
-//}
-
 def parseToXmlWithGoldFrames(infix: String, sem: Semafor) {
   val frameIdFile = new File(DATA_DIR, FRAME_ID_FILE_TEMPLATE.format(infix))
   val depParseFile = new File(DATA_DIR, DEP_PARSE_FILE_TEMPLATE.format(infix))
@@ -124,12 +115,12 @@ private def parseToFeFormatWithGoldFrames(frameIdFile: File,
   }
   // run arg id'ing
   val resultLines = {
-//    predictArgsForAllSentences(sentencesAndFrames, sem)
-    val argResults = sentencesAndFrames.iterator.map({
+    val batchSize = 128
+    val argResults = sentencesAndFrames.grouped(batchSize).flatMap(_.par.flatMap({
       case (sentence, frame) =>
         predictArgsForSentence(sentence, frame.toList, K_BEST, sem)
-    })
-    argResults.flatten
+    }))
+    argResults
   }
   // write results to file
   for (out <- managed(newWriter(outputFile, UTF_8));

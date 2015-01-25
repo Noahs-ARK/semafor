@@ -1,11 +1,11 @@
 package edu.cmu.cs.lti.ark.ml.optimization
 
-import breeze.linalg.{DenseVector, Vector => Vec}
+import breeze.linalg.{DenseVector, SparseVector, Vector => Vec}
 
+import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.math.sqrt
-import scala.util.Random.nextInt
-import scala.collection.parallel.ForkJoinTaskSupport
+import scala.util.Random
 
 
 /**
@@ -38,7 +38,8 @@ case class AdaDelta(decay: Double = 0.05, smoothing: Double = 1e-6) {
               val avgSquaredDelta: Vec[Double]) {
     /** Destructively modifies `weights`, `avgSquaredGradient`, `avgSquaredDelta` */
     def step(gradient: Vec[Double]): State = {
-      for (i <- 0 until weights.length) {
+      var i = 0
+      while (i < weights.length) {
         val g = gradient(i)
         avgSquaredGradient(i) = decayingAvg(avgSquaredGradient(i), g * g)
         // NB: uses `avgSquaredDelta` from previous step,
@@ -46,6 +47,7 @@ case class AdaDelta(decay: Double = 0.05, smoothing: Double = 1e-6) {
         val delta = (smoothSqrt(avgSquaredDelta(i)) / smoothSqrt(avgSquaredGradient(i))) * g
         avgSquaredDelta(i) = decayingAvg(avgSquaredDelta(i), delta * delta)
         weights(i) = weights(i) - delta
+	i += 1
       }
       this
     }
@@ -60,7 +62,7 @@ case class MiniBatch[T](trainingData: IndexedSeq[T],
                         numThreads: Int) {
 
   private[this] val n = trainingData.length
-  private[this] val lambda = l2 / n
+  private[this] val lambda = l2 * batchSize / n
   private[this] val forkJoin = new ForkJoinTaskSupport(new ForkJoinPool(numThreads))
   private[this] val batchRecip = 1.0 / batchSize
 
@@ -70,28 +72,41 @@ case class MiniBatch[T](trainingData: IndexedSeq[T],
    */
   def optimizationPath(initialWeights: Vec[Double]): Iterator[(Double, Vec[Double], Double)] = {
     var state = AdaDelta().start(initialWeights)
-    // sample batches with replacement
-    val shuffled = Iterator.continually(nextInt(n)).map(trainingData)
-    for ((batch, batchNum) <- shuffled.grouped(batchSize).zipWithIndex) yield {
+    // sample batches without replacement
+    // sample batches without replacement
+    for (iteration <- Iterator.from(0);
+         shuffled = Random.shuffle(trainingData);
+         (batch, batchNum) <- shuffled.grouped(batchSize).zipWithIndex) yield {
+//    for (iteration <- Iterator.from(0);
+//         shuffled = Random.shuffle(trainingData).iterator;
+//         (batch, batchNum) <- shuffled.grouped(batchSize).zipWithIndex) yield {
       val weights = state.weights
-      // add regularization for each batch
-      var loss = lambda * (weights dot weights)
-      val gradient = weights * (2 * lambda)
+      // add regularization for each batch (don't regularize bias)
+      val regLoss = lambda * (weights dot weights) //- (weights(biasFeatureIdx) * weights(biasFeatureIdx)))
+      val regGradient = weights * (2 * lambda)
+//      gradient(biasFeatureIdx) = 0.0
       // compute gradients in parallel
       val batchPar = batch.par
       batchPar.tasksupport = forkJoin
       val lossesAndGrads = batchPar.map(lossFn.lossAndGradient(weights))
-      for ((l, grad) <- lossesAndGrads.seq) {
-        loss += l
-        gradient += grad
-      }
+//      var loss = 0.0
+//      val gradient = SparseVector.zeros[Double](weights.length)
+//      for ((l, grad) <- lossesAndGrads.seq) {
+//        loss += l
+//        gradient += grad
+//      }
+      var (loss, gradient) = lossesAndGrads.fold((0.0, SparseVector.zeros[Double](weights.length)))({
+	      case ((la, ga), (lb, gb)) => (la + lb, ga + gb)
+      })
       // scale to per-instance
       loss *= batchRecip
       gradient *= batchRecip
       val avgStepSize = sqrt(state.avgSquaredDelta.sum)
-      System.err.println(f"i: ${batchNum * batchSize}%6s,\tloss: $loss%20s,\tavgStepSize: $avgStepSize%20s")
-      state = state.step(gradient)
-      (loss, state.weights, avgStepSize)
+//      System.err.println(f"i: ${batchNum * batchSize}%6s,\tloss: $loss%20s,\tavgStepSize: $avgStepSize%20s")
+      val partialIt = iteration + (batchNum.toDouble * batchSize / n)
+      System.err.println(f"i: $partialIt%.3f,\tloss: $loss%.5f,\tregLoss: $regLoss%.5f,\tavgStepSize: $avgStepSize%.5f") //,\tbias: ${weights(biasFeatureIdx)}%.5f
+      state = state.step(gradient + regGradient)
+      (loss + regLoss, state.weights, avgStepSize)
     }
   }
 }

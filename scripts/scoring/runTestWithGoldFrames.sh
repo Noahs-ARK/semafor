@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e # fail fast
+set -x
 
 cv=$1  # "test" or "dev"
 
@@ -16,13 +17,14 @@ fn_1_5_dir="${datadir}/framenet15/"
 frames_single_file="${fn_1_5_dir}/framesSingleFile.xml"
 relation_modified_file="${fn_1_5_dir}/frRelationModified.xml"
 
+output_dir="${experiments_dir}/output"
+mkdir -p "${output_dir}"
+predicted_xml="${output_dir}/${cv}.argid.predict.xml"
+gold_xml="${output_dir}/${cv}.gold.xml"
+
 results_dir="${experiments_dir}/results"
 mkdir -p "${results_dir}"
 results_file="${results_dir}/argid_${cv}_exact"
-
-predicted_xml="${experiments_dir}/output/${cv}.argid.predict.xml"
-gold_xml="${experiments_dir}/output/${cv}.gold.xml"
-
 
 
 # make a gold xml file whose tokenization matches the tokenization used for parsing
@@ -38,7 +40,7 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
     endIndex:${end} \
     testParseFile:${all_lemma_tags_file} \
     testTokenizedFile:${tokenizedfile} \
-    outputFile:${gold_xml}
+    outputFile:${gold_xml}  2>/dev/null
 
 
 echo "Performing argument identification on ${cv} set, with model \"${model_name}\"..."
@@ -57,10 +59,26 @@ ${SEMAFOR_HOME}/scripts/scoring/fnSemScore_modified.pl \
     -l \
     -n \
     -e \
+    -a \
     -v \
     ${frames_single_file} \
     ${relation_modified_file} \
     ${gold_xml} \
-    ${predicted_xml} > "${results_file}"
+    ${predicted_xml} > "${results_dir}/argid_${cv}_exact" 2>/dev/null
 
-tail -n1 "${results_file}"
+tail -n1 "${results_dir}/argid_${cv}_exact"
+
+# Dipanjan reported using this evaluation
+echo "Evaluating argument identification on ${cv} set (counting gold frames)..."
+${SEMAFOR_HOME}/scripts/scoring/fnSemScore_modified.pl \
+    -l \
+    -n \
+    -e \
+    -v \
+    ${frames_single_file} \
+    ${relation_modified_file} \
+    ${gold_xml} \
+    ${predicted_xml} > "${results_dir}/argid_${cv}_exact_count_gold_frames" 2>/dev/null
+
+
+tail -n1 "${results_dir}/argid_${cv}_exact_count_gold_frames"

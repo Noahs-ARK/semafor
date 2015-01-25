@@ -1,18 +1,51 @@
 package edu.cmu.cs.lti.ark.fn.parsing
 
-import java.io.{FileInputStream, FileOutputStream, PrintStream}
+import java.io._
 import java.util
 import java.util.Scanner
 
-import breeze.linalg.{DenseVector, SparseVector, Vector => Vec}
+import breeze.linalg.{DenseVector, Vector => Vec}
+import com.google.common.base.Charsets
+import com.google.common.io.Files
+import edu.cmu.cs.lti.ark.fn.parsing.FrameFeaturesCache.readFrameFeatures
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions
-import edu.cmu.cs.lti.ark.ml.FeatureVector
 import edu.cmu.cs.lti.ark.ml.optimization._
-import edu.cmu.cs.lti.ark.util.SerializedObjects._
-import resource.managed
+import edu.cmu.cs.lti.ark.ml.{FeatureVector, MultiClassTrainingExample}
+import resource.{ManagedResource, managed}
 
 import scala.collection.Iterator.continually
 import scala.collection.JavaConverters._
+import scala.util.Try
+
+object CacheFrameFeaturesApp extends App {
+  val opts = new FNModelOptions(args)
+  val eventsFile = opts.eventsFile.get
+  val spanFile = opts.spansFile.get
+  val frFile = opts.trainFrameFile.get
+  val outputFile = opts.frameFeaturesCacheFile.get
+
+  val frameLines: util.List[String] = Files.readLines(new File(frFile), Charsets.UTF_8)
+  val lfr = new LocalFeatureReading(eventsFile, spanFile, frameLines)
+  val frameFeaturesList: util.List[FrameFeatures] = lfr.readLocalFeatures
+  FrameFeaturesCache.writeFrameFeatures(frameFeaturesList.asScala, outputFile)
+}
+object FrameFeaturesCache {
+  def writeFrameFeatures(frameFeaturesList: TraversableOnce[FrameFeatures], outputFile: String): Unit = {
+    for (output <- managed(new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile))))) {
+      for (frameFeatures <- frameFeaturesList) {
+        output.writeObject(frameFeatures)
+      }
+    }
+  }
+  def readFrameFeatures(inputFile: String): ManagedResource[Iterator[FrameFeatures]] = {
+    for (input <- managed(new ObjectInputStream(new BufferedInputStream(new FileInputStream(inputFile))))) yield {
+      Iterator.from(1).map(i => {
+        if (i % 100 == 0) System.err.print(".")
+        Try(input.readObject.asInstanceOf[FrameFeatures])
+      }).takeWhile(_.isSuccess).map(_.get)
+    }
+  }
+}
 
 /**
  * command-line arguments as follows:
@@ -25,156 +58,68 @@ import scala.collection.JavaConverters._
  *   modelFile + "_" + i
  */
 object TrainArgIdApp extends App {
-  val opts: FNModelOptions = new FNModelOptions(args)
-  val modelFile: String = opts.modelFile.get
-  val alphabetFile: String = opts.alphabetFile.get
+  val opts = new FNModelOptions(args)
+  val modelFile = opts.modelFile.get
+  val alphabetFile = opts.alphabetFile.get
+  val frameFeaturesCacheFile = opts.frameFeaturesCacheFile.get
+  val lambda = opts.lambda.get
+  val numThreads = opts.numThreads.get
+  val batchSize = opts.batchSize.get
+
   // Read the size of the model from the first line of `alphabetFile`.
-  private val numFeatures: Int = {
+  private val numFeats: Int = {
     managed(new Scanner(new FileInputStream(alphabetFile))).acquireAndGet(_.nextInt + 1)
   }
-  val frameFeaturesCacheFile: String = opts.frameFeaturesCacheFile.get
-  val lambda: Double = opts.lambda.get
-  val numThreads: Int = opts.numThreads.get
-  val batchSize: Int = opts.batchSize.get()
   System.err.println("Reading cached training data")
-  val frameFeaturesList: util.ArrayList[FrameFeatures] = readObject(frameFeaturesCacheFile)
-  System.err.println("Done reading cached training data")
-  TrainArgId(
+  val trainingData: Array[MultiClassTrainingExample] = {
+    readFrameFeatures(frameFeaturesCacheFile).acquireAndGet(_.flatMap(ArgIdTrainer.frameExampleToArgExamples(numFeats)).toArray)
+  }
+  System.err.println(s"Done reading cached training data. ${trainingData.length} training examples.")
+  ArgIdTrainer(
     modelFile,
-    numFeatures,
-    frameFeaturesList.asScala.toArray,
+    numFeats,
+    trainingData,
     HingeLoss,
     lambda,
     numThreads
-  ).runAdaDelta()
+  ).runAdaDelta(batchSize = batchSize)
 }
 
-/** Calculates the loss and gradient for all spans of a given frame */
-case class FrameLoss(lossType: SubDifferentiableLoss[(Array[FeatureVector], Int)])
-    extends SubDifferentiableLoss[FrameFeatures] {
-
-  override def lossAndGradient(weights: Vec[Double])
-                              (example: FrameFeatures): (Double, Vec[Double]) = {
-    val lossFn = lossType.lossAndGradient(weights)(_)
-    val numFeats = weights.length
-    val features = example.fElementSpansAndFeatures.asScala
-    val goldLabels = example.goldSpanIdxs.asScala
-    var loss = 0.0
-    val gradient = SparseVector.zeros[Double](numFeats)
-    for ((featsByLabelNoBias, goldRoleIdx) <- features zip goldLabels) {
-      // FrameFeatures don't explicitly add the bias feature (index=0)
-      val featsByLabel = featsByLabelNoBias.map(f =>
-        new FeatureVector(0 +: f.features, numFeats)
-      )
-      val (l, g) = lossFn((featsByLabel, goldRoleIdx))
-      loss += l
-      gradient += g
-    }
-    (loss, gradient)
-  }
-}
-
-case class TrainArgId(modelFile: String,
-                      numFeats: Int,
-                      trainingData: Array[FrameFeatures],
-                      lossFn: SubDifferentiableLoss[(Array[FeatureVector], Int)],
-                      lambda: Double,
-                      numThreads: Int) {
-//  /** all of these arrays get reused to conserve memory */
-//  private final var weights: Vec[Double] = DenseVector.zeros(numFeats)
-//  private final val gradient: DenseVector[Double] = DenseVector.zeros(numFeats)
-//  private final val threadLosses: Array[Double] = new Array[Double](numThreads)
-//  private final val threadGradients: Array[Array[Double]] = Array.ofDim[Double](numFeats, numThreads)
-  private final val frameLoss = FrameLoss(lossFn)
-
-//  /** clobbers `gradient`, `threadLosses`, `threadGradients` as a side-effect */
-//  private def lossAndGradient(weights: Vec[Double],
-//                              batchSize: Int = 10): (Double, Vec[Double]) = {
-//    // zero out thread objs and grads
-//    util.Arrays.fill(threadLosses, 0.0)
-//    for (grads <- threadGradients) {
-//      util.Arrays.fill(grads, 0.0)
-//    }
-//    // spawn threads to calculate new objs and grads
-//    val threadPool = new ThreadPool(numThreads)
-//    for ((start, batchNum) <- (0 until trainingData.size by batchSize).zipWithIndex) {
-//      val range: Range = start until min(start + batchSize, trainingData.size)
-//      threadPool.runTask(processBatch(weights, batchNum, range))
-//    }
-//    // wait for them to finish
-//    threadPool.join()
-//
-//    // sum them all up and add regularization
-//    val loss = threadLosses.sum + lambda * weights.map(w => w * w).sum
-//    for (j <- 0 until numFeats) {
-//      gradient(j) = threadGradients(j).sum + 2 * lambda * weights(j)
-//    }
-//    println("Finished value and gradient computation.")
-//    (loss, gradient)
-//  }
-
-//  def processBatch(weights: Vec[Double],
-//                   taskId: Int,
-//                   indexes: Iterable[Int]): Runnable = new Runnable {
-//    override def run() {
-//      val threadId = taskId % numThreads
-//      System.err.println(s"Processing taskId: $taskId, threadId: $threadId")
-//      for (index <- indexes) {
-//        val frameFeatures = trainingData(index)
-//        val (loss, gradient) = frameLoss.lossAndGradient(weights)(frameFeatures)
-//        threadLosses(threadId) += loss
-//        for (i <- 0 until numFeats) {
-//          threadGradients(i)(threadId) += gradient(i)
-//        }
-//      }
-//      System.err.println(s"taskId $taskId end")
-//    }
-//  }
-
+case class ArgIdTrainer(modelFile: String,
+                        numFeats: Int,
+                        trainingData: Array[MultiClassTrainingExample],
+                        lossFn: SubDifferentiableLoss[MultiClassTrainingExample],
+                        lambda: Double,
+                        numThreads: Int) {
   def runAdaDelta(batchSize: Int = 128,
-                  saveEveryKBatches: Int = 100,
-                  maxSaves: Int = 30) {
-    import edu.cmu.cs.lti.ark.fn.parsing.TrainArgId.writeModel
-    val optimizer = MiniBatch(trainingData, frameLoss, lambda, batchSize, numThreads)
+                  saveEveryKBatches: Int = 500,
+                  maxSaves: Int = 100) {
+    import edu.cmu.cs.lti.ark.fn.parsing.ArgIdTrainer.writeModel
+    val optimizer = MiniBatch(trainingData, lossFn, lambda, batchSize, numThreads)
     val optimizationPath = optimizer.optimizationPath(DenseVector.zeros(numFeats))
     val everyK = continually(optimizationPath.drop(saveEveryKBatches - 1).next())
     for (((loss, weights, gradNorm), i) <- everyK.take(maxSaves).zipWithIndex) {
       writeModel(weights, modelFile + "_" + i)
     }
   }
-
-//  def runLbfgs() {
-//    import edu.cmu.cs.lti.ark.fn.parsing.TrainArgId.writeModel
-//    val diagco = new Array[Double](numFeats)
-//    val iprint = Array(if (Lbfgs.DEBUG) 1 else -1, 0)
-//    val iflag = Array(0)
-//    var iteration = 0
-//    do {
-//      System.err.println("Starting iteration:" + iteration)
-//      val (loss, gradients) = lossAndGradient(weights)
-//      val gradNorm = gradNorm(DenseVector(gradients))
-//      System.err.println(f"iteration: $iteration%4s,\tloss: $loss%20s,\tgradNorm: $gradNorm%20s")
-//      LBFGS.lbfgs(
-//        numFeats,
-//        Lbfgs.NUM_CORRECTIONS,
-//        weights.toArray,
-//        loss,
-//        gradients.toArray,
-//        false,
-//        diagco,
-//        iprint,
-//        Lbfgs.STOPPING_THRESHOLD,
-//        Lbfgs.XTOL,
-//        iflag
-//      )
-//      System.err.println("Finished iteration:" + iteration)
-//      iteration += 1
-//      if (iteration % Lbfgs.SAVE_EVERY_K == 0) writeModel(weights, modelFile + "_" + iteration)
-//    } while (iteration <= Lbfgs.MAX_ITERATIONS && iflag(0) != 0)
-//    writeModel(weights, modelFile)
-//  }
 }
-object TrainArgId {
+object ArgIdTrainer {
+  val nullLabelIdx = 0
+  val biasFeatureIdx = 0
+
+  def frameExampleToArgExamples(numFeats: Int)(example: FrameFeatures): Iterator[MultiClassTrainingExample] = {
+    val featsNoBias = example.fElementSpansAndFeatures.asScala.iterator
+    val featsWithBias: Iterator[Array[FeatureVector]] = featsNoBias.map(_.map(f => //zipWithIndex.map({ case (f, label) =>
+   //  Not true? //        zeroth label is always "Not an argument", so bias feature (idx 0) doesn't fire
+//        val firingFeatures = if (label == nullLabelIdx) { f.features } else { biasFeatureIdx +: f.features }
+//        FeatureVector(firingFeatures, numFeats)
+        FeatureVector(f.features, numFeats)
+      )
+    )
+    val goldLabels = example.goldSpanIdxs.asScala.iterator
+    for ((feats, label) <- featsWithBias zip goldLabels) yield MultiClassTrainingExample(feats, label)
+  }
+
   def writeModel(weights: Vec[Double], modelFile: String) {
     for (ps <- managed(new PrintStream(new FileOutputStream(modelFile)))) {
       System.err.println(s"Writing model to $modelFile")

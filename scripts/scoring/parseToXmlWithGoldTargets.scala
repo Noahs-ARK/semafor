@@ -108,18 +108,22 @@ private def parseToFeFormatWithGoldTargets(frameIdFile: File,
     framesBySentence.keys.toList.sorted.map(i => (i, sentences(i), framesBySentence(i).map(getTargetFromFrameLine)))
   }
   // parse
-  val resultLines = for ((sentenceId, sentence, targets) <- sentencesAndTargets.iterator) yield {
-    System.err.println(s"Sentence Id: $sentenceId")
-    // frame identification
-    val idResult = sem.predictFrames(sentence, targets.map(_.asJava).asJava)
-    // argument identification
-    val idResultLines = sem.getArgumentIdInput(sentence, idResult)
-    val results = sem.predictArgumentLines(sentence, idResultLines, 1).asScala
-    results.flatMap(_.split("\n")).map(line => setSentenceId(line, sentenceId.toString))
+  val resultLines: Iterator[String] = {
+    val batchSize = 128
+    sentencesAndTargets.grouped(batchSize).flatMap(_.par.flatMap {
+      case (sentenceId, sentence, targets) =>
+        System.err.println(s"Sentence Id: $sentenceId")
+        // frame identification
+        val idResult = sem.predictFrames(sentence, targets.map(_.asJava).asJava)
+        // argument identification
+        val idResultLines = sem.getArgumentIdInput(sentence, idResult)
+        val results = sem.predictArgumentLines(sentence, idResultLines, 1).asScala
+        results.flatMap(_.split("\n")).map(line => setSentenceId(line, sentenceId.toString))
+    })
   }
   // write results to file
   for (out <- managed(newWriter(outputFile, UTF_8));
-       line <- resultLines.flatten) {
+       line <- resultLines) {
     out.write(line)
     out.write('\n')
   }

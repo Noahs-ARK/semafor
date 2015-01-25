@@ -1,7 +1,7 @@
 package edu.cmu.cs.lti.ark.ml.optimization
 
 import breeze.linalg.{SparseVector, Vector => Vec}
-import edu.cmu.cs.lti.ark.ml.FeatureVector
+import edu.cmu.cs.lti.ark.ml.MultiClassTrainingExample
 
 import scala.math._
 
@@ -10,10 +10,10 @@ trait SubDifferentiableLoss[T] {
   def lossAndGradient(weights: Vec[Double])(example: T): (Double, Vec[Double])
 }
 
-object HingeLoss extends SubDifferentiableLoss[(Array[FeatureVector], Int)] {
+object HingeLoss extends SubDifferentiableLoss[MultiClassTrainingExample] {
   override def lossAndGradient(weights: Vec[Double])
-                              (example: (Array[FeatureVector], Int)): (Double, Vec[Double]) = {
-    val (featsByLabel, goldLabelIdx) = example
+                              (example: MultiClassTrainingExample): (Double, Vec[Double]) = {
+    val MultiClassTrainingExample(featsByLabel, goldLabelIdx) = example
     // cost-augmented decoding
     val scoresByLabel: Array[Double] = featsByLabel.zipWithIndex.map { case (feats, roleIdx) =>
       val cost = if (roleIdx == goldLabelIdx) 0 else 1
@@ -30,10 +30,10 @@ object HingeLoss extends SubDifferentiableLoss[(Array[FeatureVector], Int)] {
   }
 }
 
-object LogLoss extends SubDifferentiableLoss[(Array[FeatureVector], Int)] {
+object LogLoss extends SubDifferentiableLoss[MultiClassTrainingExample] {
   override def lossAndGradient(weights: Vec[Double])
-                              (example: (Array[FeatureVector], Int)): (Double, Vec[Double]) = {
-    val (featsByLabel, goldLabelIdx) = example
+                              (example: MultiClassTrainingExample): (Double, Vec[Double]) = {
+    val MultiClassTrainingExample(featsByLabel, goldLabelIdx) = example
     val gradient = SparseVector.zeros[Double](weights.length)
     val scoresByLabel: Array[Double] = featsByLabel.map(_.dot(weights))
     val predictedProbsByLabel = {

@@ -8,7 +8,7 @@ echo
 
 source "$(dirname ${BASH_SOURCE[0]})/config.sh"
 
-${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms8000m -Xmx8000m \
+${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms6500m -Xmx6500m \
   edu.cmu.cs.lti.ark.fn.parsing.TrainArgIdApp \
   model:${model_dir}/argmodel.dat \
   alphabetfile:${SCAN_DIR}/parser.conf.unlabeled \

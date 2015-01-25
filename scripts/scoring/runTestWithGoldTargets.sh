@@ -40,7 +40,7 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
     endIndex:${end} \
     testParseFile:${all_lemma_tags_file} \
     testTokenizedFile:${tokenizedfile} \
-    outputFile:${gold_xml}
+    outputFile:${gold_xml}  2>/dev/null
 
 
 echo "Performing full parsing (but w/ gold targets) on ${cv} set, with model \"${model_name}\"..."

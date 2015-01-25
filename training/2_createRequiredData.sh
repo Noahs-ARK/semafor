@@ -39,6 +39,6 @@ mkdir -p "${model_dir}"
 #      fnidreqdatafile:${fn_id_req_data_file}
 
 #ln -s "${old_model_dir}/{*.{map,jobj,ser,conf,mco,gz},argmodel.dat}" "${model_dir}/"
-for model_file in `(cd ${old_model_dir} && ls *.{map,jobj,ser,conf,mco,gz})`; do
+for model_file in `(cd ${old_model_dir} && ls {*.{map,jobj,ser,conf,mco,gz},idmodel.dat,argmodel.dat})`; do
     ln -s "${old_model_dir}/${model_file}" "${model_dir}/${model_file}"
 done
