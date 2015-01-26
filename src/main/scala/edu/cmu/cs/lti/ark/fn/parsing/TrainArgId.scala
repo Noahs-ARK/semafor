@@ -7,6 +7,7 @@ import java.util.Scanner
 import breeze.linalg.{DenseVector, Vector => Vec}
 import com.google.common.base.Charsets
 import com.google.common.io.Files
+import edu.cmu.cs.lti.ark.fn.parsing.ArgIdTrainer.frameExampleToArgExamples
 import edu.cmu.cs.lti.ark.fn.parsing.FrameFeaturesCache.readFrameFeatures
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions
 import edu.cmu.cs.lti.ark.ml.optimization._
@@ -48,6 +49,7 @@ object FrameFeaturesCache {
 }
 
 /**
+ * Trains the Argument Id model, using pre-cached features
  * command-line arguments as follows:
  * frameFeaturesCacheFile: path to file containing a serialized cache of all of the features
  *   extracted from the training data
@@ -72,7 +74,9 @@ object TrainArgIdApp extends App {
   }
   System.err.println("Reading cached training data")
   val trainingData: Array[MultiClassTrainingExample] = {
-    readFrameFeatures(frameFeaturesCacheFile).acquireAndGet(_.flatMap(ArgIdTrainer.frameExampleToArgExamples(numFeats)).toArray)
+    readFrameFeatures(frameFeaturesCacheFile).acquireAndGet(
+      _.flatMap(frameExampleToArgExamples(numFeats)).toArray
+    )
   }
   System.err.println(s"Done reading cached training data. ${trainingData.length} training examples.")
   ArgIdTrainer(
@@ -98,8 +102,8 @@ case class ArgIdTrainer(modelFile: String,
     val optimizer = MiniBatch(trainingData, lossFn, lambda, batchSize, numThreads)
     val optimizationPath = optimizer.optimizationPath(DenseVector.zeros(numFeats))
     val everyK = continually(optimizationPath.drop(saveEveryKBatches - 1).next())
-    for (((loss, weights, gradNorm), i) <- everyK.take(maxSaves).zipWithIndex) {
-      writeModel(weights, modelFile + "_" + i)
+    for (((loss, weights), i) <- everyK.take(maxSaves).zipWithIndex) {
+      writeModel(weights, f"${modelFile}_$i%04d")
     }
   }
 }
@@ -108,16 +112,12 @@ object ArgIdTrainer {
   val biasFeatureIdx = 0
 
   def frameExampleToArgExamples(numFeats: Int)(example: FrameFeatures): Iterator[MultiClassTrainingExample] = {
-    val featsNoBias = example.fElementSpansAndFeatures.asScala.iterator
-    val featsWithBias: Iterator[Array[FeatureVector]] = featsNoBias.map(_.map(f => //zipWithIndex.map({ case (f, label) =>
-   //  Not true? //        zeroth label is always "Not an argument", so bias feature (idx 0) doesn't fire
-//        val firingFeatures = if (label == nullLabelIdx) { f.features } else { biasFeatureIdx +: f.features }
-//        FeatureVector(firingFeatures, numFeats)
-        FeatureVector(f.features, numFeats)
-      )
-    )
+    val frameFeatures = example.fElementSpansAndFeatures.asScala.iterator
     val goldLabels = example.goldSpanIdxs.asScala.iterator
-    for ((feats, label) <- featsWithBias zip goldLabels) yield MultiClassTrainingExample(feats, label)
+    for ((argFeats, label) <- frameFeatures zip goldLabels) yield {
+      val featureVector = argFeats.map(f => FeatureVector(f.features, numFeats))
+      MultiClassTrainingExample(featureVector, label)
+    }
   }
 
   def writeModel(weights: Vec[Double], modelFile: String) {

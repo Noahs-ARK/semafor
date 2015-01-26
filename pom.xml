@@ -50,7 +50,7 @@
         </dependency>
         <dependency>
             <groupId>edu.washington.cs.knowitall.nlptools</groupId>
-            <artifactId>nlptools-stem-morpha_2.9.2</artifactId>
+            <artifactId>nlptools-stem-morpha_2.10</artifactId>
             <version>2.4.1</version>
         </dependency>
         <dependency>
@@ -78,12 +78,12 @@
             <artifactId>stanford-corenlp</artifactId>
             <version>3.2.0</version>
         </dependency>
-        <dependency>
-            <groupId>edu.stanford.nlp</groupId>
-            <artifactId>stanford-corenlp</artifactId>
-            <version>3.2.0</version>
-            <classifier>models</classifier>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>edu.stanford.nlp</groupId>-->
+            <!--<artifactId>stanford-corenlp</artifactId>-->
+            <!--<version>3.2.0</version>-->
+            <!--<classifier>models</classifier>-->
+        <!--</dependency>-->
         <dependency>
             <!-- supposed to be optional (only used in signature), but scala won't compile without it -->
             <scope>provided</scope>
@@ -162,19 +162,19 @@
                 </configuration>
             </plugin>
             <!-- include source code in the final jar -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.2.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-source-plugin</artifactId>-->
+                <!--<version>2.2.1</version>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<id>attach-sources</id>-->
+                        <!--<goals>-->
+                            <!--<goal>jar-no-fork</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
