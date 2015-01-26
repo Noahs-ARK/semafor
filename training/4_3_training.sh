@@ -13,6 +13,7 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms5g -Xmx5g \
   model:${model_dir}/argmodel.dat \
   alphabetfile:${SCAN_DIR}/parser.conf.unlabeled \
   localfeaturescache:${SCAN_DIR}/featurecache.jobj \
-  lambda:0.1 \
+  lambda:0.01 \
   numthreads:${num_threads} \
-  batch-size:4000
+  batch-size:4000 # \
+#  warm-start-model:"${model_dir}/argmodel.dat_39"

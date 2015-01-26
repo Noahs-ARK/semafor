@@ -53,6 +53,7 @@ public final class FNModelOptions extends CommandLineOptions {
 	public StringOption testFrameFile = new StringOption("test-framefile");
 	public StringOption testParseFile = new StringOption("test-parsefile");
 	public StringOption modelFile = new StringOption("model");
+	public StringOption warmStartModelFile = new StringOption("warm-start-model");
 	public IntOption memory = new IntOption("memory");
 	public IntOption startIndex = new IntOption("startindex");
 	public IntOption endIndex = new IntOption("endindex");
