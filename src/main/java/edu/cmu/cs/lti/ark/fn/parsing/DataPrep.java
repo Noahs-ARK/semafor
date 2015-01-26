@@ -214,35 +214,32 @@ public class DataPrep {
 	}
 
 	public List<int[][]> getTrainData(String feline,
-									  List<SpanAndParseIdx> candidateTokens,
+									  List<SpanAndParseIdx> candidateSpans,
 									  Sentence sentence,
 									  String spanFilename)
 			throws IOException {
 		final DataPointWithFrameElements dataPoint = new DataPointWithFrameElements(sentence, feline);
 		final String frame = dataPoint.getFrameName();
-		final String[] frameElements = FEDict.getInstance().lookupFrameElements(frame);
+		final String[] allFrameElements = FEDict.getInstance().lookupFrameElements(frame);
 		final List<int[][]> featuresList = new ArrayList<int[][]>();
 
 		final List<Pair<List<int[]>, List<String>>> allFeaturesAndSpanLines = Lists.newArrayList();
 		//add realized frame elements
 		final List<Range0Based> spans = dataPoint.getOvertFrameElementFillerSpans();
-		final List<String> frameElementNames = dataPoint.getOvertFilledFrameElementNames();
-		final Set<String> realizedFes = Sets.newHashSet();
+		final List<String> filledFrameElements = dataPoint.getOvertFilledFrameElementNames();
 		for (int i = 0; i < dataPoint.getNumOvertFrameElementFillers(); i++) {
-			final String frameElement = frameElementNames.get(i);
-			if (!realizedFes.contains(frameElement)) {
-				realizedFes.add(frameElement);
-				final Range0Based span = spans.get(i);
-				allFeaturesAndSpanLines.add(
-						getFeaturesForOneArgument(dataPoint, frame, frameElement, span, candidateTokens));
-			}
+			final String frameElement = filledFrameElements.get(i);
+			final Range0Based goldSpan = spans.get(i);
+			allFeaturesAndSpanLines.add(
+					getFeaturesForOneArgument(dataPoint, frame, frameElement, goldSpan, candidateSpans));
 		}
 		//add null frame elements
-		for (String frameElement : frameElements) {
+		final Set<String> realizedFes = Sets.newHashSet(filledFrameElements);
+		for (String frameElement : allFrameElements) {
 			if (!realizedFes.contains(frameElement)) {
-				final Range0Based span = EMPTY_SPAN;
+				final Range0Based goldSpan = EMPTY_SPAN;
 				allFeaturesAndSpanLines.add(
-						getFeaturesForOneArgument(dataPoint, frame, frameElement, span, candidateTokens));
+						getFeaturesForOneArgument(dataPoint, frame, frameElement, goldSpan, candidateSpans));
 			}
 		}
 		//prints .spans file, which is later used to recover frame parse after prediction
@@ -260,22 +257,20 @@ public class DataPrep {
 		return featuresList;
 	}
 
-	/**
-	 * @param candidateSpanAndParseIdxs are of the form [start, end, dependencyParseIdx]
-	 */
 	Pair<List<int[]>, List<String>> getFeaturesForOneArgument(DataPointWithFrameElements dp,
 															  String frame,
 															  String fe,
 															  Range0Based goldSpan,
-															  List<SpanAndParseIdx> candidateSpanAndParseIdxs) {
+															  List<SpanAndParseIdx> candidateSpans) {
 		final List<int[]> features = Lists.newArrayList();
 		final List<String> spanLines = Lists.newArrayList();
 		spanLines.add(Joiner.on("\t").join(
 				dp.getSentenceNum(), fe, frame, dp.getTargetTokenIdxs()[0],
 				dp.getTargetTokenIdxs()[dp.getTargetTokenIdxs().length-1], feIndex));
 		// put gold span first
-		final List<SpanAndParseIdx> goldFirst = Lists.newArrayList();
-		for (SpanAndParseIdx candidateSpanAndParseIdx : candidateSpanAndParseIdxs) {
+		final List<SpanAndParseIdx> goldFirst =
+				Lists.newArrayListWithCapacity(candidateSpans.size());
+		for (SpanAndParseIdx candidateSpanAndParseIdx : candidateSpans) {
 			if (candidateSpanAndParseIdx.span.equals(goldSpan)) {
 				goldFirst.add(0, candidateSpanAndParseIdx);
 			} else {
@@ -287,18 +282,19 @@ public class DataPrep {
 		for (SpanAndParseIdx candidateSpanAndParseIdx : goldFirst) {
 			final Range0Based candidateSpan = candidateSpanAndParseIdx.span;
 			final DependencyParse parse = parses.get(candidateSpanAndParseIdx.parseIdx);
-			features.add(getFeaturesByIndex(dp, frame, fe, candidateSpan, parse));
+			features.add(getFeatureIndexes(dp, frame, fe, candidateSpan, parse));
 			spanLines.add(candidateSpan.start + "\t" + candidateSpan.end);
 		}
 		spanLines.add("");
 		return Pair.of(features, spanLines);
 	}
 
-	int[] getFeaturesByIndex(DataPointWithFrameElements dataPoint,
-							 String frame,
-							 String fe,
-							 Range0Based span,
-							 DependencyParse parse) {
+	/** Gets the indexes of all features that fire */
+	int[] getFeatureIndexes(DataPointWithFrameElements dataPoint,
+							String frame,
+							String fe,
+							Range0Based span,
+							DependencyParse parse) {
 		final Set<String> featureSet =
 				new FeatureExtractor().extractFeatures(dataPoint, frame, fe, span, parse).elementSet();
 		final int[] featArray = new int[featureSet.size()];
