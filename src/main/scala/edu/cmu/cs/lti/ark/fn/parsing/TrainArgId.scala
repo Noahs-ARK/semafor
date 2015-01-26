@@ -31,6 +31,7 @@ object CacheFrameFeaturesApp extends App {
   val frameFeaturesList: util.List[FrameFeatures] = lfr.readLocalFeatures
   FrameFeaturesCache.writeFrameFeatures(frameFeaturesList.asScala, outputFile)
 }
+
 object FrameFeaturesCache {
   def writeFrameFeatures(frameFeaturesList: TraversableOnce[FrameFeatures], outputFile: String): Unit = {
     for (output <- managed(new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile))))) {
@@ -39,6 +40,7 @@ object FrameFeaturesCache {
       }
     }
   }
+
   def readFrameFeatures(inputFile: String): ManagedResource[Iterator[FrameFeatures]] = {
     for (input <- managed(new ObjectInputStream(new BufferedInputStream(new FileInputStream(inputFile))))) yield {
       Iterator.from(1).map(i => {
@@ -53,12 +55,12 @@ object FrameFeaturesCache {
  * Trains the Argument Id model, using pre-cached features
  * command-line arguments as follows:
  * frameFeaturesCacheFile: path to file containing a serialized cache of all of the features
- *   extracted from the training data
+ * extracted from the training data
  * alphabetFile: path to file containing the alphabet
  * lambda: L2 regularization hyperparameter
  * numThreads: the number of parallel threads to run while optimizing
  * modelFile: path to output file to write resulting model to. intermediate models will be written to
- *   modelFile + "_" + i
+ * modelFile + "_" + i
  */
 object TrainArgIdApp extends App {
   val opts = new FNModelOptions(args)
@@ -69,6 +71,8 @@ object TrainArgIdApp extends App {
   val lambda = opts.lambda.get
   val numThreads = opts.numThreads.get
   val batchSize = opts.batchSize.get
+  val saveEveryKBatches = opts.saveEveryKBatches.get
+  val numModelsToSave = opts.numModelsToSave.get
 
   // Read the size of the model from the first line of `alphabetFile`.
   private val numFeats: Int = {
@@ -87,10 +91,14 @@ object TrainArgIdApp extends App {
     initialWeights,
     numFeats,
     trainingData,
-    HingeLoss,
+    SquaredHingeLoss,
     lambda,
     numThreads
-  ).runAdaDelta(batchSize = batchSize)
+  ).runAdaDelta(
+    batchSize = batchSize,
+    saveEveryKBatches = saveEveryKBatches,
+    numModelsToSave = numModelsToSave
+  )
 }
 
 case class ArgIdTrainer(modelFile: String,
@@ -102,16 +110,17 @@ case class ArgIdTrainer(modelFile: String,
                         numThreads: Int) {
   def runAdaDelta(batchSize: Int = 128,
                   saveEveryKBatches: Int = 500,
-                  maxSaves: Int = 100) {
+                  numModelsToSave: Int = 100) {
     import edu.cmu.cs.lti.ark.fn.parsing.ArgIdTrainer.writeModel
     val optimizer = MiniBatch(trainingData, lossFn, lambda, batchSize, numThreads)
     val optimizationPath = optimizer.optimizationPath(initialWeights)
     val everyK = continually(optimizationPath.drop(saveEveryKBatches - 1).next())
-    for (((loss, weights), i) <- everyK.take(maxSaves).zipWithIndex) {
+    for (((loss, weights), i) <- everyK.take(numModelsToSave).zipWithIndex) {
       writeModel(weights, f"${modelFile}_$i%04d")
     }
   }
 }
+
 object ArgIdTrainer {
   def frameExampleToArgExamples(numFeats: Int)(example: FrameFeatures): Iterator[MultiClassTrainingExample] = {
     val frameFeatures = example.fElementSpansAndFeatures.asScala.iterator

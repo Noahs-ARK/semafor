@@ -21,6 +21,7 @@ object HingeLoss extends SubDifferentiableLoss[MultiClassTrainingExample] {
     }
     val (predictedScore, predictedLabelIdx) = scoresByLabel.zipWithIndex.maxBy(_._1)
     if (predictedLabelIdx == goldLabelIdx) {
+      // predicted correct label with sufficient margin. no penalty
       (0, SparseVector.zeros(weights.length))
     } else {
       val loss = predictedScore - scoresByLabel(goldLabelIdx)
@@ -29,6 +30,15 @@ object HingeLoss extends SubDifferentiableLoss[MultiClassTrainingExample] {
     }
   }
 }
+
+object SquaredHingeLoss extends SubDifferentiableLoss[MultiClassTrainingExample] {
+  override def lossAndGradient(weights: Vec[Double])
+                              (example: MultiClassTrainingExample): (Double, Vec[Double]) = {
+    val (loss, gradient) = HingeLoss.lossAndGradient(weights)(example)
+    (loss * loss, gradient * loss)
+  }
+}
+
 
 object LogLoss extends SubDifferentiableLoss[MultiClassTrainingExample] {
   override def lossAndGradient(weights: Vec[Double])

@@ -54,6 +54,8 @@ public final class FNModelOptions extends CommandLineOptions {
 	public StringOption testParseFile = new StringOption("test-parsefile");
 	public StringOption modelFile = new StringOption("model");
 	public StringOption warmStartModelFile = new StringOption("warm-start-model");
+	public IntOption saveEveryKBatches = new IntOption("save-every-k-batches");
+	public IntOption numModelsToSave = new IntOption("num-models-to-save");
 	public IntOption memory = new IntOption("memory");
 	public IntOption startIndex = new IntOption("startindex");
 	public IntOption endIndex = new IntOption("endindex");

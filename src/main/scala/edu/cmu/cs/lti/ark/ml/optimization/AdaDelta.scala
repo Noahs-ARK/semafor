@@ -39,12 +39,14 @@ case class AdaDelta(decay: Double = 0.05, smoothing: Double = 1e-6) {
     def step(gradient: Vec[Double]): State = {
       for (i <- (0 until weights.length).par) {
         val g = gradient(i)
-        val oldAvgSqDelta = avgSquaredDelta(i)
-        val newAvgSqGrad = decayingAvg(avgSquaredGradient(i), g * g)
-        avgSquaredGradient(i) = newAvgSqGrad
-        val delta = (smoothSqrt(oldAvgSqDelta) / smoothSqrt(newAvgSqGrad)) * g
-        avgSquaredDelta(i) = decayingAvg(oldAvgSqDelta, delta * delta)
-        weights(i) = weights(i) - delta
+        if (g != 0.0) {
+          val oldAvgSqDelta = avgSquaredDelta(i)
+          val newAvgSqGrad = decayingAvg(avgSquaredGradient(i), g * g)
+          avgSquaredGradient(i) = newAvgSqGrad
+          val delta = (smoothSqrt(oldAvgSqDelta) / smoothSqrt(newAvgSqGrad)) * g
+          avgSquaredDelta(i) = decayingAvg(oldAvgSqDelta, delta * delta)
+          weights(i) = weights(i) - delta
+        }
       }
       this
     }
