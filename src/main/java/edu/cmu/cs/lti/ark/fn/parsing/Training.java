@@ -54,7 +54,7 @@ public class Training {
 	 *   frameFeaturesCacheFile: path to file containing a serialized cache of all of the features
 	 *       extracted from the training data
 	 *   alphabetFile: path to file containing the alphabet
-	 *   lambda: L2 regularization hyperparameter
+	 *   l2Strength: L2 regularization hyperparameter
 	 *   numThreads: the number of parallel threads to run while optimizing
 	 *   modelFile: path to output file to write resulting model to. intermediate models will be written to
 	 *       modelFile + "_" + i
@@ -64,7 +64,7 @@ public class Training {
 		final String modelFile = opts.modelFile.get();
 		final String alphabetFile = opts.alphabetFile.get();
 		final String frameFeaturesCacheFile = opts.frameFeaturesCacheFile.get();
-		final double lambda = opts.lambda.get();
+		final double lambda = opts.l2Strength.get();
 		final int numThreads = opts.numThreads.get();
 		final ArrayList<FrameFeatures> frameFeaturesList = readObject(frameFeaturesCacheFile);
 		final Training training = new Training(modelFile, alphabetFile, frameFeaturesList, lambda, numThreads);

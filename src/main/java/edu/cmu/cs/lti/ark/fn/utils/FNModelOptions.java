@@ -46,7 +46,8 @@ public final class FNModelOptions extends CommandLineOptions {
 	public StringOption trainFrameFile = new StringOption("train-framefile");
 	public StringOption trainFrameElementFile = new StringOption("train-fefile");
 	public StringOption reg = new StringOption("regularization");
-	public DoubleOption lambda = new DoubleOption("lambda");
+	public DoubleOption l1Strength = new DoubleOption("l1-strength");
+	public DoubleOption l2Strength = new DoubleOption("l2-strength");
 	public StringOption frameNetMapFile = new StringOption("framenet-mapfile");
 	public ExistingPathOption wnConfigFile = new ExistingPathOption("wordnet-configfile");
 	public ExistingPathOption stopWordsFile = new ExistingPathOption("stopwords-file");

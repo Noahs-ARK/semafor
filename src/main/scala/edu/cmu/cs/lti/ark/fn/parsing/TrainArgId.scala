@@ -57,7 +57,7 @@ object FrameFeaturesCache {
  * frameFeaturesCacheFile: path to file containing a serialized cache of all of the features
  * extracted from the training data
  * alphabetFile: path to file containing the alphabet
- * lambda: L2 regularization hyperparameter
+ * l2Strength: L2 regularization hyperparameter
  * numThreads: the number of parallel threads to run while optimizing
  * modelFile: path to output file to write resulting model to. intermediate models will be written to
  * modelFile + "_" + i
@@ -65,11 +65,11 @@ object FrameFeaturesCache {
 object TrainArgIdApp extends App {
   val opts = new FNModelOptions(args)
   val modelFile = opts.modelFile.get
-  val oWarmStartModelFile = if (opts.warmStartModelFile.present) Some(opts.warmStartModelFile.get) else None
+  val oWarmStartModelFile = if (opts.warmStartModelFile.present) { Some(opts.warmStartModelFile.get) } else { None }
   val alphabetFile = opts.alphabetFile.get
   val frameFeaturesCacheFile = opts.frameFeaturesCacheFile.get
-  val lambda = opts.lambda.get
-  val numThreads = opts.numThreads.get
+  val l1Strength = opts.l1Strength.get
+  val l2Strength = opts.l2Strength.get
   val batchSize = opts.batchSize.get
   val saveEveryKBatches = opts.saveEveryKBatches.get
   val numModelsToSave = opts.numModelsToSave.get
@@ -85,43 +85,48 @@ object TrainArgIdApp extends App {
     )
   }
   System.err.println(s"Done reading cached training data. ${trainingData.length} training examples.")
-  val initialWeights = oWarmStartModelFile.fold(DenseVector.zeros[Double](numFeats))(readModel)
-  ArgIdTrainer(
-    modelFile,
-    initialWeights,
-    numFeats,
-    trainingData,
-    SquaredHingeLoss,
-    lambda,
-    numThreads
-  ).runAdaDelta(
+  val initialWeights = oWarmStartModelFile match {
+    case Some(file) => readModel(file)
+    case None => DenseVector.zeros[Double](numFeats)
+  }
+  ArgIdTrainer.runAdaDelta(
+    modelFile = modelFile,
+    initialWeights = initialWeights,
+    trainingData = trainingData,
+    lossFn = SquaredHingeLoss,
+    l1Strength = l1Strength,
+    l2Strength = l2Strength,
     batchSize = batchSize,
     saveEveryKBatches = saveEveryKBatches,
     numModelsToSave = numModelsToSave
   )
 }
-
-case class ArgIdTrainer(modelFile: String,
-                        initialWeights: DenseVector[Double],
-                        numFeats: Int,
-                        trainingData: Array[MultiClassTrainingExample],
-                        lossFn: SubDifferentiableLoss[MultiClassTrainingExample],
-                        lambda: Double,
-                        numThreads: Int) {
-  def runAdaDelta(batchSize: Int = 128,
+object ArgIdTrainer {
+  def runAdaDelta(modelFile: String,
+                  initialWeights: DenseVector[Double],
+                  trainingData: Array[MultiClassTrainingExample],
+                  lossFn: SubDifferentiableLoss[MultiClassTrainingExample],
+                  l1Strength: Double,
+                  l2Strength: Double,
+                  batchSize: Int = 4000,
                   saveEveryKBatches: Int = 500,
-                  numModelsToSave: Int = 100) {
-    import edu.cmu.cs.lti.ark.fn.parsing.ArgIdTrainer.writeModel
-    val optimizer = MiniBatch(trainingData, lossFn, lambda, batchSize, numThreads)
-    val optimizationPath = optimizer.optimizationPath(initialWeights)
+                  numModelsToSave: Int = 30) {
+    val n = trainingData.length
+    val optimizer = MiniBatch(trainingData, lossFn, l1Strength, l2Strength, batchSize)
+    lazy val startTime = System.currentTimeMillis()
+    val optimizationPath = optimizer.optimizationPath(initialWeights).map({
+      case (state, loss, iteration, batchNum) =>
+        val partialIt = iteration + (batchNum.toDouble * batchSize / n)
+        val time = (System.currentTimeMillis() - startTime) / 1000.0
+        System.err.println(f"i: $partialIt%.3f,  loss: $loss%.5f,  regLoss: ${state.regLoss}%.5f,  time:$time%.2fs")
+        state
+    })
     val everyK = continually(optimizationPath.drop(saveEveryKBatches - 1).next())
-    for (((loss, weights), i) <- everyK.take(numModelsToSave).zipWithIndex) {
-      writeModel(weights, f"${modelFile}_$i%04d")
+    for ((state, i) <- everyK.take(numModelsToSave).zipWithIndex) {
+      writeModel(state.weights, f"${modelFile}_$i%04d")
     }
   }
-}
 
-object ArgIdTrainer {
   def frameExampleToArgExamples(numFeats: Int)(example: FrameFeatures): Iterator[MultiClassTrainingExample] = {
     val frameFeatures = example.fElementSpansAndFeatures.asScala.iterator
     val goldLabels = example.goldSpanIdxs.asScala.iterator

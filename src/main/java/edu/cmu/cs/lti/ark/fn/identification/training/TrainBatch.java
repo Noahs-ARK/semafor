@@ -99,7 +99,7 @@ public class TrainBatch {
 				options.eventsFile.get(),
 				options.modelFile.get(),
 				options.reg.get(),
-				options.lambda.get(),
+				options.l2Strength.get(),
 				restartFile.equals("null") ? Optional.<String>absent() : Optional.of(restartFile),
 				numThreads,
 				options.usePartialCredit.get(),

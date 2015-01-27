@@ -14,8 +14,8 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms5g -Xmx5g \
   warm-start-model:${model_dir}/argmodel.dat \
   alphabetfile:${SCAN_DIR}/parser.conf.unlabeled \
   localfeaturescache:${SCAN_DIR}/featurecache.jobj \
-  lambda:1e-7 \
-  numthreads:${num_threads} \
+  l1-strength:1e-8 \
+  l2-strength:1e-8 \
   batch-size:4000 \
   save-every-k-batches:400 \
   num-models-to-save:30

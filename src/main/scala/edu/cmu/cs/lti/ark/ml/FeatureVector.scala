@@ -3,7 +3,7 @@ package edu.cmu.cs.lti.ark.ml
 import java.util
 
 import breeze.collection.mutable.SparseArray
-import breeze.linalg.{SparseVector, Vector => Vec}
+import breeze.linalg.{Vector => Vec, DenseVector, SparseVector}
 
 import scala.reflect.ClassTag
 
@@ -31,10 +31,25 @@ case class FeatureVector(indexes: Array[Int], length: Int) {
     util.Arrays.sort(indexes)
     indexes
   }
-  private def sparseArray[T : ClassTag](t: T, f: T): SparseArray[T] = {
+
+  private def sparseArray[T: ClassTag](t: T, f: T): SparseArray[T] = {
     new SparseArray[T](sorted, Array.fill(sorted.length)(t), sorted.length, length, f)
   }
 }
 
 case class MultiClassTrainingExample(featuresByLabel: Array[FeatureVector],
                                      correctLabel: Int)
+
+object Vectors {
+  /** Converts a SparseVector to a DenseVector using all cores */
+  def toDenseVector(vec: Vec[Double]): DenseVector[Double] = vec match {
+    case v: SparseVector[Double] =>
+      val result = Array.ofDim[Double](vec.length)
+      (0 until v.activeSize).par.map(i =>
+        result(v.index(i)) = v.data(i)
+      )
+      DenseVector(result)
+    case grad: DenseVector[Double] => grad
+    case grad => grad.toDenseVector
+  }
+}
