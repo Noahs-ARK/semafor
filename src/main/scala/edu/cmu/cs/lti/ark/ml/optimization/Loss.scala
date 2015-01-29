@@ -59,3 +59,28 @@ object LogLoss extends SubDifferentiableLoss[MultiClassTrainingExample] {
     (-log(predictedProbsByLabel(goldLabelIdx)), gradient)
   }
 }
+
+/**
+ * Proximal mappings for some common functions
+ * prox_h(w) = min_x { h(x) + 1/2 ||x - w||^2 }
+ */
+object ProximalMappings {
+  /** Proximal mapping for L1 (a.k.a. "soft-threshold") */
+  @inline def lasso(lambda: Double)(x: Double): Double = {
+    if (x > lambda) {
+      x - lambda
+    } else if (x < -lambda) {
+      x + lambda
+    } else {
+      0.0
+    }
+  }
+
+  /** Proximal mapping for L2 */
+  @inline def ridge(lambda: Double)(x: Double): Double = x / (lambda + 1.0)
+
+  /** Proximal mapping for L1 + L2 */
+  @inline def elasticNet(lambda1: Double, lambda2: Double)(x: Double): Double = {
+    ridge(lambda2)(lasso(lambda1)(x))
+  }
+}

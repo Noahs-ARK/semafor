@@ -17,7 +17,4 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4g -Xmx4g \
    ${parsed_file} \
    ${SCAN_DIR}/cv.train.events.bin \
    ${SCAN_DIR}/parser.conf.unlabeled \
-   ${SCAN_DIR}/cv.train.sentences.frame.elements.spans \
-   true \
-   1 \
-   null
+   ${SCAN_DIR}/cv.train.sentences.frame.elements.spans

@@ -282,7 +282,7 @@ public class Semafor {
 			final DependencyParses parses = dataPoint.getParses();
 			final int targetStartTokenIdx = dataPoint.getTargetTokenIdxs()[0];
 			final int targetEndTokenIdx = dataPoint.getTargetTokenIdxs()[dataPoint.getTargetTokenIdxs().length-1];
-			final List<SpanAndParseIdx> spans = DataPrep.findSpans(dataPoint, 1);
+			final List<SpanAndParseIdx> spans = DataPrep.findSpans(dataPoint);
 			final List<String> frameElements = Lists.newArrayList(frameElementsForFrame.lookupFrameElements(frame));
 			final List<SpanAndCorrespondingFeatures[]> featuresAndSpanByArgument = Lists.newArrayList();
 			for (String frameElement : frameElements) {

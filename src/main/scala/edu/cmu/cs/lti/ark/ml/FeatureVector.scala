@@ -42,7 +42,7 @@ case class MultiClassTrainingExample(featuresByLabel: Array[FeatureVector],
 
 object Vectors {
   /** Converts a SparseVector to a DenseVector using all cores */
-  def toDenseVector(vec: Vec[Double]): DenseVector[Double] = vec match {
+  def toDenseVectorPar(vec: Vec[Double]): DenseVector[Double] = vec match {
     case v: SparseVector[Double] =>
       val result = Array.ofDim[Double](vec.length)
       (0 until v.activeSize).par.map(i =>

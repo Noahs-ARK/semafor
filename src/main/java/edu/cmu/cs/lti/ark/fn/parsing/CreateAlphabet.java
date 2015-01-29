@@ -22,12 +22,12 @@
 package edu.cmu.cs.lti.ark.fn.parsing;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import edu.cmu.cs.lti.ark.util.FileUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 
 import static com.google.common.base.Charsets.UTF_8;
@@ -42,39 +42,25 @@ public class CreateAlphabet {
 		final String eventFilename =  args[2];
 		final String alphabetFilename = args[3];
 		final String spanFilename = args[4];
-		final boolean doGenerateAlphabet = Boolean.parseBoolean(args[5]);
-		final int kBestParse = Integer.parseInt(args[6]);
 
-		if(doGenerateAlphabet) System.out.println("Generating alphabet...");
+		System.out.println("Generating alphabet...");
 
 		final List<String> feLines = readLines(new File(feFilename), UTF_8);
 		final List<String> tagLines = readLines(new File(tagFilename), UTF_8);
-		run(doGenerateAlphabet, tagLines, feLines, eventFilename, alphabetFilename, spanFilename, kBestParse);
+		run(tagLines, feLines, eventFilename, alphabetFilename, spanFilename);
 	}
 
-	private static void run(boolean doGenerateAlphabet,
-							List<String> tagLines,
+	private static void run(List<String> tagLines,
 							List<String> frameElementLines,
 							String eventFilename,
 							String alphabetFilename,
-							String spanFilename,
-							int kBestParse) throws IOException {
-		DataPrep.genAlpha = doGenerateAlphabet;
-		if(doGenerateAlphabet){
-			DataPrep.featureIndex = Maps.newHashMap();
-		} else if(DataPrep.featureIndex == null){
-			System.err.println("Reading alphabet...");
-			long time = System.currentTimeMillis();
-			DataPrep.featureIndex = DataPrep.readFeatureIndex(new File(alphabetFilename));
-			System.err.println("Read alphabet in "+(System.currentTimeMillis()-time) + " millis.");
-		}
-		final List<int[][][]> dataPoints = getDataPoints(tagLines, frameElementLines, spanFilename, kBestParse);
+							String spanFilename) throws IOException {
+		final DataPrep dataPrep = new DataPrep(tagLines, frameElementLines, spanFilename, new HashMap<String, Integer>());
+		final List<int[][][]> dataPoints = getDataPoints(dataPrep, spanFilename);
 		final long time = System.currentTimeMillis();
 		writeEvents(dataPoints, eventFilename);
 		System.err.println("Wrote events in " + (System.currentTimeMillis() - time) + " millis.");
-		if(doGenerateAlphabet){
-			DataPrep.writeFeatureIndex(alphabetFilename);
-		}
+		dataPrep.writeFeatureIndex(alphabetFilename);
 	}
 
 	private static void writeEvents(List<int[][][]> dataPoints, String eventFilename) {
@@ -101,11 +87,7 @@ public class CreateAlphabet {
 		}
 	}
 
-	private static List<int[][][]> getDataPoints(List<String> tagLines,
-												 List<String> frameElementLines,
-												 String spanFilename,
-												 int kBestParse) throws IOException {
-		final DataPrep dataPrep = new DataPrep(tagLines, frameElementLines, spanFilename, kBestParse);
+	private static List<int[][][]> getDataPoints(DataPrep dataPrep, String spanFilename) throws IOException {
 		final List<int[][][]> dataPoints = Lists.newArrayList();
 		while(dataPrep.hasNext()){
 			dataPoints.add(dataPrep.getNextTrainData(spanFilename));

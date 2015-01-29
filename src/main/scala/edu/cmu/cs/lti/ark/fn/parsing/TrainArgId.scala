@@ -1,13 +1,12 @@
 package edu.cmu.cs.lti.ark.fn.parsing
 
 import java.io._
-import java.util
 import java.util.Scanner
 
 import breeze.linalg.{DenseVector, Vector => Vec}
 import com.google.common.base.Charsets
 import com.google.common.io.Files
-import edu.cmu.cs.lti.ark.fn.parsing.ArgIdTrainer.{readModel, frameExampleToArgExamples}
+import edu.cmu.cs.lti.ark.fn.parsing.ArgIdTrainer.{frameExampleToArgExamples, readModel}
 import edu.cmu.cs.lti.ark.fn.parsing.FrameFeaturesCache.readFrameFeatures
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions
 import edu.cmu.cs.lti.ark.ml.optimization._
@@ -25,10 +24,9 @@ object CacheFrameFeaturesApp extends App {
   val spanFile = opts.spansFile.get
   val frFile = opts.trainFrameFile.get
   val outputFile = opts.frameFeaturesCacheFile.get
-
-  val frameLines: util.List[String] = Files.readLines(new File(frFile), Charsets.UTF_8)
+  val frameLines = Files.readLines(new File(frFile), Charsets.UTF_8)
   val lfr = new LocalFeatureReading(eventsFile, spanFile, frameLines)
-  val frameFeaturesList: util.List[FrameFeatures] = lfr.readLocalFeatures
+  val frameFeaturesList = lfr.readLocalFeatures
   FrameFeaturesCache.writeFrameFeatures(frameFeaturesList.asScala, outputFile)
 }
 
@@ -65,11 +63,11 @@ object FrameFeaturesCache {
 object TrainArgIdApp extends App {
   val opts = new FNModelOptions(args)
   val modelFile = opts.modelFile.get
-  val oWarmStartModelFile = if (opts.warmStartModelFile.present) { Some(opts.warmStartModelFile.get) } else { None }
+  val oWarmStartModelFile = Option(opts.warmStartModelFile.get)
   val alphabetFile = opts.alphabetFile.get
   val frameFeaturesCacheFile = opts.frameFeaturesCacheFile.get
-  val l1Strength = opts.l1Strength.get
-  val l2Strength = opts.l2Strength.get
+  val l1Strength = Option(opts.l1Strength.get).getOrElse(0.0)
+  val l2Strength = Option(opts.l2Strength.get).getOrElse(0.0)
   val batchSize = opts.batchSize.get
   val saveEveryKBatches = opts.saveEveryKBatches.get
   val numModelsToSave = opts.numModelsToSave.get

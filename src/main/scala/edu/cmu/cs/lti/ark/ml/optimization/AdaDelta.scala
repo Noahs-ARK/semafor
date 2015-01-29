@@ -1,7 +1,7 @@
 package edu.cmu.cs.lti.ark.ml.optimization
 
 import breeze.linalg.{DenseVector, Vector => Vec}
-import edu.cmu.cs.lti.ark.ml.Vectors.toDenseVector
+import edu.cmu.cs.lti.ark.ml.Vectors.toDenseVectorPar
 import edu.cmu.cs.lti.ark.ml.optimization.MiniBatch.addLossAndGradient
 
 import scala.math.sqrt
@@ -26,50 +26,6 @@ case class AdaDelta(decay: Double = 0.05,
                     smoothing: Double = 1e-6,
                     l1Strength: Double = 1e-5,
                     l2Strength: Double = 0.0) {
-
-  @inline private[this] def smoothSqrt(x: Double): Double = sqrt(x + smoothing)
-
-  @inline private[this] val oneMinusDecay = 1 - decay
-
-  @inline def decayingAvg(oldAvg: Double, newVal: Double): Double = {
-    oneMinusDecay * oldAvg + decay * newVal
-  }
-
-  /** Proximal mapping for L1 (a.k.a. "soft-threshold") */
-  @inline private[this] def l1Proximal(scale: Double)(x: Double): Double = {
-    if (x > scale) {
-      x - scale
-    } else if (x < -scale) {
-      x + scale
-    } else {
-      0.0
-    }
-  }
-
-  /** Proximal mapping for L2. Scales `x` down by `1 / (scale + 1)` */
-  @inline private[this] def l2Proximal(scale: Double)(x: Double): Double = {
-    x / (scale + 1.0)
-  }
-
-  /**
-   * Proximal mapping for L1 + L2.
-   * Closed-form solution to `\argmin_y { (scale * regLoss(y)) + ||y-x||^2 }`.
-   * `scale` should be the same as the learning rate applied to the respective
-   * gradient component.
-   */
-  @inline private[this] def proximal(scale: Double)(x: Double): Double = {
-    val thresholded = if (l1Strength == 0.0) {
-      x
-    } else {
-      l1Proximal(scale * l1Strength)(x)
-    }
-    if (l2Strength == 0.0) {
-      thresholded
-    } else {
-      l2Proximal(scale * l2Strength)(thresholded)
-    }
-  }
-
   /** The starting state for a run of AdaDelta */
   def start(initialWeights: Vec[Double]): State = {
     val size = initialWeights.length
@@ -92,7 +48,7 @@ case class AdaDelta(decay: Double = 0.05,
      * TODO: Modifying state in place is in order to reduce memory usage. Is it necessary?
      */
     def step(gradient: Vec[Double]): State = {
-      val denseGrad = toDenseVector(gradient)
+      val denseGrad = toDenseVectorPar(gradient)
       val regLosses = for (i <- (0 until denseGrad.length).par) yield {
         // modify each component in place
         val g = denseGrad(i)
@@ -103,15 +59,26 @@ case class AdaDelta(decay: Double = 0.05,
         val delta = rate * g
         avgSquaredGradient(i) = newAvgSqGrad
         avgSquaredDelta(i) = decayingAvg(oldAvgSqDelta, delta * delta)
-        val newWeight = proximal(rate)(w - delta)
+        val newWeight = proximalStep(rate)(w - delta)
         weights(i) = newWeight
-        // yield regularization loss due to this component
-        l1Strength * math.abs(newWeight) +.5 * l2Strength * newWeight * newWeight
+        // yield regularization loss due to this weight
+        l1Strength * math.abs(newWeight) + .5 * l2Strength * newWeight * newWeight
       }
       copy(regLoss = regLosses.sum)
     }
   }
 
+  @inline private[this] def smoothSqrt(x: Double): Double = sqrt(x + smoothing)
+
+  private[this] val oneMinusDecay = 1 - decay
+
+  @inline def decayingAvg(oldAvg: Double, newVal: Double): Double = {
+    oneMinusDecay * oldAvg + decay * newVal
+  }
+
+  @inline private def proximalStep(rate: Double): Double => Double = {
+    ProximalMappings.elasticNet(rate * l1Strength, rate * l2Strength)
+  }
 }
 
 case class MiniBatch[T](trainingData: IndexedSeq[T],
