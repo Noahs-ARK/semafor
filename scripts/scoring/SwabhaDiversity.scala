@@ -22,7 +22,7 @@ val SEMAFOR_HOME = new File(System.getProperty("user.home"), "code/semafor/semaf
 
 val TOKENIZED_FILE = new File(SEMAFOR_HOME, "training/data/naacl2012/cv.test.sentences.tokenized")
 val FRAME_ID_FILE = new File(SEMAFOR_HOME, "training/data/naacl2012/cv.test.sentences.frames")
-val GOLD_DEP_PARSE_FILENAME = new File(SEMAFOR_HOME, "training/data/naacl2012/cv.test.sentences.all.lemma.tags")
+val GOLD_DEP_PARSE_FILENAME = new File(SEMAFOR_HOME, "training/data/naacl2012/cv.test.sentences.turboparsed.matsumoto.all.lemma.tags")
 val NUM_SENTENCES = Source.fromFile(TOKENIZED_FILE).getLines().length
 
 val EXPERIMENTS_DIR = new File(SEMAFOR_HOME, "experiments/turbo_matsumoto_20140723")
