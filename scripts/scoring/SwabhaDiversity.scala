@@ -18,7 +18,7 @@ import scala.io.Source
 val K_BEST = 1
 val SENTENCE_FIELD = 7
 
-val SEMAFOR_HOME = new File(System.getProperty("user.home"), "code/semafor/semafor")
+val SEMAFOR_HOME = new File(System.getProperty("user.home"), "semafor/semafor")
 
 val TOKENIZED_FILE = new File(SEMAFOR_HOME, "training/data/naacl2012/cv.test.sentences.tokenized")
 val FRAME_ID_FILE = new File(SEMAFOR_HOME, "training/data/naacl2012/cv.test.sentences.frames")

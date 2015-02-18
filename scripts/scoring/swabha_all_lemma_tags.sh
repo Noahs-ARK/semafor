@@ -11,7 +11,7 @@ set -e # fail fast
 source "$(dirname ${0})/../../training/config.sh"
 
 prefixes="train dev test"
-for [prefix in prefixes]; do
+for prefix in $prefixes ; do
     tmp_parse_file="${training_dir}/cv.${prefix}.sentences.tmp_parse_file"
     ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
         edu.cmu.cs.lti.ark.fn.data.prep.AllAnnotationsMergingWithoutNE \
