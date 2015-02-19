@@ -25,7 +25,8 @@ val FRAME_ID_FILE = new File(SEMAFOR_HOME, "training/data/naacl2012/cv.test.sent
 val GOLD_DEP_PARSE_FILENAME = new File(SEMAFOR_HOME, "training/data/naacl2012/cv.test.sentences.turboparsed.matsumoto.all.lemma.tags")
 val NUM_SENTENCES = Source.fromFile(TOKENIZED_FILE).getLines().length
 
-val EXPERIMENTS_DIR = new File(SEMAFOR_HOME, "experiments/turbo_matsumoto_20140723")
+//val EXPERIMENTS_DIR = new File(SEMAFOR_HOME, "experiments/turbo_matsumoto_20140723")
+val EXPERIMENTS_DIR = new File(SEMAFOR_HOME, "experiments/turbo_standard_20150218")
 val MODEL_DIR = new File(EXPERIMENTS_DIR, "model")
 
 val DEP_PARSE_BASE_FOLDER = new File(SEMAFOR_HOME, "experiments/swabha/diversekbestdeps")
@@ -47,7 +48,7 @@ def setSentenceId(line: String, sentenceId: String): String = {
 def predictArgsForSentence(sentence: Sentence, frames: List[String], kBest: Int, sem: Semafor): List[String] = {
   // predictArgumentLines needs the sentenceId field to be 0, but we don't want to forget it
   val sentenceId = frames(0).split("\t")(SENTENCE_FIELD)
-  System.err.println("\nSentence Id: %s\n".format(sentenceId))
+  if (sentenceId.endsWith("00")) System.err.println("%s...".format(sentenceId))
   // set it to 0 and run arg id'ing
   val zeroed = frames.map(setSentenceId(_, "0"))
   val results: List[String] = sem.predictArgumentLines(sentence, zeroed.asJava, kBest).asScala.toList

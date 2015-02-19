@@ -155,7 +155,7 @@ public class Training {
 
 	public void processBatch(int taskID, int start, int end) {
 		int threadID = taskID % mNumThreads;
-		System.out.println("Processing batch:" + taskID + " thread ID:" + threadID);
+		//System.out.println("Processing batch:" + taskID + " thread ID:" + threadID);
 		if (end > mFrameList.size()) {
 			end = mFrameList.size();
 		}
@@ -175,9 +175,9 @@ public class Training {
 	public Runnable createTask(final int count, final int start, final int end) {
 		return new Runnable() {
 		      public void run() {
-		        System.out.println("Task " + count + " : start");
+		        //System.out.println("Task " + count + " : start");
 		        processBatch(count, start, end);
-		        System.out.println("Task " + count + " : end");
+		        //System.out.println("Task " + count + " : end");
 		      }
 		};
 	}
@@ -225,7 +225,7 @@ public class Training {
 		int iteration = 0;
 		do {
 			Arrays.fill(mGradients, 0.0);
-			System.out.println("Starting iteration:" + iteration);
+			//System.out.println("Starting iteration:" + iteration);
 			double m_value = getValuesAndGradients();
 			System.out.println("Function value:"+m_value);
 			LBFGS.lbfgs(modelSize,
