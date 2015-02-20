@@ -4,6 +4,7 @@ set -e # fail fast
 
 source "$(dirname ${0})/config.sh"
 
+echo 
 echo
 echo "RequiredDataCreation"
 echo

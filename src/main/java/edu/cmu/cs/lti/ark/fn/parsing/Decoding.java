@@ -145,6 +145,7 @@ public class Decoding {
 	}
 
 	protected static double[] readModel(String modelFile, String alphabetFile) {
+                System.out.println("alphabet file: " + alphabetFile);
 		final Scanner localsc = FileUtil.openInFile(alphabetFile);
 		final int numLocalFeatures;
 		try {
@@ -155,6 +156,7 @@ public class Decoding {
 		final Scanner scanner = FileUtil.openInFile(modelFile);
 		final double [] modelWeights = new double[numLocalFeatures];
 		try {
+                        System.out.println("numLocalFeatures = " + numLocalFeatures);
 			for (int i = 0; i < numLocalFeatures; i++) {
 				modelWeights[i] = Double.parseDouble(scanner.nextLine());
 			}

@@ -311,6 +311,7 @@ public class DataPrep {
 	}
 
 	public static Map<String, Integer> readFeatureIndex(File alphabetFile) throws FileNotFoundException {
+                System.out.println("alphabet file " + alphabetFile.getAbsolutePath());
 		HashMap<String, Integer> featureIndex = Maps.newHashMap();
 		final FileInputStream inputStream = new FileInputStream(alphabetFile);
 		Scanner scanner = new Scanner(inputStream);

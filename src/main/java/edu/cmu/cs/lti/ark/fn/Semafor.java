@@ -70,7 +70,7 @@ import static org.apache.commons.io.IOUtils.closeQuietly;
 
 public class Semafor {
 	public static final String REQUIRED_DATA_FILENAME = "reqData.jobj";
-	private static final String ALPHABET_FILENAME = "parser.conf";
+	private static final String ALPHABET_FILENAME = "alphabet.dat";//"parser.conf";
 	private static final String FRAME_ELEMENT_MAP_FILENAME = "framenet.frame.element.map";
 	private static final String ARG_MODEL_FILENAME = "argmodel.dat";
 
@@ -123,6 +123,7 @@ public class Semafor {
 		final String alphabetFilename = new File(modelDirectory, ALPHABET_FILENAME).getAbsolutePath();
 		final String frameElementMapFilename = new File(modelDirectory, FRAME_ELEMENT_MAP_FILENAME).getAbsolutePath();
 		final String argModelFilename = new File(modelDirectory, ARG_MODEL_FILENAME).getAbsolutePath();
+                System.out.println(argModelFilename+"\n\n");
 		// unpack required data
 		final RequiredDataForFrameIdentification r = readObject(requiredDataFilename);
 		final Set<String> allRelatedWords = r.getAllRelatedWords();

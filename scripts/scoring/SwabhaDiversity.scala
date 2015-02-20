@@ -90,6 +90,7 @@ def parseAllSwabhasFiles(diversityType: String) {
   val xmlOutputFolder = new File(baseOutputFolder, "xml")
 
   // load up the model
+  System.err.println("\n\n%s".format(MODEL_DIR.getCanonicalPath))
   val sem = Semafor.getSemaforInstance(MODEL_DIR.getCanonicalPath)
   // parse each kthBest file
   for (depParseFile <- depParseFolder.listFiles) {

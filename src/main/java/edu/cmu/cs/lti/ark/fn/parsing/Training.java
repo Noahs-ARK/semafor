@@ -210,8 +210,8 @@ public class Training {
 		return value;
 	}
 	
-	public void runCustomLBFGS() throws Exception
-	{   
+	public void runCustomLBFGS() //throws Exception
+	{   try{
 		int modelSize = W.length;
 		double[] diagco = new double[modelSize];
 		int[] iprint = new int[2];
@@ -245,7 +245,10 @@ public class Training {
 			if (iteration% Lbfgs.SAVE_EVERY_K ==0)
 				writeModel(mModelFile+"_"+iteration);
 		} while (iteration <= Lbfgs.MAX_ITERATIONS &&iflag[0] != 0);
+            } catch (Exception e) {
+                e.printStackTrace();    
 		writeModel(mModelFile);
+           }
 	}
 
 	public void writeModel(String modelFile) {
