@@ -20,18 +20,17 @@ val SENTENCE_FIELD = 7
 
 val SEMAFOR_HOME = new File(System.getProperty("user.home"), "semafor/semafor")
 
-val TOKENIZED_FILE = new File(SEMAFOR_HOME, "training/data/naacl2012/cv.test.sentences.tokenized")
-val FRAME_ID_FILE = new File(SEMAFOR_HOME, "training/data/naacl2012/cv.test.sentences.frames")
-val GOLD_DEP_PARSE_FILENAME = new File(SEMAFOR_HOME, "training/data/naacl2012/cv.test.sentences.turboparsed.matsumoto.all.lemma.tags")
+val diversityType = args(0) // e.g. "grand"
+
+val TOKENIZED_FILE = new File(SEMAFOR_HOME, args(1)) // "training/data/naacl2012/cv.test.sentences.tokenized")
+val FRAME_ID_FILE = new File(SEMAFOR_HOME, args(2)) // "training/data/naacl2012/cv.test.sentences.frames")
+val GOLD_DEP_PARSE_FILENAME = new File(SEMAFOR_HOME, args(3)) //"training/data/naacl2012/cv.test.sentences.turboparsed.full.matsumoto.all.lemma.tags")
 val NUM_SENTENCES = Source.fromFile(TOKENIZED_FILE).getLines().length
 
-//val EXPERIMENTS_DIR = new File(SEMAFOR_HOME, "experiments/turbo_matsumoto_20140723")
-val EXPERIMENTS_DIR = new File(SEMAFOR_HOME, "experiments/turbo_standard_20150218")
+val EXPERIMENTS_DIR = new File(SEMAFOR_HOME, args(4)) // "experiments/turbo_matsumoto_20140723")
 val MODEL_DIR = new File(EXPERIMENTS_DIR, "model")
 
 val DEP_PARSE_BASE_FOLDER = new File(SEMAFOR_HOME, "experiments/swabha/diversekbestdeps")
-
-val diversityType = args(0) // e.g. "grand"
 
 parseAllSwabhasFiles(diversityType)
 

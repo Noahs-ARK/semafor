@@ -7,6 +7,6 @@ source "$(dirname ${0})/config.sh"
 my_dir="$(dirname ${0})"
 
 ${my_dir}/4_1_createAlphabet.sh
-cp ${model_dir}/parser.conf ${model_dir}/alphabet.dat
+cp ${model_dir}/scan/parser.conf.unlabeled ${model_dir}/alphabet.dat
 ${my_dir}/4_2_cacheFeatureVectors.sh
 ${my_dir}/4_3_training.sh

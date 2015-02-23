@@ -8,7 +8,8 @@ source "$(dirname ${BASH_SOURCE[0]})/../bin/config.sh"
 # choose a name for the model to train
 # model_name="ancestor_frame_id_20130626"
 # model_name="turbo_matsumoto_20140723" # model for basic
-model_name="turbo_full" # model for standard
+# model_name="turbo_standard_20150218" # model for standard
+model_name="turbo_basic" # model for full
 
 
 # should set to roughly the number of cores available

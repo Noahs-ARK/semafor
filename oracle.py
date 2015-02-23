@@ -1,9 +1,10 @@
 import sys
 
-ranks=100
-examples=951 # int(sys.argv[1])
 metric=sys.argv[1]
 model=sys.argv[2]
+
+ranks=100
+examples=int(sys.argv[3]) # int(sys.argv[1])
 
 dir="experiments/"+model+"/results/"+metric+"/partial/";
 
@@ -12,6 +13,7 @@ avg=[0 for i in range(ranks)]
 
 f=open(dir + "0thBest.xml","r")
 s=[line.strip().split("\t")[-1] for line in f][1:]
+
 sc=[float(i) for i in s]
 f.close()
     

@@ -16,8 +16,8 @@ for prefix in $prefixes ; do
     ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
         edu.cmu.cs.lti.ark.fn.data.prep.AllAnnotationsMergingWithoutNE \
           "${training_dir}/cv.${prefix}.sentences.tokenized" \
-          "${training_dir}/cv.${prefix}.sentences.turboparsed.full.matsumoto.lemmatized.conll" \
+          "${training_dir}/cv.${prefix}.sentences.turboparsed.basic.matsumoto.lemmatized.conll" \
           "${tmp_parse_file}" \
-          "${training_dir}/cv.${prefix}.sentences.turboparsed.full.matsumoto.all.lemma.tags"
+          "${training_dir}/cv.${prefix}.sentences.turboparsed.basic.matsumoto.all.lemma.tags"
     rm "${tmp_parse_file}"
 done

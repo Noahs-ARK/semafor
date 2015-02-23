@@ -18,7 +18,7 @@ JAVA_HOME_BIN="/usr/bin"
 # the models for SEMAFOR 2.0.
 
 # MALT_MODEL_DIR="${BASE_DIR}/models/semafor_malt_model_20121129"
-MALT_MODEL_DIR="${SEMAFOR_HOME}/experiments/turbo_matsumoto_20140723/model/"
+MALT_MODEL_DIR="${SEMAFOR_HOME}/experiments/fake_old_model/model/"
 
 
 

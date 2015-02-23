@@ -5,6 +5,7 @@ source "$(dirname ${BASH_SOURCE[0]})/../../training/config.sh"
 
 
 NAME="$1"
+PREFIX="$2"
 
 #************************************ PREPROCESSING *******************************************#
 
@@ -17,7 +18,7 @@ frames_single_file="${fn_1_5_dir}/framesSingleFile.xml"
 relation_modified_file="${fn_1_5_dir}/frRelationModified.xml"
 
 
-GOLD_FILE="${training_dir}/cv.test.sentences.lrb.xml"
+GOLD_FILE="${training_dir}/cv.${PREFIX}.sentences.lrb.xml"
 
 
 EXPERIMENT_DIR="${experiments_dir}"
@@ -37,18 +38,18 @@ INPUT_FILES=$(cd "${INPUT_DIR}" > /dev/null && echo *)
 
 for INPUT_FILE in ${INPUT_FILES}; do
     cd "${SEMAFOR_HOME}"
-    echo "Argument Labeling Exact Results: ${INPUT_DIR}/${INPUT_FILE}"
-    mkdir -p "${RESULTS_DIR}/exact"
-    ./scripts/scoring/fnSemScore_swabha.pl \
-        -c ${temp} \
-        -l \
-        -n \
-        -e \
-        -s \
-        "${frames_single_file}" \
-        "${relation_modified_file}" \
-        "${GOLD_FILE}" \
-        "${INPUT_DIR}/${INPUT_FILE}" > "${RESULTS_DIR}/exact/${INPUT_FILE}"
+#    echo "Argument Labeling Exact Results: ${INPUT_DIR}/${INPUT_FILE}"
+#    mkdir -p "${RESULTS_DIR}/exact"
+#    ./scripts/scoring/fnSemScore_swabha.pl \
+#        -c ${temp} \
+#        -l \
+#        -n \
+#        -e \
+#        -s \
+#        "${frames_single_file}" \
+#        "${relation_modified_file}" \
+#        "${GOLD_FILE}" \
+#        "${INPUT_DIR}/${INPUT_FILE}" > "${RESULTS_DIR}/exact/${INPUT_FILE}"
 
     echo "Argument Labeling Partial Credit Results: ${INPUT_DIR}/${INPUT_FILE}"
     mkdir -p "${RESULTS_DIR}/partial"
