@@ -3,13 +3,18 @@
 source "$(dirname ${BASH_SOURCE[0]})/../bin/config.sh"
 
 
+# RUN swabha_all_lemma_tags.sh AND CHANGE parsed_file
+# AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+#
+#
+# ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
 
 # choose a name for the model to train
 # model_name="ancestor_frame_id_20130626"
 # model_name="turbo_matsumoto_20140723" # model for basic
 # model_name="turbo_standard_20150218" # model for standard
-model_name="turbo_basic" # model for full
+model_name="full" # model for full
 
 
 # should set to roughly the number of cores available
@@ -38,9 +43,9 @@ fn_id_req_data_file="${model_dir}/reqData.jobj"
 # paths to the gold-standard annotated sentences, and dependency-parsed version of it
 training_dir="${datadir}/naacl2012"
 fe_file="${training_dir}/cv.train.sentences.frame.elements"
-parsed_file="${training_dir}/cv.train.sentences.all.lemma.tags"
 fe_file_length=`wc -l ${fe_file}`
 fe_file_length=`expr ${fe_file_length% *}`
+parsed_file="${training_dir}/cv.train.sentences.turboparsed.full.matsumoto.all.lemma.tags"
 
 # path to store the alphabet we create:
 alphabet_file="${model_dir}/alphabet.dat"
