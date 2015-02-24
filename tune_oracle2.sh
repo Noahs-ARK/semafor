@@ -1,4 +1,4 @@
-alphas="0.5 0.6 0.7 0.8 0.9"
+alphas="0.7 0.8 0.9"
 for alpha in $alphas ; do
 
 metric="framenet_test_tune/turbo1_${alpha}"
@@ -26,7 +26,7 @@ mkdir -p experiments/$model/tmp/
 scala -cp "target/Semafor-3.0-alpha-05-SNAPSHOT.jar" -J-Xms4g -J-Xmx4g -J-XX:ParallelGCThreads=6 scripts/scoring/SwabhaDiversity.scala $metric  "training/data/naacl2012/cv.test.sentences.tokenized"  "training/data/naacl2012/cv.test.sentences.frames"  "training/data/naacl2012/cv.test.sentences.turboparsed."$mdl".matsumoto.all.lemma.tags"  "experiments/"$model 
 
 cd scripts/scoring
-./runSwabhaDiversityTestWithGoldFrameId.sh $metric "test"
+./runSwabhaDiversityTestWithGoldFrameId.sh $metric "test" $model
 
 cd ../../
 echo "alpha = " $alpha >> testresult.txt
