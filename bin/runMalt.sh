@@ -68,7 +68,12 @@ echo "**********************************************************************"
 echo "**********************************************************************"
 echo "Running MaltParser...."
 pushd ${SEMAFOR_HOME}/scripts/maltparser-1.7.2
-time java -Xmx2g -jar maltparser-1.7.2.jar -w ${MALT_MODEL_DIR} -c engmalt.linear-1.7 -i ${POS_TAGGED}.conll -o ${TEST_PARSED_FILE}
+time ${JAVA_HOME_BIN}/java -Xmx2g \
+    -jar maltparser-1.7.2.jar \
+    -w ${MALT_MODEL_DIR} \
+    -c engmalt.linear-1.7 \
+    -i ${POS_TAGGED}.conll \
+    -o ${TEST_PARSED_FILE}
 echo "Finished rrunning MaltParser."
 echo "**********************************************************************"
 echo
