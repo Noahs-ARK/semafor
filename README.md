@@ -161,6 +161,10 @@ Running the Frame-Semantic Parser
 
     ./bin/runSemafor.sh <absolute-path-to-input-file-with-one-sentence-per-line> <output-file> <number-of-threads>
 
+Some users have reported improved and more consistent runtime behavior when enabling [NUMA](http://docs.oracle.com/javase/7/docs/technotes/guides/vm/performance-enhancements-7.html#numa).
+If your system is NUMA-capable, you can enable it, with the JVM option `-XX:+UseNUMA`, which requires the `-XX:+UseParallelGC` option to also be specified.
+
+
 Server Mode
 --------------
 
