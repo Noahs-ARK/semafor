@@ -121,7 +121,7 @@ Downloads
 
 This experimental fork is maintained at <https://github.com/sammthomson/semafor>.
 For a more stable version, the latest official release, SEMAFOR v2.1, can be downloaded from
-<http://semafor-semantic-parser.googlecode.com/files/SEMAFOR-2.1.tgz>
+<https://github.com/Noahs-ARK/semafor-semantic-parser>
 
 In preprocessing, SEMAFOR uses MaltParser as the syntactic dependency parser.
 To use MaltParser, download and unpack the model files for MaltParser and SEMAFOR from here:
