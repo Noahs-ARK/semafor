@@ -46,7 +46,6 @@ import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 import edu.cmu.cs.lti.ark.util.nlp.Lemmatizer;
 import edu.cmu.cs.lti.ark.util.nlp.MorphaLemmatizer;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
-import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParses;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,10 +62,10 @@ import static com.google.common.collect.Lists.transform;
 import static edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec.ConllCodec;
 import static edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationJson.processPredictionLine;
 import static edu.cmu.cs.lti.ark.fn.identification.FrameIdentificationRelease.getTokenRepresentation;
-import static edu.cmu.cs.lti.ark.fn.parsing.DataPrep.SpanAndParseIdx;
 import static edu.cmu.cs.lti.ark.util.SerializedObjects.readObject;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.apache.commons.io.IOUtils.closeQuietly;
+
 
 public class Semafor {
 	public static final String REQUIRED_DATA_FILENAME = "reqData.jobj";
@@ -83,6 +82,7 @@ public class Semafor {
 	protected final Decoding decoder;
 	protected final Map<String, Integer> argIdFeatureIndex;
 	protected final Lemmatizer lemmatizer = new MorphaLemmatizer();
+    protected final CandidateSpanPruner spanPruner = new CandidateSpanPruner();
 
 	/**
 	 * required flags:
@@ -236,7 +236,7 @@ public class Semafor {
 		return segmenter.getSegmentation(sentence);
 	}
 
-	private List<Pair<List<Integer>, String>> predictFrames(Sentence sentence, List<List<Integer>> targets) {
+	public List<Pair<List<Integer>, String>> predictFrames(Sentence sentence, List<List<Integer>> targets) {
 		final List<Pair<List<Integer>, String>> idResult = Lists.newArrayList();
 		for (List<Integer> targetTokenIdxs : targets) {
 			final String frame = idModel.getBestFrame(targetTokenIdxs, sentence);
@@ -258,7 +258,7 @@ public class Semafor {
 	 * @param idResults a list of (target, frame) pairs
 	 * @return a list of strings in the format that {@link #predictArgumentLines} expects.
 	 */
-	private List<String> getArgumentIdInput(Sentence sentence, List<Pair<List<Integer>, String>> idResults) {
+	public List<String> getArgumentIdInput(Sentence sentence, List<Pair<List<Integer>, String>> idResults) {
 		final List<String> idResultLines = Lists.newArrayList();
 		final String parseLine = AllLemmaTags.makeLine(sentence.toAllLemmaTagsArray());
 		for (Pair<List<Integer>, String> targetAndFrame : idResults) {
@@ -279,17 +279,15 @@ public class Semafor {
 		for (String feLine : idResult) {
 			final DataPointWithFrameElements dataPoint = new DataPointWithFrameElements(sentence, feLine);
 			final String frame = dataPoint.getFrameName();
-			final DependencyParses parses = dataPoint.getParses();
+			final DependencyParse parse = dataPoint.getParses().getBestParse();
 			final int targetStartTokenIdx = dataPoint.getTargetTokenIdxs()[0];
 			final int targetEndTokenIdx = dataPoint.getTargetTokenIdxs()[dataPoint.getTargetTokenIdxs().length-1];
-			final List<SpanAndParseIdx> spans = DataPrep.findSpans(dataPoint, 1);
-			final List<String> frameElements = Lists.newArrayList(frameElementsForFrame.lookupFrameElements(frame));
+			final List<Range0Based> spans = spanPruner.candidateSpans(parse);
+            final List<String> frameElements = Lists.newArrayList(frameElementsForFrame.lookupFrameElements(frame));
 			final List<SpanAndCorrespondingFeatures[]> featuresAndSpanByArgument = Lists.newArrayList();
 			for (String frameElement : frameElements) {
 				final List<SpanAndCorrespondingFeatures> spansAndFeatures = Lists.newArrayList();
-				for (SpanAndParseIdx candidateSpanAndParseIdx : spans) {
-					final Range0Based span = candidateSpanAndParseIdx.span;
-					final DependencyParse parse = parses.get(candidateSpanAndParseIdx.parseIdx);
+				for (Range0Based span : spans) {
 					final Set<String> featureSet =
 							featureExtractor.extractFeatures(dataPoint, frame, frameElement, span, parse).elementSet();
 					final int[] featArray = convertToIdxs(featureSet);

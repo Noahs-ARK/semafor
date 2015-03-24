@@ -29,7 +29,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.common.primitives.Ints;
-import edu.cmu.cs.lti.ark.fn.optimization.Lbfgs;
+import edu.cmu.cs.lti.ark.ml.optimization.Lbfgs;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.fn.utils.ThreadPool;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
@@ -105,7 +105,7 @@ public class TrainBatchModelDerThreaded {
 				options.eventsFile.get(),
 				options.modelFile.get(),
 				options.reg.get(),
-				options.lambda.get(),
+				options.l2Strength.get(),
 				restartFile.equals("null") ? Optional.<String>absent() : Optional.of(restartFile),
 				numThreads);
 		tbm.trainModel();

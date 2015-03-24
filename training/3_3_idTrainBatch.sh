@@ -6,7 +6,7 @@ echo
 echo "step 4: training the frame identification model."
 echo
 
-source "$(dirname ${0})/config.sh"
+source "$(dirname ${BASH_SOURCE[0]})/config.sh"
 
 mkdir -p ${model_dir}
 
@@ -26,7 +26,7 @@ ${JAVA_HOME_BIN}/java \
   eventsfile:${model_dir}/events \
   model:${model_dir}/idmodel.dat \
   regularization:l1 \
-  lambda:1.0 \
+  l2-strength:1.0 \
   restartfile:null \
   logoutputfile:${model_dir}/log \
   numthreads:${num_threads} \
