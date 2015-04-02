@@ -1,8 +1,8 @@
 # Compiled artifacts
 *.class
 *.pyc
-target/
-dependency-reduced-pom.xml
+/target
+/dependency-reduced-pom.xml
 
 # IDE cruft
 .idea
@@ -18,11 +18,9 @@ dependency-reduced-pom.xml
 .DS_Store
 
 # training data we don't include in the repo
-training/data/naacl2012*
+/training/data/naacl2012
+/training/data/framenet15
 
-# log
-training/data/log
-
-# models and experiments
-models/
-experiments/
+# experimental artifacts
+/models
+/experiments
