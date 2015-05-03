@@ -39,7 +39,7 @@ mkdir -p "${model_dir}"
 #      lemmacachefile:${lemma_cache_file} \
 #      fnidreqdatafile:${fn_id_req_data_file}
 #
-for model_file in `(cd ${old_model_dir} && ls {*.{map,jobj,ser,conf,mco,gz},idmodel.dat,argmodel.dat})`; do
+for model_file in `(cd ${old_model_dir} && ls {*.{map,jobj,ser,conf,mco,gz},idmodel.dat})`; do
     ln -s "${old_model_dir}/${model_file}" "${model_dir}/${model_file}"
 done
 #ln -s "${old_model_dir}/{*.{map,jobj,ser,conf,mco,gz},argmodel.dat}" "${model_dir}/"

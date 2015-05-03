@@ -1,11 +1,12 @@
 #!/bin/bash
 set -e # fail fast
 
-source "$(dirname ${BASH_SOURCE[0]})/../../training/config.sh"
+source "$(dirname ${BASH_SOURCE[0]})/../../bin/config.sh"
 
 
 NAME="$1"
 PREFIX="$2"
+MODEL="$3"
 
 #************************************ PREPROCESSING *******************************************#
 
@@ -13,15 +14,18 @@ echo "Root of Project:"
 echo ${SEMAFOR_HOME}
 echo
 
+datadir="${SEMAFOR_HOME}/training/data"
+
+EXPERIMENT_DIR="${SEMAFOR_HOME}/experiments/${MODEL}"
+
 fn_1_5_dir="${datadir}/framenet15/"
 frames_single_file="${fn_1_5_dir}/framesSingleFile.xml"
 relation_modified_file="${fn_1_5_dir}/frRelationModified.xml"
 
 
-GOLD_FILE="${training_dir}/cv.${PREFIX}.sentences.lrb.xml"
+GOLD_FILE="${datadir}/naacl2012/cv.${PREFIX}.sentences.lrb.xml"
 
 
-EXPERIMENT_DIR="${experiments_dir}"
 
 #temp="$(mktemp -d --tmpdir=${training_dir} temp_arg_`date +%s`_XXX)"
 temp="${EXPERIMENT_DIR}/tmp"

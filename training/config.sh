@@ -1,23 +1,26 @@
 #!/bin/bash -e                                                                                       
-
 source "$(dirname ${BASH_SOURCE[0]})/../bin/config.sh"
 
+# choose a name for the model to train
+model_name="standard" # make this directory in ../experiments/
+mdl="standard" # prefix for the all.lemma.tags file
 
 # RUN swabha_all_lemma_tags.sh AND CHANGE parsed_file
 # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 #
 #
 # ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
-
-
-# choose a name for the model to train
-# model_name="ancestor_frame_id_20130626"
-# model_name="turbo_matsumoto_20140723" # model for basic
-# model_name="turbo_standard_20150218" # model for standard
-model_name="full" # model for full
-
-
 # should set to roughly the number of cores available
+
+
+
+
+
+
+
+
+
+
 num_threads=10
 gc_threads=6
 
@@ -45,7 +48,7 @@ training_dir="${datadir}/naacl2012"
 fe_file="${training_dir}/cv.train.sentences.frame.elements"
 fe_file_length=`wc -l ${fe_file}`
 fe_file_length=`expr ${fe_file_length% *}`
-parsed_file="${training_dir}/cv.train.sentences.turboparsed.full.matsumoto.all.lemma.tags"
+parsed_file="${training_dir}/cv.train.sentences.turboparsed.${mdl}.matsumoto.all.lemma.tags"
 
 # path to store the alphabet we create:
 alphabet_file="${model_dir}/alphabet.dat"

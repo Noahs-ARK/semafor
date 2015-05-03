@@ -20,8 +20,11 @@ dependency-reduced-pom.xml
 # training data we don't include in the repo
 training/data/naacl2012*
 training/data/*
+
 # log
 training/data/log
 
 # experiments and models
 experiments/*
+*.txt
+

@@ -1,10 +1,11 @@
-alphas="0.7 0.8 0.9"
+alphas="3.0 4.0"
 for alpha in $alphas ; do
 
-metric="framenet_test_tune/turbo1_${alpha}"
-model="turbo_basic"
+model="basic"
 mdl="basic"
-numtest="951"
+numtest="674" #"951"
+prefix="dev"  # tuning is done on the dev set
+metric="framenet_${prefix}_tune/turbo1_${alpha}"
 
 # Need to copy alphabet.dat from scan/parser.conf.unlabeled
 # Need to set argmodel.dat to whatever the last one was, right after training...
@@ -23,13 +24,13 @@ mkdir -p experiments/$model/output/$metric/frameElements
 
 mkdir -p experiments/$model/tmp/
 
-scala -cp "target/Semafor-3.0-alpha-05-SNAPSHOT.jar" -J-Xms4g -J-Xmx4g -J-XX:ParallelGCThreads=6 scripts/scoring/SwabhaDiversity.scala $metric  "training/data/naacl2012/cv.test.sentences.tokenized"  "training/data/naacl2012/cv.test.sentences.frames"  "training/data/naacl2012/cv.test.sentences.turboparsed."$mdl".matsumoto.all.lemma.tags"  "experiments/"$model 
+scala -cp "target/Semafor-3.0-alpha-05-SNAPSHOT.jar" -J-Xms4g -J-Xmx4g -J-XX:ParallelGCThreads=6 scripts/scoring/SwabhaDiversity.scala $metric  "training/data/naacl2012/cv.${prefix}.sentences.tokenized"  "training/data/naacl2012/cv.${prefix}.sentences.frames"  "training/data/naacl2012/cv.${prefix}.sentences.turboparsed."$mdl".matsumoto.all.lemma.tags"  "experiments/"$model 
 
 cd scripts/scoring
-./runSwabhaDiversityTestWithGoldFrameId.sh $metric "test" $model
+./runSwabhaDiversityTestWithGoldFrameId.sh $metric $prefix $model
 
 cd ../../
-echo "alpha = " $alpha >> testresult.txt
-python oracle.py $metric $model $numtest >> testresult.txt
+echo "alpha = " $alpha >> basicresult.txt
+python oracle.py $metric $model $numtest >> basicresult.txt
 
 done
