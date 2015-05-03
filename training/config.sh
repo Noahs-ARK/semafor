@@ -14,13 +14,6 @@ mdl="standard" # prefix for the all.lemma.tags file
 
 
 
-
-
-
-
-
-
-
 num_threads=10
 gc_threads=6
 
