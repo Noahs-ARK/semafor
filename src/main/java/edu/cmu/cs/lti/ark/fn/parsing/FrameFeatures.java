@@ -49,10 +49,6 @@ public class FrameFeatures implements Serializable {
 		this.goldSpanIdxs = goldSpanIdxs;
 	}
 
-	public FrameFeatures(String frameName, int start, int end) {
-		this(frameName, start, end, new ArrayList<String>(), new ArrayList<SpanAndCorrespondingFeatures[]>());
-	}
-
 	public FrameFeatures(String frameName,
 						 int targetStartTokenIdx,
 						 int targetEndTokenIdx,
@@ -61,4 +57,3 @@ public class FrameFeatures implements Serializable {
 		this(frameName, targetStartTokenIdx, targetEndTokenIdx, fElements, fElementSpansAndFeatures, new ArrayList<Integer>());
 	}
 }
-

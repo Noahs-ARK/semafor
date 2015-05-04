@@ -4,7 +4,7 @@ set -e # fail fast
 
 # step 5: convert the alphabet file.
 
-source "$(dirname ${0})/config.sh"
+source "$(dirname ${BASH_SOURCE[0]})/config.sh"
 
 # gets the last model file created
 model_file="$(ls ${model_dir}/idmodel.dat_* | sort -r | head -n1)"

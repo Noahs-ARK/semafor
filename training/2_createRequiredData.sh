@@ -2,7 +2,7 @@
 
 set -e # fail fast
 
-source "$(dirname ${0})/config.sh"
+source "$(dirname ${BASH_SOURCE[0]})/config.sh"
 
 echo 
 echo
@@ -43,3 +43,4 @@ for model_file in `(cd ${old_model_dir} && ls {*.{map,jobj,ser,conf,mco,gz},idmo
     ln -s "${old_model_dir}/${model_file}" "${model_dir}/${model_file}"
 done
 #ln -s "${old_model_dir}/{*.{map,jobj,ser,conf,mco,gz},argmodel.dat}" "${model_dir}/"
+

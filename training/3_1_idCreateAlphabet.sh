@@ -2,7 +2,7 @@
 
 set -e # fail fast
 
-source "$(dirname ${0})/config.sh"
+source "$(dirname ${BASH_SOURCE[0]})/config.sh"
 
 # a temp directory where training events will be stored
 event_dir="${model_dir}/events"

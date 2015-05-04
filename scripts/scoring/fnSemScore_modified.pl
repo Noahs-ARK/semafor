@@ -12,7 +12,7 @@ use File::Basename;
 use Getopt::Std;
 use Storable;
 use XML::Parser;
-use vars qw($opt_c $opt_d $opt_e $opt_h $opt_l $opt_n $opt_s $opt_t $opt_v);
+use vars qw($opt_c $opt_d $opt_e $opt_h $opt_l $opt_n $opt_s $opt_t $opt_a $opt_v);
 
 # global variables
 my $PROG = basename($0);
@@ -63,7 +63,7 @@ MAIN:{
     #################################################################
     # PROCESS OPTIONS
 
-    getopts("c:d:ehlnstv") || &usage();
+    getopts("c:d:ehlnstav") || &usage();
     if (defined $opt_c) {
         $CACHEDIR = $opt_c;
         if (! -e $CACHEDIR) {die "ERROR: $CACHEDIR doesn't exist!\n"};
@@ -96,6 +96,10 @@ MAIN:{
         $NE_POINTS = 0;
         $SUPP_POINTS = 0;
         $CMDOPTIONS .= "-t ";
+    }
+    if (defined $opt_a) {
+        # Arg Id only
+        $FRAME_POINTS = 0;
     }
     if (defined $opt_v) {
         $VERBOSE = 1;
