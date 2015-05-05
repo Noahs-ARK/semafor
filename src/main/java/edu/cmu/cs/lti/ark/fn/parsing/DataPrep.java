@@ -59,7 +59,7 @@ public class DataPrep {
 	public List<String> tagLines;
 	/** index of the current line in feLines being processed */
 	public int feIndex = 0;
-	public final CandidateSpanPruner spanPruner;
+	public final CandidateSpanPruner spanPruner = new CandidateSpanPruner();
 
 	public static class SpanAndParseIdx {
 		public final static SpanAndParseIdx EMPTY_SPAN_AND_PARSE_IDX = new SpanAndParseIdx(EMPTY_SPAN, 0);
@@ -88,7 +88,6 @@ public class DataPrep {
 		this.feLines = feLines;
 		this.tagLines = tagLines;
 		candidateLines = load(tagLines, feLines);
-		spanPruner = new CandidateSpanPruner();
 	}
 
 	/** loads data needed for feature extraction */
