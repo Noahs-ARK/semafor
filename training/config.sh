@@ -2,8 +2,8 @@
 source "$(dirname ${BASH_SOURCE[0]})/../bin/config.sh"
 
 # choose a name for the model to train
-model_name="standard" # make this directory in ../experiments/
-mdl="standard" # prefix for the all.lemma.tags file
+model_name="basic_tbp_stan" # make this directory in ../experiments/
+mdl="basic" # prefix for the all.lemma.tags file
 
 # RUN swabha_all_lemma_tags.sh AND CHANGE parsed_file
 # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
@@ -41,7 +41,7 @@ training_dir="${datadir}/naacl2012"
 fe_file="${training_dir}/cv.train.sentences.frame.elements"
 fe_file_length=`wc -l ${fe_file}`
 fe_file_length=`expr ${fe_file_length% *}`
-parsed_file="${training_dir}/cv.train.sentences.turboparsed.${mdl}.matsumoto.all.lemma.tags"
+parsed_file="${training_dir}/cv.train.sentences.turboparsed.${mdl}.stanford.all.lemma.tags"
 
 # path to store the alphabet we create:
 alphabet_file="${model_dir}/alphabet.dat"

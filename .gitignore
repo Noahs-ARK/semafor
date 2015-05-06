@@ -1,6 +1,7 @@
 # Compiled artifacts
 *.class
 *.pyc
+*.swp
 target/
 dependency-reduced-pom.xml
 
@@ -27,4 +28,5 @@ training/data/log
 # experiments and models
 experiments/*
 *.txt
-
+*.err
+*.out

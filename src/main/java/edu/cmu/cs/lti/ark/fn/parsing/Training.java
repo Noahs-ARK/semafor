@@ -199,6 +199,7 @@ public class Training {
 	}
 	
 	public void runCustomLBFGS() throws Exception {
+            try{
 		int modelSize = weights.length;
 		double[] diagco = new double[modelSize];
 		int[] iprint = { Lbfgs.DEBUG ? 1 : -1,  0 };   //output the minimum level of info
@@ -228,7 +229,7 @@ public class Training {
 		} while (iteration <= Lbfgs.MAX_ITERATIONS &&iflag[0] != 0);
             } catch (Exception e) {
                 e.printStackTrace();    
-		writeModel(mModelFile);
+		writeModel(modelFile);
            }
 	}
 

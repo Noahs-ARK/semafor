@@ -79,8 +79,10 @@ public class DependencyParses implements Iterable<DependencyParse>, Serializable
 	 * @return The first parse in the list
 	 */
 	public DependencyParse getBestParse() {
-		if (this.parses.length<1 || this.parses[0]==null)
+		if (this.parses.length<1 || this.parses[0]==null){
+                        System.out.println("something is clearly worng");
 			return null;
+                }
 		return this.parses[0];
 	}
 

@@ -87,8 +87,8 @@ public class DataPrep {
 		new FileOutputStream(new File(spanFilename), false).close(); // clobber spans file. this is gross
 		this.feLines = feLines;
 		this.tagLines = tagLines;
-		candidateLines = load(tagLines, feLines);
 		spanPruner = new CandidateSpanPruner();
+		candidateLines = load(tagLines, feLines);
 	}
 
 	/** loads data needed for feature extraction */
