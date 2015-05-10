@@ -40,18 +40,16 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
     endIndex:${end} \
     testParseFile:${all_lemma_tags_file} \
     testTokenizedFile:${tokenizedfile} \
-    outputFile:${gold_xml}  2>/dev/null
+    outputFile:${gold_xml}  # 2>/dev/null
 
 
 echo "Performing argument identification on ${cv} set, with model \"${model_name}\"..."
-scala \
-  -cp "${classpath}" \
-  -J-Xms4g \
-  -J-Xmx4g \
-  -J-XX:ParallelGCThreads=2 \
-  scripts/scoring/parseToXmlWithGoldFrames.scala \
-  ${model_name} \
-  ${cv}
+${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4g -Xmx4g -XX:ParallelGCThreads=2 \
+    edu.cmu.cs.lti.ark.fn.evaluation.ParseToXmlWithGoldFramesApp \
+    ${SEMAFOR_HOME} \
+    ${model_name} \
+    ${cv}
+
 
 
 echo "Evaluating argument identification on ${cv} set..."
