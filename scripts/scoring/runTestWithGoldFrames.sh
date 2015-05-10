@@ -8,7 +8,7 @@ source "$(dirname ${BASH_SOURCE[0]})/../../training/config.sh"
 
 cd ${SEMAFOR_HOME}
 
-all_lemma_tags_file="${training_dir}/cv.${cv}.sentences.all.lemma.tags"
+all_lemma_tags_file="${training_dir}/cv.${cv}.sentences.turboparsed.basic.stanford.all.lemma.tags"
 tokenizedfile="${training_dir}/cv.${cv}.sentences.tokenized"
 gold_fe_file="${training_dir}/cv.${cv}.sentences.frame.elements"
 
@@ -40,7 +40,7 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
     endIndex:${end} \
     testParseFile:${all_lemma_tags_file} \
     testTokenizedFile:${tokenizedfile} \
-    outputFile:${gold_xml}  2>/dev/null
+    outputFile:${gold_xml}  #2>/dev/null
 
 
 echo "Performing argument identification on ${cv} set, with model \"${model_name}\"..."

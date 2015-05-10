@@ -69,7 +69,7 @@ import static org.apache.commons.io.IOUtils.closeQuietly;
 
 public class Semafor {
 	public static final String REQUIRED_DATA_FILENAME = "reqData.jobj";
-	private static final String ALPHABET_FILENAME = "alphabet.dat";//"parser.conf";
+	private static final String ALPHABET_FILENAME = "parser.conf"; //"alphabet.dat";
 	private static final String FRAME_ELEMENT_MAP_FILENAME = "framenet.frame.element.map";
 	private static final String ARG_MODEL_FILENAME = "argmodel.dat";
 
