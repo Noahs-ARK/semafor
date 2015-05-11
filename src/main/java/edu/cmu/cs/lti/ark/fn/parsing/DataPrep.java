@@ -59,7 +59,7 @@ public class DataPrep {
 	public List<String> tagLines;
 	/** index of the current line in feLines being processed */
 	public int feIndex = 0;
-	public final CandidateSpanPruner spanPruner;
+	public final CandidateSpanPruner spanPruner = new CandidateSpanPruner();
 
 	public static class SpanAndParseIdx {
 		public final static SpanAndParseIdx EMPTY_SPAN_AND_PARSE_IDX = new SpanAndParseIdx(EMPTY_SPAN, 0);
@@ -87,7 +87,6 @@ public class DataPrep {
 		new FileOutputStream(new File(spanFilename), false).close(); // clobber spans file. this is gross
 		this.feLines = feLines;
 		this.tagLines = tagLines;
-		spanPruner = new CandidateSpanPruner();
 		candidateLines = load(tagLines, feLines);
 	}
 
