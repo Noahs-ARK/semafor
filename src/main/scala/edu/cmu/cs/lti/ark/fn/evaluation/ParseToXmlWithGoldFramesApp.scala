@@ -15,25 +15,73 @@ import resource._
 import scala.collection.JavaConverters.{asScalaBufferConverter, asScalaIteratorConverter, seqAsJavaListConverter}
 import scala.io.Source
 
-// TODO: refactor
-
-object Filenames {
+object Constants {
   val TOKENIZED_FILE_TEMPLATE = "cv.%s.sentences.tokenized"
   val FRAME_ID_FILE_TEMPLATE = "cv.%s.sentences.frames"
-  //val DEP_PARSE_FILE_TEMPLATE = "cv.%s.sentences.maltparsed.conll"
   val DEP_PARSE_FILE_TEMPLATE = "cv.%s.sentences.turboparsed.basic.stanford.lemmatized.conll"
   val ALL_LEMMA_TAGS_FILE_TEMPLATE = "cv.%s.sentences.turboparsed.basic.stanford.all.lemma.tags"
+
+  val K_BEST = 1
+  val TARGET_FIELD = 5
+  val SENTENCE_FIELD = 7
+}
+
+object SwabhaDiversityApp extends App {
+  val Array(
+    semaforHome,
+    diversityType,
+    tokenizedFilename,
+    frameIdFilename,
+    allLemmaTagsFilename,
+    experimentsDir,
+    depParseBaseFolder,
+    outputDirName
+  ) = args
+
+  val tokenizedFile = new File(tokenizedFilename) // "training/data/naacl2012/cv.test.sentences.tokenized")
+  val frameIdFile = new File(frameIdFilename) // "training/data/naacl2012/cv.test.sentences.frames")
+  val allLemmaTagsFile = new File(allLemmaTagsFilename) //"training/data/naacl2012/cv.test.sentences.turboparsed.full.matsumoto.all.lemma.tags")
+  val numSentences = Source.fromFile(tokenizedFile).getLines().length
+
+  val EXPERIMENTS_DIR = new File(experimentsDir) // "experiments/turbo_matsumoto_20140723")
+  val MODEL_DIR = new File(EXPERIMENTS_DIR, "model")
+
+  parseAllSwabhasFiles(diversityType)
+
+  def parseAllSwabhasFiles(diversityType: String) {
+    val depParseFolder = new File(depParseBaseFolder, diversityType)
+
+    val baseOutputFolder = new File(outputDirName, diversityType)
+    val frameElementsOutputFolder = new File(baseOutputFolder, "frameElements")
+    val xmlOutputFolder = new File(baseOutputFolder, "xml")
+
+    // load up the model
+//    System.err.println("\n\n%s".format(MODEL_DIR.getCanonicalPath))
+    val sem = Semafor.getSemaforInstance(MODEL_DIR.getCanonicalPath)
+    // parse each kthBest file
+    for (depParseFile <- depParseFolder.listFiles) {
+      val name = depParseFile.getName.split('.')(0)
+      ParseToXmlWithGoldFrames.parseToXmlWithGoldFrames(
+        name,
+        tokenizedFile,
+        allLemmaTagsFile,
+        frameIdFile,
+        depParseFile,
+        frameElementsOutputFolder,
+        xmlOutputFolder,
+        sem
+      )
+    }
+  }
 }
 
 object ParseToXmlWithGoldFramesApp extends App {
-  import Filenames._
-  val K_BEST = 1
-  val SENTENCE_FIELD = 7
+  import Constants._
 
   // CLI args:
   val semaforHome = args(0)
-  val modelName = args(1) // e.g. "adadelta_20150122" // "turbo_matsumoto_20140702"
-  val cvFold = args(2) // e.g. "dev" or "test"
+  val modelName = args(1)  // e.g. "adadelta_20150122" // "turbo_matsumoto_20140702"
+  val infix = args(2)  // e.g. "dev" or "test"
 
   val dataDir = new File(semaforHome, "training/data/naacl2012")
   val experimentsDir = new File(new File(semaforHome, "experiments"), modelName)
@@ -44,7 +92,20 @@ object ParseToXmlWithGoldFramesApp extends App {
   val sem = Semafor.getSemaforInstance(modelDir.getCanonicalPath)
 
   // parse
-  parseToXmlWithGoldFrames(cvFold, sem)
+  ParseToXmlWithGoldFrames.parseToXmlWithGoldFrames(
+    infix,
+    new File(dataDir, TOKENIZED_FILE_TEMPLATE.format(infix)),
+    new File(dataDir, ALL_LEMMA_TAGS_FILE_TEMPLATE.format(infix)),
+    new File(dataDir, FRAME_ID_FILE_TEMPLATE.format(infix)),
+    new File(dataDir, DEP_PARSE_FILE_TEMPLATE.format(infix)),
+    resultsDir,
+    resultsDir,
+    sem
+  )
+}
+  
+object ParseToXmlWithGoldFrames {
+  import Constants._
 
   def setSentenceId(line: String, sentenceId: String): String = {
     val fields = line.split("\t")
@@ -63,19 +124,22 @@ object ParseToXmlWithGoldFramesApp extends App {
     results.flatMap(_.split("\n")).map(setSentenceId(_, sentenceId))
   }
 
-  def parseToXmlWithGoldFrames(infix: String, sem: Semafor) {
-    val frameIdFile = new File(dataDir, FRAME_ID_FILE_TEMPLATE.format(infix))
-    val depParseFile = new File(dataDir, DEP_PARSE_FILE_TEMPLATE.format(infix))
-    val outputFeFile = new File(resultsDir, infix + ".argid.predict.frame.elements")
+  def parseToXmlWithGoldFrames(infix: String,
+                               tokenizedFile: File,
+                               allLemmaTagsFile: File,
+                               frameIdFile: File,
+                               depParseFile: File,
+                               feResultsDir: File,
+                               xmlResultsDir: File,
+                               sem: Semafor) {
+    val outputFeFile = new File(feResultsDir, infix + ".argid.predict.frame.elements")
 
     System.err.println("\n\nParsing file: %s\n\n".format(depParseFile))
 
     parseToFeFormatWithGoldFrames(frameIdFile, depParseFile, outputFeFile, sem)
 
-    val tokenizedFile = new File(dataDir, TOKENIZED_FILE_TEMPLATE.format(infix))
     val numSentences = Source.fromFile(tokenizedFile).getLines().length
-    val allLemmaTagsFile = new File(dataDir, ALL_LEMMA_TAGS_FILE_TEMPLATE.format(infix))
-    val outputXmlFile = new File(resultsDir, infix + ".argid.predict.xml")
+    val outputXmlFile = new File(xmlResultsDir, infix + ".argid.predict.xml")
 
     System.err.println("\n\nGenerating xml: %s\n\n".format(outputXmlFile.getAbsolutePath))
 
@@ -122,16 +186,17 @@ object ParseToXmlWithGoldFramesApp extends App {
   }
 }
 
+
+// TODO: refactor
+
 object ParseToXmlWithGoldTargetsApp extends App {
-  import Filenames._
-  val K_BEST = 1
-  val TARGET_FIELD = 5
-  val SENTENCE_FIELD = 7
+  import Constants._
+  import ParseToXmlWithGoldFrames._
 
   // CLI args:
   val semaforHome = args(0)
   val modelName = args(1) // e.g. "adadelta_20150122" // "turbo_matsumoto_20140702"
-  val cvFold = args(2) // e.g. "dev" or "test"
+  val infix = args(2) // e.g. "dev" or "test"
 
   val dataDir = new File(semaforHome, "training/data/naacl2012")
   val experimentsDir = new File(new File(semaforHome, "experiments"), modelName)
@@ -142,13 +207,7 @@ object ParseToXmlWithGoldTargetsApp extends App {
   val sem = Semafor.getSemaforInstance(modelDir.getCanonicalPath)
 
   // parse
-  parseToXmlWithGoldTargets(cvFold, sem)
-
-  def setSentenceId(line: String, sentenceId: String): String = {
-    val fields = line.split("\t")
-    fields(SENTENCE_FIELD) = sentenceId
-    fields.mkString("\t")
-  }
+  parseToXmlWithGoldTargets(infix, sem)
 
   def getTargetFromFrameLine(frameLine: String): List[Integer] = {
     frameLine.split("\t")(TARGET_FIELD).split("_").map(new Integer(_)).toList

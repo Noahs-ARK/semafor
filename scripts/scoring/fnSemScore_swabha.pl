@@ -1480,7 +1480,7 @@ sub ParseProcessFrRelXML {
 	if (-e $CACHEDIR) {
 	    my @cache = (\%frSPLength,\%frSPCount,\%feSPLength,\%feSPCount);
 	    store(\@cache, $cacheFile);
-	    print "Created cache file $cacheFile\n";
+#	    print "Created cache file $cacheFile\n";
 	} else {
 	    print STDERR "WARNING: directory $CACHEDIR doesn't exist.  No FrRelation cache saved.\n";
 	}
