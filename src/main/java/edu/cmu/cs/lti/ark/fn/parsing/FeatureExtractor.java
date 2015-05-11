@@ -32,7 +32,7 @@ import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 
 import java.util.List;
 
-import static edu.cmu.cs.lti.ark.fn.parsing.CandidateFrameElementFilters.isEmptySpan;
+import static edu.cmu.cs.lti.ark.fn.parsing.CandidateSpanPruner.EMPTY_SPAN;
 import static edu.cmu.cs.lti.ark.fn.parsing.FeatureExtractor.ConjoinLevel.*;
 import static java.lang.Math.max;
 
@@ -42,7 +42,7 @@ import static java.lang.Math.max;
  * 
  * @author Nathan Schneider (nschneid)
  * @since 2009-04-07
- * @see CandidateFrameElementFilters
+ * @see CandidateSpanPruner
  * @see edu.cmu.cs.lti.ark.fn.identification.IdFeatureExtractor
  */
 public class FeatureExtractor {
@@ -104,7 +104,7 @@ public class FeatureExtractor {
 		final DependencyParse[] nodes = parse.getIndexSortedListOfNodes();
 		final DependencyParse targetHeadNode = DependencyParse.getHeuristicHead(nodes, targetTokenNums);
 
-		final boolean isEmpty = isEmptySpan(fillerSpanRange);
+		final boolean isEmpty = fillerSpanRange.equals(EMPTY_SPAN());
 		String overtness = isEmpty ? "NULL" : "OVERT";
 		conjoinAndAdd(overtness, frameAndRoleName, roleName, FRAME_AND_ROLE_NAME, featureMap);	// overtness of the role
 		

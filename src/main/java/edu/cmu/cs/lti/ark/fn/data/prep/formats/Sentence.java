@@ -2,6 +2,8 @@ package edu.cmu.cs.lti.ark.fn.data.prep.formats;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import edu.cmu.cs.lti.ark.fn.utils.DataPoint;
+import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 
 import javax.annotation.concurrent.Immutable;
 import java.util.List;
@@ -67,6 +69,10 @@ public class Sentence {
 			result[PARSE_LEMMA_ROW][id] = token.getLemma() == null ? "_" : token.getLemma();
 		}
 		return result;
+	}
+
+	public DependencyParse toDependencyParse() {
+		return DataPoint.buildParsesForLine(AllLemmaTags.makeLine(toAllLemmaTagsArray()))[0];
 	}
 
 	public int size() {

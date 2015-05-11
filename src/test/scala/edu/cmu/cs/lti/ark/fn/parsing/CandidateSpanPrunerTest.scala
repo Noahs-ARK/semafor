@@ -1,11 +1,11 @@
 package edu.cmu.cs.lti.ark.fn.parsing
 
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec._
-import edu.cmu.cs.lti.ark.fn.parsing.CandidateFrameElementFilters._
-import edu.cmu.cs.lti.ark.fn.parsing.DataPrep.SpanAndParseIdx
+import edu.cmu.cs.lti.ark.fn.parsing.CandidateSpanPruner.createSpanRange
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements
 import edu.cmu.cs.lti.ark.util.IntRanges._
-import org.scalatest.{Matchers, FlatSpec}
+import org.scalatest.{FlatSpec, Matchers}
+
 import scala.collection.JavaConverters._
 
 /**
@@ -17,10 +17,10 @@ class CandidateSpanPrunerTest extends FlatSpec with Matchers {
   private val frameElementsLine = "0\t1.0\t1\tTemporal_collocation\tno.r\t2_3\tno longer\t0\n"
   private val dataPointWithElements = new DataPointWithFrameElements(sentence, frameElementsLine)
   private val pruner = new CandidateSpanPruner()
-  private val spanList = pruner.candidateSpans(dataPointWithElements.getParses.getBestParse).asScala.toList
+  private val spanList = pruner.candidateSpans(dataPointWithElements.getParse).asScala.toList
 
   "CandidateSpanPruner.candidateSpans" should "include the null span" in {
-    spanList should contain (SpanAndParseIdx.EMPTY_SPAN_AND_PARSE_IDX.span)
+    spanList should contain (CandidateSpanPruner.EMPTY_SPAN)
   }
 
   it should "include singletons" in {

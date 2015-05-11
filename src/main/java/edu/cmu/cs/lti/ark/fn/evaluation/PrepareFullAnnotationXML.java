@@ -21,13 +21,12 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.evaluation;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import edu.cmu.cs.lti.ark.fn.parsing.RankedScoredRoleAssignment;
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements;
 import edu.cmu.cs.lti.ark.util.XmlUtils;
-import edu.cmu.cs.lti.ark.util.ds.Range;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
@@ -45,13 +44,6 @@ import static org.apache.commons.io.IOUtils.closeQuietly;
 
 
 public class PrepareFullAnnotationXML {
-	private static final Function<DataPointWithFrameElements,String> GET_FRAME =
-			new Function<DataPointWithFrameElements, String>() {
-				@Override public String apply(DataPointWithFrameElements input) {
-					return input.getFrameName();
-				}
-			};
-
 	/**
 	 * Generates the XML representation of a set of predicted semantic parses so evaluation 
 	 * can be performed (with SemEval Perl scripts)
@@ -86,17 +78,17 @@ public class PrepareFullAnnotationXML {
 	 * @param testTokenizedFile File Original form of each sentence in the data
 	 * @param outputFile Where to store the resulting XML
 	 */
-	public static void generateXMLForPrediction(String testFEPredictionsFile, Range sentenceNums, 
+	public static void generateXMLForPrediction(String testFEPredictionsFile, Range0Based sentenceNums,
 			String testParseFile, String testTokenizedFile, String outputFile) throws Exception {
-		ArrayList<String> parses = new ArrayList<String>();
-		List<String> predictedFELines = new ArrayList<String>();
-		List<String> orgSentenceLines = new ArrayList<String>();
+		ArrayList<String> parses = new ArrayList<>();
+		List<String> predictedFELines = new ArrayList<>();
+		List<String> orgSentenceLines = new ArrayList<>();
 		// Read in a subset of (predicted) frame element lines
 		BufferedReader inFELines = new BufferedReader(new FileReader(testFEPredictionsFile));
 		// output of MapReduce--will have an extra number and tab at the beginning of each line
 		String pFELine;
 		while((pFELine=inFELines.readLine()) != null) {
-			int sentNum = DataPointWithFrameElements.parseFrameNameAndSentenceNum(pFELine).second;
+			int sentNum = RankedScoredRoleAssignment.fromLine(pFELine).sentenceIdx();
 			if (sentenceNums.contains(sentNum)) {
 				predictedFELines.add(pFELine.trim());
 			}
@@ -140,10 +132,9 @@ public class PrepareFullAnnotationXML {
 	 * @param sentenceNums Global sentence number for the first sentence being predicted, so as to map FE lines to items in parses/orgLines
 	 * @param parses Lines encoding the parse for each sentence
 	 * @param origLines The original sentences, untokenized
-	 * @return
 	 */
 	private static Document createXMLDoc(List<String> predictedFELines,
-										 Range sentenceNums,
+										 Range0Based sentenceNums,
 										 List<String> parses,
 										 List<String> origLines) {
 		final Document doc = XmlUtils.getNewDocument();
@@ -170,9 +161,9 @@ public class PrepareFullAnnotationXML {
 		final Element sentences = doc.createElement("sentences");
 
 		// Map sentence offsets to frame annotation data points within each sentence
-		final TIntObjectHashMap<Set<String>> predictions = new TIntObjectHashMap<Set<String>>();
+		final TIntObjectHashMap<Set<String>> predictions = new TIntObjectHashMap<>();
 		for (String feLine : predictedFELines) {
-			final int sentNum = DataPointWithFrameElements.parseFrameNameAndSentenceNum(feLine).second;
+			final int sentNum = RankedScoredRoleAssignment.fromLine(feLine).sentenceIdx();
 
 			if (!predictions.containsKey(sentNum))
 				predictions.put(sentNum, new THashSet<String>());
@@ -295,11 +286,11 @@ public class PrepareFullAnnotationXML {
 			final Element labels = doc.createElement("labels");
 			feLayer.appendChild(labels);
 
-			final List<Range0Based> fillerSpans = dataPointWithFrameElements.getOvertFrameElementFillerSpans();
-			final List<String> feNames = dataPointWithFrameElements.getOvertFilledFrameElementNames();
-			for (int i = 0; i < feNames.size(); i++) {
-				final String feName = feNames.get(i);
-				final Range fillerSpan = fillerSpans.get(i);
+			final List<DataPointWithFrameElements.FrameElementAndSpan> fesAndSpans =
+					dataPointWithFrameElements.getFrameElementsAndSpans();
+			for (int i = 0; i < fesAndSpans.size(); i++) {
+				final String feName = fesAndSpans.get(i).name;
+				final Range0Based fillerSpan = fesAndSpans.get(i).span;
 
 				final int labelId = layerId * 100 + i + 1;
 				final Element label = doc.createElement("label");
