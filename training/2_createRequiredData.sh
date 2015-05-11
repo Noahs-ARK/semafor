@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e # fail fast
+set -x
 
 source "$(dirname ${BASH_SOURCE[0]})/config.sh"
 
