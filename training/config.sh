@@ -2,7 +2,7 @@
 source "$(dirname ${BASH_SOURCE[0]})/../bin/config.sh"
 
 # choose a name for the model to train
-model_name="basic_tbp_stan" # make this directory in ../experiments/
+model_name="basic_tbps" # make this directory in ../experiments/
 mdl="basic" # prefix for the all.lemma.tags file
 
 # RUN swabha_all_lemma_tags.sh AND CHANGE parsed_file

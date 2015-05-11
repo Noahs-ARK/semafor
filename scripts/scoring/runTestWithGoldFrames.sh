@@ -62,7 +62,7 @@ ${SEMAFOR_HOME}/scripts/scoring/fnSemScore_modified.pl \
     ${frames_single_file} \
     ${relation_modified_file} \
     ${gold_xml} \
-    ${predicted_xml} > "${results_dir}/argid_${cv}_exact" 2>/dev/null
+    ${predicted_xml} > "${results_dir}/argid_${cv}_exact" # 2>/dev/null
 
 tail -n1 "${results_dir}/argid_${cv}_exact"
 
@@ -76,7 +76,7 @@ ${SEMAFOR_HOME}/scripts/scoring/fnSemScore_modified.pl \
     ${frames_single_file} \
     ${relation_modified_file} \
     ${gold_xml} \
-    ${predicted_xml} > "${results_dir}/argid_${cv}_exact_count_gold_frames" 2>/dev/null
+    ${predicted_xml} > "${results_dir}/argid_${cv}_exact_count_gold_frames" # 2>/dev/null
 
 
 tail -n1 "${results_dir}/argid_${cv}_exact_count_gold_frames"

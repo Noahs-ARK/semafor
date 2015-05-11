@@ -30,5 +30,6 @@ experiments/*
 *.txt
 *.err
 *.out
+*.log
 training/cv*.sh
 scripts/scoring/cv*.sh

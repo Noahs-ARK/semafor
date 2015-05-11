@@ -20,8 +20,9 @@ import scala.io.Source
 object Filenames {
   val TOKENIZED_FILE_TEMPLATE = "cv.%s.sentences.tokenized"
   val FRAME_ID_FILE_TEMPLATE = "cv.%s.sentences.frames"
-  val DEP_PARSE_FILE_TEMPLATE = "cv.%s.sentences.maltparsed.conll"
-  val ALL_LEMMA_TAGS_FILE_TEMPLATE = "cv.%s.sentences.all.lemma.tags"
+  //val DEP_PARSE_FILE_TEMPLATE = "cv.%s.sentences.maltparsed.conll"
+  val DEP_PARSE_FILE_TEMPLATE = "cv.%s.sentences.turboparsed.basic.stanford.lemmatized.conll"
+  val ALL_LEMMA_TAGS_FILE_TEMPLATE = "cv.%s.sentences.turboparsed.basic.stanford.all.lemma.tags"
 }
 
 object ParseToXmlWithGoldFramesApp extends App {
