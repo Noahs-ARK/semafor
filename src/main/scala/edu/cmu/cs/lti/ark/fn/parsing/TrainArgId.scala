@@ -4,50 +4,17 @@ import java.io._
 import java.util.Scanner
 
 import breeze.linalg.{DenseVector, Vector => Vec}
-import com.google.common.base.Charsets
-import com.google.common.io.Files
 import edu.cmu.cs.lti.ark.fn.parsing.ArgIdTrainer.{frameExampleToArgExamples, readModel}
 import edu.cmu.cs.lti.ark.fn.parsing.FrameFeaturesCache.readFrameFeatures
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions
 import edu.cmu.cs.lti.ark.ml.optimization._
 import edu.cmu.cs.lti.ark.ml.{FeatureVector, MultiClassTrainingExample}
-import resource.{ManagedResource, managed}
+import resource.managed
 
 import scala.collection.Iterator.continually
 import scala.collection.JavaConverters._
 import scala.io.{Codec, Source}
-import scala.util.Try
 
-object CacheFrameFeaturesApp extends App {
-  val opts = new FNModelOptions(args)
-  val eventsFile = opts.eventsFile.get
-  val spanFile = opts.spansFile.get
-  val frFile = opts.trainFrameFile.get
-  val outputFile = opts.frameFeaturesCacheFile.get
-  val frameLines = Files.readLines(new File(frFile), Charsets.UTF_8)
-  val lfr = new LocalFeatureReading(eventsFile, spanFile, frameLines)
-  val frameFeaturesList = lfr.readLocalFeatures
-  FrameFeaturesCache.writeFrameFeatures(frameFeaturesList.asScala, outputFile)
-}
-
-object FrameFeaturesCache {
-  def writeFrameFeatures(frameFeaturesList: TraversableOnce[FrameFeatures], outputFile: String): Unit = {
-    for (output <- managed(new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(outputFile))))) {
-      for (frameFeatures <- frameFeaturesList) {
-        output.writeObject(frameFeatures)
-      }
-    }
-  }
-
-  def readFrameFeatures(inputFile: String): ManagedResource[Iterator[FrameFeatures]] = {
-    for (input <- managed(new ObjectInputStream(new BufferedInputStream(new FileInputStream(inputFile))))) yield {
-      Iterator.from(1).map(i => {
-        if (i % 100 == 0) System.err.print(".")
-        Try(input.readObject.asInstanceOf[FrameFeatures])
-      }).takeWhile(_.isSuccess).map(_.get)
-    }
-  }
-}
 
 /**
  * Trains the Argument Id model, using pre-cached features

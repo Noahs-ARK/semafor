@@ -2,9 +2,7 @@ package edu.cmu.cs.lti.ark.fn.parsing
 
 import java.util
 
-import edu.cmu.cs.lti.ark.fn.parsing.CandidateFrameElementFilters._
 import edu.cmu.cs.lti.ark.fn.parsing.CandidateSpanPruner.NON_BREAKING_LEFT_CONSTITUENT_POS
-import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements
 import edu.cmu.cs.lti.ark.util.ds.Range0Based
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse
 
@@ -12,28 +10,26 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 
 
-/**
- * Uses a dependency parse to prune the options of candidate spans.
- */
-class CandidateSpanPruner {
-  /** Finds a set of candidate spans based on a dependency parse */
-  def candidateSpansAndGoldSpans(dataPoint: DataPointWithFrameElements): util.List[DataPrep.SpanAndParseIdx] = {
-    val candidates = candidateSpans(dataPoint.getParses.getBestParse)
-    val goldSpans = dataPoint.getOvertFrameElementFillerSpans.asScala
-    val result = for (range <- candidates.asScala ++ goldSpans) yield {
-      new DataPrep.SpanAndParseIdx(range, 0)
-    }
-    result.asJava
+object CandidateSpanPruner {
+  val EMPTY_SPAN: Range0Based = new Range0Based(-1, -1, false)
+  val NON_BREAKING_LEFT_CONSTITUENT_POS: Set[String] = Set("DT", "JJ")
+
+  def createSpanRange(start: Int, end: Int): Range0Based = {
+    if (start < 0 && end < 0) EMPTY_SPAN else new Range0Based(start, end, true)
   }
+}
+/** Uses a dependency parse to prune the options of candidate spans. */
+class CandidateSpanPruner {
+  import CandidateSpanPruner.EMPTY_SPAN
 
   /**
-   * Calculates an array of constituent spans based on the given dependency parse.
+   * Calculates a set of constituent spans based on the given dependency parse.
    * A constituent span is a token and all of its descendants.
    *
    * @param depParse the dependency parse
    */
   def candidateSpans(depParse: DependencyParse): util.List[Range0Based] = {
-    val result = mutable.Set[Range0Based](CandidateFrameElementFilters.EMPTY_SPAN) // always include the empty span
+    val result = mutable.Set[Range0Based](EMPTY_SPAN) // always include the empty span
     val nodes = depParse.getIndexSortedListOfNodes
     val length = nodes.length - 1
     // single tokens are always considered
@@ -86,7 +82,4 @@ class CandidateSpanPruner {
     }
     (left zip right).map({ case (startIdx, endIdx) => new Range0Based(startIdx, endIdx) })
   }
-}
-object CandidateSpanPruner {
-  val NON_BREAKING_LEFT_CONSTITUENT_POS: Set[String] = Set("DT", "JJ")
 }

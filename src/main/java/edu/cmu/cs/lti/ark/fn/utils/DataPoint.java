@@ -23,27 +23,21 @@ package edu.cmu.cs.lti.ark.fn.utils;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
-import edu.cmu.cs.lti.ark.util.ds.Pair;
 import edu.cmu.cs.lti.ark.util.ds.Range;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
-import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParses;
 import gnu.trove.THashMap;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-import static java.lang.Integer.parseInt;
-
-public class DataPoint {
-	private DependencyParses parses;
-	private String frameName;
-	private String lexicalUnitName;	// e.g. 'cause.v'
+public abstract class DataPoint {
+	protected DependencyParse parse;
+	protected String frameName;
 	/* token indices of target phrase */
-	private int[] targetTokenIdxs;
-	private int sentNum;
+	protected int[] targetTokenIdxs;
+	protected int sentNum;
 	
 	protected String dataSet;
 	
@@ -53,18 +47,6 @@ public class DataPoint {
 	 * @see #getCharacterIndicesForToken(int)
 	 */
 	private THashMap<Integer,Range0Based> tokenIndexMap;
-
-	// for benefit of subclasses
-	protected DataPoint() { }
-
-	public DataPoint(DependencyParses parses) {
-		this.parses = parses;
-	}
-
-	protected DataPoint(DependencyParses parses, String dataSet) {
-		this(parses);
-		this.dataSet = dataSet;
-	}
 
 	/**
 	 * Given a sentence tokenized with space separators, populates tokenIndexMap with mappings 
@@ -91,50 +73,8 @@ public class DataPoint {
 		tokenIndexMap = localTokenIndexMap;
 	}
 
-	public void processFrameLine(String frameLine) {
-		// tokens are separated by tabs
-		// tokens[0]: frame name
-		// tokens[1]: lexical unit
-		// tokens[2]: target token indexes (0-based), separated by "_"
-		// tokens[3]: target word(s), separated by " "
-		// tokens[4]: sentence number
-		final String[] tokens = frameLine.split("\t");
-		frameName = tokens[0].intern();
-		sentNum = parseInt(tokens[4]);
-		// The above 3 lines are duplicated in parseFrameNameAndSentenceNum()
-		lexicalUnitName = tokens[1].intern();
-		String[] tokNums = tokens[2].split("_");
-		targetTokenIdxs = new int[tokNums.length];
-		for(int j = 0; j < tokNums.length; j ++) {
-			targetTokenIdxs[j] = parseInt(tokNums[j]);
-		}
-		Arrays.sort(targetTokenIdxs);
-	}
-	
-	/**
-	 * The inverse of processFrameLine(). Result does not include a trailing newline.
-	 * @see #processFrameLine(String)
-	 */
-	public static String makeFrameLine(String frameName, String lexicalUnit, int[] tokenNums, String target, int sentNum) {
-		String s = "";
-		s += frameName + "\t" + lexicalUnit + "\t";
-		for (int i=0; i<tokenNums.length; i++) {
-			s += ((i==0) ? tokenNums[i] : "_" + tokenNums[i]);
-		}
-		s += "\t" + target + "\t" + sentNum;
-		return s;
-	}
-	
-	protected static Pair<String,Integer> parseFrameNameAndSentenceNum(String frameLine) {
-		// A subset of the code in processFrameLine()
-		String[] toks = frameLine.split("\t");
-		String frameName = toks[0].intern();
-		int sentNum = Integer.parseInt(toks[4]);
-		return new Pair<String,Integer>(frameName, sentNum);
-	}
-	
-	public DependencyParses getParses() {
-		return parses;
+	public DependencyParse getParse() {
+		return parse;
 	}
 	
 	public String getFrameName() {

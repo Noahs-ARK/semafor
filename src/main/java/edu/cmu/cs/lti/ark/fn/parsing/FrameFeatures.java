@@ -31,7 +31,7 @@ public class FrameFeatures implements Serializable {
 	final public int start;
 	final public int end;
 	final public List<String> fElements;
-	final public List<SpanAndCorrespondingFeatures[]> fElementSpansAndFeatures;
+	final public List<SpanAndFeatures[]> fElementSpansAndFeatures;
 	// indexes of fElementSpansAndFeatures that are gold spans (used only in training)
 	final public List<Integer> goldSpanIdxs;
 
@@ -39,7 +39,7 @@ public class FrameFeatures implements Serializable {
 						 int targetStartTokenIdx,
 						 int targetEndTokenIdx,
 						 List<String> fElements,
-						 List<SpanAndCorrespondingFeatures[]> fElementSpansAndFeatures,
+						 List<SpanAndFeatures[]> fElementSpansAndFeatures,
 						 List<Integer> goldSpanIdxs) {
 		this.frameName = frameName;
 		this.start = targetStartTokenIdx;
@@ -53,7 +53,7 @@ public class FrameFeatures implements Serializable {
 						 int targetStartTokenIdx,
 						 int targetEndTokenIdx,
 						 List<String> fElements,
-						 List<SpanAndCorrespondingFeatures[]> fElementSpansAndFeatures) {
+						 List<SpanAndFeatures[]> fElementSpansAndFeatures) {
 		this(frameName, targetStartTokenIdx, targetEndTokenIdx, fElements, fElementSpansAndFeatures, new ArrayList<Integer>());
 	}
 }
