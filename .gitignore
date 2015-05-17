@@ -18,7 +18,9 @@ dependency-reduced-pom.xml
 .DS_Store
 
 # training data we don't include in the repo
-training/data/naacl2012*
+training/data/naacl2012/
+training/data/framenet15/
 
-# log
-training/data/log
+# experimental artifacts
+models/
+experiments/
