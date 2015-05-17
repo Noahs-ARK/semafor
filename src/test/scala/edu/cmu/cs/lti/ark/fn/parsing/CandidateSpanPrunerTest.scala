@@ -4,14 +4,15 @@ import edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec._
 import edu.cmu.cs.lti.ark.fn.parsing.CandidateSpanPruner.createSpanRange
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements
 import edu.cmu.cs.lti.ark.util.IntRanges._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.FlatSpec
+import org.scalatest.matchers.ShouldMatchers
 
 import scala.collection.JavaConverters._
 
 /**
  * @author sthomson@cs.cmu.edu
  */
-class CandidateSpanPrunerTest extends FlatSpec with Matchers {
+class CandidateSpanPrunerTest extends FlatSpec with ShouldMatchers {
   private val maltLine = "My/PRP$/2/NMOD kitchen/NN/5/SBJ no/RB/5/ADV longer/RB/3/AMOD smells/VBZ/0/ROOT ././5/P"
   private val sentence = MaltCodec.decode(maltLine)
   private val frameElementsLine = "0\t1.0\t1\tTemporal_collocation\tno.r\t2_3\tno longer\t0\n"

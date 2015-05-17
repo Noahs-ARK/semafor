@@ -7,7 +7,6 @@ import edu.cmu.cs.lti.ark.fn.parsing.FrameFeaturesCache.writeFrameFeatures
 import resource.{ManagedResource, managed}
 
 import scala.io.{Codec, Source}
-import scala.util.Try
 
 
 object CacheFrameFeaturesApp {
@@ -54,8 +53,12 @@ object FrameFeaturesCache {
     for (input <- managed(new ObjectInputStream(new BufferedInputStream(new FileInputStream(inputFile))))) yield {
       Iterator.from(1).map(i => {
         if (i % 100 == 0) System.err.print(".")
-        Try(input.readObject.asInstanceOf[FrameFeatures])
-      }).takeWhile(_.isSuccess).map(_.get)
+        try {
+          Some(input.readObject.asInstanceOf[FrameFeatures])
+        } catch {
+          case _: IOException | _: ClassNotFoundException | _: ClassCastException => None
+        }
+      }).takeWhile(_.isDefined).map(_.get)
     }
   }
 }

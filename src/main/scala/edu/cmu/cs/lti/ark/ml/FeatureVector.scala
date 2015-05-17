@@ -5,7 +5,7 @@ import java.util
 import breeze.collection.mutable.SparseArray
 import breeze.linalg.{Vector => Vec, DenseVector, SparseVector}
 
-import scala.reflect.ClassTag
+import scala.reflect.Manifest
 
 /**
  * A binary feature vector. Only stores the indexes of features that fired.
@@ -32,7 +32,7 @@ case class FeatureVector(indexes: Array[Int], length: Int) {
     indexes
   }
 
-  private def sparseArray[T: ClassTag](t: T, f: T): SparseArray[T] = {
+  private def sparseArray[T: Manifest](t: T, f: T): SparseArray[T] = {
     new SparseArray[T](sorted, Array.fill(sorted.length)(t), sorted.length, length, f)
   }
 }
@@ -45,7 +45,7 @@ object Vectors {
   def toDenseVectorPar(vec: Vec[Double]): DenseVector[Double] = vec match {
     case v: SparseVector[Double] =>
       val result = Array.ofDim[Double](vec.length)
-      (0 until v.activeSize).par.map(i =>
+      (0 until v.activeSize).par.foreach(i =>
         result(v.index(i)) = v.data(i)
       )
       DenseVector(result)

@@ -49,7 +49,7 @@ object TrainArgIdApp extends App {
       _.flatMap(frameExampleToArgExamples(numFeats)).toArray
     )
   }
-  System.err.println(s"Done reading cached training data. ${trainingData.length} training examples.")
+  System.err.println("Done reading cached training data. %d training examples.".format(trainingData.length))
   val initialWeights = oWarmStartModelFile match {
     case Some(file) => readModel(file)
     case None => DenseVector.zeros[Double](numFeats)
@@ -83,12 +83,12 @@ object ArgIdTrainer {
       case (state, loss, iteration, batchNum) =>
         val partialIt = iteration + (batchNum.toDouble * batchSize / n)
         val time = (System.currentTimeMillis() - startTime) / 1000.0
-        System.err.println(f"i: $partialIt%.3f,  loss: $loss%.5f,  regLoss: ${state.regLoss}%.5f,  time:$time%.2fs")
+        System.err.println("i: %.3f,  loss: %.5f,  regLoss: %.5f,  time:%.2fs".format(partialIt, loss, state.regLoss, time))
         state
     })
     val everyK = continually(optimizationPath.drop(saveEveryKBatches - 1).next())
     for ((state, i) <- everyK.take(numModelsToSave).zipWithIndex) {
-      writeModel(state.weights, f"${modelFile}_$i%04d")
+      writeModel(state.weights, "%s_%04d".format(modelFile, i))
     }
   }
 
@@ -102,18 +102,18 @@ object ArgIdTrainer {
   }
 
   def readModel(warmStartModelFile: String): DenseVector[Double] = {
-    System.err.println(s"Reading warm start model from $warmStartModelFile")
+    System.err.println("Reading warm start model from %s".format(warmStartModelFile))
     val input = Source.fromFile(warmStartModelFile)(Codec.UTF8)
     val weights = DenseVector(input.getLines().map(_.toDouble).toArray)
-    System.err.println(s"Done reading warm start model from $warmStartModelFile")
+    System.err.println("Done reading warm start model from %s".format(warmStartModelFile))
     weights
   }
 
   def writeModel(weights: Vec[Double], modelFile: String) {
     for (ps <- managed(new PrintStream(new FileOutputStream(modelFile)))) {
-      System.err.println(s"Writing model to $modelFile")
+      System.err.println("Writing model to %s".format(modelFile))
       weights.foreach(ps.println)
-      System.err.println(s"Finished writing model $modelFile")
+      System.err.println("Finished writing model %s".format(modelFile))
     }
   }
 }

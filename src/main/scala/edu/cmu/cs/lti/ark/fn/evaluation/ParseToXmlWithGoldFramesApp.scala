@@ -1,6 +1,7 @@
 package edu.cmu.cs.lti.ark.fn.evaluation
 
 import java.io.File
+import java.{lang => j}
 
 import com.google.common.base.Charsets.UTF_8
 import com.google.common.io.Files
@@ -54,7 +55,7 @@ object ParseToXmlWithGoldFramesApp extends App {
   def predictArgsForSentence(sentence: Sentence, frames: List[String], kBest: Int, sem: Semafor): List[String] = {
     // predictArgumentLines needs the sentenceId field to be 0, but we don't want to forget it
     val sentenceId = frames.head.split("\t")(SENTENCE_FIELD)
-    System.err.println(s"Sentence Id: $sentenceId")
+    System.err.println("Sentence Id: %s".format(sentenceId))
     // set sentenceId to 0 and run arg id'ing
     val zeroed = frames.map(setSentenceId(_, "0"))
     val results: List[String] = sem.predictArgumentLines(sentence, zeroed.asJava, kBest).asScala.toList
@@ -149,7 +150,7 @@ object ParseToXmlWithGoldTargetsApp extends App {
     fields.mkString("\t")
   }
 
-  def getTargetFromFrameLine(frameLine: String): List[Integer] = {
+  def getTargetFromFrameLine(frameLine: String): List[j.Integer] = {
     frameLine.split("\t")(TARGET_FIELD).split("_").map(new Integer(_)).toList
   }
 
@@ -189,7 +190,7 @@ object ParseToXmlWithGoldTargetsApp extends App {
       unLemmatized.map(sem.addLemmas)
     }
     // read in gold targets and collate with sentences
-    val sentencesAndTargets: List[(Int, Sentence, List[List[Integer]])] = {
+    val sentencesAndTargets: List[(Int, Sentence, List[List[j.Integer]])] = {
       val frameLines = Files.readLines(frameIdFile, UTF_8).asScala.toList
       val framesBySentence = frameLines.groupBy(_.split("\t")(SENTENCE_FIELD).trim.toInt)
       framesBySentence.keys.toList.sorted.map(i => (i, sentences(i), framesBySentence(i).map(getTargetFromFrameLine)))
@@ -199,7 +200,7 @@ object ParseToXmlWithGoldTargetsApp extends App {
       val batchSize = 128
       sentencesAndTargets.grouped(batchSize).flatMap(_.par.flatMap {
         case (sentenceId, sentence, targets) =>
-          System.err.println(s"Sentence Id: $sentenceId")
+          System.err.println("Sentence Id: %d".format(sentenceId))
           // frame identification
           val idResult = sem.predictFrames(sentence, targets.map(_.asJava).asJava)
           // argument identification

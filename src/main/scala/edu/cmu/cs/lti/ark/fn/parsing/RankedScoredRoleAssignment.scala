@@ -22,7 +22,7 @@ case class RankedScoredRoleAssignment(rank: Int,
       spanToStr("_")(targetSpan),
       targetTokens,
       sentenceIdx,
-      fesAndSpans.map(fe => s"${fe.name}\t${spanToStr(":")(targetSpan)}").mkString("\t")
+      fesAndSpans.map(fe => "%s\t%s".format(fe.name, spanToStr(":")(targetSpan))).mkString("\t")
     ).mkString("\t")
   }
 }
@@ -52,5 +52,5 @@ object RankedScoredRoleAssignment {
     new Range0Based(spanStrs(0).toInt, spanStrs(spanStrs.length - 1).toInt)
   }
   
-  def spanToStr(delimiter: String)(span: Range0Based): String = s"${span.start}$delimiter${span.end}"
+  def spanToStr(delimiter: String)(span: Range0Based): String = "%d%s%d".format(span.start, delimiter, span.end)
 }
