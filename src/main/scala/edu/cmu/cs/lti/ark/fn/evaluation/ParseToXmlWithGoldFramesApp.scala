@@ -116,7 +116,7 @@ object ParseToXmlWithGoldFrames {
   def predictArgsForSentence(sentence: Sentence, frames: List[String], kBest: Int, sem: Semafor): List[String] = {
     // predictArgumentLines needs the sentenceId field to be 0, but we don't want to forget it
     val sentenceId = frames.head.split("\t")(SENTENCE_FIELD)
-    System.err.println(s"Sentence Id: $sentenceId")
+    //System.err.println(s"Sentence Id: $sentenceId")
     // set sentenceId to 0 and run arg id'ing
     val zeroed = frames.map(setSentenceId(_, "0"))
     val results: List[String] = sem.predictArgumentLines(sentence, zeroed.asJava, kBest).asScala.toList
