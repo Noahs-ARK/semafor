@@ -2,9 +2,9 @@
 set -e # fail fast
 set -x
 
-cv=$1  # "test" or "dev"
+source $(dirname ${BASH_SOURCE[0]})/../../training/tune_config.sh $1
+cv=$2  # "test" or "dev"
 
-source "$(dirname ${BASH_SOURCE[0]})/../../training/config.sh"
 
 cd ${SEMAFOR_HOME}
 
@@ -71,11 +71,12 @@ echo "Evaluating argument identification on ${cv} set (counting gold frames)..."
 ${SEMAFOR_HOME}/scripts/scoring/fnSemScore_modified.pl \
     -l \
     -n \
+    -e \
+    -v \
     ${frames_single_file} \
     ${relation_modified_file} \
     ${gold_xml} \
     ${predicted_xml} > "${results_dir}/argid_${cv}_exact_count_gold_frames" # 2>/dev/null
-    #-ve \
 
 
 tail -n1 "${results_dir}/argid_${cv}_exact_count_gold_frames"

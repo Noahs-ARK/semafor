@@ -2,8 +2,8 @@
 source "$(dirname ${BASH_SOURCE[0]})/../bin/config.sh"
 
 # choose a name for the model to train
-turbomdl="standard" # prefix for the all.lemma.tags file
-model_name=$turbomdl"_tbps" # make this directory in ../experiments/
+model_name=$1 # make this directory in ../experiments/
+prefix="basic" # prefix for the all.lemma.tags file
 
 # RUN swabha_all_lemma_tags.sh AND CHANGE parsed_file
 # AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
@@ -11,6 +11,7 @@ model_name=$turbomdl"_tbps" # make this directory in ../experiments/
 #
 # ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 # should set to roughly the number of cores available
+
 
 
 num_threads=10
@@ -40,7 +41,7 @@ training_dir="${datadir}/naacl2012"
 fe_file="${training_dir}/cv.train.sentences.frame.elements"
 fe_file_length=`wc -l ${fe_file}`
 fe_file_length=`expr ${fe_file_length% *}`
-parsed_file="${training_dir}/cv.train.sentences.turboparsed.${turbomdl}.stanford.all.lemma.tags"
+parsed_file="${training_dir}/cv.train.sentences.turboparsed.${prefix}.stanford.all.lemma.tags"
 
 # path to store the alphabet we create:
 alphabet_file="${model_dir}/alphabet.dat"

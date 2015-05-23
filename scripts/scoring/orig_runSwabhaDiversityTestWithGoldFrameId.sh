@@ -2,11 +2,11 @@
 set -e # fail fast
 set -x
 
-source "$(dirname ${BASH_SOURCE[0]})/../../training/config.sh"
+cv=$1
+source $(dirname ${BASH_SOURCE[0]})/../../training/cv${cv}_config.sh
 
-NAME="$1"
-PREFIX="$2" # "test" or "dev"
-
+divmetric=tbps_basic_cv${cv}
+PREFIX="test" # "test" actually means cv fold of train data which we will obtain kbest lists on
 
 #************************************ PREPROCESSING *******************************************#
 
@@ -24,7 +24,7 @@ frames_single_file="${fn_1_5_dir}/framesSingleFile.xml"
 relation_modified_file="${fn_1_5_dir}/frRelationModified.xml"
 
 
-GOLD_FILE="${datadir}/naacl2012/cv.${PREFIX}.sentences.lrb.xml"
+GOLD_FILE="${datadir}/cv/cv${cv}/cv.test.sentences_${cv}.lrb.xml" 
 
 
 
@@ -33,26 +33,26 @@ temp="${experiments_dir}/tmp"
 mkdir -p "${temp}"
 echo "temp directory: $temp"
 
-INPUT_DIR="${experiments_dir}/output/${NAME}/xml"
+INPUT_DIR="${experiments_dir}/output/${divmetric}/xml"
 
 
 
 ###########################
 
 
-all_lemma_tags_file="${training_dir}/cv.${PREFIX}.sentences.turboparsed.basic.stanford.all.lemma.tags"
-tokenizedfile="${training_dir}/cv.${PREFIX}.sentences.tokenized"
-gold_fe_file="${training_dir}/cv.${PREFIX}.sentences.frame.elements"
+all_lemma_tags_file="${training_dir}/cv.${PREFIX}.sentences.turboparsed.basic.stanford_${cv}.all.lemma.tags"
+tokenizedfile="${training_dir}/cv.${PREFIX}.sentences_${cv}.tokenized"
+gold_fe_file="${training_dir}/cv.${PREFIX}.sentences_${cv}.frame.elements"
 
 
 output_dir="${experiments_dir}/output"
 mkdir -p "${output_dir}"
-predicted_xml="${output_dir}/${PREFIX}.argid.predict.xml"
-gold_xml="${output_dir}/${PREFIX}.gold.xml"
+#predicted_xml="${output_dir}/${PREFIX}.argid.predict.xml"
+gold_xml="${output_dir}/cv_${PREFIX}.gold.xml"
 
 results_dir="${experiments_dir}/results"
 mkdir -p "${results_dir}"
-results_file="${results_dir}/argid_${PREFIX}_exact"
+#results_file="${results_dir}/argid_${PREFIX}_exact"
 
 
 # make a gold xml file whose tokenization matches the tokenization used for parsing
@@ -71,14 +71,14 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
     outputFile:${gold_xml}
 
 
-mkdir -p "${output_dir}/${NAME}/frameElements"
-mkdir -p "${output_dir}/${NAME}/xml"
+mkdir -p "${output_dir}/${divmetric}/frameElements"
+mkdir -p "${output_dir}/${divmetric}/xml"
 
 echo "Performing argument identification on ${PREFIX} set, with model \"${model_name}\"..."
 ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4g -Xmx4g -XX:ParallelGCThreads=2 \
     edu.cmu.cs.lti.ark.fn.evaluation.SwabhaDiversityApp \
     "${SEMAFOR_HOME}" \
-    "${NAME}" \
+    "${divmetric}" \
     "${tokenizedfile}" \
     "${gold_fe_file}" \
     "${all_lemma_tags_file}" \
@@ -87,7 +87,7 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4g -Xmx4g -XX:ParallelGCThread
     "${output_dir}"
 
 
-DIVERSITY_RESULTS_DIR="${experiments_dir}/results/${NAME}"
+DIVERSITY_RESULTS_DIR="${experiments_dir}/results/${divmetric}"
 mkdir -p "${DIVERSITY_RESULTS_DIR}"
 
 INPUT_FILES=$(cd "${INPUT_DIR}" > /dev/null && echo *)

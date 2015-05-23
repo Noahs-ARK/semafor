@@ -16,8 +16,18 @@ for prefix in $prefixes ; do
     ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
         edu.cmu.cs.lti.ark.fn.data.prep.AllAnnotationsMergingWithoutNE \
           "${training_dir}/cv.${prefix}.sentences.tokenized" \
-          "${training_dir}/cv.${prefix}.sentences.turboparsed.basic.stanford.lemmatized.conll" \
+          "${training_dir}/cv.${prefix}.sentences.turboparsed.${turbomdl}.stanford.lemmatized.conll" \
           "${tmp_parse_file}" \
-          "${training_dir}/cv.${prefix}.sentences.turboparsed.basic.stanford.all.lemma.tags"
+          "${training_dir}/cv.${prefix}.sentences.turboparsed.${turbomdl}.stanford.all.lemma.tags"
     rm "${tmp_parse_file}"
 done
+
+
+#tmp_parse_file="${training_dir}/cv.${prefix}.sentences.tmp_parse_file"
+#${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
+#    edu.cmu.cs.lti.ark.fn.data.prep.AllAnnotationsMergingWithoutNE \
+#    "${training_dir}/cv.dev.sentences.concise.tokenized" \
+#    "${training_dir}/cv.dev.sentences.turboparsed.standard.stanford.concise.lemmatized.conll" \
+#    "${tmp_parse_file}" \
+#    "${training_dir}/cv.dev.sentences.turboparsed.standard.stanford.concise.all.lemma.tags"
+#rm "${tmp_parse_file}"

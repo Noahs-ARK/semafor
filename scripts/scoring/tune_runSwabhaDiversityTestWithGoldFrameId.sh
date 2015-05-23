@@ -5,7 +5,7 @@ set -x
 source "$(dirname ${BASH_SOURCE[0]})/../../training/config.sh"
 
 NAME="$1"
-PREFIX="$2" # "test" or "dev"
+PREFIX="dev" # "test" or "dev"
 
 
 #************************************ PREPROCESSING *******************************************#
@@ -24,9 +24,9 @@ frames_single_file="${fn_1_5_dir}/framesSingleFile.xml"
 relation_modified_file="${fn_1_5_dir}/frRelationModified.xml"
 
 
-GOLD_FILE="${datadir}/naacl2012/cv.${PREFIX}.sentences.lrb.xml"
+GOLD_FILE="${datadir}/naacl2012/cv.${PREFIX}.concise.gold.xml"
 
-
+echo "but why?"
 
 #temp="$(mktemp -d --tmpdir=${training_dir} temp_arg_`date +%s`_XXX)"
 temp="${experiments_dir}/tmp"
@@ -40,9 +40,9 @@ INPUT_DIR="${experiments_dir}/output/${NAME}/xml"
 ###########################
 
 
-all_lemma_tags_file="${training_dir}/cv.${PREFIX}.sentences.turboparsed.basic.stanford.all.lemma.tags"
-tokenizedfile="${training_dir}/cv.${PREFIX}.sentences.tokenized"
-gold_fe_file="${training_dir}/cv.${PREFIX}.sentences.frame.elements"
+all_lemma_tags_file="${training_dir}/cv.${PREFIX}.sentences.turboparsed.standard.stanford.concise.all.lemma.tags"
+tokenizedfile="${training_dir}/cv.${PREFIX}.sentences.concise.tokenized"
+gold_fe_file="${training_dir}/cv.${PREFIX}.sentences.concise.frame.elements"
 
 
 output_dir="${experiments_dir}/output"
@@ -54,7 +54,7 @@ results_dir="${experiments_dir}/results"
 mkdir -p "${results_dir}"
 results_file="${results_dir}/argid_${PREFIX}_exact"
 
-
+echo "Ia m here"
 # make a gold xml file whose tokenization matches the tokenization used for parsing
 # (hack around the fact that SEMAFOR mangles token offsets)
 end=`wc -l ${tokenizedfile}`
