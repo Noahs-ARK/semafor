@@ -42,6 +42,7 @@ INPUT_DIR="${experiments_dir}/output/${NAME}/xml"
 
 all_lemma_tags_file="${training_dir}/cv.${PREFIX}.sentences.turboparsed.basic.stanford.all.lemma.tags"
 tokenizedfile="${training_dir}/cv.${PREFIX}.sentences.tokenized"
+gold_frame_file="${training_dir}/cv.${PREFIX}.sentences.frames"
 gold_fe_file="${training_dir}/cv.${PREFIX}.sentences.frame.elements"
 
 
@@ -80,7 +81,7 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4g -Xmx4g -XX:ParallelGCThread
     "${SEMAFOR_HOME}" \
     "${NAME}" \
     "${tokenizedfile}" \
-    "${gold_fe_file}" \
+    "${gold_frame_file}" \
     "${all_lemma_tags_file}" \
     "${experiments_dir}" \
     "${SEMAFOR_HOME}/experiments/swabha/diversekbestdeps" \
