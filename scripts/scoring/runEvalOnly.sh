@@ -5,7 +5,7 @@ set -x
 source "$(dirname ${BASH_SOURCE[0]})/../../training/config.sh"
 
 NAME="$1"
-PREFIX="dev" # "test" or "dev"
+PREFIX="$2" # "test" or "dev"
 
 
 #************************************ PREPROCESSING *******************************************#
@@ -24,7 +24,8 @@ frames_single_file="${fn_1_5_dir}/framesSingleFile.xml"
 relation_modified_file="${fn_1_5_dir}/frRelationModified.xml"
 
 
-GOLD_FILE="${datadir}/naacl2012/cv.${PREFIX}.concise.gold.xml"
+GOLD_FILE="${datadir}/naacl2012/cv.${PREFIX}.sentences.lrb.xml"
+
 
 
 #temp="$(mktemp -d --tmpdir=${training_dir} temp_arg_`date +%s`_XXX)"
@@ -39,50 +40,49 @@ INPUT_DIR="${experiments_dir}/output/${NAME}/xml"
 ###########################
 
 
-all_lemma_tags_file="${training_dir}/cv.${PREFIX}.sentences.turboparsed.standard.stanford.concise.all.lemma.tags"
-tokenizedfile="${training_dir}/cv.${PREFIX}.sentences.concise.tokenized"
-gold_fe_file="${training_dir}/cv.${PREFIX}.sentences.concise.frame.elements"
+all_lemma_tags_file="${training_dir}/cv.${PREFIX}.sentences.turboparsed.basic.stanford.all.lemma.tags"
+tokenizedfile="${training_dir}/cv.${PREFIX}.sentences.tokenized"
+gold_fe_file="${training_dir}/cv.${PREFIX}.sentences.frame.elements"
 
 
 output_dir="${experiments_dir}/output"
-mkdir -p "${output_dir}"
 predicted_xml="${output_dir}/${PREFIX}.argid.predict.xml"
 gold_xml="${output_dir}/${PREFIX}.gold.xml"
 
 results_dir="${experiments_dir}/results"
-mkdir -p "${results_dir}"
 results_file="${results_dir}/argid_${PREFIX}_exact"
+
 
 # make a gold xml file whose tokenization matches the tokenization used for parsing
 # (hack around the fact that SEMAFOR mangles token offsets)
-end=`wc -l ${tokenizedfile}`
-end=`expr ${end% *}`
-echo "Start:0"
-echo "End:${end}"
-${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
-    edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationXML \
-    testFEPredictionsFile:${gold_fe_file} \
-    startIndex:0 \
-    endIndex:${end} \
-    testParseFile:${all_lemma_tags_file} \
-    testTokenizedFile:${tokenizedfile} \
-    outputFile:${gold_xml}
-
-
-mkdir -p "${output_dir}/${NAME}/frameElements"
-mkdir -p "${output_dir}/${NAME}/xml"
-
-echo "Performing argument identification on ${PREFIX} set, with model \"${model_name}\"..."
-${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4g -Xmx4g -XX:ParallelGCThreads=2 \
-    edu.cmu.cs.lti.ark.fn.evaluation.SwabhaDiversityApp \
-    "${SEMAFOR_HOME}" \
-    "${NAME}" \
-    "${tokenizedfile}" \
-    "${gold_fe_file}" \
-    "${all_lemma_tags_file}" \
-    "${experiments_dir}" \
-    "${SEMAFOR_HOME}/experiments/swabha/diversekbestdeps" \
-    "${output_dir}"
+#end=`wc -l ${tokenizedfile}`
+#end=`expr ${end% *}`
+#echo "Start:0"
+#echo "End:${end}"
+#${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
+#    edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationXML \
+#    testFEPredictionsFile:${gold_fe_file} \
+#    startIndex:0 \
+#    endIndex:${end} \
+#    testParseFile:${all_lemma_tags_file} \
+#    testTokenizedFile:${tokenizedfile} \
+#    outputFile:${gold_xml}
+#
+#
+#mkdir -p "${output_dir}/${NAME}/frameElements"
+#mkdir -p "${output_dir}/${NAME}/xml"
+#
+#echo "Performing argument identification on ${PREFIX} set, with model \"${model_name}\"..."
+#${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4g -Xmx4g -XX:ParallelGCThreads=2 \
+#    edu.cmu.cs.lti.ark.fn.evaluation.SwabhaDiversityApp \
+#    "${SEMAFOR_HOME}" \
+#    "${NAME}" \
+#    "${tokenizedfile}" \
+#    "${gold_fe_file}" \
+#    "${all_lemma_tags_file}" \
+#    "${experiments_dir}" \
+#    "${SEMAFOR_HOME}/experiments/swabha/diversekbestdeps" \
+#    "${output_dir}"
 
 
 DIVERSITY_RESULTS_DIR="${experiments_dir}/results/${NAME}"

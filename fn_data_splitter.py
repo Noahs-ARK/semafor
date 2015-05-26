@@ -6,6 +6,8 @@ into specified number of folds for jacknifing
 
 import sys
 
+model = "basic"
+
 
 def split_tok(tok_file, num_folds, dest):
     f = open(tok_file, 'r')
@@ -13,7 +15,7 @@ def split_tok(tok_file, num_folds, dest):
     f.close()
     req_sents = int(len(lines)/num_folds)
     print "total = ", req_sents
-    extn = ".tokenized"
+    extn = ".test.sentences.tokenized"
 
     tokfname = tok_file.split("/")[-1]
     split_pts=[] 
@@ -24,26 +26,28 @@ def split_tok(tok_file, num_folds, dest):
             end = req_sents*(i+1)
         split_pts.append(end)
 
-        fn = dest + "/" + tokfname[:-len(extn)] + "_" + str(i) + extn;
+        fn = dest + "/cv" +  str(i) + "/cv" + str(i) + extn;
         print fn 
         wf = open(fn, 'w')
         for l in lines[req_sents*i:end]:
             wf.write(l+"\n")
         wf.close()
+    #split_pts = split_pts[:-1]
+    print split_pts
     return split_pts
 
+# BUGGGY. IF THE SPLIT SIZES ARE UNEVEN IT WRITES WRONG SENTENCE NUMBERS IN THE VERY LAST FILE
 def split_fe(fe_file, sp, dest):
     f = open(fe_file, 'r')
 
     fefname = fe_file.split("/")[-1]
-    extn = ".frame.elements"
+    extn = ".test.sentences.frame.elements"
+    
     split_pts = [i for i in reversed(sp)]
-    print split_pts
     req_num = sp[0]
-    print req_num 
     k = 0
     #split_pts.pop()
-    fname = dest + "/" + fefname[:-len(extn)] + "_" + str(k) + extn
+    fname = dest + "/cv" + str(k) + "/cv" + str(k) + extn
     print fname
     fn = open(fname, "w")
     for l in f:
@@ -51,50 +55,59 @@ def split_fe(fe_file, sp, dest):
         num = int(ele[7])
         #print split_pts, num
         if (num in split_pts or num > split_pts[-1]):
-            print num, split_pts
             x = split_pts.pop()
+            print num, split_pts
             print x
             if num != 0:
                 fn.close()
             k += 1
-            fname = dest + "/" + fefname[:-len(extn)] + "_" + str(k) + extn
+            fname = dest + "/cv" + str(k) + "/cv" + str(k) + extn
             print fname
             fn = open(fname, "w")
         ele[7] = str(int(ele[7]) % req_num)
-        fn.write(("\t").join(ele) +"\n");
+        fn.write(("\t").join(ele) +"\n")
+    f.close()
+    fn.close()
 
 def split_conll(conll_file, splits, dest):
     sent = 0
     cf = open(conll_file, 'r')
-    extn = ".conll"
+    extn = ".test.sentences.turboparsed." + model + ".stanford.lemmatized.conll"
 
     cfname = conll_file.split("/")[-1]
     
-    f = open(dest + "/" + cfname[:-len(extn)] + "_0" + extn, "w")
-    i = 1    
+    i = 0 
+    wfname = dest + "/cv" + str(i) + "/cv" + str(i) +  extn
+    print wfname   
+    wf = open(wfname, "w")
+
     for l in cf:
         if l.strip()=='':
             sent += 1
             if sent in splits:
-                f.write(l)
-	        f.close()
-		f = open(dest + "/" + cfname[:-len(extn)] + "_" + str(i) + extn, "w")
+                wf.write(l)
+	        wf.close()
 		i += 1
+    		wfname = dest + "/cv" + str(i) + "/cv" + str(i) +  extn
+    		print wfname   
+    		wf = open(wfname, "w")
                 continue
-        f.write(l)
-    f.close()
+        wf.write(l)
+    wf.close()
+    cf.close()
 
 if __name__=="__main__":
 
     file_to_be_split = sys.argv[1] # /path_to/cv.xxx.sentences
-    conll_file = sys.argv[2] # /path_to/cv.xxx.sentences.yyy
-    num_folds = int(sys.argv[3])
-    dest = sys.argv[4] 
+    #model = sys.argv[2]
+    num_folds = int(sys.argv[2])
+    dest = sys.argv[3] 
 
     tok_file = file_to_be_split+".tokenized"
+    conll_file = file_to_be_split+".turboparsed." + model + ".stanford.lemmatized.conll"
     fe_file = file_to_be_split+".frame.elements"
 
     split_pts = split_tok(tok_file, num_folds, dest)
     split_fe(fe_file, split_pts, dest)
-    split_conll(conll_file, split_pts, dest)
+    #split_conll(conll_file, split_pts[:-1], dest)
     

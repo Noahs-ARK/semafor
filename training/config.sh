@@ -2,7 +2,7 @@
 source "$(dirname ${BASH_SOURCE[0]})/../bin/config.sh"
 
 # choose a name for the model to train
-turbomdl="standard" # prefix for the all.lemma.tags file
+turbomdl="basic" # prefix for the all.lemma.tags file
 model_name=$turbomdl"_tbps" # make this directory in ../experiments/
 
 # RUN swabha_all_lemma_tags.sh AND CHANGE parsed_file

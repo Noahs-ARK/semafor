@@ -494,9 +494,11 @@ MAIN:{
             $fscore = (2 * $recall * $precision) / ($recall + $precision);
         }
 	if ($OUTPUT_PER_SENTENCE || $VERBOSE) {
-#            printf("Sentence ID=%d: Recall=%.${PREC}f (%.1f/%.1f) Precision=%.${PREC}f (%.1f/%.1f) Fscore=%.${PREC}f\n",
-#                   $sent, $recall, $matchSum, $goldSum, $precision, $matchSum, $scoreSum, $fscore);
-            printf("%d\t%.${PREC}f\t%.${PREC}f\t%.${PREC}f\n", $sent, $recall, $precision, $fscore);
+            #printf("Sentence ID=%d: Recall=%.${PREC}f (%.1f/%.1f) Precision=%.${PREC}f (%.1f/%.1f) Fscore=%.${PREC}f\n",
+             #      $sent, $recall, $matchSum, $goldSum, $precision, $matchSum, $scoreSum, $fscore);
+            printf("%d\t%.${PREC}f(%.1f/%.1f)\t%.${PREC}f(%.1f/%.1f)\t%.${PREC}f\n",
+                   $sent, $recall, $matchSum, $goldSum, $precision, $matchSum, $scoreSum, $fscore);
+            #printf("%d\t%.${PREC}f\t%.${PREC}f\t%.${PREC}f\n", $sent, $recall, $precision, $fscore);
         }
 	$nSent++;
     }

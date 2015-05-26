@@ -12,15 +12,20 @@ model = "basic"
 semmodel = model + "_tbps_cv"
 metric = "tbps_" + model + "_cv"
 extn = "thBest.argid.predict.frame.elements"
-dest = expdir + "basic_tbps/semreranker_train/output/frameElements/"
+dest = expdir + "basic_tbps/output/semreranker_train/frameElements/"
 
-splitsize = 556
-numsplits = 5
+splitsize = 705
+numsplits = 4
 ranks = 100
 
 def fefilename(cv, rank):
 	fn = expdir + semmodel + str(cv) + "/output/" + metric + str(cv) + "/frameElements/" + str(rank) + extn
 	return fn
+
+#def fefilename(splitnum):
+#	if (splitnum == 0):
+#		return semhome + "/training/data/naacl2012/cv.train.sentences.frame.elements"
+#        return semhome + "/training/data/naacl2012/cv.dev.sentences.frame.elements"
 
 if __name__ == "__main__":
 	for rank in range(ranks):
@@ -35,7 +40,8 @@ if __name__ == "__main__":
 				ele[7] = str(int(ele[7])+i*splitsize)
 				alllines.append("\t".join(ele))
 
-		wf = open(dest + str(rank) + extn, "w")
+		wfname = dest + str(rank) + extn #semhome + "/training/data/naacl2012/cv.train+dev.sentences.frame.elements" 
+		wf = open(wfname, "w")
 		for l in alllines:
 			wf.write(l+"\n")
 

@@ -10,7 +10,6 @@ cd ${SEMAFOR_HOME}
 
 all_lemma_tags_file="${training_dir}/cv.${cv}.sentences.turboparsed.standard.stanford.concise.all.lemma.tags"
 tokenizedfile="${training_dir}/cv.${cv}.sentences.concise.tokenized"
-gold_fe_file="${training_dir}/cv.${cv}.sentences.concise.frame.elements"
 
 
 fn_1_5_dir="${datadir}/framenet15/"
@@ -19,8 +18,9 @@ relation_modified_file="${fn_1_5_dir}/frRelationModified.xml"
 
 output_dir="/usr0/home/sswayamd/semafor/semafor/fix/"
 #mkdir -p "${output_dir}"
-gold_xml="${training_dir}/cv.${cv}.concise.gold.xml"
-
+#gold_xml="${training_dir}/cv.${cv}.concise.gold.xml"
+gold_fe_file=$1 #"${training_dir}/cv.${cv}.sentences.concise.frame.elements"
+gold_xml="${output_dir}/dedup.0th.argid.predict.xml"
 
 
 # make a gold xml file whose tokenization matches the tokenization used for parsing

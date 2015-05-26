@@ -12,11 +12,11 @@ model = "basic"
 semmodel = model + "_tbps_cv"
 metric = "tbps_" + model + "_cv"
 
-splitsize = 556
-numsplits = 5
+splitsize = 705#556
+numsplits = 4
 
 ranks = 100
-dest = expdir + "basic_tbps/semreranker_train/results/partial/"
+dest = expdir + "basic_tbps/results/semreranker_train/partial/"
 extn = "thBest.argid.predict.xml"
 
 header = "Sentence ID\tRecall\tPrecision\tFscore"
