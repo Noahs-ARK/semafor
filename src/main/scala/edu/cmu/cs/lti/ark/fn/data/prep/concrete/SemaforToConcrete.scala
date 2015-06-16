@@ -18,18 +18,16 @@ import org.joda.time.{DateTimeZone, DateTime}
 
 object SemaforToConcrete {
   val toolName = "edu.cmu.cs.lti.ark:Semafor:3.0-alpha-05-SNAPSHOT"
-  val modelDir = new File("/Users/sam/code/semafor/models/semafor_malt_model_20121129")
 
   def main(args: Array[String]) {
-    val Array(concreteFile, outFile) = args
-
-    addAllAnnotations(new File(concreteFile), new File(outFile))
+    val Array(modelDir, concreteFile, outFile) = args
+    addAllAnnotations(new File(modelDir), new File(concreteFile), new File(outFile))
   }
 
   /** Takes a file containing multiple Communications, adds Stanford, Malt and
     * Semafor annotations, and writes to a new file
     */
-  def addAllAnnotations(rawConcreteFile: File, outFile: File) {
+  def addAllAnnotations(modelDir: File, rawConcreteFile: File, outFile: File) {
     // store intermediate results so that we don't have to have stanford, malt and semafor
     // models loaded in memory all at once
     val stanfordTempFile = new File(outFile.getCanonicalPath + ".stanford")

@@ -5,7 +5,6 @@ import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.fn.utils.DataPoint;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
 
-import javax.annotation.concurrent.Immutable;
 import java.util.List;
 
 import static com.google.common.collect.ImmutableList.copyOf;
@@ -19,7 +18,6 @@ import static java.lang.Integer.parseInt;
  *
  * @author sthomson@cs.cmu.edu
  */
-@Immutable
 public class Sentence {
 	private final ImmutableList<Token> tokens;
 

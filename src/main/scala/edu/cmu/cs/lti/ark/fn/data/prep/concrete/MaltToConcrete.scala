@@ -16,7 +16,7 @@ object MaltToConcrete {
       .setTool(toolName)
       .setTimestamp(new DateTime(DateTimeZone.UTC).getMillis)
       .build()
-    val concretePosTaggedSentences = getAllSentences(communication).toIterable
+    val concretePosTaggedSentences = getAllSentences(communication)
     val concreteMaltParsedSentences = concretePosTaggedSentences.map(concreteSentence => {
       val posTaggedSentence = sentenceFromPosTaggedConcrete(concreteSentence)
       val maltParsedSentence = maltParser.parse(posTaggedSentence)

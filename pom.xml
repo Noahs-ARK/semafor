@@ -6,7 +6,7 @@
 
     <groupId>edu.cmu.cs.lti.ark</groupId>
     <artifactId>Semafor</artifactId>
-    <version>3.0-alpha-05-SNAPSHOT</version>
+    <version>3.0-alpha-05</version>
 
     <repositories>
         <repository>
@@ -51,7 +51,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>12.0</version>
+            <version>14.0.1</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -71,14 +71,14 @@
         <dependency>
             <groupId>edu.stanford.nlp</groupId>
             <artifactId>stanford-corenlp</artifactId>
-            <version>3.2.0</version>
+            <version>3.3.1</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>edu.stanford.nlp</groupId>-->
-            <!--<artifactId>stanford-corenlp</artifactId>-->
-            <!--<version>3.2.0</version>-->
-            <!--<classifier>models</classifier>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>edu.stanford.nlp</groupId>
+            <artifactId>stanford-corenlp</artifactId>
+            <version>3.3.1</version>
+            <classifier>models</classifier>
+        </dependency>
         <dependency>
             <!-- supposed to be optional (only used in signature), but scala won't compile without it -->
             <scope>provided</scope>
@@ -157,19 +157,19 @@
                 </configuration>
             </plugin>
             <!-- include source code in the final jar -->
-            <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-source-plugin</artifactId>-->
-                <!--<version>2.2.1</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<id>attach-sources</id>-->
-                        <!--<goals>-->
-                            <!--<goal>jar-no-fork</goal>-->
-                        <!--</goals>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-            <!--</plugin>-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
@@ -186,31 +186,31 @@
                     <finalName>${project.artifactId}-${project.version}</finalName>
                 </configuration>
             </plugin>
-            <plugin>
-                <!-- make an uberjar -->
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>2.1</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <transformers>
-                                <!-- make it executable -->
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>edu.cmu.cs.lti.ark.fn.Semafor</mainClass>
-                                </transformer>
-                            </transformers>
-                            <!-- only include dependencies that are actually used (the transitive hull)
-                            <minimizeJar>true</minimizeJar>
-                             -->
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+            <!--<plugin>-->
+                <!--&lt;!&ndash; make an uberjar &ndash;&gt;-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-shade-plugin</artifactId>-->
+                <!--<version>2.1</version>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<phase>package</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>shade</goal>-->
+                        <!--</goals>-->
+                        <!--<configuration>-->
+                            <!--<transformers>-->
+                                <!--&lt;!&ndash; make it executable &ndash;&gt;-->
+                                <!--<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">-->
+                                    <!--<mainClass>edu.cmu.cs.lti.ark.fn.Semafor</mainClass>-->
+                                <!--</transformer>-->
+                            <!--</transformers>-->
+                            <!--&lt;!&ndash; only include dependencies that are actually used (the transitive hull)-->
+                            <!--<minimizeJar>true</minimizeJar>-->
+                             <!--&ndash;&gt;-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
             <plugin>
                 <groupId>org.scala-tools</groupId>
                 <artifactId>maven-scala-plugin</artifactId>

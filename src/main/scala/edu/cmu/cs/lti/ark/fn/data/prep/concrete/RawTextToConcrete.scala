@@ -1,12 +1,12 @@
 package edu.cmu.cs.lti.ark.fn.data.prep.concrete
 
-import scala.io.Source
-import java.io.FileOutputStream
-import java.io.File
+import java.io.{File, FileOutputStream}
+
 import edu.jhu.hlt.concrete.Concrete._
 import edu.jhu.hlt.concrete.util.IdUtil.generateUUID
 import resource.managed
-import Utils.{originalDir, rawConcreteFile}
+
+import scala.io.Source
 
 object RawTextToConcrete {
   def main(args: Array[String]) {
@@ -15,7 +15,6 @@ object RawTextToConcrete {
     convertAndWriteAll(new File(inputDir), corpusName, new File(outFile))
   }
 
-  //convertAndWriteAll(Util.originalDir, "Firestone", Util.rawConcreteFile)
   def convertAndWriteAll(inputDir: File, corpusName: String, outFile: File) {
     val files = inputDir.listFiles
     val communications = files.toIterator.map { file =>

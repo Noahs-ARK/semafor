@@ -32,7 +32,10 @@ object StanfordToConcrete {
                 SentenceSegmentation.newBuilder()
                   .setUuid(generateUUID())
                   .setMetadata(meta)
-                  .addAllSentence(sentences))))
+                  .addAllSentence(sentences)
+                )
+            )
+        )
       .build()
   }
 
@@ -74,7 +77,8 @@ object StanfordToConcrete {
         .addTokenization(tokenization)
         .setTextSpan(TextSpan.newBuilder()
           .setStart(concreteTokens.head.getTextSpan.getStart)
-          .setEnd(concreteTokens.last.getTextSpan.getEnd))
+          .setEnd(concreteTokens.last.getTextSpan.getEnd)
+          )
         .build()
     }
   }
