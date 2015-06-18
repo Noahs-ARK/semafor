@@ -34,6 +34,11 @@
             <version>4.11</version>
         </dependency>
         <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+        <dependency>
             <groupId>org.pcollections</groupId>
             <artifactId>pcollections</artifactId>
             <version>2.1.2</version>
@@ -186,31 +191,31 @@
                     <finalName>${project.artifactId}-${project.version}</finalName>
                 </configuration>
             </plugin>
-            <!--<plugin>-->
-                <!--&lt;!&ndash; make an uberjar &ndash;&gt;-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-shade-plugin</artifactId>-->
-                <!--<version>2.1</version>-->
-                <!--<executions>-->
-                    <!--<execution>-->
-                        <!--<phase>package</phase>-->
-                        <!--<goals>-->
-                            <!--<goal>shade</goal>-->
-                        <!--</goals>-->
-                        <!--<configuration>-->
-                            <!--<transformers>-->
-                                <!--&lt;!&ndash; make it executable &ndash;&gt;-->
-                                <!--<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">-->
-                                    <!--<mainClass>edu.cmu.cs.lti.ark.fn.Semafor</mainClass>-->
-                                <!--</transformer>-->
-                            <!--</transformers>-->
-                            <!--&lt;!&ndash; only include dependencies that are actually used (the transitive hull)-->
-                            <!--<minimizeJar>true</minimizeJar>-->
-                             <!--&ndash;&gt;-->
-                        <!--</configuration>-->
-                    <!--</execution>-->
-                <!--</executions>-->
-            <!--</plugin>-->
+            <plugin>
+                <!-- make an uberjar -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <!-- make it executable -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>edu.cmu.cs.lti.ark.fn.Semafor</mainClass>
+                                </transformer>
+                            </transformers>
+                            <!-- only include dependencies that are actually used (the transitive hull)
+                            <minimizeJar>true</minimizeJar>
+                             -->
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.scala-tools</groupId>
                 <artifactId>maven-scala-plugin</artifactId>

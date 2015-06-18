@@ -9,7 +9,7 @@ BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." > /dev/null && pwd )"
 # where you decompressed SEMAFOR.
 SEMAFOR_HOME="${BASE_DIR}/semafor"
 
-CLASSPATH=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-05-SNAPSHOT.jar"
+CLASSPATH=".:${SEMAFOR_HOME}/target/Semafor-3.0-alpha-05.jar"
 
 # Change the following to the bin directory of your $JAVA_HOME
 JAVA_HOME_BIN="/usr/bin"
