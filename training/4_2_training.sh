@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e # fail fast
+set -x
 
 echo
 echo "step 4ii: Training."
@@ -12,10 +13,10 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms5g -Xmx5g \
   edu.cmu.cs.lti.ark.fn.parsing.TrainArgIdApp \
   model:${model_dir}/argmodel.dat \
   alphabetfile:${SCAN_DIR}/parser.conf.unlabeled \
-  localfeaturescache:${SCAN_DIR}/featurecache.jobj \
+  localfeaturescache:${SCAN_DIR}/train.featurecache.jobj \
   l1-strength:1e-8 \
   l2-strength:1e-8 \
-  batch-size:4000 \
+  batch-size:400 \
   save-every-k-batches:400 \
   num-models-to-save:30
-#  warm-start-model:${model_dir}/argmodel.dat \
+#  warm-start-model:${model_dir}/argmodel.dat

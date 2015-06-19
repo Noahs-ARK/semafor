@@ -33,7 +33,7 @@ object CacheFrameFeaturesApp {
       writeFrameFeatures(frameFeatures, frameFeaturesCacheFile)
     }
     System.err.println("Extracted features in " + (System.currentTimeMillis - time) + " millis.")
-    featureIndex.save(alphabetFilename)
+    featureIndex.save(new File(alphabetFilename))
   }
 }
 

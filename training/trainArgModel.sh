@@ -7,6 +7,5 @@ set -x
 
 my_dir="$(dirname ${BASH_SOURCE[0]})"
 
-${my_dir}/4_1_createAlphabet.sh
-${my_dir}/4_2_cacheFeatureVectors.sh
-${my_dir}/4_3_training.sh
+${my_dir}/4_1_extractFeatures.sh
+${my_dir}/4_2_training.sh
