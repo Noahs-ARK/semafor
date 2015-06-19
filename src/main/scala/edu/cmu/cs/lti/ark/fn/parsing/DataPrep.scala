@@ -39,16 +39,26 @@ import scala.io.Source
 
 case class FeAndSpansWithFeatures(frameElement: String, spans: Array[SpanAndFeatures])
 
-/** a map from feature name to its index */
+/**
+ * A mutable bimap between feature name and index.
+ * `forAll feat: String => names.toVector(index(feat)) == feat`
+ * `forAll i: Int => index(names.toVector(i)) == i`
+ * Expands to add new features on lookup misses.
+ * This is useful for "numberizing" features, so model parameters can be stored
+ * in a 1d vector.
+ * Uses a `LinkedHashMap` so that features are sorted by insertion order.
+ */
 @NotThreadSafe
-case class FeatureIndex(index: m.Map[String, Int], name: m.Buffer[String])
+case class FeatureIndex(index: m.LinkedHashMap[String, Int])
     extends m.Map.WithDefault[String, Int](index, k => index.getOrElseUpdate(k, index.size + 1)) {
 
-  def save(alphabetFilename: String) {
+  def names: Iterator[String] = index.keysIterator
+
+  def save(file: File) {
     val numFeatures = size
-    for (printStream <- managed(new PrintStream(new FileOutputStream(alphabetFilename)))) {
+    for (printStream <- managed(new PrintStream(new FileOutputStream(file)))) {
       printStream.println(numFeatures)
-      name.foreach(printStream.println)
+      names.foreach(printStream.println)
     }
   }
 
@@ -56,11 +66,11 @@ case class FeatureIndex(index: m.Map[String, Int], name: m.Buffer[String])
 }
 
 object FeatureIndex {
-  def empty: FeatureIndex = FeatureIndex(m.HashMap.empty, m.Buffer())
+  def empty: FeatureIndex = FeatureIndex(m.LinkedHashMap.empty)
 
   def fromFile(file: File): FeatureIndex = {
     val result = empty
-    managed(Source.fromFile(file)).foreach(_.getLines().foreach(result))
+    managed(Source.fromFile(file)).foreach(_.getLines().drop(1).foreach(result))
     result
   }
 }
