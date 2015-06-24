@@ -3,10 +3,9 @@ package edu.cmu.cs.lti.ark.fn.evaluation
 import com.google.common.base.Charsets.UTF_8
 import com.google.common.io.Files
 
-import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec.ConllCodec
 import edu.cmu.cs.lti.ark.fn.parsing.{CandidateSpanPruner, RankedScoredRoleAssignment}
-import edu.cmu.cs.lti.ark.util.ds.Range0Based
+import CandidateSpanPruner.spanToString
 
 import java.io.File
 
@@ -39,7 +38,7 @@ object EvalCandidateSpanPruner {
       roleAssignment <- frameElementsInput.getLines().map(RankedScoredRoleAssignment.fromLine);
       sentenceIdx = roleAssignment.sentenceIdx;
       sentence = sentences(sentenceIdx);
-      predictedSpansForFrame = pruner.candidateSpans(sentence.toDependencyParse, roleAssignment.targetSpan).toSet
+      predictedSpansForFrame = pruner.candidateSpans(sentence, roleAssignment.targetSpan).toSet
     ) {
       if (verbose && sentenceIdx != currentSentenceIdx) {
         // only print dep parse for the first frame of a sentence
@@ -71,11 +70,6 @@ object EvalCandidateSpanPruner {
     val (p, r, f) = precisionRecallF1(numTruePositives, numPredicted, numGold)
     println("p: " + p + ", r: " + r + ", f1: " + f)
     (p, r, f)
-  }
-
-  def spanToString(span: Range0Based, sentence: Sentence): String = {
-    // print 1-based indices to make it easier to collate with conll
-    (span.start + 1) + "-" + (span.end + 1) + "\t" + sentence.getTokens.subList(span.start, span.end + 1).mkString(" ")
   }
 
   def precisionRecallF1(numTruePositives: Float, numPredicted: Float, numGold: Float): (Float, Float, Float) = {

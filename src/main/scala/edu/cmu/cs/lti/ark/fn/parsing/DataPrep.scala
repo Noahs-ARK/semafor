@@ -85,7 +85,7 @@ class DataPrep(tagLines: Array[String], index: FeatureIndex) {
   def frameFeatures(feLine: String): FrameFeatures = {
     val roleAssignment = RankedScoredRoleAssignment.fromLine(feLine)
     val sentence = sentences(roleAssignment.sentenceIdx)
-    val candidates = spanPruner.candidateSpans(sentence.toDependencyParse, roleAssignment.targetSpan)
+    val candidates = spanPruner.candidateSpans(sentence, roleAssignment.targetSpan)
     val goldSpans = roleAssignment.fesAndSpans.map(_.span)
     val spans = (candidates.asScala.toSet ++ goldSpans).toArray.sorted
     val feAndSpansWithFeatsAndGoldIdxs = getFeaturesForFrameLine(feLine, spans, sentence).toArray
