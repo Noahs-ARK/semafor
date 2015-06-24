@@ -11,12 +11,12 @@ import scala.math.{max, min}
 
 
 object CandidateSpanPruner {
-  val EMPTY_SPAN: Range0Based = new Range0Based(-1, -1, false)
+  val EmptySpan: Range0Based = new Range0Based(-1, -1, false)
   val NON_BREAKING_LEFT_CONSTITUENT_POS: Set[String] = Set("DT", "JJ")
   val PUNCTUATION_POS: Set[String] = Set(".", ",", ":")
 
   def range(start: Int, end: Int): Range0Based = {
-    if ((start < 0 && end < 0) || start > end) EMPTY_SPAN else new Range0Based(start, end, true)
+    if ((start < 0 && end < 0) || start > end) EmptySpan else new Range0Based(start, end, true)
   }
 
   def groupContiguous[A](xs: Iterable[A], p: A => Boolean): List[Iterable[A]] = {
@@ -32,14 +32,14 @@ object CandidateSpanPruner {
 }
 
 /** Uses a dependency parse to prune the options of candidate spans. */
-class CandidateSpanPruner {
+class CandidateSpanPruner(doStripPunctuation: Boolean = true,
+                          doIncludeContiguousSubspans: Boolean = true) {
   import CandidateSpanPruner._
 
   /** Calculates a set of candidate spans based on the given dependency parse. */
   def candidateSpans(depParse: DependencyParse,
-                     doStripPunctuation: Boolean = true,
-                     doIncludeContiguousSubspans: Boolean = false): util.List[Range0Based] = {
-    val result = m.Set[Range0Based](EMPTY_SPAN) // always include the empty span
+                     targetSpan: Range0Based): util.List[Range0Based] = {
+    val result = m.Set[Range0Based](EmptySpan) // always include the empty span
     val nodes = depParse.getIndexSortedListOfNodes.drop(1) // drop the dummy root node
     result ++= nodes.indices.map(i => range(i, i))  // single tokens are always considered
     // full subtrees
@@ -50,7 +50,7 @@ class CandidateSpanPruner {
       result ++= contiguousSubspans(nodes, subtrees)
     }
     // heuristics for less-than-full subtrees
-    result ++= johanssonFinerGrained(nodes, subtrees)
+    result ++= johanssonHeuristics(nodes, subtrees)
     result.toList.asJava
   }
 
@@ -85,8 +85,8 @@ class CandidateSpanPruner {
   }
 
   // heuristics to try to recover finer-grained constituents when a node has descendants on both sides
-  def johanssonFinerGrained(nodes: Array[DependencyParse],
-                            subtrees: Array[Range0Based]): Set[Range0Based] = {
+  def johanssonHeuristics(nodes: Array[DependencyParse],
+                          subtrees: Array[Range0Based]): Set[Range0Based] = {
     val result = m.Set.empty[Range0Based]
     for (
       (subtree, i) <- subtrees.zipWithIndex

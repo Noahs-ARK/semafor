@@ -27,7 +27,7 @@ object EvalCandidateSpanPrunerApp extends App {
 
 object EvalCandidateSpanPruner {
   def score(frameElementsFile: File, depParseFile: File, verbose: Boolean = true): (Float, Float, Float) = {
-    val pruner = new CandidateSpanPruner
+    val pruner = new CandidateSpanPruner(true, true)
     val sentenceInput = managed(ConllCodec.readInput(Files.newReaderSupplier(depParseFile, UTF_8).getInput))
     val sentences = sentenceInput.acquireAndGet(_.toArray)
     var currentSentenceIdx = -1
@@ -39,7 +39,7 @@ object EvalCandidateSpanPruner {
       roleAssignment <- frameElementsInput.getLines().map(RankedScoredRoleAssignment.fromLine);
       sentenceIdx = roleAssignment.sentenceIdx;
       sentence = sentences(sentenceIdx);
-      predictedSpansForFrame = pruner.candidateSpans(sentence.toDependencyParse).toSet
+      predictedSpansForFrame = pruner.candidateSpans(sentence.toDependencyParse, roleAssignment.targetSpan).toSet
     ) {
       if (verbose && sentenceIdx != currentSentenceIdx) {
         // only print dep parse for the first frame of a sentence
