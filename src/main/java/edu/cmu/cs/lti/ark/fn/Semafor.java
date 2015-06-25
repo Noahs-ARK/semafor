@@ -83,7 +83,7 @@ public class Semafor {
 	protected final Decoding decoder;
 	protected final Map<String, Integer> argIdFeatureIndex;
 	protected final Lemmatizer lemmatizer = new MorphaLemmatizer();
-    protected final CandidateSpanPruner spanPruner = new CandidateSpanPruner();
+    protected final CandidateSpanPruner spanPruner = CandidateSpanPruner.defaultInstance();
 
 	/**
 	 * required flags:
@@ -284,7 +284,8 @@ public class Semafor {
 			final DependencyParse parse = dataPoint.getParse();
 			final int targetStartTokenIdx = dataPoint.getTargetTokenIdxs()[0];
 			final int targetEndTokenIdx = dataPoint.getTargetTokenIdxs()[dataPoint.getTargetTokenIdxs().length-1];
-			final List<Range0Based> spans = spanPruner.candidateSpans(parse);
+			final List<Range0Based> spans =
+					spanPruner.candidateSpans(sentence, new Range0Based(targetStartTokenIdx, targetEndTokenIdx));
             final List<String> frameElements = Lists.newArrayList(frameElementsForFrame.lookupFrameElements(frame));
 			final List<SpanAndFeatures[]> featuresAndSpanByArgument = Lists.newArrayList();
 			for (String frameElement : frameElements) {

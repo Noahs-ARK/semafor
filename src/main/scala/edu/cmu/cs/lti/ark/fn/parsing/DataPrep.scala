@@ -26,7 +26,7 @@ import javax.annotation.concurrent.NotThreadSafe
 
 import com.google.common.collect.ImmutableList
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.{AllLemmaTags, Sentence}
-import edu.cmu.cs.lti.ark.fn.parsing.CandidateSpanPruner.EMPTY_SPAN
+import edu.cmu.cs.lti.ark.fn.parsing.CandidateSpanPruner.EmptySpan
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements.FrameElementAndSpan
 import edu.cmu.cs.lti.ark.util.ds.Range0Based
@@ -85,7 +85,7 @@ class DataPrep(tagLines: Array[String], index: FeatureIndex) {
   def frameFeatures(feLine: String): FrameFeatures = {
     val roleAssignment = RankedScoredRoleAssignment.fromLine(feLine)
     val sentence = sentences(roleAssignment.sentenceIdx)
-    val candidates = spanPruner.candidateSpans(sentence.toDependencyParse)
+    val candidates = spanPruner.candidateSpans(sentence, roleAssignment.targetSpan)
     val goldSpans = roleAssignment.fesAndSpans.map(_.span)
     val spans = (candidates.asScala.toSet ++ goldSpans).toArray.sorted
     val feAndSpansWithFeatsAndGoldIdxs = getFeaturesForFrameLine(feLine, spans, sentence).toArray
@@ -110,7 +110,7 @@ class DataPrep(tagLines: Array[String], index: FeatureIndex) {
     val realizedFes = dataPoint.getOvertFrameElementNames.asScala.toSet
     // null-instantiated FEs
     val nullFes = allFrameElements.toSet.diff(realizedFes)
-    val nullFesAndSpans = nullFes.map(new FrameElementAndSpan(_, EMPTY_SPAN))
+    val nullFesAndSpans = nullFes.map(new FrameElementAndSpan(_, EmptySpan))
     for (feAndSpan <- nullFesAndSpans ++ fesAndSpans.asScala) yield {
       val spansAndFeats = getFeaturesForRole(dataPoint, frame, feAndSpan.name, candidateSpans)
       val goldSpanIdx = candidateSpans.indexOf(feAndSpan.span)
