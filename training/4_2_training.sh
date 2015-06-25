@@ -1,9 +1,10 @@
 #!/bin/bash
 
 set -e # fail fast
+set -x
 
 echo
-echo "step 4iii: Training."
+echo "step 4ii: Training."
 echo
 
 source "$(dirname ${BASH_SOURCE[0]})/config.sh"

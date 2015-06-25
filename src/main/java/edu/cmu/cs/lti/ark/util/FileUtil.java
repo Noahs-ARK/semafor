@@ -51,18 +51,6 @@ public class FileUtil {
 		}
 		return localsc;
 	}
-	public static PrintStream  openOutFile(String filename){
-		PrintStream localps=null;
-		try
-		{
-			localps=new PrintStream (new FileOutputStream(filename));
-
-		}catch(IOException ioe){
-			// TODO: NO! stop swallowing exceptions
-			System.out.println(ioe.getMessage());
-		}
-		return localps;
-	}
 
 	public static int countLines(String filename) throws IOException {
 		return countLines(Files.newReaderSupplier(new File(filename), Charsets.UTF_8));

@@ -132,72 +132,6 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 	}
 
 	/**
-	 * @return A pair of lists of nodes: the first being all left children of the current node, from left to right;
-	 * and the second being all right children of the current node, also from left to right.
-	 */
-	public Pair<DependencyParse[],DependencyParse[]> getLeftAndRightChildren() {
-		List<DependencyParse> leftChildren = new ArrayList<DependencyParse>();
-		List<DependencyParse> rightChildren = new ArrayList<DependencyParse>();
-		for (DependencyParse child : children) {
-			if (child.getIndex()>this.getIndex())
-				rightChildren.add(child);
-			else if (child.getIndex()<this.getIndex())
-				leftChildren.add(child);
-		}
-		return new Pair<DependencyParse[],DependencyParse[]>(DependencyParse.sortNodesByIndex(leftChildren), DependencyParse.sortNodesByIndex(rightChildren));
-	}
-
-	/**
-	 * @return A list of left children of the current node, from left to right.
-	 */
-	public DependencyParse[] getLeftChildren() {
-		return getLeftAndRightChildren().first;
-	}
-
-	/**
-	 * @return A list of right children of the current node, from left to right.
-	 */
-	public DependencyParse[] getRightChildren() {
-		return getLeftAndRightChildren().second;
-	}
-
-	/**
-	 * @return A pair of lists of nodes: the first being all left descendants of the current node, from left to right;
-	 * and the second being all right descendants of the current node, also from left to right. If the parse is projective,
-	 * it follows that the left (right) descendants will be children of this node, or descendants of this node's left (right) children.
-	 */
-	public Pair<DependencyParse[],DependencyParse[]> getLeftAndRightDescendants() {
-		DependencyParse[] orderedDescendants = getIndexSortedListOfNodes();
-		List<DependencyParse> leftDescendants = new ArrayList<DependencyParse>();
-		List<DependencyParse> rightDescendants = new ArrayList<DependencyParse>();
-		for (DependencyParse desc : orderedDescendants) {	// orderedDescendants also contains the current node
-			if (desc.getIndex()>this.getIndex())
-				rightDescendants.add(desc);
-			else if (desc.getIndex()<this.getIndex())
-				leftDescendants.add(desc);
-		}
-		DependencyParse[] ldesc = new DependencyParse[0];
-		DependencyParse[] rdesc = new DependencyParse[0];
-		return new Pair<DependencyParse[],DependencyParse[]>(leftDescendants.toArray(ldesc), rightDescendants.toArray(rdesc));
-	}
-
-	/**
-	 * @return A list of left descendants of the current node, from left to right. If the parse is projective,
-	 * it follows that the left descendants will be children of this node, or descendants of this node's left children.
-	 */
-	public DependencyParse[] getLeftDescendants() {
-		return getLeftAndRightDescendants().first;
-	}
-
-	/**
-	 * @return A list of right descendants of the current node, from left to right. If the parse is projective,
-	 * it follows that the right descendants will be children of this node, or descendants of this node's right children.
-	 */
-	public DependencyParse[] getRightDescendants() {
-		return getLeftAndRightDescendants().second;
-	}
-
-	/**
 	 * Generates DependencyParse instances from string representations returned from a parser.
 	 * Currently assumes word tokens and POS/NER tags will each have 1 series associated with them,
 	 * whereas dependency types and parent indices may have multiple (parallel) series corresponding to
@@ -218,8 +152,8 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 
 		for(int p=0; p<parseData[0][2].length; p++) {
 
-			ArrayList<DependencyParse> list = new ArrayList<DependencyParse>();
-			ArrayList<DependencyParse> headWords = new ArrayList<DependencyParse>();
+			ArrayList<DependencyParse> list = new ArrayList<>();
+			ArrayList<DependencyParse> headWords = new ArrayList<>();
 
 			DependencyParse dummyRoot = new DependencyParse();
 			dummyRoot.setParent(null);
@@ -377,7 +311,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 		{
 			return parseNodes[tokenNums[0]+1];
 		}
-		ArrayList<Integer> listOfParents = new ArrayList<Integer>();
+		ArrayList<Integer> listOfParents = new ArrayList<>();
 		String fragment = "";
 		for(int tokenNum : tokenNums) {
 			DependencyParse internalNode = parseNodes[tokenNum + 1];
@@ -386,7 +320,7 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 		}
 		fragment=fragment.trim();
 		int size = listOfParents.size();
-		ArrayList<Integer> internalNodesWithExternalParents = new ArrayList<Integer>();
+		ArrayList<Integer> internalNodesWithExternalParents = new ArrayList<>();
 		for(int j = 0; j < size; j ++) {
 			int parentIndex = listOfParents.get(j)-1;
 
@@ -419,47 +353,5 @@ public class DependencyParse extends ParseNode<DependencyParse> {
 
 	public String toString() {
 		return Integer.toString(index) + ":" + word + "(^=" + Integer.toString(getParent().index) + ":" + getParent().word + ")";
-	}
-
-	/**
-	 * Calculates the list of constituents spans based on the given dependency parse.
-	 * A constituent span is a token and all of its descendants.
-	 * Ranges are 0-based, and include both endpoints.
-	 *
-	 * @return the list of constituents in parse. results.get(i) is the span headed by token i.
-	 */
-	public List<Range0Based> getConstituents() {
-		final DependencyParse[] nodes = getIndexSortedListOfNodes();
-		final int length = nodes.length - 1;
-		// left[i] is the index of the left-most descendant of i
-		int left[] = new int[length];
-		// right[i] is the index of the right-most descendant of i
-		int right[] = new int[length];
-		// translate parent indices from 1-based to 0-based
-		int[] parent = new int[length];
-		for (int i : xrange(length)) {
-			parent[i] = (nodes[i+1].getParentIndex() - 1);
-			left[i] = i;
-			right[i] = i;
-		}
-
-		// for each node i, expand i's ancestors' spans to include i
-		for (int i : xrange(length)) {
-			int parentIndex = parent[i];
-			while (parentIndex >= 0) {
-				if (left[parentIndex] > i) {
-					left[parentIndex] = i;
-				}
-				if (right[parentIndex] < i) {
-					right[parentIndex] = i;
-				}
-				parentIndex = parent[parentIndex];
-			}
-		}
-		ImmutableList.Builder<Range0Based> results = ImmutableList.builder();
-		for(int i : xrange(length)) {
-			results.add(new Range0Based(left[i], right[i]));
-		}
-		return results.build();
 	}
 }

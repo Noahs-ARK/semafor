@@ -21,8 +21,7 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.util.ds;
 
-import gnu.trove.THashSet;
-
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -31,7 +30,9 @@ import java.util.*;
  * @author Nathan Schneider (nschneid)
  * @since 2009-04-20
  */
-public abstract class Range implements Iterable<Integer> {
+public abstract class Range implements Iterable<Integer>, Serializable {
+	private static final long serialVersionUID = -1255114597229118205L;
+
 	public final int start;
 	public final int end;
 	protected boolean endInclusive;
@@ -60,14 +61,6 @@ public abstract class Range implements Iterable<Integer> {
 		
 	}
 
-	public int getBaseIndex() {
-		return baseIndex;
-	}
-	
-	public boolean isZeroBased() {
-		return getBaseIndex()==0;
-	}
-	
 	public boolean isEndInclusive() {
 		return endInclusive;
 	}
@@ -75,21 +68,11 @@ public abstract class Range implements Iterable<Integer> {
 	public int length() {
 		return ((endInclusive) ? end-start+1 : end-start);
 	}
-	
-	public<T> List<T> applyToList(List<T> l) {
-		return l.subList(start, ((endInclusive) ? end+1 : end));
-	}
-	
-	public<T> T[] applyToArray(T[] a) {
-		return Arrays.copyOfRange(a, start, ((endInclusive) ? end+1 : end));
-	}
-	
-	public String applyToString(String s) {
-		return s.substring(start, start+length());
-	}
-	
+
+	public boolean isEmpty() { return length() == 0; }
+
+
 	/**
-	 * @param i
 	 * @return Whether the value of 'i' is included in the range
 	 */
 	public boolean contains(int i) {
@@ -112,7 +95,7 @@ public abstract class Range implements Iterable<Integer> {
 	}
 
 	public Iterator<Integer> iterator() {
-		List<Integer> list = new ArrayList<Integer>();
+		List<Integer> list = new ArrayList<>();
 		for (int i=start; i<start+length(); i++)
 			list.add(i);
 		return list.iterator();
@@ -126,14 +109,5 @@ public abstract class Range implements Iterable<Integer> {
 		String s = "[" + start + "," + end;
 		s += ((endInclusive) ? "]" : ")");
 		return s;
-	}
-
-	public static Set<Integer> union(List<? extends Range> ranges) {
-		Set<Integer> result = new THashSet<Integer>();
-		for (Range range : ranges) {
-			for (int i : range)
-				result.add(i);
-		}
-		return result;
 	}
 }

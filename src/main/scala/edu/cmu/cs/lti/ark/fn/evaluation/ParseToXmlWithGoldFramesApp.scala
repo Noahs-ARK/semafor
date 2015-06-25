@@ -158,7 +158,7 @@ object ParseToXmlWithGoldFrames {
     // read in dep parses
     val sentences = {
       val sentenceIterator = new SentenceIterator(ConllCodec, depParseFile)
-      val unLemmatized = sentenceIterator.asScala.toList
+      val unLemmatized = sentenceIterator.asScala.toArray
       sentenceIterator.close()
       unLemmatized.map(sem.addLemmas)
     }
@@ -244,7 +244,7 @@ object ParseToXmlWithGoldTargetsApp extends App {
     // read in dep parses
     val sentences = {
       val sentenceIterator = new SentenceIterator(ConllCodec, depParseFile)
-      val unLemmatized = sentenceIterator.asScala.toList
+      val unLemmatized = sentenceIterator.asScala.toArray
       sentenceIterator.close()
       unLemmatized.map(sem.addLemmas)
     }
@@ -269,8 +269,10 @@ object ParseToXmlWithGoldTargetsApp extends App {
       })
     }
     // write results to file
-    for (out <- managed(newWriter(outputFile, UTF_8));
-         line <- resultLines) {
+    for (
+      out <- managed(newWriter(outputFile, UTF_8));
+      line <- resultLines
+    ) {
       out.write(line)
       out.write('\n')
     }

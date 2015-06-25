@@ -28,6 +28,8 @@ import edu.cmu.cs.lti.ark.util.FileUtil;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import riso.numerical.LBFGS;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -96,12 +98,12 @@ public class Training {
 
 	private Pair<Double, double[]> getObjectiveAndGradient(FrameFeatures ffs) {
 		final int modelSize = weights.length;
-		final List<SpanAndCorrespondingFeatures[]> featsList = ffs.fElementSpansAndFeatures;
+		final List<SpanAndFeatures[]> featsList = ffs.fElementSpansAndFeatures;
 		final List<Integer> goldSpans = ffs.goldSpanIdxs;
 		final double[] gradients = new double[modelSize];
 		double value = 0.0;
 		for(int i = 0; i < featsList.size(); i ++) {
-			SpanAndCorrespondingFeatures[] featureArray = featsList.get(i);
+			SpanAndFeatures[] featureArray = featsList.get(i);
 			int goldSpan = goldSpans.get(i);
 			int featArrLen = featureArray.length;
 			double weiFeatSum[] = new double[featArrLen];
@@ -109,7 +111,7 @@ public class Training {
 			double sumExp = 0.0;
 			for(int j = 0; j < featArrLen; j ++) {
 				weiFeatSum[j] = weights[0];
-				int[] feats = featureArray[j].features;
+				int[] feats = featureArray[j].features();
 				for (int feat : feats) {
 					if (feat == 0) {
 						continue;
@@ -126,7 +128,7 @@ public class Training {
 				int Y = 0;
 				if (j == goldSpan)
 					Y = 1;
-				int[] feats = featureArray[j].features;
+				int[] feats = featureArray[j].features();
 				YMinusP[j] = Y - exp[j]/sumExp;
 				gradients[0] -= YMinusP[j];
 				for (int feat : feats) {
@@ -233,8 +235,8 @@ public class Training {
            }
 	}
 
-	public void writeModel(String modelFile) {
-		final PrintStream ps = FileUtil.openOutFile(modelFile);
+	public void writeModel(String modelFile) throws FileNotFoundException {
+		final PrintStream ps = new PrintStream (new FileOutputStream(modelFile));
 		System.out.println("Writing Model... ...");
 		for (double w : weights) {
 			ps.println(w);

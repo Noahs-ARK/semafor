@@ -33,3 +33,6 @@ experiments/*
 *.log
 training/cv*.sh
 scripts/scoring/cv*.sh
+
+# experimental artifacts
+models/

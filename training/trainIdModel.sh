@@ -3,8 +3,9 @@
 # train the frameId model
 
 set -e # fail fast
+set -x
 
-my_dir="$(dirname ${0})"
+my_dir="$(dirname ${BASH_SOURCE[0]})"
 
 ${my_dir}/3_1_idCreateAlphabet.sh
 ${my_dir}/3_2_idCreateFeatureEvents.sh

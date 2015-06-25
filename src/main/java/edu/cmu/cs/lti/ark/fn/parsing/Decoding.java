@@ -25,6 +25,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.*;
 import edu.cmu.cs.lti.ark.util.FileUtil;
+import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 import edu.cmu.cs.lti.ark.util.ds.Scored;
 import org.pcollections.HashTreePMap;
 import org.pcollections.PMap;
@@ -46,62 +47,28 @@ public class Decoding {
 
 	protected double[] modelWeights;
 
-	/** 0-indexed. Both ends inclusive. Null span is represented as [-1,-1]. */
-	public static class Span implements Comparable<Span> {
-		public final int start;
-		public final int end;
-
-		public Span(int start, int end) {
-			this.start = start;
-			this.end = end;
-		}
-
-		public boolean isEmpty() { return start == -1; }
-
-		/** Determines whether this and the other span overlap */
-		public boolean overlaps(Span other) {
-			// empty spans can't overlap with anything
-			if(isEmpty() || other.isEmpty()) return false;
-			if(start < other.start) {
-				return end >= other.start;
-			} else {
-				return other.end >= start;
-			}
-		}
-
-		@Override
-		public int compareTo(Span other) {
-			return ComparisonChain.start()
-					.compare(start, other.start)
-					.compare(end, other.end).result();
-		}
-
-		@Override
-		public String toString() {
-			return (start == end) ? (""+start) : (start + ":" + end);
-		}
-	}
-
 	/** An assignment of spans to roles of a particular frame */
 	public static class RoleAssignments implements Comparable<RoleAssignments> {
-		private final static Function<Map.Entry<String,Span>,String> JOIN_ENTRY = new Function<Map.Entry<String, Span>, String>() {
-			@Override public String apply(Map.Entry<String, Span> input) {
-				return TAB_JOINER.join(input.getKey(), input.getValue().toString());
-			}
-		};
-		private final PMap<String, Span> nonNullAssignments;
-		private final PMap<String, Span> nullAssignments;
+		private final static Function<Map.Entry<String,Range0Based>,String> JOIN_ENTRY =
+				new Function<Map.Entry<String, Range0Based>, String>() {
+					@Override public String apply(Map.Entry<String, Range0Based> input) {
+						return TAB_JOINER.join(input.getKey(), spanToString(input.getValue()));
+					}
+				};
+		private final PMap<String, Range0Based> nonNullAssignments;
+		private final PMap<String, Range0Based> nullAssignments;
 
-		public RoleAssignments(PMap<String, Span> nonNullAssignments, PMap<String, Span> nullAssignments) {
+		public RoleAssignments(PMap<String, Range0Based> nonNullAssignments,
+							   PMap<String, Range0Based> nullAssignments) {
 			this.nonNullAssignments = nonNullAssignments;
 			this.nullAssignments = nullAssignments;
 		}
 
 		public RoleAssignments() {
-			this(HashTreePMap.<String, Span>empty(), HashTreePMap.<String, Span>empty());
+			this(HashTreePMap.<String, Range0Based>empty(), HashTreePMap.<String, Range0Based>empty());
 		}
 
-		public RoleAssignments plus(String key, Span value) {
+		public RoleAssignments plus(String key, Range0Based value) {
 			if (value.isEmpty()) {
 				return new RoleAssignments(nonNullAssignments, nullAssignments.plus(key, value));
 			} else {
@@ -109,14 +76,18 @@ public class Decoding {
 			}
 		}
 
-		private Map<String, Span> getNonNullAssignments() {
+		private static String spanToString(Range0Based span) {
+			return (span.start == span.end) ? (""+span.start) : (span.start + ":" + span.end);
+		}
+
+		private Map<String, Range0Based> getNonNullAssignments() {
 			return nonNullAssignments;
 		}
 
 		/** Determines whether the given span overlaps with any of our spans */
-		private boolean overlaps(Span otherSpan) {
+		private boolean overlaps(Range0Based otherSpan) {
 			if(otherSpan.isEmpty()) return false;
-			for (Span span : getNonNullAssignments().values()) {
+			for (Range0Based span : getNonNullAssignments().values()) {
 				if (span.overlaps(otherSpan)) return true;
 			}
 			return false;
@@ -134,7 +105,7 @@ public class Decoding {
 	}
 
 	/** A sorted list of spans and their log score for a particular role */
-	public static class CandidatesForRole extends TreeSet<Scored<Span>> { }
+	public static class CandidatesForRole extends TreeSet<Scored<Range0Based>> { }
 
 	public Decoding(double[] modelWeights) {
 		this.modelWeights = modelWeights;
@@ -167,7 +138,7 @@ public class Decoding {
 	}
 
 	public List<String> decodeAll(List<FrameFeatures> frameFeaturesList, List<String> frameLines, int offset, int kBestOutput) {
-		final ArrayList<String> results = new ArrayList<String>();
+		final ArrayList<String> results = new ArrayList<>();
 		for(int i = 0; i < frameFeaturesList.size(); i++) {
 			final FrameFeatures frameFeatures = frameFeaturesList.get(i);
 			final String initialDecisionLine = getInitialDecisionLine(frameLines.get(i), offset);
@@ -237,7 +208,7 @@ public class Decoding {
 		// run beam search
 		for (String roleName : candidatesAndScoresByRole.keySet()) {
 			final PriorityQueue<Scored<RoleAssignments>> newBeam = Queues.newPriorityQueue();
-			for (Scored<Span> candidate : candidatesAndScoresByRole.get(roleName)) {
+			for (Scored<Range0Based> candidate : candidatesAndScoresByRole.get(roleName)) {
 				for (Scored<RoleAssignments> partialAssignment : currentBeam) {
 					final double newScore = partialAssignment.score + candidate.score; // multiply in log-space
 					if (newBeam.size() >= DEFAULT_BEAM_WIDTH && newScore <= newBeam.peek().score) break;
@@ -249,28 +220,23 @@ public class Decoding {
 				}
 			}
 			currentBeam = copyOf(newBeam);
-			//System.out.println("Considering " + roleName);
-			//System.out.println("Beam grew to " + newBeam.size());
-			//System.out.println("Current best: " + newBeam.first().value + " " + newBeam.first().score);
 		}
 		return safeTruncate(currentBeam, kBestOutput);
 	}
 
 	private Map<String, CandidatesForRole>
-			scoreCandidatesForRoles(List<String> roleNames, List<SpanAndCorrespondingFeatures[]> featuresList) {
+			scoreCandidatesForRoles(List<String> roleNames, List<SpanAndFeatures[]> featuresList) {
 		final Map<String,CandidatesForRole> results = Maps.newHashMap();
 		for(int i = 0; i < featuresList.size(); i++) {
 			final String roleName = roleNames.get(i);
 			final CandidatesForRole candidatesForRole = new CandidatesForRole();
-			for (SpanAndCorrespondingFeatures spanAndFeatures : featuresList.get(i)) {
-				final Span span = new Span(spanAndFeatures.span[0], spanAndFeatures.span[1]);
-				final double logScore = getWeightSum(spanAndFeatures.features, modelWeights);
+			for (SpanAndFeatures spanAndFeatures : featuresList.get(i)) {
+				final Range0Based span = spanAndFeatures.span();
+				final double logScore = getWeightSum(spanAndFeatures.features(), modelWeights);
 				candidatesForRole.add(scored(span, logScore));
 			}
 			results.put(roleName, candidatesForRole);
 		}
 		return results;
 	}
-
-	public void wrapUp() { /* no op unless overridden */ }
 }

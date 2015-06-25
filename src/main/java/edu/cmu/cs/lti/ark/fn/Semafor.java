@@ -25,6 +25,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multiset;
 import com.google.common.collect.Queues;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
@@ -130,7 +131,7 @@ public class Semafor {
 		final GraphBasedFrameIdentifier idModel = GraphBasedFrameIdentifier.getInstance(modelDirectory);
 		final RoteSegmenter segmenter = new RoteSegmenter(allRelatedWords);
 		System.err.println("Initializing alphabet for argument identification..");
-		final Map<String, Integer> argIdFeatureIndex = DataPrep.readFeatureIndex(new File(alphabetFilename));
+		final Map<String, Integer> argIdFeatureIndex = FeatureIndex.fromFile(new File(alphabetFilename)).asJava();
 		final FEDict frameElementsForFrame = FEDict.fromFile(frameElementMapFilename);
 		final Decoding decoder = Decoding.fromFile(argModelFilename, alphabetFilename);
 		return new Semafor(allRelatedWords,
@@ -280,21 +281,21 @@ public class Semafor {
 		for (String feLine : idResult) {
 			final DataPointWithFrameElements dataPoint = new DataPointWithFrameElements(sentence, feLine);
 			final String frame = dataPoint.getFrameName();
-			final DependencyParse parse = dataPoint.getParses().getBestParse();
+			final DependencyParse parse = dataPoint.getParse();
 			final int targetStartTokenIdx = dataPoint.getTargetTokenIdxs()[0];
 			final int targetEndTokenIdx = dataPoint.getTargetTokenIdxs()[dataPoint.getTargetTokenIdxs().length-1];
 			final List<Range0Based> spans = spanPruner.candidateSpans(parse);
             final List<String> frameElements = Lists.newArrayList(frameElementsForFrame.lookupFrameElements(frame));
-			final List<SpanAndCorrespondingFeatures[]> featuresAndSpanByArgument = Lists.newArrayList();
+			final List<SpanAndFeatures[]> featuresAndSpanByArgument = Lists.newArrayList();
 			for (String frameElement : frameElements) {
-				final List<SpanAndCorrespondingFeatures> spansAndFeatures = Lists.newArrayList();
+				final List<SpanAndFeatures> spansAndFeatures = Lists.newArrayList();
 				for (Range0Based span : spans) {
-					final Set<String> featureSet =
-							featureExtractor.extractFeatures(dataPoint, frame, frameElement, span, parse).elementSet();
+					final Multiset<String> featureSet =
+							featureExtractor.extractFeatures(dataPoint, frame, frameElement, span, parse);
 					final int[] featArray = convertToIdxs(featureSet);
-					spansAndFeatures.add(new SpanAndCorrespondingFeatures(new int[] {span.start, span.end}, featArray));
+					spansAndFeatures.add(new SpanAndFeatures(span, featArray));
 				}
-				featuresAndSpanByArgument.add(spansAndFeatures.toArray(new SpanAndCorrespondingFeatures[spansAndFeatures.size()]));
+				featuresAndSpanByArgument.add(spansAndFeatures.toArray(new SpanAndFeatures[spansAndFeatures.size()]));
 			}
 			frameFeaturesList.add(new FrameFeatures(frame,
 					targetStartTokenIdx,

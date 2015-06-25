@@ -56,19 +56,19 @@ public class PrepareFullAnnotationJson {
 	private static final Function<RankedScoredRoleAssignment,Integer> getSentenceIndex =
 			new Function<RankedScoredRoleAssignment, Integer>() {
 				@Nullable @Override public Integer apply(RankedScoredRoleAssignment input) {
-					return input.sentenceIdx;
+					return input.sentenceIdx();
 				}
 			};
 	public static final Function<String,RankedScoredRoleAssignment> processPredictionLine =
 			new Function<String, RankedScoredRoleAssignment>() {
 				@Nullable @Override public RankedScoredRoleAssignment apply(@Nullable String input) {
-					return RankedScoredRoleAssignment.fromPredictionLine(input);
+					return RankedScoredRoleAssignment.fromLine(input);
 				}
 			};
 	private static final Function<RankedScoredRoleAssignment,Range0Based> getTargetSpan =
 			new Function<RankedScoredRoleAssignment, Range0Based>() {
 				@Override public Range0Based apply(RankedScoredRoleAssignment input) {
-					return input.targetSpan;
+					return input.targetSpan();
 				}
 			};
 
@@ -160,17 +160,17 @@ public class PrepareFullAnnotationJson {
 		for (Range0Based targetSpan : predictionsByFrame.keySet()) {
 			final List<RankedScoredRoleAssignment> predictionsForFrame = predictionsByFrame.get(targetSpan);
 			final RankedScoredRoleAssignment first = predictionsForFrame.get(0);
-			final NamedSpanSet target = makeSpan(first.targetSpan.start, first.targetSpan.end + 1, first.frame, tokens);
+			final NamedSpanSet target = makeSpan(first.targetSpan().start, first.targetSpan().end + 1, first.frame(), tokens);
 			final List<Frame.ScoredRoleAssignment> scoredRoleAssignments = Lists.newArrayList();
 			for (RankedScoredRoleAssignment ra : predictionsForFrame) {
 				// extract frame elements
-				final List<FrameElementAndSpan> frameElementsAndSpans = ra.fesAndSpans;
+				final FrameElementAndSpan[] frameElementsAndSpans = ra.fesAndSpans();
 				final List<NamedSpanSet> frameElements = Lists.newArrayList();
 				for(FrameElementAndSpan frameElementAndSpan : frameElementsAndSpans) {
 					final Range0Based range = frameElementAndSpan.span;
 					frameElements.add(makeSpan(range.start, range.end + 1, frameElementAndSpan.name, tokens));
 				}
-				scoredRoleAssignments.add(new Frame.ScoredRoleAssignment(ra.rank, ra.score, frameElements));
+				scoredRoleAssignments.add(new Frame.ScoredRoleAssignment(ra.rank(), ra.score(), frameElements));
 			}
 			frames.add(new Frame(target, scoredRoleAssignments));
 		}
