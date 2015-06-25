@@ -67,19 +67,19 @@ def shorten_fes(fefile, newfefile):
 if __name__ == "__main__":
 	validfile=sys.argv[1] # valid example numbers, as per semafor evaluation
 	
-	conllfile=sys.argv[2] # file in which only the valid example numbers need to be kept
-	newconllfile = conllfile[:-len(".conll")] + ".concise.conll"
+	#conllfile=sys.argv[2] # file in which only the valid example numbers need to be kept
+	#newconllfile = conllfile[:-len(".conll")] + ".concise.conll"
 	
 #	tokfile = sys.argv[3]
 #	newtokfile = tokfile[:-len(".tokenized")] + ".concise.tokenized"
 #
-#	fefile = sys.argv[4]
-#        newfefile = fefile[:-len(".frame.elements")] + ".concise.frame.elements"
+	fefile = sys.argv[4]
+        newfefile = fefile[:-len(".frames")] + ".concise.frames"
 
 	vf = open(validfile,"r")
 	valids=[int(l) for l in vf]
 	vf.close()
         
-	shorten_conlls(conllfile, newconllfile, valids)
+	#shorten_conlls(conllfile, newconllfile, valids)
         #shorten_toks(tokfile, newtokfile, valids)
-	#shorten_fes(fefile, newfefile)
+	shorten_fes(fefile, newfefile)

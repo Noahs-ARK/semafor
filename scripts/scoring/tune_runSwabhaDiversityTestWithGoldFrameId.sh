@@ -39,18 +39,19 @@ INPUT_DIR="${experiments_dir}/output/${NAME}/xml"
 ###########################
 
 
-all_lemma_tags_file="${training_dir}/cv.${PREFIX}.sentences.turboparsed.standard.stanford.concise.all.lemma.tags"
+all_lemma_tags_file="${training_dir}/cv.${PREFIX}.sentences.turboparsed.${turbomdl}.stanford.concise.all.lemma.tags"
 tokenizedfile="${training_dir}/cv.${PREFIX}.sentences.concise.tokenized"
+gold_frame_file="${training_dir}/cv.${PREFIX}.sentences.concise.frames"
 gold_fe_file="${training_dir}/cv.${PREFIX}.sentences.concise.frame.elements"
 
 
 output_dir="${experiments_dir}/output"
-mkdir -p "${output_dir}"
+#mkdir -p "${output_dir}"
 predicted_xml="${output_dir}/${PREFIX}.argid.predict.xml"
 gold_xml="${output_dir}/${PREFIX}.gold.xml"
 
 results_dir="${experiments_dir}/results"
-mkdir -p "${results_dir}"
+#mkdir -p "${results_dir}"
 results_file="${results_dir}/argid_${PREFIX}_exact"
 
 # make a gold xml file whose tokenization matches the tokenization used for parsing
@@ -78,7 +79,7 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4g -Xmx4g -XX:ParallelGCThread
     "${SEMAFOR_HOME}" \
     "${NAME}" \
     "${tokenizedfile}" \
-    "${gold_fe_file}" \
+    "${gold_frame_file}" \
     "${all_lemma_tags_file}" \
     "${experiments_dir}" \
     "${SEMAFOR_HOME}/experiments/swabha/diversekbestdeps" \

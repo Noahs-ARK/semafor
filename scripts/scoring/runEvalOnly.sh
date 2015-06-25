@@ -4,8 +4,8 @@ set -x
 
 source "$(dirname ${BASH_SOURCE[0]})/../../training/config.sh"
 
-NAME="$1"
-PREFIX="$2" # "test" or "dev"
+NAME=$1
+PREFIX="test" # "test" or "dev"
 
 
 #************************************ PREPROCESSING *******************************************#
@@ -33,7 +33,7 @@ temp="${experiments_dir}/tmp"
 mkdir -p "${temp}"
 echo "temp directory: $temp"
 
-INPUT_DIR="${experiments_dir}/output/${NAME}/xml"
+INPUT_DIR="${experiments_dir}/output/${NAME}/xml1000/"
 
 
 
@@ -46,7 +46,6 @@ gold_fe_file="${training_dir}/cv.${PREFIX}.sentences.frame.elements"
 
 
 output_dir="${experiments_dir}/output"
-predicted_xml="${output_dir}/${PREFIX}.argid.predict.xml"
 gold_xml="${output_dir}/${PREFIX}.gold.xml"
 
 results_dir="${experiments_dir}/results"
@@ -86,7 +85,7 @@ results_file="${results_dir}/argid_${PREFIX}_exact"
 
 
 DIVERSITY_RESULTS_DIR="${experiments_dir}/results/${NAME}"
-mkdir -p "${DIVERSITY_RESULTS_DIR}"
+#mkdir -p "${DIVERSITY_RESULTS_DIR}"
 
 INPUT_FILES=$(cd "${INPUT_DIR}" > /dev/null && echo *)
 #INPUT_FILE="${INPUT_DIR}/1thBest.xml"
@@ -108,7 +107,7 @@ for INPUT_FILE in ${INPUT_FILES}; do
 #        "${INPUT_DIR}/${INPUT_FILE}" > "${DIVERSITY_RESULTS_DIR}/exact/${INPUT_FILE}"
 
     echo "Argument Labeling Partial Credit Results: ${INPUT_DIR}/${INPUT_FILE}"
-    mkdir -p "${DIVERSITY_RESULTS_DIR}/partial"
+    mkdir -p "${DIVERSITY_RESULTS_DIR}/partial1000/"
     ./scripts/scoring/fnSemScore_swabha.pl \
         -c ${temp} \
         -l \
@@ -117,5 +116,5 @@ for INPUT_FILE in ${INPUT_FILES}; do
         "${frames_single_file}" \
         "${relation_modified_file}" \
         "${GOLD_FILE}" \
-        "${INPUT_DIR}/${INPUT_FILE}" > "${DIVERSITY_RESULTS_DIR}/partial/${INPUT_FILE}"
+        "${INPUT_DIR}/${INPUT_FILE}" > "${DIVERSITY_RESULTS_DIR}/partial1000/${INPUT_FILE}"
 done

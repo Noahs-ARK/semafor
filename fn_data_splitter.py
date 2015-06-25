@@ -37,27 +37,29 @@ def split_tok(tok_file, num_folds, dest):
     return split_pts
 
 # BUGGGY. IF THE SPLIT SIZES ARE UNEVEN IT WRITES WRONG SENTENCE NUMBERS IN THE VERY LAST FILE
-def split_fe(fe_file, sp, dest):
+def split_fe(fe_file, sp, dest, extn):
     f = open(fe_file, 'r')
 
     fefname = fe_file.split("/")[-1]
-    extn = ".test.sentences.frame.elements"
+    
     
     split_pts = [i for i in reversed(sp)]
     req_num = sp[0]
+    print split_pts
     k = 0
     #split_pts.pop()
     fname = dest + "/cv" + str(k) + "/cv" + str(k) + extn
     print fname
     fn = open(fname, "w")
+    line = 0
     for l in f:
+        line += 1
         ele = l.strip().split("\t")
         num = int(ele[7])
-        #print split_pts, num
         if (num in split_pts or num > split_pts[-1]):
             x = split_pts.pop()
-            print num, split_pts
-            print x
+            print "at example",num
+            print "popped", x, "from", split_pts
             if num != 0:
                 fn.close()
             k += 1
@@ -106,8 +108,10 @@ if __name__=="__main__":
     tok_file = file_to_be_split+".tokenized"
     conll_file = file_to_be_split+".turboparsed." + model + ".stanford.lemmatized.conll"
     fe_file = file_to_be_split+".frame.elements"
+    frames_file = file_to_be_split+".frames"
 
     split_pts = split_tok(tok_file, num_folds, dest)
-    split_fe(fe_file, split_pts, dest)
-    #split_conll(conll_file, split_pts[:-1], dest)
+    split_fe(fe_file, split_pts, dest, ".test.sentences.frame.elements")
+    #split_fe(frames_file, split_pts, dest, ".test.sentences.frames")
+    #split_conll(conll_file, split_pts[:-1])
     

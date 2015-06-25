@@ -27,10 +27,10 @@ def calc_oracle_score(directory):
     pdenoms = [[0.0 for i in range(ranks)] for j in range(examples)] # oracle precision numerators
     rdenoms = [[0.0 for i in range(ranks)] for j in range(examples)] # oracle recall numerators
 
-    avg = [0 for i in range(ranks)] # oracle corpus scores
-    p = [0 for i in range(ranks)]
-    r = [0 for i in range(ranks)]
-    microavg = [0 for i in range(ranks)]
+    avg = [0.0 for i in range(ranks)] # oracle corpus scores
+    p = [0.0 for i in range(ranks)]
+    r = [0.0 for i in range(ranks)]
+    microavg = [0.0 for i in range(ranks)]
 
 
     for ex in range(examples):
@@ -90,6 +90,7 @@ def calc_oracle_score(directory):
     for rank in [0,24,49,74,99]:
 	print "%.5f\t" % microavg[rank],
     print
+    print "debug", avg[0]
     return microavg[-1]
 
 if __name__ == "__main__":

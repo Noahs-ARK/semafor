@@ -26,8 +26,8 @@ done
 #tmp_parse_file="${training_dir}/cv.${prefix}.sentences.tmp_parse_file"
 #${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
 #    edu.cmu.cs.lti.ark.fn.data.prep.AllAnnotationsMergingWithoutNE \
-#    "${training_dir}/cv.dev.sentences.concise.tokenized" \
-#    "${training_dir}/cv.dev.sentences.turboparsed.standard.stanford.concise.lemmatized.conll" \
+#    "${training_dir}/cv.dev.sentences.tokenized" \
+#    "${training_dir}/cv.dev.sentences.turboparsed.standard.stanford.lemmatized.conll" \
 #    "${tmp_parse_file}" \
-#    "${training_dir}/cv.dev.sentences.turboparsed.standard.stanford.concise.all.lemma.tags"
+#    "${training_dir}/cv.dev.sentences.turboparsed.standard.stanford.all.lemma.tags"
 #rm "${tmp_parse_file}"
