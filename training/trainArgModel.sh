@@ -7,9 +7,9 @@ my_dir="$(dirname ${BASH_SOURCE[0]})"
 
 source ${my_dir}/config.sh
 
-${my_dir}/4_1_createAlphabet.sh
+${my_dir}/4_1_extractFeatures.sh
 # apparently, we don't need to do : cp ${model_dir}/scan/parser.conf.unlabeled ${model_dir}/alphabet.dat
 #${my_dir}/4_2_cacheFeatureVectors.sh
-${my_dir}/4_3_training.sh
+${my_dir}/4_22_training.sh
 
 

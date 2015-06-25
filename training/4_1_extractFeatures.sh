@@ -12,7 +12,7 @@ source "$(dirname ${BASH_SOURCE[0]})/config.sh"
 mkdir -p ${SCAN_DIR}
 
 
-${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4g -Xmx4g \
+${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms20g -Xmx20g \
    edu.cmu.cs.lti.ark.fn.parsing.CacheFrameFeaturesApp \
    ${fe_file} \
    ${parsed_file} \

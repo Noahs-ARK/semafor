@@ -50,7 +50,9 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4g -Xmx4g -XX:ParallelGCThread
     ${model_name} \
     ${cv}
 
-
+temp="${experiments_dir}/tmp"
+mkdir -p "${temp}"
+echo "temp directory: $temp"
 
 echo "Evaluating argument identification on ${cv} set..."
 ${SEMAFOR_HOME}/scripts/scoring/fnSemScore_modified.pl \
@@ -66,10 +68,13 @@ ${SEMAFOR_HOME}/scripts/scoring/fnSemScore_modified.pl \
 
 tail -n1 "${results_dir}/argid_${cv}_exact"
 
+
 # Dipanjan reported using this evaluation
 echo "Evaluating argument identification on ${cv} set (counting gold frames)..."
+
 ${SEMAFOR_HOME}/scripts/scoring/fnSemScore_modified.pl \
     -l \
+    -e \
     -n \
     ${frames_single_file} \
     ${relation_modified_file} \
@@ -78,4 +83,6 @@ ${SEMAFOR_HOME}/scripts/scoring/fnSemScore_modified.pl \
     #-ve \
 
 
+
 tail -n1 "${results_dir}/argid_${cv}_exact_count_gold_frames"
+
