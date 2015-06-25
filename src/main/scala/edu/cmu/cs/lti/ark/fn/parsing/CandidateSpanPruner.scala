@@ -2,9 +2,8 @@ package edu.cmu.cs.lti.ark.fn.parsing
 
 import java.util
 
-import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.{Token, Sentence}
 import edu.cmu.cs.lti.ark.util.ds.Range0Based
-import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse
 
 import scala.collection.JavaConverters._
 import scala.collection.{mutable => m}
@@ -13,9 +12,9 @@ import scala.math.{max, min}
 
 object CandidateSpanPruner {
   val EmptySpan: Range0Based = new Range0Based(-1, -1, false)
-  val NON_BREAKING_LEFT_CONSTITUENT_POS: Set[String] = Set("DT", "JJ")
-  val PUNCTUATION_POS: Set[String] = Set(".", ",", ":")
-  val PartsOfSpeechToSplitOn: Set[String] = Set("WDT", "IN", "TO") ++ PUNCTUATION_POS
+  val NonBreakingLeftConstituentPos: Set[String] = Set("DT", "JJ")
+  val PunctuationPos: Set[String] = Set(".", ",", ":", "''", "-RRB-", "-RSB-")
+  val PartsOfSpeechToSplitOn: Set[String] = Set("WDT", "IN", "TO") ++ PunctuationPos
 
   def defaultInstance: CandidateSpanPruner = CandidateSpanPruner()
 
@@ -29,8 +28,9 @@ object CandidateSpanPruner {
     if (isEmpty(span.start, span.end)) {
       "Empty"
     } else {
+      val text = sentence.getTokens.subList(span.start, span.end + 1).asScala.mkString(" ")
       // print 1-based indices to make it easier to collate with conll
-      s"${span.start + 1}-${span.end + 1}\t${sentence.getTokens.subList(span.start, span.end + 1).asScala.mkString(" ")}"
+      s"${span.start + 1}-${span.end + 1}\t$text"
     }
   }
 }
@@ -40,26 +40,27 @@ case class CandidateSpanPruner(doStripPunctuation: Boolean = true,
                                doIncludeContiguousSubspans: Boolean = true,
                                doIncludeTarget: Boolean = true,
                                doIncludeSpansMinusTarget: Boolean = true,
-                               doStripPPs: Boolean = true) {
+                               doStripPPs: Boolean = true,
+                               doFindNNModifiers: Boolean = true,
+                               maxLength: Option[Int] = Some(20)) {
   import CandidateSpanPruner._
 
   /** Calculates a set of candidate spans based on the given dependency parse. */
   def candidateSpans(sentence: Sentence,
                      targetSpan: Range0Based): util.List[Range0Based] = {
-    val depParse = sentence.toDependencyParse
-    val result = m.Set[Range0Based](EmptySpan) // always include the empty span
-    val nodes = depParse.getIndexSortedListOfNodes.drop(1) // drop the dummy root node
-    val parents = nodes.map(_.getParentIndex - 1)
+    var result = m.Set[Range0Based](EmptySpan) // always include the empty span
+    val tokens: Array[Token] = sentence.getTokens.asScala.toArray
+    val parents = tokens.map(_.getHead - 1)  // nodes are 1-indexed
     if (doIncludeTarget) {
 //      println("target:\n" + spanToString(targetSpan, sentence))
       result += targetSpan
     }
     // single tokens
-    val singletons = nodes.indices.map(i => range(i, i))
+    val singletons = tokens.indices.map(i => range(i, i))
 //    println("singletons:\n" + singletons.map(spanToString(_, sentence)).mkString("\n"))
     result ++= singletons
     // full subtrees
-    val subtrees = getFullSubtrees(nodes)
+    val subtrees = getFullSubtrees(tokens, parents)
 //    println("subtrees:\n" + subtrees.map(spanToString(_, sentence)).mkString("\n"))
     result ++= subtrees
     // contiguous spans of subtrees
@@ -69,9 +70,9 @@ case class CandidateSpanPruner(doStripPunctuation: Boolean = true,
       result ++= contiguous
     }
     // heuristics for less-than-full subtrees
-    val johansson = johanssonHeuristics(nodes, subtrees)
-//    println("johansson:\n" + johansson.toSet.diff(result).map(spanToString(_, sentence)).mkString("\n"))
-    result ++= johansson
+    val halfTrees = getHalfTrees(tokens, subtrees)
+//    println("halfTrees:\n" + halfTrees.toSet.diff(result).map(spanToString(_, sentence)).mkString("\n"))
+    result ++= halfTrees
     // carve out the target from each span
     if (doIncludeSpansMinusTarget) {
       val minusTarget = spansMinusTarget(result.toSet, targetSpan)
@@ -84,7 +85,31 @@ case class CandidateSpanPruner(doStripPunctuation: Boolean = true,
 //      println("withoutPPs:\n" + withoutPPs.toSet.diff(result).map(spanToString(_, sentence)).mkString("\n"))
       result ++= withoutPPs
     }
+    if (doFindNNModifiers && tokens.slice(targetSpan.start, targetSpan.end + 1).exists(_.getPostag.startsWith("NN"))) {
+      val nnModifiers = result.flatMap(findNNModifiers(targetSpan, tokens))
+//      println("nnModifiers:\n" + nnModifiers.toSet.diff(result).map(spanToString(_, sentence)).mkString("\n"))
+      result ++= nnModifiers
+    }
+    for (maxLen <- maxLength) {
+      val (ok, tooLong) = result.partition(_.length <= maxLen)
+//      println("tooLong:\n" + tooLong.map(spanToString(_, sentence)).mkString("\n"))
+      result = ok
+    }
     result.toList.asJava
+  }
+
+  def findNNModifiers(target: Range0Based, tokens: Array[Token])(span: Range0Based): Set[Range0Based] = {
+    if (
+      span.start < target.start &&
+          target.end <= span.end &&
+          !span.contains(tokens(target.end).getHead - 1) &&
+          tokens(span.start).getPostag == "DT"
+    ) {
+      // target is inside span and head of span, and the first word in the span is a DT
+      Set(range(span.start + 1, target.start - 1)) // strip off the determiner
+    } else {
+      Set()
+    }
   }
 
   def stripPPs(sentence: Sentence)(span: Range0Based): Set[Range0Based] = {
@@ -113,14 +138,13 @@ case class CandidateSpanPruner(doStripPunctuation: Boolean = true,
   }
 
   /** For each token, find its left-most and right-most descendant. */
-  def getFullSubtrees(nodes: Array[DependencyParse]): Array[Range0Based] = {
-    val parents = nodes.map(_.getParentIndex - 1)  // nodes are 1-indexed
-    val left = nodes.indices.toArray  // left[i] is the index of the left-most descendant of i
-    val right = nodes.indices.toArray  // right[i] is the index of the right-most descendant of i
+  def getFullSubtrees(tokens: Array[Token], parents: Array[Int]): Array[Range0Based] = {
+    val left = tokens.indices.toArray  // left[i] is the index of the left-most descendant of i
+    val right = tokens.indices.toArray  // right[i] is the index of the right-most descendant of i
     for (
-      i <- nodes.indices
+      i <- tokens.indices
       // if `doStripPunctuation`, never start or end a span with punctuation
-      if !doStripPunctuation || !PUNCTUATION_POS.contains(nodes(i).getPOS);
+      if !doStripPunctuation || !PunctuationPos.contains(tokens(i).getPostag);
       // walk up i's ancestors, expanding their boundaries to include i if necessary
       ancestorIdx <- ancestors(parents)(i)
     ) {
@@ -142,8 +166,11 @@ case class CandidateSpanPruner(doStripPunctuation: Boolean = true,
     ) yield range(chunk.head, chunk.last)
   }
 
-  // heuristics to try to recover finer-grained constituents when a node has descendants on both sides
-  def johanssonHeuristics(nodes: Array[DependencyParse],
+  /**
+   * Heuristics to try to recover finer-grained constituents when a node has descendants on both sides.
+   * Originally from Johansson and Nugues 2007
+   */
+  def getHalfTrees(nodes: Array[Token],
                           subtrees: Array[Range0Based]): Set[Range0Based] = {
     val result = m.Set.empty[Range0Based]
     for (
@@ -152,7 +179,7 @@ case class CandidateSpanPruner(doStripPunctuation: Boolean = true,
     ) {
       if (subtrees.contains(range(subtree.start, i - 1)) && // node has exactly one left child
           // never leave a single determiner or adj dangling
-          !(i - 1 == subtree.start && NON_BREAKING_LEFT_CONSTITUENT_POS.contains(nodes(i - 1).getPOS))) {
+          !(i - 1 == subtree.start && NonBreakingLeftConstituentPos.contains(nodes(i - 1).getPostag))) {
         // include self and right children
         result += range(i, subtree.end)
       }
