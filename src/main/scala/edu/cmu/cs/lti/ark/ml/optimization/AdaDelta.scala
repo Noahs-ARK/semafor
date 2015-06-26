@@ -87,19 +87,19 @@ case class MiniBatch[T](trainingData: IndexedSeq[T],
                         l2Strength: Double,
                         batchSize: Int) {
 
-  private[this] val batchRecip = 1.0 / batchSize
-
   /**
    * Returns an (infinite) iterator of (State, iteration, batchNum).
    * Weights get clobbered as you iterate, so make copies if you want to keep them.
    */
   def optimizationPath(initialWeights: Vec[Double]): Iterator[(AdaDelta#State, Double, Int, Int)] = {
-    var state = AdaDelta().start(initialWeights)
+    val adaDelta = AdaDelta(l1Strength = l1Strength, l2Strength = l2Strength)
+    var state = adaDelta.start(initialWeights)
     // sample batches without replacement
     for (
       iteration <- Iterator.from(0);
       (batch, batchNum) <- Random.shuffle(trainingData).grouped(batchSize).zipWithIndex
     ) yield {
+      val batchRecip = 1.0 / batch.size
       val weights = state.weights
       // compute gradients in parallel
       val lossesAndGrads = batch.par.map(lossFn.lossAndGradient(weights))
