@@ -31,6 +31,7 @@ fn_id_req_data_file="${model_dir}/reqData.jobj"
 training_dir="${datadir}/naacl2012"
 fe_file="${training_dir}/cv.train.sentences.frame.elements"
 parsed_file="${training_dir}/cv.train.sentences.all.lemma.tags"
+dep_parser="turbo3rd"
 fe_file_length=`wc -l ${fe_file}`
 fe_file_length=`expr ${fe_file_length% *}`
 

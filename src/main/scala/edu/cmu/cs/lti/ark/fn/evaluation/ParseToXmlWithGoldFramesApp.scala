@@ -20,7 +20,6 @@ import scala.io.Source
 object Filenames {
   val TOKENIZED_FILE_TEMPLATE = "cv.%s.sentences.tokenized"
   val FRAME_ID_FILE_TEMPLATE = "cv.%s.sentences.frames"
-  val DEP_PARSE_FILE_TEMPLATE = "cv.%s.sentences.maltparsed.conll"
   val ALL_LEMMA_TAGS_FILE_TEMPLATE = "cv.%s.sentences.all.lemma.tags"
 }
 
@@ -33,6 +32,7 @@ object ParseToXmlWithGoldFramesApp extends App {
   val semaforHome = args(0)
   val modelName = args(1) // e.g. "adadelta_20150122" // "turbo_matsumoto_20140702"
   val cvFold = args(2) // e.g. "dev" or "test"
+  val depParseFile = new File(args(3))
 
   val dataDir = new File(semaforHome, "training/data/naacl2012")
   val experimentsDir = new File(new File(semaforHome, "experiments"), modelName)
@@ -64,12 +64,11 @@ object ParseToXmlWithGoldFramesApp extends App {
 
   def parseToXmlWithGoldFrames(infix: String, sem: Semafor) {
     val frameIdFile = new File(dataDir, FRAME_ID_FILE_TEMPLATE.format(infix))
-    val depParseFile = new File(dataDir, DEP_PARSE_FILE_TEMPLATE.format(infix))
     val outputFeFile = new File(resultsDir, infix + ".argid.predict.frame.elements")
 
     System.err.println("\n\nParsing file: %s\n\n".format(depParseFile))
 
-    parseToFeFormatWithGoldFrames(frameIdFile, depParseFile, outputFeFile, sem)
+    parseToFeFormatWithGoldFrames(frameIdFile, outputFeFile, sem)
 
     val tokenizedFile = new File(dataDir, TOKENIZED_FILE_TEMPLATE.format(infix))
     val numSentences = Source.fromFile(tokenizedFile).getLines().length
@@ -87,7 +86,6 @@ object ParseToXmlWithGoldFramesApp extends App {
   }
 
   private def parseToFeFormatWithGoldFrames(frameIdFile: File,
-                                            depParseFile: File,
                                             outputFile: File,
                                             sem: Semafor) {
     // read in dep parses
@@ -131,6 +129,7 @@ object ParseToXmlWithGoldTargetsApp extends App {
   val semaforHome = args(0)
   val modelName = args(1) // e.g. "adadelta_20150122" // "turbo_matsumoto_20140702"
   val cvFold = args(2) // e.g. "dev" or "test"
+  val depParseFile = new File(args(3))
 
   val dataDir = new File(semaforHome, "training/data/naacl2012")
   val experimentsDir = new File(new File(semaforHome, "experiments"), modelName)
@@ -155,12 +154,11 @@ object ParseToXmlWithGoldTargetsApp extends App {
 
   def parseToXmlWithGoldTargets(infix: String, sem: Semafor) {
     val frameIdFile = new File(dataDir, FRAME_ID_FILE_TEMPLATE.format(infix))
-    val depParseFile = new File(dataDir, DEP_PARSE_FILE_TEMPLATE.format(infix))
     val outputFeFile = new File(resultsDir, infix + ".full.predict.frame.elements")
 
     System.err.println("\n\nParsing file: %s\n\n".format(depParseFile))
 
-    parseToFeFormatWithGoldTargets(frameIdFile, depParseFile, outputFeFile, sem)
+    parseToFeFormatWithGoldTargets(frameIdFile, outputFeFile, sem)
 
     val tokenizedFile = new File(dataDir, TOKENIZED_FILE_TEMPLATE.format(infix))
     val numSentences = Source.fromFile(tokenizedFile).getLines().length
@@ -178,7 +176,6 @@ object ParseToXmlWithGoldTargetsApp extends App {
   }
 
   private def parseToFeFormatWithGoldTargets(frameIdFile: File,
-                                             depParseFile: File,
                                              outputFile: File,
                                              sem: Semafor) {
     // read in dep parses
