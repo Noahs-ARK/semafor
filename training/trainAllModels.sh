@@ -9,6 +9,6 @@ my_dir="$(dirname ${BASH_SOURCE[0]})"
 
 ${my_dir}/2_createRequiredData.sh
 
-${my_dir}/trainIdModel.sh
+#${my_dir}/trainIdModel.sh
 
 ${my_dir}/trainArgModel.sh

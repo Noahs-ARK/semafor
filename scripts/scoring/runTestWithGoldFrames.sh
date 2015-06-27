@@ -12,7 +12,6 @@ all_lemma_tags_file="${training_dir}/cv.${cv}.sentences.turboparsed.basic.stanfo
 tokenizedfile="${training_dir}/cv.${cv}.sentences.tokenized"
 gold_fe_file="${training_dir}/cv.${cv}.sentences.frame.elements"
 
-
 fn_1_5_dir="${datadir}/framenet15/"
 frames_single_file="${fn_1_5_dir}/framesSingleFile.xml"
 relation_modified_file="${fn_1_5_dir}/frRelationModified.xml"
@@ -48,7 +47,8 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4g -Xmx4g -XX:ParallelGCThread
     edu.cmu.cs.lti.ark.fn.evaluation.ParseToXmlWithGoldFramesApp \
     ${SEMAFOR_HOME} \
     ${model_name} \
-    ${cv}
+    ${cv} \
+    "${dep_parse_file}"
 
 temp="${experiments_dir}/tmp"
 mkdir -p "${temp}"
