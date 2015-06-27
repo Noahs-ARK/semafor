@@ -7,7 +7,7 @@ source "$(dirname ${BASH_SOURCE[0]})/../bin/config.sh"
 # choose a name for the model to train
 #model_name="mst_frame_id_20130625"
 #model_name="ancestor_frame_id_20130626"
-model_name="adadelta_20150122"
+model_name="meghana_turbo"
 
 # should set to roughly the number of cores available
 num_threads=8
@@ -29,8 +29,9 @@ fn_id_req_data_file="${model_dir}/reqData.jobj"
 
 # paths to the gold-standard annotated sentences, and dependency-parsed version of it
 training_dir="${datadir}/naacl2012"
+parser="turboparsed.full.stanford"
 fe_file="${training_dir}/cv.train.sentences.frame.elements"
-parsed_file="${training_dir}/cv.train.sentences.all.lemma.tags"
+parsed_file="${training_dir}/cv.train.sentences.${parser}.all.lemma.tags"
 fe_file_length=`wc -l ${fe_file}`
 fe_file_length=`expr ${fe_file_length% *}`
 

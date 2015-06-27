@@ -8,6 +8,6 @@ my_dir="$(dirname ${0})"
 
 ${my_dir}/2_createRequiredData.sh
 
-${my_dir}/trainIdModel.sh
+#${my_dir}/trainIdModel.sh
 
 ${my_dir}/trainArgModel.sh

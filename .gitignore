@@ -18,7 +18,14 @@ dependency-reduced-pom.xml
 .DS_Store
 
 # training data we don't include in the repo
-training/data/naacl2012*
+training/data*
+training/cv*
+training/tune*
 
 # log
 training/data/log
+*.err
+
+# experiments
+experiments/
+*.txt

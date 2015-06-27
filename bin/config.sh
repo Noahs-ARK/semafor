@@ -16,8 +16,8 @@ JAVA_HOME_BIN="/usr/bin"
 
 # Change the following to the directory where you decompressed 
 # the models for SEMAFOR 2.0.
-MALT_MODEL_DIR="${BASE_DIR}/models/semafor_malt_model_20121129"
-TURBO_MODEL_DIR="{BASE_DIR}/models/turbo_20130606"
+MALT_MODEL_DIR="${BASE_DIR}/semafor/experiments/fake_old_model/model/"
+#TURBO_MODEL_DIR="{BASE_DIR}/models/turbo_20130606"
 
 
 

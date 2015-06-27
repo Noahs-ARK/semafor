@@ -6,9 +6,14 @@ cv=$1  # "test" or "dev"
 
 source "$(dirname ${BASH_SOURCE[0]})/../../training/config.sh"
 
+rm -f $model_dir/parser.conf
+ln -s $model_dir/scan/parser.conf.unlabeled $model_dir/parser.conf
+rm -f $model_dir/argmodel.dat
+ln -s $model_dir/argmodel.dat_0029 $model_dir/argmodel.dat
+
 cd ${SEMAFOR_HOME}
 
-all_lemma_tags_file="${training_dir}/cv.${cv}.sentences.all.lemma.tags"
+all_lemma_tags_file="${training_dir}/cv.${cv}.sentences.${parser}.all.lemma.tags"
 tokenizedfile="${training_dir}/cv.${cv}.sentences.tokenized"
 gold_fe_file="${training_dir}/cv.${cv}.sentences.frame.elements"
 
@@ -40,11 +45,11 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
     endIndex:${end} \
     testParseFile:${all_lemma_tags_file} \
     testTokenizedFile:${tokenizedfile} \
-    outputFile:${gold_xml}  2>/dev/null
+    outputFile:${gold_xml} # 2>/dev/null
 
 
 echo "Performing argument identification on ${cv} set, with model \"${model_name}\"..."
-scala \
+/usr0/home/sswayamd/scala-2.10.4/bin/scala \
   -cp "${classpath}" \
   -J-Xms4g \
   -J-Xmx4g \
@@ -64,7 +69,7 @@ ${SEMAFOR_HOME}/scripts/scoring/fnSemScore_modified.pl \
     ${frames_single_file} \
     ${relation_modified_file} \
     ${gold_xml} \
-    ${predicted_xml} > "${results_dir}/argid_${cv}_exact" 2>/dev/null
+    ${predicted_xml} > "${results_dir}/argid_${cv}_exact" 
 
 tail -n1 "${results_dir}/argid_${cv}_exact"
 
@@ -74,11 +79,11 @@ ${SEMAFOR_HOME}/scripts/scoring/fnSemScore_modified.pl \
     -l \
     -n \
     -e \
-    -v \
+    -s \
     ${frames_single_file} \
     ${relation_modified_file} \
     ${gold_xml} \
-    ${predicted_xml} > "${results_dir}/argid_${cv}_exact_count_gold_frames" 2>/dev/null
+    ${predicted_xml} > "${results_dir}/argid_${cv}_exact_count_gold_frames"
 
 
 tail -n1 "${results_dir}/argid_${cv}_exact_count_gold_frames"
