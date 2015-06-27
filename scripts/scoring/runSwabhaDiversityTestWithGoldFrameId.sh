@@ -92,33 +92,36 @@ DIVERSITY_RESULTS_DIR="${experiments_dir}/results/${NAME}"
 mkdir -p "${DIVERSITY_RESULTS_DIR}"
 
 INPUT_FILES=$(cd "${INPUT_DIR}" > /dev/null && echo *)
-#INPUT_FILE="${INPUT_DIR}/1thBest.xml"
-#OUTPUT_FILE="${DIVERSITY_RESULTS_DIR}/exact/1thBest"
+
+exact_dir="${DIVERSITY_RESULTS_DIR}/exact_count_gold_frames"
+mkdir $exact_dir
+honest_dir="${DIVERSITY_RESULTS_DIR}/exact"
+mkdir $honest_dir
 
 for INPUT_FILE in ${INPUT_FILES}; do
     cd "${SEMAFOR_HOME}"
-#    echo "Argument Labeling Exact Results: ${INPUT_DIR}/${INPUT_FILE}"
-#    mkdir -p "${DIVERSITY_RESULTS_DIR}/exact"
-#    ./scripts/scoring/fnSemScore_swabha.pl \
-#        -c ${temp} \
-#        -l \
-#        -n \
-#        -e \
-#        -s \
-#        "${frames_single_file}" \
-#        "${relation_modified_file}" \
-#        "${GOLD_FILE}" \
-#        "${INPUT_DIR}/${INPUT_FILE}" > "${DIVERSITY_RESULTS_DIR}/exact/${INPUT_FILE}"
-
-    echo "Argument Labeling Partial Credit Results: ${INPUT_DIR}/${INPUT_FILE}"
-    mkdir -p "${DIVERSITY_RESULTS_DIR}/partial"
+    echo "Argument Labeling Exact (Counting Gold Frames) Results: ${exact_dir}/${INPUT_FILE}"
     ./scripts/scoring/fnSemScore_swabha.pl \
-        -c ${temp} \
         -l \
         -n \
+        -e \
         -s \
         "${frames_single_file}" \
         "${relation_modified_file}" \
-        "${GOLD_FILE}" \
-        "${INPUT_DIR}/${INPUT_FILE}" > "${DIVERSITY_RESULTS_DIR}/partial/${INPUT_FILE}"
+        "${gold_xml}" \
+        "${INPUT_DIR}/${INPUT_FILE}" > "${exact_dir}/${INPUT_FILE}"
+
+   echo "Argument Labeling Exact (NOT Counting Gold Frames) Results: ${honest_dir}/${INPUT_FILE}"
+    ./scripts/scoring/fnSemScore_swabha.pl \
+        -l \
+        -n \
+        -e \
+        -a \
+        -s \
+        "${frames_single_file}" \
+        "${relation_modified_file}" \
+        "${gold_xml}" \
+        "${INPUT_DIR}/${INPUT_FILE}" > "${honest_dir}/${INPUT_FILE}"
 done
+echo "Done with evaluation, now run oracle or reranker!"
+
