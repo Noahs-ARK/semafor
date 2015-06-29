@@ -16,7 +16,15 @@ object CandidateSpanPruner {
   val PunctuationPos: Set[String] = Set(".", ",", ":", "''", "-RRB-", "-RSB-")
   val PartsOfSpeechToSplitOn: Set[String] = Set("WDT", "IN", "TO") ++ PunctuationPos
 
-  def defaultInstance: CandidateSpanPruner = CandidateSpanPruner()
+  def defaultInstance: CandidateSpanPruner = CandidateSpanPruner(
+    doStripPunctuation = true,
+    doIncludeContiguousSubspans = true,
+    doIncludeTarget = true,
+    doIncludeSpansMinusTarget = true,
+    doStripPPs = true,
+    doFindNNModifiers = true,
+    maxLength = Some(20)
+  )
 
   def range(start: Int, end: Int): Range0Based = {
     if (isEmpty(start, end)) EmptySpan else new Range0Based(start, end, true)
@@ -36,13 +44,13 @@ object CandidateSpanPruner {
 }
 
 /** Uses a dependency parse to prune the options of candidate spans. */
-case class CandidateSpanPruner(doStripPunctuation: Boolean = true,
-                               doIncludeContiguousSubspans: Boolean = true,
-                               doIncludeTarget: Boolean = true,
-                               doIncludeSpansMinusTarget: Boolean = true,
-                               doStripPPs: Boolean = true,
-                               doFindNNModifiers: Boolean = true,
-                               maxLength: Option[Int] = Some(20)) {
+case class CandidateSpanPruner(doStripPunctuation: Boolean,
+                               doIncludeContiguousSubspans: Boolean,
+                               doIncludeTarget: Boolean,
+                               doIncludeSpansMinusTarget: Boolean,
+                               doStripPPs: Boolean,
+                               doFindNNModifiers: Boolean,
+                               maxLength: Option[Int]) {
   import CandidateSpanPruner._
 
   /** Calculates a set of candidate spans based on the given dependency parse. */

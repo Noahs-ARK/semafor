@@ -11,8 +11,8 @@ import scala.collection.JavaConverters._
 class CandidateSpanPrunerTest extends FlatSpec with Matchers {
   private val maltLine = "My/PRP$/2/NMOD kitchen/NN/5/SBJ no/RB/5/ADV longer/RB/3/AMOD smells/VBZ/0/ROOT ././5/P"
   private val sentence = MaltCodec.decode(maltLine)
-  private val prunerWithPunct = CandidateSpanPruner(doStripPunctuation = false)
-  private val prunerWithoutPunct = CandidateSpanPruner(doStripPunctuation = true)
+  private val prunerWithPunct = CandidateSpanPruner.defaultInstance.copy(doStripPunctuation = false)
+  private val prunerWithoutPunct = CandidateSpanPruner.defaultInstance.copy(doStripPunctuation = true)
   private lazy val spanList = prunerWithPunct.candidateSpans(sentence, EmptySpan).asScala.toList
 
   "CandidateSpanPruner.candidateSpans" should "include the null span" in {
@@ -108,7 +108,7 @@ class CandidateSpanPrunerTest extends FlatSpec with Matchers {
         |38	.	.	.	.	_	6	punct	_	_""".stripMargin
     val inputSentence = SentenceCodec.ConllCodec.decode(inputConll)
     val target = range(17, 17) // "Center"
-    val result = CandidateSpanPruner(doFindNNModifiers = true).candidateSpans(inputSentence, target)
+    val result = CandidateSpanPruner.defaultInstance.copy(doFindNNModifiers = true).candidateSpans(inputSentence, target)
     val expectedModifierSpan = range(14, 16) // "Edgewood Chemical Biological"
     result should contain (expectedModifierSpan)
   }
