@@ -78,7 +78,7 @@ object FeatureIndex {
 
 @NotThreadSafe
 class DataPrep(tagLines: Array[String], index: FeatureIndex) {
-  val spanPruner = new CandidateSpanPruner
+  val spanPruner = CandidateSpanPruner.defaultInstance
   val extractor = new FeatureExtractor()
   val sentences = tagLines.map(line => Sentence.fromAllLemmaTagsArray(AllLemmaTags.readLine(line)))
 

@@ -4,15 +4,6 @@ source "$(dirname ${BASH_SOURCE[0]})/../bin/config.sh"
 # choose a name for the model to train
 turbomdl="basic" # prefix for the all.lemma.tags file
 model_name=$turbomdl"_tbps_spans" # make this directory in ../experiments/
-
-# RUN swabha_all_lemma_tags.sh AND CHANGE parsed_file
-# AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-#
-#
-# ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
-# should set to roughly the number of cores available
-
-
 num_threads=10
 gc_threads=6
 
@@ -41,10 +32,8 @@ fe_file="${training_dir}/cv.train.sentences.frame.elements"
 fe_file_length=`wc -l ${fe_file}`
 fe_file_length=`expr ${fe_file_length% *}`
 parsed_file="${training_dir}/cv.train.sentences.turboparsed.${turbomdl}.stanford.all.lemma.tags"
-
 # path to store the alphabet we create:
 alphabet_file="${model_dir}/alphabet.dat"
-
 SCAN_DIR="${model_dir}/scan"
 
 echo num_threads="${num_threads}"
