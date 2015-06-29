@@ -12,7 +12,7 @@ use File::Basename;
 use Getopt::Std;
 use Storable;
 use XML::Parser;
-use vars qw($opt_c $opt_d $opt_e $opt_h $opt_l $opt_n $opt_s $opt_t $opt_v);
+use vars qw($opt_c $opt_d $opt_e $opt_h $opt_l $opt_n $opt_s $opt_t $opt_a $opt_v);
 
 # global variables
 my $PROG = basename($0);
@@ -66,7 +66,7 @@ MAIN:{
     #################################################################
     # PROCESS OPTIONS
 
-    getopts("c:d:ehlnstv") || &usage();
+    getopts("c:d:ehlnstav") || &usage();
     if (defined $opt_c) {
         $CACHEDIR = $opt_c;
         if (! -e $CACHEDIR) {die "ERROR: $CACHEDIR doesn't exist!\n"};
@@ -99,6 +99,10 @@ MAIN:{
         $NE_POINTS = 0;
         $SUPP_POINTS = 0;
         $CMDOPTIONS .= "-t ";
+    }
+    if (defined $opt_a) {
+        # Arg Id only
+        $FRAME_POINTS = 0;
     }
     if (defined $opt_v) {
         $VERBOSE = 1;
@@ -346,7 +350,7 @@ MAIN:{
                                         "        Shortest path has length $feDist.\n".
                                         "        FE Path: ".join(" ->\n                    ",&GetSP($sfe,$gfe,$FESPLENLOOKUP))."\n".
                                         "        Frame Path: ".join(" ->\n                        ",&GetSP($sfr,$gfr,$FRSPLENLOOKUP))."\n".
-                                        "        Multiplier was capped at 1.\n";                                    
+                                        "        Multiplier was capped at 1.\n";                                          
                                 }
                                 
                                 # match!
@@ -494,11 +498,11 @@ MAIN:{
             $fscore = (2 * $recall * $precision) / ($recall + $precision);
         }
 	if ($OUTPUT_PER_SENTENCE || $VERBOSE) {
-            #printf("Sentence ID=%d: Recall=%.${PREC}f (%.1f/%.1f) Precision=%.${PREC}f (%.1f/%.1f) Fscore=%.${PREC}f\n",
-             #      $sent, $recall, $matchSum, $goldSum, $precision, $matchSum, $scoreSum, $fscore);
+#            printf("Sentence ID=%d: Recall=%.${PREC}f (%.1f/%.1f) Precision=%.${PREC}f (%.1f/%.1f) Fscore=%.${PREC}f\n",
+#                   $sent, $recall, $matchSum, $goldSum, $precision, $matchSum, $scoreSum, $fscore);
+            #printf("%d\t%.${PREC}f\t%.${PREC}f\t%.${PREC}f\n", $sent, $recall, $precision, $fscore);
             printf("%d\t%.${PREC}f(%.1f/%.1f)\t%.${PREC}f(%.1f/%.1f)\t%.${PREC}f\n",
                    $sent, $recall, $matchSum, $goldSum, $precision, $matchSum, $scoreSum, $fscore);
-            #printf("%d\t%.${PREC}f\t%.${PREC}f\t%.${PREC}f\n", $sent, $recall, $precision, $fscore);
         }
 	$nSent++;
     }
@@ -520,7 +524,6 @@ MAIN:{
 #    printf("%d Sentences Scored: Recall=%.${PREC}f (%.1f/%.1f)  Precision=%.${PREC}f (%.1f/%.1f)  Fscore=%.${PREC}f\n",
 #           $nSent,$totalRecall, $totalMatchSum, $totalGoldSum,
 #           $totalPrecision, $totalMatchSum, $totalScoreSum, $fScore);
-
     exit;
 }
 # end MAIN
@@ -1050,7 +1053,7 @@ sub ParseFNXMLFile {
                                                         my $bounds = join(',',sort(split(',',$feBounds{$fe})));
 
 							# nschneid: allow for multiple frame elements to have the same predicted span ($feBounds value)
-							my $feBounds = $bounds.'=FE';							
+							my $feBounds = $bounds.'=FE';							      
 							if (!(defined $feFeatures{$feBounds})) {
 							    $feFeatures{$feBounds} = {};
 							}
@@ -1198,7 +1201,7 @@ sub ParseSemXMLFile {
 				    print "Frame $patts{Frame} $patts{Target}\n" if $DEBUG;
 
 				    # Denoted FEs (there can be multiple--comma separated)
-				    if (defined $patts{Denoted}) {                                        
+				    if (defined $patts{Denoted}) {                                              
 					my @denotedFEs = split(/, /,$patts{Denoted});
 
                                         # take only the first item if there are multiple
@@ -1482,7 +1485,7 @@ sub ParseProcessFrRelXML {
 	if (-e $CACHEDIR) {
 	    my @cache = (\%frSPLength,\%frSPCount,\%feSPLength,\%feSPCount);
 	    store(\@cache, $cacheFile);
-#	    print "Created cache file $cacheFile\n";
+	    print "Created cache file $cacheFile\n";
 	} else {
 	    print STDERR "WARNING: directory $CACHEDIR doesn't exist.  No FrRelation cache saved.\n";
 	}
@@ -1722,3 +1725,4 @@ USAGEEND
 		
     die $usage;
 }
+
