@@ -34,7 +34,7 @@ end=`expr ${end% *}`
 echo "Start:0"
 echo "End:${end}"
 ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
-    edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationXML \
+    edu.cmu.cs.lti.ark.fn.evaluation.FrameElementsToXml \
     testFEPredictionsFile:${gold_fe_file} \
     startIndex:0 \
     endIndex:${end} \
