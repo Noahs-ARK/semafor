@@ -3,6 +3,9 @@ package edu.cmu.cs.lti.ark.util.ds;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Ordering;
 
+import static com.google.common.base.Objects.toStringHelper;
+
+
 /**
 * @author sthomson@cs.cmu.edu
 */
@@ -28,5 +31,10 @@ public class Scored<T> implements Comparable<Scored<T>>  {
 				.compare(other.score, this.score)
 				.compare(other.value, this.value, this.ordering)
 				.result();
+	}
+
+	@Override
+	public String toString() {
+		return toStringHelper(this).add("value", value).add("score", score).toString();
 	}
 }

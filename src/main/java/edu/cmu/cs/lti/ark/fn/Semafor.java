@@ -30,7 +30,6 @@ import com.google.common.collect.Queues;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
-import com.google.common.primitives.Ints;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.AllLemmaTags;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence;
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec;
@@ -78,10 +77,9 @@ public class Semafor {
 
 	protected final Set<String> allRelatedWords;
 	protected final FEDict frameElementsForFrame;
-	protected final RoteSegmenter segmenter;
+	protected final RoteSegmenter targetIdentifier;
 	protected final GraphBasedFrameIdentifier idModel;
-	protected final Decoding decoder;
-	protected final Map<String, Integer> argIdFeatureIndex;
+	protected final ArgDecoding argDecoder;
 	protected final Lemmatizer lemmatizer = new MorphaLemmatizer();
     protected final CandidateSpanPruner spanPruner = new CandidateSpanPruner();
 
@@ -106,16 +104,14 @@ public class Semafor {
 
 	public Semafor(Set<String> allRelatedWords,
 				   FEDict frameElementsForFrame,
-				   RoteSegmenter segmenter,
+				   RoteSegmenter targetIdentifier,
 				   GraphBasedFrameIdentifier idModel,
-				   Decoding decoder,
-				   Map<String, Integer> argIdFeatureIndex) {
+				   BeamSearchArgDecoding argDecoder) {
 		this.allRelatedWords = allRelatedWords;
 		this.frameElementsForFrame = frameElementsForFrame;
-		this.segmenter = segmenter;
+		this.targetIdentifier = targetIdentifier;
 		this.idModel = idModel;
-		this.decoder = decoder;
-		this.argIdFeatureIndex = argIdFeatureIndex;
+		this.argDecoder = argDecoder;
 	}
 
 	public static Semafor getSemaforInstance(String modelDirectory)
@@ -130,15 +126,15 @@ public class Semafor {
 		final GraphBasedFrameIdentifier idModel = GraphBasedFrameIdentifier.getInstance(modelDirectory);
 		final RoteSegmenter segmenter = new RoteSegmenter(allRelatedWords);
 		System.err.println("Initializing alphabet for argument identification..");
-		final Map<String, Integer> argIdFeatureIndex = FeatureIndex.fromFile(new File(alphabetFilename)).asJava();
 		final FEDict frameElementsForFrame = FEDict.fromFile(frameElementMapFilename);
-		final Decoding decoder = Decoding.fromFile(argModelFilename, alphabetFilename);
+		final Model argModel = Model.fromFiles(new File(argModelFilename), new File(alphabetFilename));
+		final BeamSearchArgDecoding decoder = BeamSearchArgDecoding.defaultInstance(argModel);
 		return new Semafor(allRelatedWords,
 				frameElementsForFrame,
 				segmenter,
 				idModel,
-				decoder,
-				argIdFeatureIndex);
+				decoder
+		);
 	}
 
 	/**
@@ -234,7 +230,7 @@ public class Semafor {
 	}
 
 	public List<List<Integer>> predictTargets(Sentence sentence) {
-		return segmenter.getSegmentation(sentence);
+		return targetIdentifier.getSegmentation(sentence);
 	}
 
 	public List<Pair<List<Integer>, String>> predictFrames(Sentence sentence, List<List<Integer>> targets) {
@@ -291,7 +287,7 @@ public class Semafor {
 				for (Range0Based span : spans) {
 					final Multiset<String> featureSet =
 							featureExtractor.extractFeatures(dataPoint, frame, frameElement, span, parse);
-					final int[] featArray = convertToIdxs(featureSet);
+					final int[] featArray = argDecoder.model().convertToIdxs(featureSet.iterator());
 					spansAndFeatures.add(new SpanAndFeatures(span, featArray));
 				}
 				featuresAndSpanByArgument.add(spansAndFeatures.toArray(new SpanAndFeatures[spansAndFeatures.size()]));
@@ -302,19 +298,7 @@ public class Semafor {
 					frameElements,
 					featuresAndSpanByArgument));
 		}
-		return decoder.decodeAll(frameFeaturesList, idResult, 0, kBest);
-	}
-
-	private int[] convertToIdxs(Iterable<String> featureSet) {
-		// convert feature names to feature indexes
-		final List<Integer> featureList = Lists.newArrayList();
-		for (String feature : featureSet) {
-			final Integer idx = argIdFeatureIndex.get(feature);
-			if (idx != null) {
-				featureList.add(idx);
-			}
-		}
-		return Ints.toArray(featureList);
+		return argDecoder.decodeAll(frameFeaturesList, idResult, 0, kBest);
 	}
 
 	public SemaforParseResult getSemaforParseResult(Sentence sentence, List<String> results) {
