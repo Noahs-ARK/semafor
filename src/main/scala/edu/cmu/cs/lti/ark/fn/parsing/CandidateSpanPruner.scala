@@ -15,6 +15,31 @@ object CandidateSpanPruner {
   val NonBreakingLeftConstituentPos: Set[String] = Set("DT", "JJ")
   val PunctuationPos: Set[String] = Set(".", ",", ":", "''", "-RRB-", "-RSB-")
   val PartsOfSpeechToSplitOn: Set[String] = Set("WDT", "IN", "TO") ++ PunctuationPos
+  val StanfordDependencyLabelsNotToSplitOn: Set[String] = Set(
+    "advmod",
+    "amod",
+    "appos",
+    "aux",
+    "auxpass",
+    "cc",
+    "conj",
+    "dep",
+    "det",
+    "mwe",
+    "neg",
+    "nn",
+    "npadvmod",
+    "num",
+    "number",
+    "poss",
+    "preconj",
+    "predet",
+    "prep",
+    "prt",
+    "ps",
+    "quantmod",
+    "tmod"
+  )
 
   def defaultInstance: CandidateSpanPruner = CandidateSpanPruner(
     doStripPunctuation = true,
