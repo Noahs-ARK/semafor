@@ -8,7 +8,7 @@ import com.google.common.io.Files._
 import edu.cmu.cs.lti.ark.fn.Semafor
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence
 import edu.cmu.cs.lti.ark.fn.data.prep.formats.SentenceCodec.{ConllCodec, SentenceIterator}
-import edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationXML._
+import FrameElementsToXml.generateXMLForPrediction
 import edu.cmu.cs.lti.ark.util.ds.Range0Based
 import resource._
 
@@ -20,8 +20,6 @@ import scala.io.Source
 object Filenames {
   val TOKENIZED_FILE_TEMPLATE = "cv.%s.sentences.tokenized"
   val FRAME_ID_FILE_TEMPLATE = "cv.%s.sentences.frames"
-  val DEP_PARSE_FILE_TEMPLATE = "cv.%s.sentences.maltparsed.conll"
-  val ALL_LEMMA_TAGS_FILE_TEMPLATE = "cv.%s.sentences.all.lemma.tags"
 }
 
 object ParseToXmlWithGoldFramesApp extends App {
@@ -31,8 +29,9 @@ object ParseToXmlWithGoldFramesApp extends App {
 
   // CLI args:
   val semaforHome = args(0)
-  val modelName = args(1) // e.g. "adadelta_20150122" // "turbo_matsumoto_20140702"
+  val modelName = args(1) // e.g. "adadelta_20150122"
   val cvFold = args(2) // e.g. "dev" or "test"
+  val depParseFile = new File(args(3))
 
   val dataDir = new File(semaforHome, "training/data/naacl2012")
   val experimentsDir = new File(new File(semaforHome, "experiments"), modelName)
@@ -54,7 +53,7 @@ object ParseToXmlWithGoldFramesApp extends App {
   def predictArgsForSentence(sentence: Sentence, frames: List[String], kBest: Int, sem: Semafor): List[String] = {
     // predictArgumentLines needs the sentenceId field to be 0, but we don't want to forget it
     val sentenceId = frames.head.split("\t")(SENTENCE_FIELD)
-    System.err.println(s"Sentence Id: $sentenceId")
+    System.err.print(".")
     // set sentenceId to 0 and run arg id'ing
     val zeroed = frames.map(setSentenceId(_, "0"))
     val results: List[String] = sem.predictArgumentLines(sentence, zeroed.asJava, kBest).asScala.toList
@@ -64,16 +63,14 @@ object ParseToXmlWithGoldFramesApp extends App {
 
   def parseToXmlWithGoldFrames(infix: String, sem: Semafor) {
     val frameIdFile = new File(dataDir, FRAME_ID_FILE_TEMPLATE.format(infix))
-    val depParseFile = new File(dataDir, DEP_PARSE_FILE_TEMPLATE.format(infix))
     val outputFeFile = new File(resultsDir, infix + ".argid.predict.frame.elements")
 
     System.err.println("\n\nParsing file: %s\n\n".format(depParseFile))
 
-    parseToFeFormatWithGoldFrames(frameIdFile, depParseFile, outputFeFile, sem)
+    parseToFeFormatWithGoldFrames(frameIdFile, outputFeFile, sem)
 
     val tokenizedFile = new File(dataDir, TOKENIZED_FILE_TEMPLATE.format(infix))
     val numSentences = Source.fromFile(tokenizedFile).getLines().length
-    val allLemmaTagsFile = new File(dataDir, ALL_LEMMA_TAGS_FILE_TEMPLATE.format(infix))
     val outputXmlFile = new File(resultsDir, infix + ".argid.predict.xml")
 
     System.err.println("\n\nGenerating xml: %s\n\n".format(outputXmlFile.getAbsolutePath))
@@ -81,13 +78,11 @@ object ParseToXmlWithGoldFramesApp extends App {
     generateXMLForPrediction(
       outputFeFile.getAbsolutePath,
       new Range0Based(0, numSentences, false),
-      allLemmaTagsFile.getAbsolutePath,
-      tokenizedFile.getAbsolutePath,
-      outputXmlFile.getAbsolutePath)
+      tokenizedFile,
+      outputXmlFile)
   }
 
   private def parseToFeFormatWithGoldFrames(frameIdFile: File,
-                                            depParseFile: File,
                                             outputFile: File,
                                             sem: Semafor) {
     // read in dep parses
@@ -131,6 +126,7 @@ object ParseToXmlWithGoldTargetsApp extends App {
   val semaforHome = args(0)
   val modelName = args(1) // e.g. "adadelta_20150122" // "turbo_matsumoto_20140702"
   val cvFold = args(2) // e.g. "dev" or "test"
+  val depParseFile = new File(args(3))
 
   val dataDir = new File(semaforHome, "training/data/naacl2012")
   val experimentsDir = new File(new File(semaforHome, "experiments"), modelName)
@@ -155,16 +151,14 @@ object ParseToXmlWithGoldTargetsApp extends App {
 
   def parseToXmlWithGoldTargets(infix: String, sem: Semafor) {
     val frameIdFile = new File(dataDir, FRAME_ID_FILE_TEMPLATE.format(infix))
-    val depParseFile = new File(dataDir, DEP_PARSE_FILE_TEMPLATE.format(infix))
     val outputFeFile = new File(resultsDir, infix + ".full.predict.frame.elements")
 
     System.err.println("\n\nParsing file: %s\n\n".format(depParseFile))
 
-    parseToFeFormatWithGoldTargets(frameIdFile, depParseFile, outputFeFile, sem)
+    parseToFeFormatWithGoldTargets(frameIdFile, outputFeFile, sem)
 
     val tokenizedFile = new File(dataDir, TOKENIZED_FILE_TEMPLATE.format(infix))
     val numSentences = Source.fromFile(tokenizedFile).getLines().length
-    val allLemmaTagsFile = new File(dataDir, ALL_LEMMA_TAGS_FILE_TEMPLATE.format(infix))
     val outputXmlFile = new File(resultsDir, infix + ".full.predict.xml")
 
     System.err.println("\n\nGenerating xml: %s\n\n".format(outputXmlFile.getAbsolutePath))
@@ -172,13 +166,11 @@ object ParseToXmlWithGoldTargetsApp extends App {
     generateXMLForPrediction(
       outputFeFile.getAbsolutePath,
       new Range0Based(0, numSentences, false),
-      allLemmaTagsFile.getAbsolutePath,
-      tokenizedFile.getAbsolutePath,
-      outputXmlFile.getAbsolutePath)
+      tokenizedFile,
+      outputXmlFile)
   }
 
   private def parseToFeFormatWithGoldTargets(frameIdFile: File,
-                                             depParseFile: File,
                                              outputFile: File,
                                              sem: Semafor) {
     // read in dep parses
@@ -199,7 +191,7 @@ object ParseToXmlWithGoldTargetsApp extends App {
       val batchSize = 128
       sentencesAndTargets.grouped(batchSize).flatMap(_.par.flatMap {
         case (sentenceId, sentence, targets) =>
-          System.err.println(s"Sentence Id: $sentenceId")
+          System.err.print(".")
           // frame identification
           val idResult = sem.predictFrames(sentence, targets.map(_.asJava).asJava)
           // argument identification

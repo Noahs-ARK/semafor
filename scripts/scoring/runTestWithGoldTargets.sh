@@ -7,7 +7,7 @@ source "$(dirname ${BASH_SOURCE[0]})/../../training/config.sh"
 
 cd ${SEMAFOR_HOME}
 
-all_lemma_tags_file="${training_dir}/cv.${cv}.sentences.all.lemma.tags"
+dep_parse_file="${training_dir}/cv.${cv}.sentences.${dep_parser}parsed.conll"
 tokenizedfile="${training_dir}/cv.${cv}.sentences.tokenized"
 gold_fe_file="${training_dir}/cv.${cv}.sentences.frame.elements"
 
@@ -34,11 +34,10 @@ end=`expr ${end% *}`
 echo "Start:0"
 echo "End:${end}"
 ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
-    edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationXML \
+    edu.cmu.cs.lti.ark.fn.evaluation.FrameElementsToXmlApp \
     testFEPredictionsFile:${gold_fe_file} \
     startIndex:0 \
     endIndex:${end} \
-    testParseFile:${all_lemma_tags_file} \
     testTokenizedFile:${tokenizedfile} \
     outputFile:${gold_xml}  # 2>/dev/null
 
@@ -48,7 +47,8 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms4g -Xmx4g -XX:ParallelGCThread
     edu.cmu.cs.lti.ark.fn.evaluation.ParseToXmlWithGoldTargetsApp \
     ${SEMAFOR_HOME} \
     ${model_name} \
-    ${cv}
+    ${cv} \
+    ${dep_parse_file}
 
 
 

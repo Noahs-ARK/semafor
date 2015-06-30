@@ -50,18 +50,17 @@ public class DataPointWithFrameElements extends DataPoint {
 		}
 	}
 
-	public DataPointWithFrameElements(String parseLine, String frameElementsLine) {
-		this(buildParsesForLine(parseLine)[0], frameElementsLine, null);
-	}
-
 	public DataPointWithFrameElements(Sentence sentence, String frameElementsLine) {
 		this(sentence.toDependencyParse(), frameElementsLine.trim(), null);
 	}
 
 	public DataPointWithFrameElements(DependencyParse parse, String frameElementsLine, String dataSet) {
+		this(parse, RankedScoredRoleAssignment.fromLine(frameElementsLine), dataSet);
+	}
+
+	public DataPointWithFrameElements(DependencyParse parse, RankedScoredRoleAssignment roleAssignment, String dataSet) {
 		this.parse = parse;
 		this.dataSet = dataSet;
-		final RankedScoredRoleAssignment roleAssignment = RankedScoredRoleAssignment.fromLine(frameElementsLine);
 		this.rank = roleAssignment.rank();
 		this.score = roleAssignment.score();
 		this.frameName = roleAssignment.frame();

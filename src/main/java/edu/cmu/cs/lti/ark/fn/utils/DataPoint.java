@@ -23,6 +23,7 @@ package edu.cmu.cs.lti.ark.fn.utils;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
+import edu.cmu.cs.lti.ark.fn.parsing.CandidateSpanPruner;
 import edu.cmu.cs.lti.ark.util.ds.Range;
 import edu.cmu.cs.lti.ark.util.ds.Range0Based;
 import edu.cmu.cs.lti.ark.util.nlp.parse.DependencyParse;
@@ -53,8 +54,12 @@ public abstract class DataPoint {
 	 * from token numbers to strings in the format StartCharacterOffset\tEndCharacterOffset
 	 */
 	public void processOrgLine(String tokenizedSentence) {
+		tokenIndexMap = getCharOffsetsOfTokens(tokenizedSentence);
+	}
+
+	public static THashMap<Integer, Range0Based> getCharOffsetsOfTokens(String tokenizedSentence) {
 		final StringTokenizer st = new StringTokenizer(tokenizedSentence.trim(), " ", true);
-		final THashMap<Integer, Range0Based> localTokenIndexMap = new THashMap<Integer, Range0Based>();
+		final THashMap<Integer, Range0Based> localTokenIndexMap = new THashMap<>();
 		int count = 0;
 		int tokNum = 0;
 		while(st.hasMoreTokens()) {
@@ -66,11 +71,11 @@ public abstract class DataPoint {
 			token = token.trim();
 			int start = count;
 			int end = count + token.length() - 1;
-			localTokenIndexMap.put(tokNum, new Range0Based(start,end));
+			localTokenIndexMap.put(tokNum, new Range0Based(start, end));
 			tokNum++;
 			count += token.length();
 		}
-		tokenIndexMap = localTokenIndexMap;
+		return localTokenIndexMap;
 	}
 
 	public DependencyParse getParse() {
@@ -126,15 +131,19 @@ public abstract class DataPoint {
 		return tokenIndexMap.get(tokenNum);
 	}
 
-	public List<Range0Based> getTokenStartEnds(boolean mergeAdjacent) {
+	public List<Range0Based> getTokenStartEnds() {
+		return getContiguousSpans(this.targetTokenIdxs);
+	}
+
+	public static List<Range0Based> getContiguousSpans(int[] tokenIdxs) {
 		final List<Range0Based> result = Lists.newArrayList();
 		Optional<Range0Based> oCurrent = Optional.absent();
-		for (int tknNum : targetTokenIdxs) {
+		for (int tknNum : tokenIdxs) {
 			if (!oCurrent.isPresent()) {
 				oCurrent = Optional.of(new Range0Based(tknNum, tknNum));
 			} else {
 				final Range0Based current = oCurrent.get();
-				if (mergeAdjacent && current.start == tknNum - 1) {
+				if (current.start == tknNum - 1) {
 					// merge with previous
 					oCurrent = Optional.of(new Range0Based(current.start, tknNum));
 				} else {
@@ -149,17 +158,19 @@ public abstract class DataPoint {
 		return result;
 	}
 
-	public List<Range0Based> getCharStartEnds(List<Range0Based> tokenRanges) {
+	public List<Range0Based> getCharStartEnds(List<Range0Based> tokenSpans) {
 		final List<Range0Based> result = Lists.newArrayList();
-		for (Range0Based tokenRange : tokenRanges) {
-			final Range0Based charRange =
-					new Range0Based(
-							tokenIndexMap.get(tokenRange.start).start,
-							tokenIndexMap.get(tokenRange.end).end
-					);
-			result.add(charRange);
+		for (Range0Based tokenSpan : tokenSpans) {
+			result.add(getCharSpan(tokenSpan, tokenIndexMap));
 		}
 		return result;
+	}
+
+	public static Range0Based getCharSpan(Range0Based tokenSpan, THashMap<Integer, Range0Based> tokenIndexMap) {
+		return new Range0Based(
+				tokenIndexMap.get(tokenSpan.start).start,
+				tokenIndexMap.get(tokenSpan.end).end
+		);
 	}
 
 	public static final String FN13_LEXICON_EXEMPLARS = "exemplars";
