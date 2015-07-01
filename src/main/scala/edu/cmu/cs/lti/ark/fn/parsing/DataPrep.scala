@@ -25,7 +25,7 @@ import java.io._
 import javax.annotation.concurrent.NotThreadSafe
 
 import com.google.common.collect.ImmutableList
-import edu.cmu.cs.lti.ark.fn.data.prep.formats.{AllLemmaTags, Sentence}
+import edu.cmu.cs.lti.ark.fn.data.prep.formats.Sentence
 import edu.cmu.cs.lti.ark.fn.parsing.CandidateSpanPruner.EMPTY_SPAN
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements
 import edu.cmu.cs.lti.ark.fn.utils.DataPointWithFrameElements.FrameElementAndSpan
@@ -77,10 +77,9 @@ object FeatureIndex {
 
 
 @NotThreadSafe
-class DataPrep(tagLines: Array[String], index: FeatureIndex) {
+class DataPrep(sentences: Array[Sentence], index: FeatureIndex) {
   val spanPruner = new CandidateSpanPruner
   val extractor = new FeatureExtractor()
-  val sentences = tagLines.map(line => Sentence.fromAllLemmaTagsArray(AllLemmaTags.readLine(line)))
 
   def frameFeatures(feLine: String): FrameFeatures = {
     val roleAssignment = RankedScoredRoleAssignment.fromLine(feLine)
