@@ -7,16 +7,16 @@ import RankedScoredRoleAssignment.spanToStr
 
 
 /** An assignment of spans to roles of a particular frame */
-case class RoleAssignment(nonNullAssignments: Map[String, Range0Based],
+case class RoleAssignment(overtAssignments: Map[String, Range0Based],
                           nullAssignments: Map[String, Range0Based]) extends Comparable[RoleAssignment] {
   def plus(key: String, value: Range0Based): Option[RoleAssignment] = {
     if (overlaps(value)) {
       None
     } else Some(
       if (value.isEmpty) {
-        RoleAssignment(nonNullAssignments, nullAssignments + (key -> value))
+        RoleAssignment(overtAssignments, nullAssignments + (key -> value))
       } else {
-        RoleAssignment(nonNullAssignments + (key -> value), nullAssignments)
+        RoleAssignment(overtAssignments + (key -> value), nullAssignments)
       }
     )
   }
@@ -26,7 +26,7 @@ case class RoleAssignment(nonNullAssignments: Map[String, Range0Based],
     if (otherSpan.isEmpty) {
       false
     } else {
-      nonNullAssignments.values.exists(otherSpan.overlaps)
+      overtAssignments.values.exists(otherSpan.overlaps)
     }
   }
 
@@ -38,7 +38,7 @@ case class RoleAssignment(nonNullAssignments: Map[String, Range0Based],
       span.start + ":" + span.end
     }
 
-    nonNullAssignments.map({ case (key, span) => key + "\t" + spanToString(span) }).mkString("\t")
+    overtAssignments.map({ case (key, span) => key + "\t" + spanToString(span) }).mkString("\t")
   }
 
   override def equals(other: Any): Boolean = {
