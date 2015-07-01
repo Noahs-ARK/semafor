@@ -9,7 +9,6 @@ source "$(dirname ${BASH_SOURCE[0]})/../../training/config.sh"
 cd ${SEMAFOR_HOME}
 
 dep_parse_file="${training_dir}/cv.${cv}.sentences.${dep_parser}parsed.conll"
-all_lemma_tags_file="${training_dir}/cv.${cv}.sentences.all.lemma.tags"
 tokenizedfile="${training_dir}/cv.${cv}.sentences.tokenized"
 gold_fe_file="${training_dir}/cv.${cv}.sentences.frame.elements"
 
@@ -38,7 +37,6 @@ ${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
     testFEPredictionsFile:${gold_fe_file} \
     startIndex:0 \
     endIndex:${end} \
-    testParseFile:${all_lemma_tags_file} \
     testTokenizedFile:${tokenizedfile} \
     outputFile:${gold_xml}  # 2>/dev/null
 
