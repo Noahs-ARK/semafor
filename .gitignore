@@ -29,3 +29,4 @@ training/data/log
 # experiments
 experiments/
 *.txt
+*.out
