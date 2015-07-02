@@ -2,8 +2,11 @@
 source "$(dirname ${BASH_SOURCE[0]})/../bin/config.sh"
 
 # choose a name for the model to train
-turbomdl="basic" # prefix for the all.lemma.tags file
-model_name=$turbomdl"_tbps_spans" # make this directory in ../experiments/
+#model_name="mst_frame_id_20130625"
+#model_name="ancestor_frame_id_20130626"
+model_name="basic_tbps_nospans"
+
+# should set to roughly the number of cores available
 num_threads=10
 gc_threads=6
 
@@ -29,6 +32,8 @@ fn_id_req_data_file="${model_dir}/reqData.jobj"
 # paths to the gold-standard annotated sentences, and dependency-parsed version of it
 training_dir="${datadir}/naacl2012"
 fe_file="${training_dir}/cv.train.sentences.frame.elements"
+parsed_file="${training_dir}/cv.train.sentences.all.lemma.tags"
+dep_parser="turboparsed.basic.stanford.lemmatized"
 fe_file_length=`wc -l ${fe_file}`
 fe_file_length=`expr ${fe_file_length% *}`
 parsed_file="${training_dir}/cv.train.sentences.turboparsed.${turbomdl}.stanford.all.lemma.tags"

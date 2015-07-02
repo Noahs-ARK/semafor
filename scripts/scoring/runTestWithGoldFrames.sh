@@ -9,6 +9,7 @@ source "$(dirname ${BASH_SOURCE[0]})/../../training/config.sh"
 cd ${SEMAFOR_HOME}
 
 all_lemma_tags_file="${training_dir}/cv.${cv}.sentences.turboparsed.basic.stanford.all.lemma.tags"
+dep_parse_file="${training_dir}/cv.${cv}.sentences.${dep_parser}.conll"
 tokenizedfile="${training_dir}/cv.${cv}.sentences.tokenized"
 gold_fe_file="${training_dir}/cv.${cv}.sentences.frame.elements"
 
