@@ -1,5 +1,6 @@
 import sys, os.path
 
+extn = "thBest.argid.predict.xml"
 
 def read_file(num_ranks, directory):
     fscores = []
@@ -9,7 +10,7 @@ def read_file(num_ranks, directory):
     pre_num = []
     
     for rank in range(num_ranks):
-	f=open(directory + str(rank) +"thBest.xml","r")
+	f=open(directory + str(rank) + extn,"r")
         lines = [l.strip().split("\t") for l in f][1:]
         if "Scored" in lines[-1][0]:
             lines = lines[:-1]

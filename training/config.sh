@@ -29,7 +29,7 @@ fn_id_req_data_file="${model_dir}/reqData.jobj"
 
 # paths to the gold-standard annotated sentences, and dependency-parsed version of it
 training_dir="${datadir}/naacl2012/new_splits"
-parser="turboparsed.full.stanford"
+parser="turboparsed.basic.stanford"
 fe_file="${training_dir}/cv.train.sentences.frame.elements"
 parsed_file="${training_dir}/cv.train.sentences.${parser}.all.lemma.tags"
 fe_file_length=`wc -l ${fe_file}`

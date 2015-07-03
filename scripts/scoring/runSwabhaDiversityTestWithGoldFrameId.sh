@@ -3,7 +3,7 @@ set -e # fail fast
 source "$(dirname ${BASH_SOURCE[0]})/../../training/config.sh"
 
 div_metric="$1"
-
+cv=$2
 
 echo "Root of Project:"
 echo ${SEMAFOR_HOME}
@@ -12,9 +12,9 @@ echo
 fn_1_5_dir="${datadir}/framenet15/"
 frames_single_file="${fn_1_5_dir}/framesSingleFile.xml"
 relation_modified_file="${fn_1_5_dir}/frRelationModified.xml"
-gold_xml="${training_dir}/cv.test.sentences.lrb.xml"
 exp_dir="${SEMAFOR_HOME}/experiments/${model_name}"
 inp_xml_dir="${exp_dir}/output/${div_metric}/xml"
+gold_xml="${exp_dir}/output/${cv}.gold.xml"
 
 echo "Performing arg id for test data"
 
@@ -28,7 +28,8 @@ mkdir -p ${exp_dir}/output/${div_metric}/frameElements
  -J-XX:ParallelGCThreads=2 \
  scripts/scoring/SwabhaDiversity.scala \
  $model_name \
- $div_metric
+ $div_metric \
+ $cv
 
 echo "Performing exact evaluation"
 

@@ -3,13 +3,9 @@ set -e # fail fast
 set -x
 
 cv=$1  # "test" or "dev"
+iter=$2
 
 source "$(dirname ${BASH_SOURCE[0]})/../../training/config.sh"
-
-rm -f $model_dir/parser.conf
-ln -s $model_dir/scan/parser.conf.unlabeled $model_dir/parser.conf
-rm -f $model_dir/argmodel.dat
-ln -s $model_dir/argmodel.dat_0029 $model_dir/argmodel.dat
 
 cd ${SEMAFOR_HOME}
 
@@ -29,8 +25,6 @@ gold_xml="${output_dir}/${cv}.gold.xml"
 
 results_dir="${experiments_dir}/results"
 mkdir -p "${results_dir}"
-results_file="${results_dir}/argid_${cv}_exact"
-
 
 # make a gold xml file whose tokenization matches the tokenization used for parsing
 # (hack around the fact that SEMAFOR mangles token offsets)
@@ -69,9 +63,9 @@ ${SEMAFOR_HOME}/scripts/scoring/fnSemScore_modified.pl \
     ${frames_single_file} \
     ${relation_modified_file} \
     ${gold_xml} \
-    ${predicted_xml} > "${results_dir}/argid_${cv}_exact" 
+    ${predicted_xml} > "${results_dir}/argid_${cv}_exact${iter}" 
 
-tail -n1 "${results_dir}/argid_${cv}_exact"
+tail -n1 "${results_dir}/argid_${cv}_exact${iter}"
 
 # Dipanjan reported using this evaluation
 echo "Evaluating argument identification on ${cv} set (counting gold frames)..."
@@ -83,7 +77,7 @@ ${SEMAFOR_HOME}/scripts/scoring/fnSemScore_modified.pl \
     ${frames_single_file} \
     ${relation_modified_file} \
     ${gold_xml} \
-    ${predicted_xml} > "${results_dir}/argid_${cv}_exact_count_gold_frames"
+    ${predicted_xml} > "${results_dir}/argid_${cv}_exact_count_gold_frames${iter}"
 
 
-tail -n1 "${results_dir}/argid_${cv}_exact_count_gold_frames"
+tail -n1 "${results_dir}/argid_${cv}_exact_count_gold_frames${iter}"

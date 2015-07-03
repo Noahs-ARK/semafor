@@ -13,29 +13,25 @@ import java.io.File
 import scala.collection.JavaConverters.{asScalaBufferConverter, seqAsJavaListConverter, asScalaIteratorConverter}
 import scala.io.Source
 
-
+val model = args(0)
+val diversityType = args(1) // e.g. "grand"
+val cv = args(2) // "test" or "dev"
 
 val K_BEST = 1
 val SENTENCE_FIELD = 7
 
 val SEMAFOR_HOME = new File(System.getProperty("user.home"), "semafor/semafor")
-
-val TOKENIZED_FILE = new File(SEMAFOR_HOME, "training/data/naacl2012/cv.test.sentences.tokenized")
-val FRAME_ID_FILE = new File(SEMAFOR_HOME, "training/data/naacl2012/cv.test.sentences.frames")
-val GOLD_DEP_PARSE_FILENAME = new File(SEMAFOR_HOME, "training/data/naacl2012/cv.test.sentences.turboparsed.basic.stanford.all.lemma.tags")
+val DATA_DIR = new File(SEMAFOR_HOME, "training/data/naacl2012/new_splits")
+val TOKENIZED_FILE = new File(DATA_DIR, "cv." + cv + ".sentences.tokenized")
+val FRAME_ID_FILE = new File(DATA_DIR, "cv." + cv + ".sentences.frames")
+val GOLD_DEP_PARSE_FILENAME = new File(DATA_DIR, "cv." + cv + ".sentences.turboparsed.basic.stanford.all.lemma.tags")
 val NUM_SENTENCES = Source.fromFile(TOKENIZED_FILE).getLines().length
-
-val model = args(0)
 val EXPERIMENTS_DIR = new File(SEMAFOR_HOME, "experiments/"+model)
 val MODEL_DIR = new File(EXPERIMENTS_DIR, "model")
-
 val DEP_PARSE_BASE_FOLDER = new File(SEMAFOR_HOME, "experiments/swabha/diversekbestdeps")
 
-val diversityType = args(1) // e.g. "grand"
 
 parseAllSwabhasFiles(diversityType)
-
-
 
 
 def setSentenceId(line: String, sentenceId: String): String = {
@@ -94,8 +90,8 @@ def parseAllSwabhasFiles(diversityType: String) {
   // parse each kthBest file
   for (depParseFile <- depParseFolder.listFiles) {
     val name = depParseFile.getName.split('.')(0)
-    val feFile = new File(frameElementsOutputFolder, name + ".frame.elements")
-    val xmlFile = new File(xmlOutputFolder, name + ".xml")
+    val feFile = new File(frameElementsOutputFolder, name + "argid.predict.frame.elements")
+    val xmlFile = new File(xmlOutputFolder, name + ".argid.predict.xml")
     runWithGoldFrames(FRAME_ID_FILE, depParseFile, feFile, sem)
     generateXMLForPrediction(
       feFile.getAbsolutePath,
