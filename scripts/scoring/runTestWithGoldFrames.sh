@@ -47,7 +47,7 @@ echo "Performing argument identification on ${cv} set, with model \"${model_name
   -cp "${classpath}" \
   -J-Xms4g \
   -J-Xmx4g \
-  -J-XX:ParallelGCThreads=2 \
+  -J-XX:ParallelGCThreads=8 \
   scripts/scoring/parseToXmlWithGoldFrames.scala \
   ${model_name} \
   ${cv}
