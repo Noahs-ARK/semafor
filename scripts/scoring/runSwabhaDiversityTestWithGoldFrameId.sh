@@ -30,6 +30,22 @@ ile
 
 echo "Performing exact evaluation"
 
+# make a gold xml file whose tokenization matches the tokenization used for parsing
+# (hack around the fact that SEMAFOR mangles token offsets)
+fefile=${prefix}.".frame.elements"
+end=`wc -l ${tokenizedfile}`
+end=`expr ${end% *}`
+echo "Start:0"
+echo "End:${end}"
+${JAVA_HOME_BIN}/java -classpath ${classpath} -Xms1g -Xmx1g \
+    edu.cmu.cs.lti.ark.fn.evaluation.PrepareFullAnnotationXML \
+    testFEPredictionsFile:${fefile} \
+    startIndex:0 \
+    endIndex:${end} \
+    testParseFile:${altfile} \
+    testTokenizedFile:${tokfile} \
+    outputFile:${gold_xml} # 2>/dev/null
+
 res_dir="${exp_dir}/results/${div_metric}"
 mkdir -p "${res_dir}"
 
