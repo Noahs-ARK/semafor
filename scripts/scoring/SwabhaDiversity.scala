@@ -16,21 +16,26 @@ import scala.io.Source
 val model = args(0)
 val diversityType = args(1) // e.g. "grand"
 val cv = args(2) // "test" or "dev"
+val tokfile = args(3) // "cv.test.sentences.tokenized"
+val framesfile = args(4) // "cv.test.sentences.frames"
+val altfile = args(5) // "cv.test.sentences.turboparsed.basic.stanford.all.lemma.tags"
 
 val K_BEST = 1
 val SENTENCE_FIELD = 7
 
+
 val SEMAFOR_HOME = new File(System.getProperty("user.home"), "semafor/semafor")
-val DATA_DIR = new File(SEMAFOR_HOME, "training/data/naacl2012/new_splits")
-val TOKENIZED_FILE = new File(DATA_DIR, "cv." + cv + ".sentences.tokenized")
-val FRAME_ID_FILE = new File(DATA_DIR, "cv." + cv + ".sentences.frames")
-val GOLD_DEP_PARSE_FILENAME = new File(DATA_DIR, "cv." + cv + ".sentences.turboparsed.basic.stanford.all.lemma.tags")
-val NUM_SENTENCES = Source.fromFile(TOKENIZED_FILE).getLines().length
 val EXPERIMENTS_DIR = new File(SEMAFOR_HOME, "experiments/"+model)
 val MODEL_DIR = new File(EXPERIMENTS_DIR, "model")
+
+
+val TOKENIZED_FILE = new File(SEMAFOR_HOME, tokfile)
+val FRAME_ID_FILE = new File(SEMAFOR_HOME, framesfile)
+val GOLD_DEP_PARSE_FILENAME = new File(SEMAFOR_HOME, altfile)
+val NUM_SENTENCES = Source.fromFile(TOKENIZED_FILE).getLines().length
+
+
 val DEP_PARSE_BASE_FOLDER = new File(SEMAFOR_HOME, "experiments/swabha/diversekbestdeps")
-
-
 parseAllSwabhasFiles(diversityType)
 
 

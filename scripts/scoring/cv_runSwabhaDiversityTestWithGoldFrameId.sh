@@ -1,9 +1,10 @@
 #!/bin/bash
 set -e # fail fast
-source "$(dirname ${BASH_SOURCE[0]})/../../training/config.sh"
+fold=$1
+source "$(dirname ${BASH_SOURCE[0]})/../../training/cv_config.sh" $fold
 
-div_metric="$1"
-cv=$2
+cv="test"
+div_metric="tbps_basic_cv"${fold}
 
 echo "Root of Project:"
 echo ${SEMAFOR_HOME}
@@ -21,12 +22,11 @@ echo "Performing arg id for test data"
 mkdir -p ${inp_xml_dir}
 mkdir -p ${exp_dir}/output/${div_metric}/frameElements
 
-prefix="training/data/naacl2012/new_splits/cv."${cv}".sentences"
+prefix="training/data/cv/cv"${fold}"/cv"${fold}"."${cv}".sentences"
 tokfile=${prefix}".tokenized"
 framesfile=${prefix}".frames"
 altfile=${prefix}".turboparsed.basic.stanford.all.lemma.tags"
-/usr0/home/sswayamd/scala-2.10.4/bin/scala  -cp ".:target/Semafor-3.0-alpha-05-SNAPSHOT.jar"  -J-Xms4g  -J-Xmx4g  -J-XX:ParallelGCThreads=2  scripts/scoring/SwabhaDiversity.scala  $model_name  $div_metric  $cv $tokfile $framesfile $altf
-ile
+/usr0/home/sswayamd/scala-2.10.4/bin/scala  -cp ".:target/Semafor-3.0-alpha-05-SNAPSHOT.jar"  -J-Xms4g  -J-Xmx4g  -J-XX:ParallelGCThreads=2  scripts/scoring/SwabhaDiversity.scala  $model_name  $div_metric  $cv  $tokfile  $framesfile  $altfile
 
 echo "Performing exact evaluation"
 
@@ -39,7 +39,7 @@ cd "${SEMAFOR_HOME}"
 exact_dir="${res_dir}/exact_count_gold_frames"
 mkdir -p "${exact_dir}"
 for kthbest_xml in ${kthbest_xml_dir}; do
-    echo "Argument Labeling Exactt Results: ${inp_xml_dir}/${kthbest_xml}"
+    echo "Argument Labeling Exact Results: ${inp_xml_dir}/${kthbest_xml}"
     ./scripts/scoring/fnSemScore_swabha.pl \
         -l \
         -n \

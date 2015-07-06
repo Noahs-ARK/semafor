@@ -3,11 +3,10 @@
 source "$(dirname ${BASH_SOURCE[0]})/../bin/config.sh"
 
 
-
 # choose a name for the model to train
 #model_name="mst_frame_id_20130625"
 #model_name="ancestor_frame_id_20130626"
-model_name="meghana"
+model_name=""
 
 # should set to roughly the number of cores available
 num_threads=10
