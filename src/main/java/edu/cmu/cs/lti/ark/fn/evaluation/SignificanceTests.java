@@ -64,32 +64,24 @@ public class SignificanceTests
 	/** Number of samples to extract by randomly swapping sentences from the two system outputs (a.k.a. <i>nt</i>) */
 	private static final int TOTAL_TIMES = 10000;
 	
-	public static final String malRootDir="../testdata";
-	//public static final String malRootDir="/mal2/dipanjan/experiments/FramenetParsing/FrameStructureExtraction/evalscripts";
-	public static void main(String[] args)	
+	public static void main(String[] args)
 	{
-		convertToNiceFormat();
-		//fullSigTests(2);
-		
-		//convertToNiceFormatSegmentation();
-		//frameIdenSigTests(0);
-		//frameIdenSigTests(2);
-		
-		//fullSigTests(2);
+		if (args.length != 2) {
+			System.err.println("Usage: SignificanceTests <file1> <file2>");
+			System.exit(1);
+		}
+		String[] filenames = convertToNiceFormat(args[0], args[1]);
+		frameIdenSigTests(2, filenames[0], filenames[1]);
 	}
-
-	
 
 	/**
 	 * Perform significance testing for a pair of frame identification results.
 	 * @param flag Metric being compared: {@code 0} for precision, {@code 1} for recall, or {@code 2} for F1 score
 	 */
-	public static void frameIdenSigTests(int flag)
+	public static void frameIdenSigTests(int flag, String system1File, String system2File)
 	{
 		Random r = new Random(new Date().getTime());
-		String system1File = malRootDir+"/fid_partial_johansson_targets_verbose_formatted";
 		ArrayList<String> system1Lines = ParsePreparation.readSentencesFromFile(system1File);
-		String system2File = malRootDir+"/fid_partial_johansson_verbose_formatted";
 		ArrayList<String> system2Lines = ParsePreparation.readSentencesFromFile(system2File);
 		double sys1Metric=getNumber(system1Lines,flag);
 		double sys2Metric=getNumber(system2Lines,flag);
@@ -120,7 +112,7 @@ public class SignificanceTests
 			double sample1Metric=getNumber(sample1Lines,flag);
 			double sample2Metric=getNumber(sample2Lines,flag);
 			double diff = sample1Metric-sample2Metric;
-			System.out.println("sys1Metric="+sample1Metric+" sys2Metric="+sample2Metric+" Difference:"+diff);
+			//System.out.println("sys1Metric="+sample1Metric+" sys2Metric="+sample2Metric+" Difference:"+diff);
 			if(diff>=actualDiff)
 				nc++;
 		}
@@ -132,12 +124,10 @@ public class SignificanceTests
 	 * Perform significance testing for a pair of full frame parsing results.
 	 * @param flag Metric being compared: {@code 0} for precision, {@code 1} for recall, or {@code 2} for F1 score
 	 */
-	public static void fullSigTests(int flag)
+	public static void fullSigTests(int flag, String system1File, String system2File)
 	{
 		Random r = new Random(new Date().getTime());
-		String system1File = malRootDir+"/full_partial_joint_verbose_formatted";
 		ArrayList<String> system1Lines = ParsePreparation.readSentencesFromFile(system1File);
-		String system2File = malRootDir+"/full_partial_joint_jtf_verbose_formatted";
 		ArrayList<String> system2Lines = ParsePreparation.readSentencesFromFile(system2File);
 		double sys1Metric=getNumber(system1Lines,flag);
 		double sys2Metric=getNumber(system2Lines,flag);
@@ -180,12 +170,10 @@ public class SignificanceTests
 	 * Perform significance testing for a pair of target identification (a.k.a. segmentation) results.
 	 * @param flag Metric being compared: {@code 0} for precision, {@code 1} for recall, or {@code 2} for F1 score
 	 */
-	public static void segmentationSigTests(int flag)
+	public static void segmentationSigTests(int flag, String system1File, String system2File)
 	{
 		Random r = new Random(new Date().getTime());
-		String system1File = malRootDir+"/segmentation.ours.formatted";
 		ArrayList<String> system1Lines = ParsePreparation.readSentencesFromFile(system1File);
-		String system2File = malRootDir+"/segmentation.johansson.formatted";
 		ArrayList<String> system2Lines = ParsePreparation.readSentencesFromFile(system2File);
 		double sys1Metric=getNumber(system1Lines,flag);
 		double sys2Metric=getNumber(system2Lines,flag);
@@ -253,18 +241,17 @@ public class SignificanceTests
 	}
 	
 	
-	public static void convertToNiceFormatSegmentation()
+	public static void convertToNiceFormatSegmentation(String filename1, String filename2,
+													   String segmfile1, String segmfile2,
+													   String goldfile)
 	{
-		String ourFile = malRootDir+"/our.fulltest.sentences.frames";
-		String jFile = malRootDir+"/johansson.fulltest.sentences.frames";
-		getSegmentationResultsForASystem(ourFile,malRootDir+"/segmentation.ours.formatted");
-		getSegmentationResultsForASystem(jFile,malRootDir+"/segmentation.johansson.formatted");
+		getSegmentationResultsForASystem(filename1, segmfile1, goldfile);
+		getSegmentationResultsForASystem(filename2, segmfile2, goldfile);
 	}
 	
 	
-	public static void getSegmentationResultsForASystem(String file, String outFile)
+	public static void getSegmentationResultsForASystem(String file, String outFile, String goldFile)
 	{
-		String goldFile = malRootDir+"/semeval.fulltest.sentences.frame.elements";
 		ArrayList<String> goldStuff = ParsePreparation.readSentencesFromFile(goldFile);
 		TIntObjectHashMap<THashSet<String>> goldSpans = new TIntObjectHashMap<THashSet<String>>();
 		for(String gold:goldStuff)
@@ -342,36 +329,11 @@ public class SignificanceTests
 	}
 	
 	
-	public static void convertToNiceFormat()
+	public static String[] convertToNiceFormat(String filename1, String filename2)
 	{
-//		String[] files = {malRootDir+"/full_partial_joint_verbose",  
-//						  malRootDir+"/full_partial_joint_johansson_verbose", 
-//						  malRootDir+"/fid_partial_verbose", 
-//						  malRootDir+"/fid_partial_johansson_verbose",
-//						  malRootDir+"/fid_gt_partial_verbose"
-//						  };
-//		String[] formattedFiles = {malRootDir+"/full_partial_joint_verbose_formatted",  
-//								   malRootDir+"/full_partial_joint_johansson_verbose_formatted",
-//								   malRootDir+"/fid_partial_verbose_formatted", 
-//								   malRootDir+"/fid_partial_johansson_verbose_formatted",
-//								   malRootDir+"/fid_gt_partial_verbose_formatted"};
-//		
-//		String[] files = {malRootDir+"/fid_exact_verbose",  
-//				  malRootDir+"/fid_exact_johansson_verbose", 
-//				  malRootDir+"/full_exact_joint_verbose", 
-//				  malRootDir+"/full_exact_johansson_verbose"
-//				  };
-//		String[] formattedFiles = {malRootDir+"/fid_exact_verbose_formatted",  
-//				  malRootDir+"/fid_exact_johansson_verbose_formatted", 
-//				  malRootDir+"/full_exact_joint_verbose_formatted", 
-//				  malRootDir+"/full_exact_johansson_verbose_formatted"};
+		String[] files = {filename1, filename2};
+		String[] formattedFiles = {files[0]+"_formatted", files[1]+"_formatted"};
 
-		String[] files = {malRootDir+"/full_partial_joint_jtf_verbose",
-				malRootDir+"/full_exact_joint_jtf_verbose"
-				  };		
-		String[] formattedFiles = {malRootDir+"/full_partial_joint_jtf_verbose_formatted",
-				malRootDir+"/full_exact_joint_jtf_formatted"};
-		
 		for(int i = 0; i < 2; i ++)
 		{
 			ArrayList<String> resLines = new ArrayList<String>();
@@ -415,7 +377,8 @@ public class SignificanceTests
 			System.out.print("Recall:"+recall+" ");
 			System.out.print("F1 score:"+f+"\n");
 			ParsePreparation.writeSentencesToFile(formattedFiles[i], resLines);
-		}		
+		}
+		return formattedFiles;
 	}
 	
 }
