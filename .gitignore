@@ -22,3 +22,7 @@ training/data/naacl2012*
 
 # log
 training/data/log
+
+# models and experiments
+models/
+experiments/
