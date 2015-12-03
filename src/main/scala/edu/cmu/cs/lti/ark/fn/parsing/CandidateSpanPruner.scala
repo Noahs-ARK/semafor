@@ -7,7 +7,7 @@ import edu.cmu.cs.lti.ark.util.ds.Range0Based
 
 import scala.collection.JavaConverters._
 import scala.collection.{mutable => m}
-import scala.math.{max, min}
+import scala.math.{abs, max, min}
 
 
 object CandidateSpanPruner {
@@ -15,7 +15,9 @@ object CandidateSpanPruner {
   val NonBreakingLeftConstituentPos: Set[String] = Set("DT", "JJ")
   val PunctuationPos: Set[String] = Set(".", ",", ":", "''", "-RRB-", "-RSB-")
   val PartsOfSpeechToSplitOn: Set[String] = Set("WDT", "IN", "TO") ++ PunctuationPos
-  val StanfordDependencyLabelsNotToSplitOn: Set[String] = Set(
+  // see Täckström et al., TACL '15
+  // http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/43251.pdf
+  val OffensiveStanfordDependencyLabels: Set[String] = Set(
     "advmod",
     "amod",
     "appos",
@@ -43,12 +45,29 @@ object CandidateSpanPruner {
 
   def defaultInstance: CandidateSpanPruner = CandidateSpanPruner(
     doStripPunctuation = true,
-    doIncludeContiguousSubspans = true,
     doIncludeTarget = true,
     doIncludeSpansMinusTarget = true,
-    doStripPPs = true,
+    doUseTackstrom = true,
     doFindNNModifiers = true,
-    maxLength = Some(20)
+    doIncludeContiguousSubspans = true,
+    doStripPPs = true,
+    maxLength = Some(20),
+    maxDistance = Some(20),
+    maxDepPathLength = Some(5)
+  )
+
+  /* heuristics used in SEMAFOR 2.1 */
+  def baseline: CandidateSpanPruner = CandidateSpanPruner(
+    doStripPunctuation = false,
+    doIncludeTarget = false,
+    doIncludeSpansMinusTarget = false,
+    doUseTackstrom = true,
+    doFindNNModifiers = false,
+    doIncludeContiguousSubspans = false,
+    doStripPPs = false,
+    maxLength = None,
+    maxDistance = None,
+    maxDepPathLength = None
   )
 
   def range(start: Int, end: Int): Range0Based = {
@@ -70,12 +89,15 @@ object CandidateSpanPruner {
 
 /** Uses a dependency parse to prune the options of candidate spans. */
 case class CandidateSpanPruner(doStripPunctuation: Boolean,
-                               doIncludeContiguousSubspans: Boolean,
                                doIncludeTarget: Boolean,
                                doIncludeSpansMinusTarget: Boolean,
-                               doStripPPs: Boolean,
+                               doUseTackstrom: Boolean,
                                doFindNNModifiers: Boolean,
-                               maxLength: Option[Int]) {
+                               doIncludeContiguousSubspans: Boolean,
+                               doStripPPs: Boolean,
+                               maxLength: Option[Int],
+                               maxDistance: Option[Int],
+                               maxDepPathLength: Option[Int]) {
   import CandidateSpanPruner._
 
   /** Calculates a set of candidate spans based on the given dependency parse. */
@@ -84,15 +106,17 @@ case class CandidateSpanPruner(doStripPunctuation: Boolean,
     var result = m.Set[Range0Based](EmptySpan) // always include the empty span
     val tokens: Array[Token] = sentence.getTokens.asScala.toArray
     val parents = tokens.map(_.getHead - 1)  // nodes are 1-indexed
+    val deprels = tokens.map(_.getDeprel)
+
     if (doIncludeTarget) {
 //      println("target:\n" + spanToString(targetSpan, sentence))
       result += targetSpan
     }
-    // single tokens
+    // always include single tokens
     val singletons = tokens.indices.map(i => range(i, i))
 //    println("singletons:\n" + singletons.map(spanToString(_, sentence)).mkString("\n"))
     result ++= singletons
-    // full subtrees
+    // always include full subtrees
     val subtrees = getFullSubtrees(tokens, parents)
 //    println("subtrees:\n" + subtrees.map(spanToString(_, sentence)).mkString("\n"))
     result ++= subtrees
@@ -103,9 +127,15 @@ case class CandidateSpanPruner(doStripPunctuation: Boolean,
       result ++= contiguous
     }
     // heuristics for less-than-full subtrees
-    val halfTrees = getHalfTrees(tokens, subtrees)
-//    println("halfTrees:\n" + halfTrees.toSet.diff(result).map(spanToString(_, sentence)).mkString("\n"))
-    result ++= halfTrees
+    if (doUseTackstrom) {
+      val subHalfTrees = getSubHalfTrees(tokens, subtrees, parents, deprels)
+//      println("subHalfTrees:\n" + subHalfTrees.toSet.diff(result).map(spanToString(_, sentence)).mkString("\n"))
+      result ++= subHalfTrees
+    } else {
+      val halfTrees = getHalfTrees(tokens, subtrees)
+      //    println("halfTrees:\n" + halfTrees.toSet.diff(result).map(spanToString(_, sentence)).mkString("\n"))
+      result ++= halfTrees
+    }
     // carve out the target from each span
     if (doIncludeSpansMinusTarget) {
       val minusTarget = spansMinusTarget(result.toSet, targetSpan)
@@ -128,7 +158,36 @@ case class CandidateSpanPruner(doStripPunctuation: Boolean,
 //      println("tooLong:\n" + tooLong.map(spanToString(_, sentence)).mkString("\n"))
       result = ok
     }
+    for (maxDist <- maxDistance) {
+      val (ok, tooFar) = result.partition(s => dist(s, targetSpan) <= maxDist)
+      //      println("tooFar:\n" + tooFar.map(spanToString(_, sentence)).mkString("\n"))
+      result = ok
+    }
+    for (maxDepLen <- maxDepPathLength) {
+      val (ok, tooFar) = result.partition(s => depLen(parents)(s, targetSpan) <= maxDepLen)
+//      if (tooFar.nonEmpty) {
+//        println("dep path too long:\n" + tooFar.map(spanToString(_, sentence)).mkString("\n"))
+//      }
+      result = ok
+    }
+
     result.toList.asJava
+  }
+
+  // TODO: reuse code for feature extraction based on dep-path
+  def depLen(parents: Int => Int)(s: Range0Based, t: Range0Based): Int = {
+    if (s.isEmpty || t.isEmpty) return 0
+    val sAncestors = s.iterator().asScala.map(i => ancestors(parents)(i).toVector.reverse).toVector
+    val tAncestors = t.iterator().asScala.map(i => ancestors(parents)(i).toVector.reverse).toVector
+
+    (for (sA <- sAncestors; tA <- tAncestors) yield {
+      val commonPathLen = sA.zip(tA).takeWhile({ case (si, ti) => si == ti }).size
+      sAncestors.size + tAncestors.size + 1 - commonPathLen
+    }).min
+  }
+
+  def dist(s: Range0Based, t: Range0Based): Int = {
+    (for (x <- Seq(s.start, s.end); y <- Seq(t.start, t.end)) yield abs(x - y)).min
   }
 
   def findNNModifiers(target: Range0Based, tokens: Array[Token])(span: Range0Based): Set[Range0Based] = {
@@ -200,11 +259,11 @@ case class CandidateSpanPruner(doStripPunctuation: Boolean,
   }
 
   /**
-   * Heuristics to try to recover finer-grained constituents when a node has descendants on both sides.
-   * Originally from Johansson and Nugues 2007
-   */
+    * Heuristics to try to recover finer-grained constituents when a node has descendants on both sides.
+    * Originally from Johansson and Nugues 2007.
+    */
   def getHalfTrees(nodes: Array[Token],
-                          subtrees: Array[Range0Based]): Set[Range0Based] = {
+                   subtrees: Array[Range0Based]): Set[Range0Based] = {
     val result = m.Set.empty[Range0Based]
     for (
       (subtree, i) <- subtrees.zipWithIndex
@@ -219,6 +278,40 @@ case class CandidateSpanPruner(doStripPunctuation: Boolean,
       if (result.contains(range(i + 1, subtree.end))) { // node has exactly one right child
         // include self and left children
         result += range(subtree.start, i)
+      }
+    }
+    result.toSet
+  }
+  /**
+    * Heuristics to try to recover finer-grained constituents when a node has multiple descendants on a side.
+    * From Täckström et al., TACL '15
+    * http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/43251.pdf
+    */
+  def getSubHalfTrees(nodes: Array[Token],
+                      subtrees: Array[Range0Based],
+                      parents: Int => Int,
+                      deprels: Int => String): Set[Range0Based] = {
+    val result = m.Set.empty[Range0Based]
+    for (
+      (subtree, i) <- subtrees.zipWithIndex
+      if subtree.start < i && subtree.end > i // node has both left and right children
+    ) {
+      val inoffensiveLeftChildren =
+        (subtree.start until i).reverse
+            .filter(j => parents(j) == i)
+            .takeWhile(j => !OffensiveStanfordDependencyLabels.contains(deprels(j)))
+      for (child <- inoffensiveLeftChildren) {
+        result += range(subtrees(child).start, i)
+      }
+      // never leave a single determiner or adj dangling
+      val start = if (NonBreakingLeftConstituentPos.contains(nodes(i - 1).getPostag)) i - 1 else i
+      // include self and right children
+      val inoffensiveRightChildren =
+        (i + 1 to subtree.end)
+            .filter(j => parents(j) == i)
+            .takeWhile(j => !OffensiveStanfordDependencyLabels.contains(deprels(j)))
+      for (child <- inoffensiveRightChildren) {
+        result += range(start, subtrees(child).end)
       }
     }
     result.toSet
