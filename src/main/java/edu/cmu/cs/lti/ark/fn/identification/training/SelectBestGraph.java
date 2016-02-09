@@ -22,12 +22,14 @@
 package edu.cmu.cs.lti.ark.fn.identification.training;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
 
 public class SelectBestGraph {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		String dir = "/mal2/dipanjan/experiments/FramenetParsing/fndata-1.5/ACLSplits";
 		String[] mu = {"0.01", "0.1", "0.3", "0.5", "1.0"};
 		//String[] a = {"0.2", "0.5", "0.8"};
@@ -60,8 +62,8 @@ public class SelectBestGraph {
 						ArrayList<String> indresults = new ArrayList<String>();
 						for (int cv = 0; cv <= 4; cv++)	{
 							String file = dir + "/" + cv + "/results/" + resultfile;
-							ArrayList<String> sents = 
-								ParsePreparation.readSentencesFromFile(file);
+							List<String> sents =
+								ParsePreparation.readLines(file);
 							int size = sents.size()-1;
 							double tot = 0.0;
 							double corr = 0.0;

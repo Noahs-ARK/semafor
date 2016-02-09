@@ -29,6 +29,7 @@ import edu.cmu.cs.lti.ark.util.FileUtil;
 import edu.cmu.cs.lti.ark.util.ds.Pair;
 import riso.numerical.LBFGS;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
 
@@ -39,7 +40,7 @@ public class Training {
 	private double[] W;
 	private double[] mGradients;
 	private int numFeatures;
-	private ArrayList<String> mFrameLines;
+	private List<String> mFrameLines;
 	private Random rand;
 	private double mLambda;
 	private int numDataPoints;
@@ -55,13 +56,12 @@ public class Training {
 	public void init(String modelFile,
 					 String alphabetFile,
 					 ArrayList<FrameFeatures> list,
-					 String frFile)
-	{
+					 String frFile) throws IOException {
 		mModelFile = modelFile;
 		mAlphabetFile = alphabetFile;
 		initModel();
 		mFrameList = list;
-		mFrameLines = ParsePreparation.readSentencesFromFile(frFile);
+		mFrameLines = ParsePreparation.readLines(frFile);
 		rand = new Random(new Date().getTime());
 		mLambda = 0.0;
 		numDataPoints = mFrameList.size();
@@ -74,13 +74,12 @@ public class Training {
 					 String frFile,
 					 String reg,
 					 double lambda,
-					 int numThreads)
-	{
+					 int numThreads) throws IOException {
 		mModelFile = modelFile;
 		mAlphabetFile = alphabetFile;
 		initModel();
 		mFrameList = list;
-		mFrameLines = ParsePreparation.readSentencesFromFile(frFile);
+		mFrameLines = ParsePreparation.readLines(frFile);
 		rand = new Random(new Date().getTime());
 		mLambda = lambda;
 		numDataPoints = mFrameList.size();

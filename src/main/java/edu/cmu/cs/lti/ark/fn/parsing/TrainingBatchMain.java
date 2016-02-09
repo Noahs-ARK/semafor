@@ -24,6 +24,7 @@ package edu.cmu.cs.lti.ark.fn.parsing;
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
 import edu.cmu.cs.lti.ark.util.SerializedObjects;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class TrainingBatchMain
@@ -42,8 +43,7 @@ public class TrainingBatchMain
 	 *             modelFile: path to output file to write resulting model to. intermediate models will be written to
 	 *                 modelFile + "_" + i
 	 */
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) throws IOException {
 		FNModelOptions opts = new FNModelOptions(args);
 		String modelFile = opts.modelFile.get();
 		String alphabetFile = opts.alphabetFile.get();

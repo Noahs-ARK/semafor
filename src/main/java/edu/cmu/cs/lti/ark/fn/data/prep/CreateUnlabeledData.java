@@ -27,6 +27,7 @@ import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 
 public class CreateUnlabeledData {
@@ -41,22 +42,22 @@ public class CreateUnlabeledData {
 		String apText = "/mal2/dipanjan/experiments/FramenetParsing/DistributionalSimilarityFeatures/data/pos/AP.txt";
 		BufferedWriter bWriter = new BufferedWriter(new FileWriter(apText));
 		String[] files = f.list(filter);
-		for (int i = 0; i < files.length; i ++) {
-			String file = dir + "/" + files[i];
-			ArrayList<String> sents = 
-				ParsePreparation.readSentencesFromFile(file);
-			for (String sent: sents) {
+		for (final String file1 : files) {
+			String file = dir + "/" + file1;
+			List<String> sents =
+					ParsePreparation.readLines(file);
+			for (String sent : sents) {
 				sent = sent.trim();
 				String[] toks = getTokens(sent);
 				if (toks.length > 100)
 					continue;
 				String outLine = "";
-				for (String tok: toks) {
+				for (String tok : toks) {
 					int li = tok.lastIndexOf("_");
 					outLine += tok.subSequence(0, li) + " ";
 				}
 				outLine = outLine.trim();
-				bWriter.write(outLine+"\n");
+				bWriter.write(outLine + "\n");
 			}
 		}
 		bWriter.close();

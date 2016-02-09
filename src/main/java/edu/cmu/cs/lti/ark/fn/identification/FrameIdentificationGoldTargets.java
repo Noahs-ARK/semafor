@@ -32,10 +32,7 @@ import gnu.trove.TObjectDoubleHashMap;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.StringTokenizer;
+import java.util.*;
 
 
 public class FrameIdentificationGoldTargets
@@ -84,7 +81,7 @@ public class FrameIdentificationGoldTargets
 		THashMap<String,THashSet<String>> frameMap = r.getFrameMap();
 		THashMap<String,THashSet<String>> cMap = r.getcMap();
 
-		ArrayList<String> segs = ParsePreparation.readSentencesFromFile(options.testFrameFile.get());
+		List<String> segs = ParsePreparation.readLines(options.testFrameFile.get());
 		ArrayList<String> inputForFrameId = getGoldSeg(segs,start,end);	// Null\tTargetTokenNum(s)\tSentenceOffset
 		ArrayList<String> idResult = new ArrayList<String>();
 		final Pair<IdFeatureExtractor,TObjectDoubleHashMap<String>> extractorAndParams =
@@ -130,7 +127,7 @@ public class FrameIdentificationGoldTargets
 		
 	}
 
-	public static ArrayList<String> getGoldSeg(ArrayList<String> segs,int start, int end)
+	public static ArrayList<String> getGoldSeg(List<String> segs,int start, int end)
 	{
 		ArrayList<String> result = new ArrayList<String>();
 		int count = 0;

@@ -27,10 +27,9 @@ import gnu.trove.TIntObjectHashMap;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Random;
+import java.io.IOException;
+import java.util.*;
+
 
 /**
  * Performs significance testing for the outputs of various stages of two semantic parsing systems.
@@ -64,8 +63,7 @@ public class SignificanceTests
 	/** Number of samples to extract by randomly swapping sentences from the two system outputs (a.k.a. <i>nt</i>) */
 	private static final int TOTAL_TIMES = 10000;
 	
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) throws IOException {
 		if (args.length != 2) {
 			System.err.println("Usage: SignificanceTests <file1> <file2>");
 			System.exit(1);
@@ -78,11 +76,10 @@ public class SignificanceTests
 	 * Perform significance testing for a pair of frame identification results.
 	 * @param flag Metric being compared: {@code 0} for precision, {@code 1} for recall, or {@code 2} for F1 score
 	 */
-	public static void frameIdenSigTests(int flag, String system1File, String system2File)
-	{
+	public static void frameIdenSigTests(int flag, String system1File, String system2File) throws IOException {
 		Random r = new Random(new Date().getTime());
-		ArrayList<String> system1Lines = ParsePreparation.readSentencesFromFile(system1File);
-		ArrayList<String> system2Lines = ParsePreparation.readSentencesFromFile(system2File);
+		List<String> system1Lines = ParsePreparation.readLines(system1File);
+		List<String> system2Lines = ParsePreparation.readLines(system2File);
 		double sys1Metric=getNumber(system1Lines,flag);
 		double sys2Metric=getNumber(system2Lines,flag);
 		double actualDiff = sys1Metric-sys2Metric;
@@ -124,11 +121,10 @@ public class SignificanceTests
 	 * Perform significance testing for a pair of full frame parsing results.
 	 * @param flag Metric being compared: {@code 0} for precision, {@code 1} for recall, or {@code 2} for F1 score
 	 */
-	public static void fullSigTests(int flag, String system1File, String system2File)
-	{
+	public static void fullSigTests(int flag, String system1File, String system2File) throws IOException {
 		Random r = new Random(new Date().getTime());
-		ArrayList<String> system1Lines = ParsePreparation.readSentencesFromFile(system1File);
-		ArrayList<String> system2Lines = ParsePreparation.readSentencesFromFile(system2File);
+		List<String> system1Lines = ParsePreparation.readLines(system1File);
+		List<String> system2Lines = ParsePreparation.readLines(system2File);
 		double sys1Metric=getNumber(system1Lines,flag);
 		double sys2Metric=getNumber(system2Lines,flag);
 		double actualDiff = sys1Metric-sys2Metric;
@@ -170,11 +166,10 @@ public class SignificanceTests
 	 * Perform significance testing for a pair of target identification (a.k.a. segmentation) results.
 	 * @param flag Metric being compared: {@code 0} for precision, {@code 1} for recall, or {@code 2} for F1 score
 	 */
-	public static void segmentationSigTests(int flag, String system1File, String system2File)
-	{
+	public static void segmentationSigTests(int flag, String system1File, String system2File) throws IOException {
 		Random r = new Random(new Date().getTime());
-		ArrayList<String> system1Lines = ParsePreparation.readSentencesFromFile(system1File);
-		ArrayList<String> system2Lines = ParsePreparation.readSentencesFromFile(system2File);
+		List<String> system1Lines = ParsePreparation.readLines(system1File);
+		List<String> system2Lines = ParsePreparation.readLines(system2File);
 		double sys1Metric=getNumber(system1Lines,flag);
 		double sys2Metric=getNumber(system2Lines,flag);
 		double actualDiff = sys1Metric-sys2Metric;
@@ -214,7 +209,7 @@ public class SignificanceTests
 	}
 	
 	
-	public static double getNumber(ArrayList<String> resLines, int flag)
+	public static double getNumber(List<String> resLines, int flag)
 	{
 		double totalMatched = 0.0;
 		double totalGold = 0.0;
@@ -239,20 +234,18 @@ public class SignificanceTests
 		else
 			return f;
 	}
-	
-	
+
 	public static void convertToNiceFormatSegmentation(String filename1, String filename2,
 													   String segmfile1, String segmfile2,
-													   String goldfile)
-	{
+													   String goldfile) throws IOException {
 		getSegmentationResultsForASystem(filename1, segmfile1, goldfile);
 		getSegmentationResultsForASystem(filename2, segmfile2, goldfile);
 	}
 	
 	
-	public static void getSegmentationResultsForASystem(String file, String outFile, String goldFile)
-	{
-		ArrayList<String> goldStuff = ParsePreparation.readSentencesFromFile(goldFile);
+	public static void getSegmentationResultsForASystem(String file, String outFile, String goldFile) throws IOException {
+		List<String> goldStuff = ParsePreparation.readLines(goldFile);
+
 		TIntObjectHashMap<THashSet<String>> goldSpans = new TIntObjectHashMap<THashSet<String>>();
 		for(String gold:goldStuff)
 		{
@@ -272,7 +265,7 @@ public class SignificanceTests
 			}
 		}	
 		TIntObjectHashMap<THashSet<String>> modelSpans = new TIntObjectHashMap<THashSet<String>>();
-		ArrayList<String> modelStuff = ParsePreparation.readSentencesFromFile(file);
+		List<String> modelStuff = ParsePreparation.readLines(file);
 		for(String line:modelStuff)
 		{
 			String[] toks = PaperEvaluation.getTokens(line);

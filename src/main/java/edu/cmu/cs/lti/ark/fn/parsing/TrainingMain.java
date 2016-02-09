@@ -21,6 +21,7 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.parsing;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import edu.cmu.cs.lti.ark.fn.utils.FNModelOptions;
@@ -28,8 +29,7 @@ import edu.cmu.cs.lti.ark.util.SerializedObjects;
 
 public class TrainingMain
 {
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) throws IOException {
 		FNModelOptions opts = new FNModelOptions(args);
 		String modelFile = opts.modelFile.get();
 		String alphabetFile = opts.alphabetFile.get();
