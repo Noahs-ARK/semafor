@@ -156,7 +156,6 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.0</version>
                 <configuration>
-                    <!-- target Java 1.7 -->
                     <source>1.7</source>
                     <target>1.7</target>
                 </configuration>

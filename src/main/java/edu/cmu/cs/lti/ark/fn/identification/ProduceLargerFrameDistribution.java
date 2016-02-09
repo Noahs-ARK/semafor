@@ -24,7 +24,7 @@ package edu.cmu.cs.lti.ark.fn.identification;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import edu.cmu.cs.lti.ark.fn.data.prep.ParsePreparation;
@@ -34,7 +34,7 @@ import gnu.trove.THashSet;
 
 
 public class ProduceLargerFrameDistribution {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		String frameMapFile = args[0];
 		String trainDistFile = args[1];
 		String largeDist = args[2];
@@ -124,10 +124,10 @@ public class ProduceLargerFrameDistribution {
 	}
 	
 	public static THashMap<String, THashMap<String, Double>> 
-		readTrainDistFile(String trainDistFile) {
+		readTrainDistFile(String trainDistFile) throws IOException {
 		THashMap<String, THashMap<String, Double>> result = 
 			new THashMap<String, THashMap<String, Double>>();
-		ArrayList<String> sents = ParsePreparation.readSentencesFromFile(trainDistFile);
+		List<String> sents = ParsePreparation.readLines(trainDistFile);
 		for (String sent: sents) {
 			sent = sent.trim();
 			String[] toks = sent.split("\t");

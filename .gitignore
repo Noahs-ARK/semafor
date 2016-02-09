@@ -1,8 +1,8 @@
 # Compiled artifacts
 *.class
 *.pyc
-target/
-dependency-reduced-pom.xml
+/target
+/dependency-reduced-pom.xml
 
 # IDE cruft
 .idea
@@ -24,3 +24,4 @@ training/data/framenet15/
 # experimental artifacts
 models/
 experiments/
+

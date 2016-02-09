@@ -116,6 +116,9 @@ public class IdFeatureExtractor {
 		final IntCounter<String> featureMap = new IntCounter<String>();
 		featureMap.increment("d:" + UNDERSCORE.join(depLabels));
 
+		final String depLabel = head.getLabelType().toUpperCase(); // dep. label between head and its parent
+		featureMap.increment("dH:" + depLabel);
+
 		if (headCpostag.equals("V")) {
 			final List<String> subcat = Lists.newArrayListWithExpectedSize(children.size()); // ordered arc labels of children
 			for (DependencyParse child : children) {

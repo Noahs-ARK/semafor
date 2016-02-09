@@ -69,7 +69,7 @@ public class ParsePreparation {
 	 * @param conllInputFile
 	 */
 	public static void printCoNLLTypeInput(String posFile, String conllInputFile) throws IOException {
-		List<String> posSentences = readSentencesFromFile(posFile);
+		List<String> posSentences = readLines(posFile);
 		BufferedWriter bWriter = new BufferedWriter(new FileWriter(conllInputFile));
 		try {
 			for(String posSentence: posSentences) {
@@ -149,73 +149,11 @@ public class ParsePreparation {
 	 * @param file Path to the file
 	 * @return List of all lines from the given file
 	 */
-	public static ArrayList<String> readSentencesFromFile(String file) {
-		BufferedReader reader;
-		try {
-			reader = new BufferedReader(new FileReader(file));
-			return readLinesFromFile(reader, 0, true);
-		} catch (FileNotFoundException ex) {
-			ex.printStackTrace();
-			return null;
-		}
-	}
-	
-	/**
-	 * Reads up to a certain number of lines of a file, starting at the current position of the {@link BufferedReader}
-	 * @param reader
-	 * @param n Nonnegative number of lines to read ({@code 0} to read all lines).
-	 * @param closeAtEOF If {@code true} and either {@code n==0} or fewer than {@code n} line could be fetched 
-	 * due to the end of the file, the stream will be closed. Otherwise, closing the stream is the caller's responsibility.
-	 * @return List of the lines in the range
-	 */
-	public static ArrayList<String> readLinesFromFile(BufferedReader reader, int n, boolean closeAtEOF) {
-		int j = 0;
-		ArrayList<String> result = new ArrayList<String>();
-		try
-		{
-			String line = null;
-			while((n==0 || j<n) && (line=reader.readLine())!=null)
-			{
-				result.add(line.trim());
-				j++;
-			}
-			if (closeAtEOF && (n==0 || j<n))
-				reader.close();
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}
-		return result;
-	}
-	
-	/**
-	 * @param file Path to the file
-	 * @param n Maximum number of lines to read; if 0, all lines will be read. Must be nonnegative.
-	 * @param start Index of first line to include (first line is 0)
-	 * @return List of lines of the specified file in the specified range--i.e. lines {@code start} through {@code (start+n-1)}
-	 */
-	public static ArrayList<String> readSentencesFromFile(String file, int n, int start)	// TODO
-	{
-		ArrayList<String> result = new ArrayList<String>();
-		try
-		{
-			BufferedReader bReader = new BufferedReader(new FileReader(file));
-			String line = null;
-			while((line=bReader.readLine())!=null)
-			{
-				result.add(line.trim());
-			}
-			bReader.close();
-		}
-		catch(Exception e)
-		{
-			e.printStackTrace();
-		}
-		return result;
+	public static List<String> readLines(String file) throws IOException {
+		return IOUtils.readLines(new BufferedReader(new FileReader(file)));
 	}
 
-	/**
+    /**
 	 * Writes the given sentences to the given file
 	 *
 	 * @param outputFile the file to write to

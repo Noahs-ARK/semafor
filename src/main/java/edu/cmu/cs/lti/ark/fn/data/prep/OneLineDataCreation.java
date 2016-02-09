@@ -21,6 +21,7 @@
  ******************************************************************************/
 package edu.cmu.cs.lti.ark.fn.data.prep;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -41,7 +42,7 @@ public class OneLineDataCreation {
 	// TODO(st): this shouldn't be hardcoded in
 	public static final String DIR_ROOT = "/mal2/dipanjan/experiments/FramenetParsing/framenet_1.3/ddData";
 		
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		String[] prefixes = {
 				"framenet.original.sentences",
 				"semeval.fulltrain.sentences",
@@ -53,11 +54,11 @@ public class OneLineDataCreation {
 		}		
 	}
 	
-	public static void transFormIntoPerLineParse(String prefix) {
+	public static void transFormIntoPerLineParse(String prefix) throws IOException {
 		prefix = DIR_ROOT + "/" + prefix;
 		ArrayList<ArrayList<String>> parses = readCoNLLParses(prefix + CONLL_PARSED_SUFFIX);
-		ArrayList<String> tokenizedSentences = ParsePreparation.readSentencesFromFile(prefix + TOKENIZED_SUFFIX);
-		ArrayList<String> neTaggedSentences = ParsePreparation.readSentencesFromFile(prefix + NETAG_SUFFIX);
+		List<String> tokenizedSentences = ParsePreparation.readLines(prefix + TOKENIZED_SUFFIX);
+		List<String> neTaggedSentences = ParsePreparation.readLines(prefix + NETAG_SUFFIX);
 		ArrayList<String> perSentenceParses = getPerSentenceParses(parses,tokenizedSentences,neTaggedSentences);
 		ParsePreparation.writeSentencesToFile(prefix + ONELINE_SUFFIX, perSentenceParses);
 	}
@@ -69,12 +70,11 @@ public class OneLineDataCreation {
 	 * @param parses a list of dependency parsed sentences. each one is a list of strings
 	 * @param tokenizedSentences a list of tokenized sentences
 	 * @param neTaggedSentences a list of NE tagged sentences
-	 * @return
 	 */
 	public static ArrayList<String> getPerSentenceParses(List<ArrayList<String>> parses,
 														 List<String> tokenizedSentences,
 														 List<String> neTaggedSentences) {
-		ArrayList<String> result = new ArrayList<String>();
+		ArrayList<String> result = new ArrayList<>();
 		ArrayList<String> gatheredSentences;
 		ArrayList<String> gatheredParses;
 		ArrayList<String> gatheredNESentences;
@@ -84,9 +84,9 @@ public class OneLineDataCreation {
 			final String tokenizedSentence = tokenizedSentences.get(i);
 			final ArrayList<String> parse = parses.get(i);
 			final String neTaggedSentence = neTaggedSentences.get(i);
-			gatheredSentences = new ArrayList<String>();
-			gatheredParses = new ArrayList<String>();
-			gatheredNESentences = new ArrayList<String>();
+			gatheredSentences = new ArrayList<>();
+			gatheredParses = new ArrayList<>();
+			gatheredNESentences = new ArrayList<>();
 			gatheredSentences.add(tokenizedSentence);
 			gatheredParses.addAll(parse);
 			gatheredNESentences.add(neTaggedSentence);
@@ -176,16 +176,16 @@ public class OneLineDataCreation {
 
 
 	public static ArrayList<ArrayList<String>> readCoNLLParses(String conllParseFile) {
-		ArrayList<ArrayList<String>> result = new ArrayList<ArrayList<String>>();
+		ArrayList<ArrayList<String>> result = new ArrayList<>();
 		try {
 			BufferedReader bReader = new BufferedReader(new FileReader(conllParseFile));
 			String line;
-			ArrayList<String> thisParse = new ArrayList<String>();
+			ArrayList<String> thisParse = new ArrayList<>();
 			while((line=bReader.readLine()) != null) {
 				line=line.trim();
 				if(line.equals("")) {
 					result.add(thisParse);
-					thisParse = new ArrayList<String>();
+					thisParse = new ArrayList<>();
 				}
 				else {
 					thisParse.add(line);

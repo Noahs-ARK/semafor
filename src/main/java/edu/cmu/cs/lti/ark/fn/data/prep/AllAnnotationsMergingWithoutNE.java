@@ -24,7 +24,7 @@ package edu.cmu.cs.lti.ark.fn.data.prep;
 import com.google.common.collect.Lists;
 import edu.cmu.cs.lti.ark.fn.utils.LemmatizeStuff;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -33,7 +33,7 @@ import java.util.StringTokenizer;
  * Script to merge the POS tags, dependency parse, and lemmatized version of each sentence into one line
  */
 public class AllAnnotationsMergingWithoutNE {
-	public static void main(String[] args) throws FileNotFoundException {
+	public static void main(String[] args) throws IOException {
 		// parse args
 		final String tokenizedFile = args[0];
 		final String conllParseFile = args[1];
@@ -52,8 +52,8 @@ public class AllAnnotationsMergingWithoutNE {
 	 * @param outfile path to file to which to write the combined sentences
 	 */
 	public static void mergeAllAnnotations(String tokenizedFile, String conllParseFile, String tmpParseFile,
-										   String outfile) throws FileNotFoundException {
-		ArrayList<String> tokenizedSentences = ParsePreparation.readSentencesFromFile(tokenizedFile);
+										   String outfile) throws IOException {
+		List<String> tokenizedSentences = ParsePreparation.readLines(tokenizedFile);
 		ArrayList<String> neSentences = findDummyNESentences(tokenizedSentences);
 		ArrayList<ArrayList<String>> parses = OneLineDataCreation.readCoNLLParses(conllParseFile);
 		ArrayList<String> perSentenceParses =
