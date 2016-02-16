@@ -2,3 +2,8 @@ language: java
 jdk:
   - oraclejdk7
   - openjdk7
+# travis-ci.org changed their hostnames to be longer than 64 chars, triggering a bug in Java 7.
+# See: https://github.com/SonarOpenCommunity/sonar-cxx/issues/700
+before_install:
+  - sudo hostname "$(hostname | cut -c1-63)"
+  - sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts
