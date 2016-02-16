@@ -96,7 +96,17 @@
         <dependency>
             <groupId>org.scalanlp</groupId>
             <artifactId>breeze_2.10</artifactId>
-            <version>0.10</version>
+            <version>0.12</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.scalamacros</groupId>
+                    <artifactId>quasiquotes_2.10</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.scala-lang</groupId>
+                    <artifactId>scala-library</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <scope>test</scope>
@@ -107,7 +117,7 @@
         <dependency>
             <groupId>com.jsuereth</groupId>
             <artifactId>scala-arm_2.10</artifactId>
-            <version>1.3</version>
+            <version>1.4</version>
         </dependency>
         <dependency>
             <!-- for "mvn scala:console" -->
