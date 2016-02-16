@@ -1,4 +1,4 @@
-[![Build Status](https://api.travis-ci.org/sammthomson/semafor.png?branch=develop)](https://travis-ci.org/sammthomson/semafor)
+[![Build Status](https://api.travis-ci.org/Noahs-ARK/semafor.png?branch=develop)](https://travis-ci.org/Noahs-ARK/semafor)
 
     SEMAFOR (a frame-semantic parser for English)
     Copyright (C) 2012
@@ -121,7 +121,7 @@ Installation
 Downloads
 ---------
 
-This experimental fork is maintained at <https://github.com/sammthomson/semafor>.
+This experimental fork is maintained at <https://github.com/Noahs-ARK/semafor>.
 For a more stable version, the latest official release, SEMAFOR v2.1, can be downloaded from
 <https://github.com/Noahs-ARK/semafor-semantic-parser>
 
