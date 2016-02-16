@@ -48,11 +48,6 @@
             <version>1.4_rc3</version>
         </dependency>
         <dependency>
-            <groupId>edu.washington.cs.knowitall.nlptools</groupId>
-            <artifactId>nlptools-stem-morpha_2.9.2</artifactId>
-            <version>2.4.1</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>12.0</version>
@@ -91,6 +86,11 @@
         <dependency>
             <groupId>danbikel</groupId>
             <artifactId>wordnet</artifactId>
+            <version>0</version>
+        </dependency>
+        <dependency>
+            <groupId>uk.ac.susx</groupId>
+            <artifactId>informatics</artifactId>
             <version>0</version>
         </dependency>
     </dependencies>
