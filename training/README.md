@@ -9,7 +9,7 @@ clunky set of steps. Your kind patience is required to train the models :-)
 ### Checkout the code:
 
 ```
-git clone git@github.com:sammthomson/semafor.git
+git clone git@github.com:Noahs-ARK/semafor.git
 cd semafor
 ```
 
@@ -21,9 +21,14 @@ Run:
 mvn package
 ```
 
-Make sure you have the required data. You'll need the `lu` folder from framenet 1.5 
-(see https://framenet.icsi.berkeley.edu/fndrupal/framenet_data for obtaining the FN dataset). 
-Set the `luxmldir` environment variable in `training/config` to point at it.
+Make sure you have the required data.
+You can download FrameNet 1.5 [here](http://www.cs.cmu.edu/~ark/SEMAFOR/framenet15.tar.gz), but
+also please fill out the request form [here](https://framenet.icsi.berkeley.edu/fndrupal/framenet_data)
+if you haven't already.
+Set the `luxmldir` environment variable in `training/config` to point at the `lu` folder.
+The train/dev/test splits that were used in the NAACL '12 and subsequent papers can be found
+[here](http://www.cs.cmu.edu/~ark/SEMAFOR/naacl2012_splits.tar.gz).
+
 
 ### 1. Data structure preparation 1/2
 

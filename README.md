@@ -119,7 +119,7 @@ Installation
 Downloads
 ---------
 
-This experimental fork is maintained at <https://github.com/sammthomson/semafor>.
+This experimental fork is maintained at <https://github.com/Noahs-ARK/semafor>.
 For a more stable version, the latest official release, SEMAFOR v2.1, can be downloaded from
 <https://github.com/Noahs-ARK/semafor-semantic-parser>
 
@@ -182,6 +182,13 @@ You can test that it's working with the following:
     cat src/test/resources/fixtures/example.conll | nc localhost NNNN
 
 (where `NNNN` is again the port).
+
+
+Retraining SEMAFOR
+==================
+
+Please see the [training README](training/README.md).
+
 
 
 Further Reading
