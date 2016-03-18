@@ -19,9 +19,17 @@ import java.util.Map;
  */
 public class FrameAncestors {
 	private static final String DEFAULT_ANCESTORS_FILE = "ancestors.csv";
-	private static InputSupplier<InputStream> DEFAULT_INPUT_SUPPLIER = new InputSupplier<InputStream>() {
+	private static final String DEFAULT_PARENTS_FILE = "frame_parents.csv";
+	public static final int PARENT = 1, ANCESTOR = 2; // mk: ancestors
+
+	private static InputSupplier<InputStream> DEFAULT_ANCESTOR_SUPPLIER = new InputSupplier<InputStream>() {
 		@Override public InputStream getInput() throws IOException {
 			return getClass().getClassLoader().getResourceAsStream(DEFAULT_ANCESTORS_FILE);
+		} };
+
+	private static InputSupplier<InputStream> DEFAULT_PARENT_SUPPLIER = new InputSupplier<InputStream>() {
+		@Override public InputStream getInput() throws IOException {
+			return getClass().getClassLoader().getResourceAsStream(DEFAULT_PARENTS_FILE);
 		} };
 
 	private final Multimap<String, String> ancestors;
@@ -31,7 +39,14 @@ public class FrameAncestors {
 	}
 
 	public static FrameAncestors load() throws IOException {
-		return load(CharStreams.newReaderSupplier(DEFAULT_INPUT_SUPPLIER, Charsets.UTF_8));
+		return load(CharStreams.newReaderSupplier(DEFAULT_ANCESTOR_SUPPLIER, Charsets.UTF_8));
+	}
+
+	public static FrameAncestors load(int type) throws IOException {
+		if(type == PARENT)
+			return load(CharStreams.newReaderSupplier(DEFAULT_PARENT_SUPPLIER, Charsets.UTF_8));
+		else
+			return load(CharStreams.newReaderSupplier(DEFAULT_ANCESTOR_SUPPLIER, Charsets.UTF_8));
 	}
 
 	public static FrameAncestors load(InputSupplier<InputStreamReader> input) throws IOException {
@@ -57,4 +72,9 @@ public class FrameAncestors {
 	public Map<String, Collection<String>> getAllAncestors() {
 		return ancestors.asMap();
 	}
+
+	public Collection<String> getAllParents() {
+		return ancestors.values();
+	}
+
 }
