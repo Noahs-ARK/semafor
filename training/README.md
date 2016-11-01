@@ -27,7 +27,7 @@ also please fill out the request form [here](https://framenet.icsi.berkeley.edu/
 if you haven't already.
 Set the `luxmldir` environment variable in `training/config` to point at the `lu` folder.
 The train/dev/test splits that were used in the NAACL '12 and subsequent papers can be found
-[here](http://www.cs.cmu.edu/~ark/SEMAFOR/naacl2012_splits.tar.gz).
+[here](http://www.cs.cmu.edu/~ark/SEMAFOR/naacl2012_splits_with_rank_score.tar.gz).
 
 
 ### 1. Data structure preparation 1/2
