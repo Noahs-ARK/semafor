@@ -1,3 +1,6 @@
+**_Notice_: SEMAFOR is no longer being maintained. Please see [open-SESAME](https://github.com/Noahs-ARK/open-sesame) for a newer, more accurate frame-semantic parsing system.**
+=
+
     SEMAFOR (a frame-semantic parser for English)
     Copyright (C) 2012
     Dipanjan Das, Andre Martins, Nathan Schneider, Desai Chen, Sam Thomson &
